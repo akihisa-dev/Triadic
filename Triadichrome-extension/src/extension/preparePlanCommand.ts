@@ -1,14 +1,8 @@
 import type { PlanCommand } from "../core/domain/planCommands";
-import type { PlanContents } from "../core/domain/plan";
-import { applyPlanCommand, createBusinessSnapshot, readPlanContents, prepareAggregationSave, prepareKindSelectionSave } from "./planProcessing";
+import { prepareOrdinarySave, prepareAggregationSave, prepareKindSelectionSave } from "./planProcessing";
 import { planContents, type OpenPlan, type PreparedPlanChange } from "./planFile";
 export type SavedOperation = { before: Uint8Array; after: Uint8Array };
 type CommandPreparation = ({ kind: "prepared"; prepared: PreparedPlanChange } | { kind: "ordinary"; bytes: Uint8Array }) & { operation: SavedOperation | null };
-function operationContents(contents: PlanContents): string {
-  // Conflict counters describe write sequencing, not a user-visible change.
-  return JSON.stringify(contents, (key, value: unknown) =>
-    ["details", "revision", "initiativeRevision", "rowRevision", "amountRevisions", "overrideRevisions"].includes(key) ? undefined : value);
-}
 /** Data preparation never selects a destination or publishes a saved document. */
 export async function preparePlanCommand(target: OpenPlan, command: PlanCommand): Promise<CommandPreparation> {
   if (command.type === "settings" && command.change.type === "selection") {
@@ -24,10 +18,6 @@ export async function preparePlanCommand(target: OpenPlan, command: PlanCommand)
     const operation = prepared.operation;
     return { kind: "prepared", prepared, operation };
   }
-  let operation: SavedOperation | null = null;
-  const bytes = await applyPlanCommand(target.bytes, command, target.fiscalYear);
-  if (operationContents(planContents(target)) !== operationContents(await readPlanContents(bytes))) {
-    operation = { before: await createBusinessSnapshot(target.bytes), after: await createBusinessSnapshot(bytes) };
-  }
+  const { bytes, operation } = await prepareOrdinarySave(target.bytes, command, target.fiscalYear);
   return { kind: "ordinary", bytes, operation };
 }

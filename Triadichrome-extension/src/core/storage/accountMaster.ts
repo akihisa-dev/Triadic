@@ -22,8 +22,8 @@ export async function readAccountMaster(bytes: Uint8Array): Promise<Account[]> {
   finally { database.close(); }
 }
 
-export async function changeAccountMaster(bytes: Uint8Array, change: AccountChange) {
-  return await editDatabase(bytes, database => {
+export async function changeAccountMaster(bytes: Uint8Array, change: AccountChange, edit = editDatabase) {
+  return await edit(bytes, database => {
     const before = listAccounts(database);
     const presentation = readMasterPresentation(database);
     const order = change.presentationOrder ?? presentation.order;

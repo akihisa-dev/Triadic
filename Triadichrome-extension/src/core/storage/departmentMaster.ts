@@ -10,8 +10,8 @@ export function listDepartments(database: Database): Department[] {
     .map(([id, name, identity]) => ({ id: Number(id), identity: String(identity), departmentName: String(name), industryIds: memberships.get(Number(id)) ?? [] }));
 }
 
-export async function changeDepartmentMaster(bytes: Uint8Array, change: DepartmentChange): Promise<Uint8Array> {
-  return (await editDatabase(bytes, database => {
+export async function changeDepartmentMaster(bytes: Uint8Array, change: DepartmentChange, edit = editDatabase): Promise<Uint8Array> {
+  return (await edit(bytes, database => {
     validateDepartmentChange(listDepartments(database), change);
     if (change.type === "delete" && database.exec("SELECT id FROM initiatives WHERE department_id = ? LIMIT 1", [change.id]).length) throw new Error("施策で使用中の部署は削除できません。");
     if (change.type === "delete" && database.exec("SELECT account_id FROM previous_amounts WHERE department_id = ? LIMIT 1", [change.id]).length) throw new Error("前年入力で使用中の部署は削除できません。");

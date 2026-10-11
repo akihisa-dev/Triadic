@@ -7,8 +7,8 @@ export function listPeriodTypes(database: Database): PeriodType[] {
     .map(([id, name, rule]) => ({ id: Number(id), periodName: String(name), startMonthRule: rule === "new" || rule === "period_gap" ? rule : null }));
 }
 
-export async function changePeriodMaster(bytes: Uint8Array, change: PeriodTypeChange): Promise<Uint8Array> {
-  return (await editDatabase(bytes, database => {
+export async function changePeriodMaster(bytes: Uint8Array, change: PeriodTypeChange, edit = editDatabase): Promise<Uint8Array> {
+  return (await edit(bytes, database => {
     validatePeriodTypeChange(listPeriodTypes(database), change);
     if (change.type === "delete" && database.exec("SELECT id FROM initiatives WHERE period_type_id = ? LIMIT 1", [change.id]).length) throw new Error("施策で使用中の期間は削除できません。");
     if (change.type === "delete") database.run("DELETE FROM period_types WHERE id = ?", [change.id]);

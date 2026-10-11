@@ -5,8 +5,8 @@ export function listExpansionCategories(database: Database): ExpansionCategory[]
   return (database.exec("SELECT id, name FROM expansion_categories ORDER BY id")[0]?.values ?? [])
     .map(([id, name]) => ({ id: Number(id), categoryName: String(name) }));
 }
-export async function changeExpansionCategoryMaster(bytes: Uint8Array, change: ExpansionCategoryChange): Promise<Uint8Array> {
-  return (await editDatabase(bytes, database => {
+export async function changeExpansionCategoryMaster(bytes: Uint8Array, change: ExpansionCategoryChange, edit = editDatabase): Promise<Uint8Array> {
+  return (await edit(bytes, database => {
     validateExpansionCategoryChange(listExpansionCategories(database), change);
     if (change.type === "delete") {
       if (database.exec("SELECT expansion_id FROM expansion_category_assignments WHERE category_id = ? LIMIT 1", [change.id]).length) throw new Error("展開に割り当てている展開区分は削除できません。");

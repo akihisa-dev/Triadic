@@ -6,8 +6,8 @@ export function listIndustries(database: Database): Industry[] {
     .map(([id, code, name, identity]) => ({ id: Number(id), identity: String(identity), industryCode: String(code), industryName: String(name) }));
 }
 
-export async function changeIndustryMaster(bytes: Uint8Array, change: IndustryChange): Promise<Uint8Array> {
-  return (await editDatabase(bytes, database => {
+export async function changeIndustryMaster(bytes: Uint8Array, change: IndustryChange, edit = editDatabase): Promise<Uint8Array> {
+  return (await edit(bytes, database => {
     validateIndustryChange(listIndustries(database), change);
     if (change.type === "delete" && database.exec("SELECT id FROM initiatives WHERE industry_id = ? LIMIT 1", [change.id]).length) throw new Error("施策で使用している業種は削除できません。");
     if (change.type === "delete" && database.exec("SELECT account_id FROM previous_amounts WHERE industry_id = ? LIMIT 1", [change.id]).length) throw new Error("前年入力で使用中の業種は削除できません。");

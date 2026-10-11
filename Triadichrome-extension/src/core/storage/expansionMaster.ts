@@ -10,8 +10,8 @@ export function listExpansions(database: Database): Expansion[] {
     .map(([id, code, name]) => ({ id: Number(id), expansionCode: String(code), expansionName: String(name), categoryIds: assignments.get(Number(id)) ?? [] }));
 }
 
-export async function changeExpansionMaster(bytes: Uint8Array, change: ExpansionChange): Promise<Uint8Array> {
-  return (await editDatabase(bytes, database => {
+export async function changeExpansionMaster(bytes: Uint8Array, change: ExpansionChange, edit = editDatabase): Promise<Uint8Array> {
+  return (await edit(bytes, database => {
     validateExpansionChange(listExpansions(database), change);
     if (change.type !== "delete" && change.categoryIds !== undefined) {
       const ids = change.categoryIds;

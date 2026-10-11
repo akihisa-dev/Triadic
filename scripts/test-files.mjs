@@ -32,6 +32,7 @@ import { verifySavedOperations } from "../tests/saved-operations.mjs";
 import { verifyInitiativeGrid } from "../tests/initiative-grid.mjs";
 import { verifyDataHistory } from "../tests/data-history.mjs";
 import { verifyBusinessSnapshot } from "../tests/business-snapshot.mjs";
+import { verifyCommandComparison } from "../tests/command-comparison.mjs";
 import { verifyPreviousGrid } from "../tests/previous-grid.mjs";
 import { verifyInitiativeData } from "../tests/initiative-data.mjs";
 import { verifyDetails } from "../tests/details.mjs";
@@ -102,6 +103,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyAutoSaveRebase(api);
   await verifyDataHistory(api);
   await verifyBusinessSnapshot(api);
+  await verifyCommandComparison(api);
   await verifyPlanSession(api);
   await verifySavedOperations(api);
   await verifyNoChangeSave(api);

@@ -31,12 +31,12 @@ export function applyKindSelection(db: Database, screen: KindScreen, selected: K
   validateKindSelection(screen, selected);
   db.run("UPDATE kind_selections SET first_kind = ?, second_kind = ? WHERE screen = ?", [selected[0]!, selected[1] ?? null, screen]);
 }
-export async function saveKindSelection(bytes: Uint8Array, screen: KindScreen, selected: KindId[]): Promise<Uint8Array> {
-  return (await editDatabase(bytes, db => applyKindSelection(db, screen, selected))).bytes;
+export async function saveKindSelection(bytes: Uint8Array, screen: KindScreen, selected: KindId[], edit = editDatabase): Promise<Uint8Array> {
+  return (await edit(bytes, db => applyKindSelection(db, screen, selected))).bytes;
 }
-export async function changePlanSettings(bytes: Uint8Array, change: PlanChange): Promise<Uint8Array> {
-  if (change.type === "previous") return savePreviousAmounts(bytes, change.input);
-  if (change.type === "previous-import") return (await editDatabase(bytes, db => {
+export async function changePlanSettings(bytes: Uint8Array, change: PlanChange, edit = editDatabase): Promise<Uint8Array> {
+  if (change.type === "previous") return savePreviousAmounts(bytes, change.input, edit);
+  if (change.type === "previous-import") return (await edit(bytes, db => {
     const seen = new Set<string>();
     if (!change.patches.length) throw new Error("変更する金額がありません。");
     for (const patch of change.patches) {
@@ -54,12 +54,12 @@ export async function changePlanSettings(bytes: Uint8Array, change: PlanChange):
         ON CONFLICT (account_id, industry_id, department_id, month) DO UPDATE SET amount_yen = excluded.amount_yen, revision = previous_amounts.revision + 1`, [patch.accountId, patch.industryId, patch.departmentId, patch.month, amount]);
     }
   })).bytes;
-  return saveKindSelection(bytes, change.screen, change.selected);
+  return saveKindSelection(bytes, change.screen, change.selected, edit);
 }
-export async function savePreviousAmounts(bytes: Uint8Array, input: PreviousInput): Promise<Uint8Array> {
+export async function savePreviousAmounts(bytes: Uint8Array, input: PreviousInput, edit = editDatabase): Promise<Uint8Array> {
   if (input.invalidNumbers) throw new Error("金額に有効な数値を入力してください。");
   if (new Set(input.rows.map(row => row.accountId)).size !== input.rows.length) throw new Error("同じ勘定科目が重複しています。");
-  return (await editDatabase(bytes, db => {
+  return (await edit(bytes, db => {
     if (!db.exec("SELECT id FROM industries WHERE id = ?", [input.industryId]).length) throw new Error("業種名を選択してください。");
     if (!db.exec("SELECT id FROM departments WHERE id = ?", [input.departmentId]).length) throw new Error("部署名を選択してください。");
     if (!db.exec("SELECT 1 FROM department_industries WHERE department_id = ? AND industry_id = ?", [input.departmentId, input.industryId]).length) throw new Error("部署に設定されている業種を選択してください。");

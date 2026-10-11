@@ -15,8 +15,8 @@ import { editDatabase } from "./transaction";
 const listNames = (database: Database, except?: number) => (database.exec("SELECT id, name FROM initiatives")[0]?.values ?? [])
   .filter(([id]) => id !== except).map(([, name]) => ({ name: String(name) }));
 /** Register 12 fixed months per input row on a private database copy. */
-export async function registerInitiative(bytes: Uint8Array, draft: InitiativeEntryDraft): Promise<Uint8Array> {
-  return (await editDatabase(bytes, database => {
+export async function registerInitiative(bytes: Uint8Array, draft: InitiativeEntryDraft, edit = editDatabase): Promise<Uint8Array> {
+  return (await edit(bytes, database => {
     validateInitiative(draft, listAccounts(database), listNames(database), listExpansions(database), listDepartments(database), listPeriodTypes(database), listIndustries(database));
     if (Number(draft.fiscalYear) !== readPlanSettings(database).fiscalYear) throw new Error("年度はファイルの基準年度と同じにしてください。");
     database.run(`INSERT INTO initiatives (name, note, expansion_id, expansion_category_id, department_id, period_type_id, industry_id, sort_order)
@@ -47,8 +47,8 @@ function writeAmounts(db: Database, rowId: string, source: AmountSource): void {
   }
 }
 
-export async function updateInitiative(bytes: Uint8Array, id: number, previousYear: number | null, draft: InitiativeEntryDraft): Promise<Uint8Array> {
-  return (await editDatabase(bytes, database => {
+export async function updateInitiative(bytes: Uint8Array, id: number, previousYear: number | null, draft: InitiativeEntryDraft, edit = editDatabase): Promise<Uint8Array> {
+  return (await edit(bytes, database => {
     const settings = readPlanSettings(database);
     const initiatives = listInitiatives(database, readPlanSettings(database).fiscalYear, id);
     const original = initiatives.find(item => item.id === id && item.fiscalYear === previousYear);
