@@ -16,9 +16,11 @@ export function markupCells(markup) {
   const table = markup.match(/<table\b[^>]*>([\s\S]*?)<\/table>/)[1];
   const occupied = new Set(), cells = [];
   let row = 0;
-  for (const match of table.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/g)) {
+  for (const match of table.matchAll(/<tr\b([^>]*)>([\s\S]*?)<\/tr>/g)) {
+    // Layout spacers are hidden from the accessible table and are not report data.
+    if (/\baria-hidden="true"/.test(match[1])) continue;
     row++; let col = 1;
-    for (const cell of match[1].matchAll(/<(th|td)\b([^>]*)>([\s\S]*?)<\/\1>/g)) {
+    for (const cell of match[2].matchAll(/<(th|td)\b([^>]*)>([\s\S]*?)<\/\1>/g)) {
       while (occupied.has(`${row}:${col}`)) col++;
       const rowspan = Number(cell[2].match(/rowspan="(\d+)"/i)?.[1] ?? 1);
       const colspan = Number(cell[2].match(/colspan="(\d+)"/i)?.[1] ?? 1);

@@ -102,11 +102,11 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
       const pages = await app.locator("body").evaluate(sampleChange, {
         observe: ".page-switch",
         actions: [
-          { frame: 0, selector: ".sidebar-navigation button:nth-child(3)" },
-          { frame: 2, selector: ".sidebar-navigation button:nth-child(1)" },
-          { frame: 4, selector: ".sidebar-navigation button:nth-child(3)" },
-          { frame: 5, selector: ".sidebar-navigation button:nth-child(1)" },
-          { frame: 6, selector: ".sidebar-navigation button:nth-child(3)" },
+          { frame: 0, selector: '.sidebar-navigation button[aria-label="施策一覧"]' },
+          { frame: 2, selector: '.sidebar-navigation button[aria-label="Home"]' },
+          { frame: 4, selector: '.sidebar-navigation button[aria-label="施策一覧"]' },
+          { frame: 5, selector: '.sidebar-navigation button[aria-label="Home"]' },
+          { frame: 6, selector: '.sidebar-navigation button[aria-label="施策一覧"]' },
         ],
       });
       expect(pages.some(sample => sample.text.startsWith("Home") && sample.opacity > 0 && sample.opacity < 0.9)).toBe(true);
@@ -136,7 +136,8 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
       expect(dragEnd.find(sample => sample.text.includes("ファイルを開く"))!.opacity).toBeLessThan(0.25);
     });
 
-    test("エラーはフェードし、表示・消去で入口の位置が動かない", async ({ page, app }) => {
+    test("エラーはフェードし、表示・消去で入口の位置が動かない", async ({ page, app }, testInfo) => {
+      testInfo.annotations.push({ type: "expected-console", description: "sqlite3_step() rc= 26 SQLITE_NOTADB SQL = PRAGMA user_version" });
       await page.getByLabel("ファイル操作", { exact: true }).selectOption("invalid");
       await expect(page.getByRole("status")).toHaveText("操作できます");
       await expect(app.getByRole("button", { name: "ファイルを開く", exact: true })).toBeVisible();

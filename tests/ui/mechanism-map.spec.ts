@@ -28,3 +28,16 @@ test("仕組みの全対象を閲覧し、条件・保存範囲を確認して�
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "履歴", exact: true }).click();
   await expect(app.locator(".history-date")).toHaveCount(3);
 });
+
+test("保存場所の説明が作成識別子・共通順・独自表示名の現在の保存先を示す", async ({ app }) => {
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("button", { name: "処理の流れ", exact: true }).click();
+  const view = app.getByRole("region", { name: "処理の流れ", exact: true });
+  await view.getByRole("button", { name: "保存場所とデータの寿命", exact: true }).click();
+  const flow = view.getByRole("list", { name: "保存場所とデータの寿命の流れ" });
+  for (const text of ["各行のidentity", "必須・一意", "識別子の欠落や旧形式は補完せず拒否", "master_order", "accounts.display_name", "表示名がNULLの場合は正式名", "triadic_metadataには保存形式の識別情報"]) {
+    await expect(flow).toContainText(text);
+  }
+  await expect(flow).not.toContainText("既存分類は識別子未登録として引き続き利用できます");
+  await expect(flow).not.toContainText("共通順と科目の独自表示名もtriadic_metadata");
+});

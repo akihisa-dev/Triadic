@@ -3,6 +3,7 @@ import { test, expect, settleMotion } from "./fixtures";
 test("操作説明を置かず、ホームのキャンバスを画面下端まで広げる", async ({ page, app }, testInfo) => {
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
   await settleMotion(app.locator("body"));
+  let firstHeight = 0;
   for (const height of [800, 1200]) {
     await page.setViewportSize({ width: page.viewportSize()!.width, height });
     await settleMotion(app.locator("body"));
@@ -10,11 +11,14 @@ test("操作説明を置かず、ホームのキャンバスを画面下端ま�
       const main = element.getBoundingClientRect();
       const viewport = element.querySelector(".home-relations-viewport")!.getBoundingClientRect();
       return { bottom: main.bottom - viewport.bottom, padding: parseFloat(getComputedStyle(element).paddingBottom),
-        height: viewport.height, overflow: element.scrollHeight > element.clientHeight };
+        height: viewport.height, viewportBottom: window.innerHeight - main.bottom,
+        overflow: element.scrollHeight > element.clientHeight };
     });
     expect(metrics.bottom).toBeCloseTo(metrics.padding, 0);
     expect(metrics.overflow).toBe(false);
-    if (height === 1200) expect(metrics.height).toBeGreaterThan(740);
+    expect(Math.abs(metrics.viewportBottom)).toBeLessThan(1);
+    if (height === 800) firstHeight = metrics.height;
+    else expect(metrics.height - firstHeight).toBeCloseTo(400, 0);
     await expect(app.getByText(/クリックで開く · 項目をドラッグ/)).toHaveCount(0);
     await expect(app.getByRole("button", { name: "全体表示", exact: true })).toBeVisible();
   }
@@ -58,6 +62,8 @@ test("自由なドラッグに接続線と周囲が追従し、離しても元�
   const center = { x: icon.x + icon.width / 2, y: icon.y + icon.height / 2 };
   const line = home.locator(".home-relation").filter({ hasText: "科目を選択" }).locator("path").first();
   const path = await line.getAttribute("d");
+  const neighbor = home.locator('.home-relation-item:has([data-page="account-master"])');
+  const neighborBefore = (await neighbor.boundingBox())!;
   await page.mouse.move(center.x, center.y);
   await page.mouse.down();
   const camera = await map.getAttribute("style");
@@ -66,17 +72,14 @@ test("自由なドラッグに接続線と周囲が追従し、離しても元�
   expect(dragged.x - box.x).toBeGreaterThan(80);
   await expect(line).not.toHaveAttribute("d", path!);
   await expect(map).toHaveAttribute("style", camera!);
+  await expect.poll(async () => {
+    const after = (await neighbor.boundingBox())!;
+    return Math.hypot(after.x - neighborBefore.x, after.y - neighborBefore.y);
+  }).toBeGreaterThan(.1);
   await page.mouse.up();
   await expect(home).toBeVisible();
   const released = (await input.boundingBox())!;
   expect(Math.abs(released.x - dragged.x)).toBeLessThan(15);
-  const sample = await home.locator('.home-relation-item:has([data-page="industry-master"])').evaluate(async node => {
-    const before = node.getBoundingClientRect().x;
-    const start = performance.now();
-    while (performance.now() - start < 400) await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
-    return Math.abs(node.getBoundingClientRect().x - before);
-  });
-  expect(sample).toBeGreaterThan(.1);
   await input.locator(".home-relation-name").click();
   await expect(app.getByRole("heading", { name: "施策一覧", exact: true })).toBeVisible();
 });

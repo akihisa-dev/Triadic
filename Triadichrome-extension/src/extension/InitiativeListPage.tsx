@@ -88,7 +88,7 @@ export function InitiativeListPage({ selection, selectedKind, initiatives, accou
           {errors.has(item.id) ? <td colSpan={36} role="alert" style={{ textAlign: "left" }}>{errors.get(item.id)} 施策を開いて金額を修正してください。</td> : initiativeMonths.map(month => <Fragment key={month}>
             {amountItems.map((metric, index) => <td key={metric.id} className={index === amountItems.length - 1 ? "initiative-month-end" : undefined}>{amountText(item.months[month]?.[metric.id])}</td>)}
           </Fragment>)}
-        </tr>} /></tbody>
+        </tr>} />{!virtual && <tr className="initiative-list-fill" aria-hidden="true"><td colSpan={40} /></tr>}</tbody>
         <tfoot>{errors.size ? <tr className="initiative-total-row"><th colSpan={40} scope="row" style={{ textAlign: "left" }}>計算できない施策があるため、合計を表示できません。</th></tr> : <InitiativeTotalRow view={view} />}</tfoot>
       </table>
     </div>
@@ -101,7 +101,7 @@ function InitiativeTotalRow({ view }: { view: InitiativeListView }) {
   if (!view.totals) return <tr className="initiative-total-row"><th colSpan={40} scope="row" role="alert">{view.totalError} 施策を開いて金額を修正してください。</th></tr>;
   const totals = view.totals;
   return <tr className="initiative-total-row">
-    <th colSpan={4} scope="row" className="initiative-total-label">合計</th>
+    <th colSpan={4} scope="row" className="initiative-total-label"><span>合計</span></th>
     {initiativeMonths.map(month => <Fragment key={month}>
       {amountItems.map((metric, index) => <td key={metric.id} className={index === amountItems.length - 1 ? "initiative-month-end" : undefined}>{amountText(totals[month]?.[metric.id])}</td>)}
     </Fragment>)}

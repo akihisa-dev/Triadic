@@ -12,7 +12,7 @@ test("施策一覧だけ4列を並べ替えられ、各表とマスタは全件�
     await expect(app.locator("thead button")).toHaveCount(screen === "施策一覧" ? 4 : 0);
     await expect(app.getByRole("button", { name: "クリア", exact: true })).toHaveCount(0);
     await expect(app.locator("thead [aria-sort]")).toHaveCount(0);
-    if (screen === "施策一覧") await expect(app.locator("tbody tr")).toHaveCount(14);
+    if (screen === "施策一覧") await expect(app.locator('tbody tr:not([aria-hidden="true"])')).toHaveCount(14);
   }
   for (const screen of ["勘定科目マスタ", "展開マスタ", "業種マスタ", "部署マスタ", "期間マスタ"]) {
     await menu.getByRole("button", { name: "マスタ", exact: true }).click();

@@ -122,12 +122,13 @@ export function FiscalYearSlot({ value, onChange, disabled }: {
       }}
       onPointerDown={event => {
         if (disabled || (event.target instanceof Element && event.target.closest("button"))) return;
+        event.preventDefault();
         stop();
         motion.current.target = null;
         motion.current.velocity = 0;
         drag.current = { y: event.clientY, time: event.timeStamp, moved: false };
         event.currentTarget.setPointerCapture(event.pointerId);
-        event.currentTarget.focus();
+        event.currentTarget.focus({ preventScroll: true });
         setMoving(true);
       }}
       onPointerMove={event => {

@@ -25,10 +25,9 @@ test("合計行は表の最下部で下端に追従し、並べ替えで変わ�
   await region.getByRole("button", { name: "開始年月", exact: true }).click();
   expect(await total.innerText()).toBe(confirmed);
   const before = (await total.boundingBox())!;
-  const label = total.getByRole("rowheader", { name: "合計", exact: true });
+  const label = total.getByRole("rowheader", { name: "合計", exact: true }).locator("span");
   const labelBefore = (await label.boundingBox())!;
   await region.evaluate(node => { node.scrollTop = node.scrollHeight; node.scrollLeft = node.scrollWidth; });
-  expect(await region.evaluate(node => node.scrollTop)).toBeGreaterThan(0);
   expect(Math.abs((await total.boundingBox())!.y - before.y)).toBeLessThan(2);
   expect(Math.abs((await label.boundingBox())!.x - labelBefore.x)).toBeLessThan(2);
   await expect(label).toBeInViewport();
@@ -44,4 +43,28 @@ test("施策未登録でも合計は0", async ({ app }) => {
   const total = app.locator(".initiative-total-row");
   await expect(total.getByRole("cell")).toHaveCount(36);
   expect(await total.getByRole("cell").allTextContents()).toEqual(Array(36).fill("0"));
+  expect(Math.abs(await total.evaluate(node => {
+    const container = node.closest(".initiative-list-container")!;
+    return container.getBoundingClientRect().top + container.clientHeight - node.getBoundingClientRect().bottom;
+  }))).toBeLessThan(2);
+});
+
+test("長い一覧を縦横にスクロールしても合計行と合計見出しを保持する", async ({ page, app }) => {
+  await page.goto("/tests/ui/preview.html?data=large");
+  await expect(page.getByRole("status")).toHaveText("操作できます");
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "施策一覧", exact: true }).click();
+  await settleMotion(app.locator("body"));
+  const region = app.locator(".initiative-list-container");
+  const total = region.locator(".initiative-total-row");
+  const label = total.getByRole("rowheader", { name: "合計", exact: true }).locator("span");
+  const before = (await total.boundingBox())!;
+  const labelBefore = (await label.boundingBox())!;
+  const amounts = await total.innerText();
+  await region.evaluate(node => { node.scrollTop = node.scrollHeight; node.scrollLeft = node.scrollWidth; });
+  expect(await region.evaluate(node => node.scrollTop)).toBeGreaterThan(0);
+  expect(Math.abs((await total.boundingBox())!.y - before.y)).toBeLessThan(2);
+  expect(Math.abs((await label.boundingBox())!.x - labelBefore.x)).toBeLessThan(2);
+  await expect(label).toBeInViewport();
+  expect(await total.innerText()).toBe(amounts);
 });

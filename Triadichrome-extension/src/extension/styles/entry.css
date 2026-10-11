@@ -53,13 +53,13 @@
   content: "";
   position: absolute;
   inset: 0.75rem;
-  border: 2px dashed var(--ink);
+  border: 2px dashed var(--accent);
   border-radius: 0.625rem;
   pointer-events: none;
   opacity: 0;
   transition: opacity var(--motion-feedback) var(--motion-ease);
 }
-.is-drag-active .entry-open-section { background: var(--soft); }
+.is-drag-active .entry-open-section { background: #eef2ff; }
 .is-drag-active .entry-open-section::after { opacity: 1; }
 .entry-create-section { border-left: 1px solid var(--line); }
 .entry-option-icon { margin-bottom: 1rem; }

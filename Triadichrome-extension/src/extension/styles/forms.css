@@ -294,6 +294,9 @@
 .initiative-overview-page .initiative-list-container::-webkit-scrollbar-corner { background: var(--soft); }
 .initiative-overview-page .initiative-list-container::-webkit-scrollbar-thumb { background: var(--control-line); border: 3px solid var(--soft); border-radius: 6px; }
 .initiative-overview-page .initiative-list-table { --initiative-expansion-width: 100px; --initiative-period-width: 100px; --initiative-name-width: 220px; --initiative-start-width: 112px; width: calc(var(--initiative-expansion-width) + var(--initiative-period-width) + var(--initiative-name-width) + var(--initiative-start-width) + 4032px); min-width: calc(var(--initiative-expansion-width) + var(--initiative-period-width) + var(--initiative-name-width) + var(--initiative-start-width) + 4032px); }
+.initiative-overview-page .initiative-list-table:not(.virtual-table) { height: 100%; }
+.initiative-overview-page .initiative-list-table .initiative-list-fill { height: 100%; }
+.initiative-overview-page .initiative-list-table .initiative-list-fill > td { height: 0; padding: 0; border: 0; }
 .initiative-list-table .initiative-expansion-column { width: var(--initiative-expansion-width); }
 .initiative-list-table .initiative-period-column { width: var(--initiative-period-width); }
 .initiative-list-table .initiative-name-column { width: var(--initiative-name-width); }
@@ -302,6 +305,7 @@
 .initiative-overview-page tfoot { position: sticky; bottom: 0; z-index: 2; }
 .initiative-overview-page .initiative-total-row > * { background: var(--soft); font-weight: 600; }
 .initiative-overview-page .initiative-list-table .initiative-total-label { position: sticky; left: 0; z-index: 1; text-align: left; }
+.initiative-total-label > span { display: inline-block; position: sticky; left: 12px; }
 .initiative-list-container { max-width: 100%; margin-top: 24px; overflow: auto; outline: 2px solid transparent; outline-offset: 2px; }
 .initiative-list-container:focus-visible { outline-color: var(--focus); }
 .initiative-list-table { width: 100%; min-width: 2908px; table-layout: fixed; border-spacing: 0; font-variant-numeric: tabular-nums; }
@@ -363,13 +367,13 @@
   max-width: min(28rem, calc(100% - 32px));
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
   max-height: calc(100svh - 32px);
   overflow-y: auto;
   pointer-events: none;
 }
 .status-notice-slot { flex-shrink: 0; }
-.status-notice-slot:not(:has(.status-notice)) { display: none; }
+.status-notice-slot:has(.status-notice) ~ .status-notice-slot:has(.status-notice) { margin-top: 8px; }
 .status-notice {
   display: flex;
   align-items: center;

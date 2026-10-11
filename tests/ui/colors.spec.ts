@@ -186,7 +186,7 @@ test("配布用ビルドでも選択アイコンと編集枠が同じ青にな�
 });
 
 
-test("入口のファイルドロップ案内は文字・背景・破線をモノクロに保つ", async ({ page, app }) => {
+test("入口のファイルドロップ先だけ背景と破線を青で示し、文字はモノクロに保つ", async ({ page, app }) => {
   await page.getByRole("button", { name: "入口に戻す", exact: true }).click();
   const entry = app.locator(".entry-page");
   await expect(entry).toBeVisible();
@@ -199,10 +199,10 @@ test("入口のファイルドロップ案内は文字・背景・破線をモ�
   await expect(app.getByRole("heading", { name: "ここにドロップして開く", exact: true })).toBeVisible();
   await settleMotion(app.locator("body"));
   const section = app.locator(".entry-open-section");
-  await expect(section).toHaveCSS("background-color", soft);
+  await expect(section).toHaveCSS("background-color", "rgb(238, 242, 255)");
   await expect(section).toHaveCSS("color", ink);
   await expect(app.locator(".entry-drop-description")).toHaveCSS("color", "rgb(98, 98, 98)");
-  expect(await section.evaluate(node => getComputedStyle(node, "::after").borderColor)).toBe(ink);
+  expect(await section.evaluate(node => getComputedStyle(node, "::after").borderColor)).toBe(blue);
   await entry.dispatchEvent("dragleave", { relatedTarget: null });
   await expect(entry).not.toHaveClass(/is-drag-active/);
   await expect(app.getByRole("heading", { name: "ファイルを開く", exact: true })).toBeVisible();
