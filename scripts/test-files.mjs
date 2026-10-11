@@ -1,3 +1,4 @@
+import { verifyNoChangeSave } from "../tests/no-change-save.mjs";
 import { verifyExpansionCategories } from "../tests/expansion-categories.mjs";
 import { verifyAggregationPositions } from "../tests/aggregation-positions.mjs";
 import { verifyAggregationRebase } from "../tests/aggregation-rebase.mjs";
@@ -83,6 +84,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyDataHistory(api);
   await verifyPlanSession(api);
   await verifySavedOperations(api);
+  await verifyNoChangeSave(api);
   await verifyRecentFile(api);
   await verifySamplePlan(api);
   await verifyPerformanceData(api, root);

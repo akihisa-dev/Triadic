@@ -83,6 +83,7 @@ export class PlanSession {
       const target = destinationPlan && !plan.handle ? { ...plan, ...destinationPlan } : plan;
       validatePlanCommand(target, command);
       const prepared = await preparePlanCommand(target, command);
+      if (!prepared.operation) return plan;
       entry = prepared.operation ?? undefined;
       return prepared.kind === "prepared"
         ? writePreparedPlanChange(target, target.handle!, prepared.prepared, true)
@@ -104,6 +105,7 @@ export class PlanSession {
         if (handle.queryPermission && await handle.queryPermission({ mode: "readwrite" }) !== "granted") throw new Error("「保存を再試行」からファイルへの保存を許可してください。");
       }
       const saved = await operation(current, destination);
+      if (saved === current) return planContents(current);
       const { rebasedOperation, ...persisted } = saved;
       if (rebasedOperation !== undefined) this.resetOperations();
       committed?.(saved);

@@ -14,9 +14,13 @@ export async function prepareSave<T>(bytes: Uint8Array, now: string,
     const before = await snapshotFromDatabase(database);
     database.run("BEGIN");
     const changed = apply();
+    if (!changed) {
+      database.run("ROLLBACK");
+      return { bytes, contents: project(database), savedHistory: historyFromDatabase(database), operation: null };
+    }
     database.run("UPDATE document_info SET updated_at = ? WHERE id = 1", [now]);
     database.run("COMMIT");
-    const after = changed ? await snapshotFromDatabase(database) : null;
+    const after = await snapshotFromDatabase(database);
     trackHistoryInDatabase(database, before, now);
     const savedBytes = exportTriadicDatabase(database);
     return { bytes: savedBytes, contents: project(database), savedHistory: historyFromDatabase(database), operation: after ? { before, after } : null };
