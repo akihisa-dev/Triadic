@@ -1,0 +1,61 @@
+import { test, expect } from "@playwright/test";
+
+test("選択・範囲・編集モードでは合計を再計算せず、計算元の変更では更新する", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto("/tests/ui/performance-preview.html?mode=initiative&count=10&traceTotals=1");
+  const cell = page.locator('input[data-row="0"][data-column="0"]');
+  await expect(cell).toBeVisible();
+  const reads = () => page.evaluate(() => (window as unknown as { totalsObservation: { attributeReads: number } }).totalsObservation.attributeReads);
+  const initial = await reads();
+  expect(initial).toBeGreaterThan(0);
+  await cell.focus();
+  expect(await reads(), "focus").toBe(initial);
+  await cell.press("ArrowRight");
+  expect(await reads(), "arrow").toBe(initial);
+  await page.locator('input[data-row="0"][data-column="1"]').press("Shift+ArrowRight");
+  expect(await reads(), "shift").toBe(initial);
+  await page.locator('input[data-row="0"][data-column="2"]').press("Tab");
+  expect(await reads(), "Tab").toBe(initial);
+  await page.locator('input[data-row="0"][data-column="2"]').press("F2");
+  expect(await reads(), "F2").toBe(initial);
+  // Blur only leaves edit mode; Enter/Tab inside editing confirms a value and may establish an override.
+  await cell.focus();
+  const from = await cell.boundingBox(), to = await page.locator('input[data-row="1"][data-column="2"]').boundingBox();
+  await page.mouse.move(from!.x+5,from!.y+5); await page.mouse.down();
+  await page.mouse.move(to!.x+5,to!.y+5,{steps:5}); await page.mouse.up();
+  expect(await reads(), "drag").toBe(initial);
+  await page.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).focus();
+  expect(await reads(), "account").toBe(initial);
+  await cell.focus();
+  await page.getByRole("button", { name: "備考変更", exact: true }).click();
+  expect(await reads(), "合計に関係しない再描画では科目属性を走査しない").toBe(initial);
+
+  const april = (name: string) => page.locator("tfoot tr").filter({ has: page.getByRole("rowheader", { name: `${name}合計`, exact: true }) }).locator("td").first();
+  await cell.fill("1.001");
+  await expect(april("売上")).toHaveText("1");
+  expect(await reads()).toBeGreaterThan(initial);
+  let previous = await reads();
+  await page.getByRole("button", { name: "種別変更", exact: true }).click();
+  await expect(cell).toHaveValue("1.001");
+  expect(await reads()).toBeGreaterThan(previous);
+  await cell.fill("0"); // Explicit confirmed zero.
+  await expect(april("売上")).toHaveText("0");
+  await page.getByRole("button", { name: "一次反映", exact: true }).click();
+  await expect(april("売上")).toHaveText("1");
+  previous = await reads();
+  await page.getByRole("button", { name: "入力不備変更", exact: true }).click();
+  await expect(april("売上")).toBeEmpty();
+  expect(await reads()).toBeGreaterThan(previous);
+  await page.getByRole("button", { name: "入力不備変更", exact: true }).click();
+  await expect(april("売上")).toHaveText("1");
+  await page.getByRole("button", { name: "属性変更", exact: true }).click();
+  await expect(april("売上")).toHaveText("0");
+  await expect(april("費用")).toHaveText("1");
+  await page.getByRole("button", { name: "保存基準へ戻す", exact: true }).click();
+  await expect(april("費用")).toHaveText("0");
+  await expect(cell).toHaveValue("0");
+  await page.getByRole("button", { name: "1行目を削除", exact: true }).click();
+  await expect(page.getByRole("combobox")).toHaveCount(9);
+  expect(errors).toEqual([]);
+});

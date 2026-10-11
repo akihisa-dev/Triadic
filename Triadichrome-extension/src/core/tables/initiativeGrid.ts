@@ -97,7 +97,7 @@ export function reflectPrimaryBudget(draft: InitiativeEntryDraft): InitiativeEnt
 }
 
 /** Apply the same fixed composition used by the amount item master, before display rounding. */
-export function initiativeAmountTotals(draft: InitiativeEntryDraft, kind: KindId, accounts: Account[]) {
+export function initiativeAmountTotals(draft: Pick<InitiativeEntryDraft, "rows" | "invalidNumbers">, kind: KindId, accounts: Account[]) {
   const accountById = new Map(accounts.map(account => [account.id, account]));
   let error = "";
   const invalidNumbers = draft.invalidNumbers || draft.rows.some(hasInvalidAmountInput);

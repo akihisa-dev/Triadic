@@ -25,7 +25,8 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
   const originalInherited = useRef(false);
   const accountsById = useMemo(() => new Map(accounts.map(account => [account.id, account])), [accounts]);
   const savedById = useMemo(() => new Map(savedRows?.map(row => [row.id, row])), [savedRows]);
-  const totals = initiativeAmountTotals(draft, kind, accounts);
+  const { rows, invalidNumbers } = draft;
+  const totals = useMemo(() => initiativeAmountTotals({ rows, invalidNumbers: Boolean(invalidNumbers) }, kind, accounts), [rows, invalidNumbers, kind, accounts]);
   useEffect(() => { setSelection(null); setEditing(false); }, [draft.rows.length]);
   const valueAt = (cell: GridCell, source = draft) => {
     const row = source.rows[cell.row]!;
