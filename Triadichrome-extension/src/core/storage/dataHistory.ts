@@ -3,11 +3,7 @@ import { exportTriadicDatabase, openTriadicDatabase, openBusinessSnapshot, busin
 import { DATA_HISTORY_SQL, isHistoryTimestamp } from "./dataHistorySchema";
 import { BUSINESS_TABLES, TRIADIC_FORMAT_VERSION } from "./triadicSchema";
 
-export const HISTORY_INTERVAL_MS = 5 * 60 * 1000;
-export type DataHistoryEntry = { id: number; recordedAt: string };
-export type DataHistoryStatus = { entries: DataHistoryEntry[]; dirtySince: string | null };
-export const emptyDataHistory: DataHistoryStatus = { entries: [], dirtySince: null };
-export type HistoryDeletion = { ids: number[] } | { before: string };
+import { HISTORY_INTERVAL_MS, type DataHistoryStatus, type HistoryDeletion } from "../domain/dataHistory";
 
 function timestamp(now: string): string {
   if (!isHistoryTimestamp(now)) throw new Error("履歴の日時が正しくありません。");

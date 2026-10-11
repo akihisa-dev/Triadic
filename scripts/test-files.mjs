@@ -1,3 +1,4 @@
+import { verifyHistoryDependencies } from "../tests/history-dependencies.mjs";
 import { verifyOrderRebase } from "../tests/order-rebase.mjs";
 import { verifyAutoSaveRebase } from "../tests/auto-save-rebase.mjs";
 import { verifyRowAccountRebase } from "../tests/row-account-rebase.mjs";
@@ -59,6 +60,7 @@ import { withNodeBundle } from "./node-bundle.mjs";
 import { projectRoot as root } from "./paths.mjs";
 await withNodeBundle("tests/core-api.ts", async production => {
   const api = { ...production, createTriadicDatabase: (year = 2026) => production.createTriadicDatabase(year) };
+  await verifyHistoryDependencies(api);
   await verifyFileRecovery(api);
   await verifyPreviousRebase(api);
   await verifyOrderRebase(api);

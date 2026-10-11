@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { HISTORY_INTERVAL_MS } from "../core/storage/dataHistory";
+import { HISTORY_INTERVAL_MS } from "../core/domain/dataHistory";
 import { PlanSession } from "./PlanSession";
 export function usePlanSession(destination: () => Promise<FileSystemFileHandle>, closing: boolean) {
   const [session] = useState(() => new PlanSession());

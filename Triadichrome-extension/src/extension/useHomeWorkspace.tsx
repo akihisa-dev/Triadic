@@ -15,7 +15,7 @@ import { type AccountChange } from "../core/domain/accountMaster";
 import { type AggregationChange } from "../core/domain/aggregationMaster";
 import { useSidebar } from "./useSidebar";
 
-import type { DataHistoryEntry, DataHistoryStatus, HistoryDeletion } from "../core/storage/dataHistory";
+import type { DataHistoryEntry, DataHistoryStatus, HistoryDeletion } from "../core/domain/dataHistory";
 
 
 export type Page = "spreadsheet-io" | "data-history" | "previous-input" | "home" | "initiative-entry" | "initiative-list" | "initiative-detail" | "cost-table" | "expansion-table" | "master" | "account-master" | "expansion-master" | "expansion-category-master" | "industry-master" | "department-master" | "period-master" | "kind-master" | "account-type-master" | "amount-item-master";

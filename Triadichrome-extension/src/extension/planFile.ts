@@ -3,7 +3,7 @@ import { TRIADIC_FILE_EXTENSION } from "../core/storage/triadicSchema";
 import { processPlan } from "./planProcessing";
 import { type PlanContents } from "../core/domain/plan";
 import { writeTriadicFile } from "./triadicFile";
-import type { DataHistoryStatus } from "../core/storage/dataHistory";
+import type { DataHistoryStatus } from "../core/domain/dataHistory";
 import { trackHistoryChange } from "./planProcessing";
 export type PreparedPlanChange = { bytes: Uint8Array; contents: PlanContents; savedHistory: DataHistoryStatus };
 

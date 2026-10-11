@@ -8,7 +8,7 @@ import { type PeriodTypeChange } from "../core/domain/periodMaster";
 import { type DepartmentChange } from "../core/domain/departmentMaster";
 import { type IndustryChange } from "../core/domain/industryMaster";
 import { type ExpansionChange } from "../core/domain/expansionMaster";
-import { type HistoryDeletion } from "../core/storage/dataHistory";
+import { type HistoryDeletion } from "../core/domain/dataHistory";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type AccountChange } from "../core/domain/accountMaster";
 import { type AggregationChange } from "../core/domain/aggregationMaster";

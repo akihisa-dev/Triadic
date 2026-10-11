@@ -23,6 +23,8 @@ test('本番設定の入口とファイル読込を段階別に比較する',asy
    await page.goto(`${root}/${version}/index.html`);
    await expect(page.getByRole('button',{name:'ファイルを開く',exact:true})).toBeEnabled({timeout:10000});
    const entry=await page.evaluate(()=>Reflect.get(window,"measureEntry"));
+   expect(starts.filter(c=>c==="worker")).toHaveLength(0);
+   expect(starts.filter(c=>c==="window")).toHaveLength(version==="after"?Number(process.env.OPEN_EXPECT_WINDOW ?? 0):1);
    await page.evaluate(async url=>{
     const bytes=await(await fetch(url)).arrayBuffer();const handle=await(await navigator.storage.getDirectory()).getFileHandle('測定.triadic',{create:true});const writer=await handle.createWritable();await writer.write(bytes);await writer.close();
     Object.defineProperty(window,'showOpenFilePicker',{value:async()=>[handle],configurable:true});

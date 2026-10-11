@@ -1,4 +1,4 @@
-import { emptyDataHistory, type DataHistoryStatus, type HistoryDeletion } from "../core/storage/dataHistory";
+import { emptyDataHistory, type DataHistoryStatus, type HistoryDeletion } from "../core/domain/dataHistory";
 import { deleteDataHistory, readDataHistory, readSavedPlan, readHistorySnapshot, recordDataHistory, restoreDataHistory, applyOperationSnapshot, readSnapshotContents } from "./planProcessing";
 import type { PlanContents } from "../core/domain/plan";
 import { writePlanChange, writePreparedPlanChange, planContents, type OpenPlan } from "./planFile";
