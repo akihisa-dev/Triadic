@@ -1,0 +1,24 @@
+const equal = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+const record = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value);
+
+/** Apply only edits made since submission over the values actually committed to the file. */
+export function reconcileSavedDraft<T>(submitted: T, pending: T, persisted: T): T {
+  const merge = (base: unknown, local: unknown, saved: unknown): unknown => {
+    if (equal(base, local)) return saved;
+    if (Array.isArray(base) && Array.isArray(local) && Array.isArray(saved)) {
+      const key = (item: unknown) => record(item) && (item.id !== undefined ? `id:${item.id}` : item.accountId !== undefined ? `account:${item.accountId}` : undefined);
+      const maps = [base, local, saved].map(items => new Map(items.map(item => [key(item), item])));
+      if (maps.some((map, index) => map.has(undefined) || map.size !== [base, local, saved][index]!.length)) return local;
+      const [original, edited, committed] = maps;
+      const localOrder = [...edited!.keys()], baseOrder = [...original!.keys()], savedOrder = [...committed!.keys()];
+      const order = [...new Set([...(equal(baseOrder, localOrder) ? savedOrder : localOrder), ...savedOrder, ...localOrder])];
+      return order.map(id => merge(original!.get(id), edited!.get(id), committed!.get(id))).filter(value => value !== undefined);
+    }
+    if (record(base) && record(local) && record(saved)) {
+      return Object.fromEntries([...new Set([...Object.keys(base), ...Object.keys(local), ...Object.keys(saved)])]
+        .map(key => [key, merge(base[key], local[key], saved[key])]).filter(([, value]) => value !== undefined));
+    }
+    return local;
+  };
+  return merge(submitted, pending, persisted) as T;
+}

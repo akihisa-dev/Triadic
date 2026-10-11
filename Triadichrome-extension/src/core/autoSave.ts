@@ -1,3 +1,4 @@
+import { reconcileSavedDraft } from "./reconcileSavedDraft";
 export type AutoSaveState<T> = {
   draft: T | null;
   pending: boolean;
@@ -9,6 +10,7 @@ export type AutoSaveState<T> = {
 export class AutoSave<T> {
   private state: AutoSaveState<T> = { draft: null, pending: false, saving: false, error: "" };
   private saved: T | null = null;
+  private incoming: T | null = null;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private listeners = new Set<() => void>();
   private composing = false;
@@ -22,6 +24,15 @@ export class AutoSave<T> {
     this.saved = draft;
     this.publish({ draft, pending: false, saving: false, error: "" });
   }
+  /** The page supplies the actual saved source, including any external merge. */
+  syncSaved(draft: T) {
+    if (this.state.saving) { this.incoming = draft; return; }
+    const current = this.saved === null || this.state.draft === null ? draft : reconcileSavedDraft(this.saved, this.state.draft, draft);
+    this.saved = draft;
+    const pending = !this.equal(current, draft);
+    if (!pending) clearTimeout(this.timer);
+    this.publish({ ...this.state, draft: current, pending, error: pending ? this.state.error : "" });
+  }
   change(draft: T) {
     clearTimeout(this.timer);
     this.publish({ ...this.state, draft, pending: this.state.saving || !this.equal(draft, this.saved), error: "" });
@@ -31,12 +42,17 @@ export class AutoSave<T> {
     clearTimeout(this.timer);
     if (this.composing || this.state.saving || !this.state.pending || this.state.draft === null) return;
     const draft = this.state.draft;
+    this.incoming = null;
     this.publish({ ...this.state, saving: true, error: "" });
     try {
       await this.save(draft);
-      this.saved = draft;
-      const pending = !this.equal(this.state.draft, draft);
-      this.publish({ ...this.state, pending, saving: false, error: "" });
+      clearTimeout(this.timer);
+      const persisted = this.incoming ?? draft;
+      this.incoming = null;
+      const latest = reconcileSavedDraft(draft, this.state.draft!, persisted);
+      this.saved = persisted;
+      const pending = !this.equal(latest, persisted);
+      this.publish({ ...this.state, draft: latest, pending, saving: false, error: "" });
       if (pending && !this.composing) this.timer = setTimeout(() => { void this.flush(); }, this.delay);
     } catch (error) {
       clearTimeout(this.timer);

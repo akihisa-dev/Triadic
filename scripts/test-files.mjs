@@ -1,4 +1,5 @@
 import { verifyOrderRebase } from "../tests/order-rebase.mjs";
+import { verifyAutoSaveRebase } from "../tests/auto-save-rebase.mjs";
 import { verifyRowAccountRebase } from "../tests/row-account-rebase.mjs";
 import { verifyReadSavedPlan } from "../tests/read-saved-plan.mjs";
 import { verifyPreviousRebase } from "../tests/previous-rebase.mjs";
@@ -89,6 +90,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyExpansionTable(api);
   await verifyAggregationData({ ...api, createTriadicDatabase: () => api.createCurrentEmptyTestPlan(2026) });
   await verifyAutoSave(api);
+  await verifyAutoSaveRebase(api);
   await verifyDataHistory(api);
   await verifyPlanSession(api);
   await verifySavedOperations(api);

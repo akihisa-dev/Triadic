@@ -3,7 +3,7 @@ import { type Industry } from "../core/domain/industryMaster";
 import { type PeriodType } from "../core/domain/periodMaster";
 import { type Department } from "../core/domain/departmentMaster";
 import { type Expansion } from "../core/domain/expansionMaster";
-import { useLayoutEffect } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { type Account } from "../core/domain/accountMaster";
 import { type Initiative, type InitiativeEntryDraft } from "../core/domain/plan";
 import { InitiativeEntryPage } from "./InitiativeEntryPage";
@@ -27,9 +27,13 @@ type Props = AutoSaveProps & {
 export function InitiativeDetailPage({ initiative, accounts, expansions, expansionCategories, departments, periodTypes, industries, backLabel = "施策一覧", onUpdate, onBack, onOpenMaster, onPendingChange, onPrepareSave }: Props) {
   const autoSave = useAutoSave(onUpdate, onPendingChange);
   const { controller, draft, revision } = autoSave;
+  const source = useRef<Initiative | null>(null);
   useLayoutEffect(() => {
-    if (!controller.getSnapshot().draft) controller.begin({ name: initiative.name, note: initiative.note, expansionId: initiative.expansionId, expansionCategoryId: initiative.expansionCategoryId ?? null, departmentId: initiative.departmentId ?? null, periodTypeId: initiative.periodTypeId ?? null, industryId: initiative.industryId ?? null,
+    if (source.current !== initiative || !controller.getSnapshot().draft) {
+      source.current = initiative;
+      controller.syncSaved({ name: initiative.name, note: initiative.note, expansionId: initiative.expansionId, expansionCategoryId: initiative.expansionCategoryId ?? null, departmentId: initiative.departmentId ?? null, periodTypeId: initiative.periodTypeId ?? null, industryId: initiative.industryId ?? null,
       fiscalYear: initiative.fiscalYear === null ? "" : String(initiative.fiscalYear), rows: initiative.rows.length ? initiative.rows : [{ id: crypto.randomUUID(), accountId: null, amounts: {} }] });
+    }
   }, [controller, initiative, revision]);
   if (!draft) return null;
   return <InitiativeEntryPage draft={draft} onDraftChange={value => controller.change(value)} accounts={accounts} expansions={expansions} expansionCategories={expansionCategories} departments={departments} periodTypes={periodTypes} industries={industries}
