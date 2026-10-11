@@ -7,6 +7,10 @@ const equal = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b
 export function readRebaseRows(database: Database, table: string): Map<string, SqlValue[]> {
   const columns = database.exec(`PRAGMA table_info(${table})`)[0]?.values ?? [];
   const keys = columns.map((column, index) => ({ index, order: Number(column[5]) })).filter(key => key.order).sort((a,b) => a.order-b.order).map(key => key.index);
+  if (table === "previous_amounts") {
+    keys.splice(0, keys.length, ...["account_id", "industry_id", "department_id", "month"].map(name => columns.findIndex(column => column[1] === name)));
+    if (keys.some(index => index < 0)) throw new Error("前年金額の識別項目がありません。");
+  }
   const account = columns.findIndex(column => column[1] === "account_id"), group = columns.findIndex(column => column[1] === "group_id");
   const membership = table === "aggregation_members";
   if (membership ? account < 0 || group < 0 : !keys.length) throw new Error("統合対象の行識別子がありません。");
@@ -36,13 +40,28 @@ export async function rebasePlan(baseBytes: Uint8Array, editedBytes: Uint8Array,
     for (const table of BUSINESS_TABLES) {
       if (table === "document_info") continue;
       const original = readRebaseRows(base, table), local = readRebaseRows(edited, table), latest = readRebaseRows(current, table);
+      // Previous cells are identified by their business coordinates, not a copy's auto-increment ID.
+      const sameRow = (a: SqlValue[] | undefined, b: SqlValue[] | undefined) =>
+        equal(table === "previous_amounts" ? a?.slice(1) : a, table === "previous_amounts" ? b?.slice(1) : b);
+      let nextId = table === "previous_amounts" ? Math.max(0, ...databases.map(db =>
+        Number(db.exec("SELECT seq FROM sqlite_sequence WHERE name = 'previous_amounts'")[0]?.values[0]?.[0] ?? 0))) : 0;
       let changed = false;
       for (const key of new Set([...original.keys(), ...local.keys()])) {
         const before = original.get(key), after = local.get(key), external = latest.get(key);
-        if (equal(before, after)) continue;
-        if (!equal(before, external) && !equal(after, external)) return null;
-        if (equal(after, external)) continue;
-        if (after) latest.set(key, after); else latest.delete(key);
+        if (sameRow(before, after)) continue;
+        if (!sameRow(before, external) && !sameRow(after, external)) return null;
+        if (sameRow(after, external)) continue;
+        if (after) {
+          const row = [...after];
+          if (table === "previous_amounts") {
+            if (external) row[0] = external[0]!;
+            else {
+              if (!Number.isSafeInteger(++nextId)) return null;
+              row[0] = nextId;
+            }
+          }
+          latest.set(key, row);
+        } else latest.delete(key);
         changed = true;
       }
       if (changed) replacements.set(table, [...latest.values()]);
