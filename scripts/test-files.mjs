@@ -88,5 +88,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyPerformanceData(api, root);
 });
 
-await withNodeBundle("tests/performance-api.ts", verifyInitiativeListRendering);
-await withNodeBundle("tests/performance-api.ts", verifyExpansionTableView);
+await withNodeBundle("tests/performance-api.ts", async api => {
+  await verifyInitiativeListRendering(api);
+  await verifyExpansionTableView(api);
+});

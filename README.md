@@ -291,7 +291,7 @@ TypeScript、React、Vite、SQLite公式のWebAssembly配布（`@sqlite.org/sqli
 
 SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外部通信・追加権限は不要です。保存形式と履歴の構造は維持します。SQLite公式のnpm配布部分はApache-2.0、SQLite本体は著作権放棄、補助コードはMIT・NCSAで提供されています。配布時には同梱のライセンス表示を保持します。
 
-`npm run build`は型チェック後に一時領域でビルド・検証し、Chrome読み込み用の`dist/extension/`と配布用の`dist/Triadichrome-<version>.zip`を生成します。配布ZIPはローカルに保持し、Git管理・commit・pushから除外します。ZIPの直下にManifestを置き、ソース・確認用データ・一時ファイルは含めません。Git管理されるManifest・独立ページ・assets・icons・service workerは、引き続き`Triadichrome-extension/`へ同期します。ZIP生成にはJSZip（MITライセンスを選択）を開発用依存として使用します。続いて[確認用の.triadicファイル](#確認用のtriadicファイル)を再生成します。
+`npm run build`は型チェック後に一時領域でビルド・検証し、Chrome読み込み用の`dist/extension/`と配布用の`dist/Triadichrome-<version>.zip`を生成します。配布ZIPはローカルに保持し、Git管理・commit・pushから除外します。ZIPの直下にManifestを置き、ソース・確認用データ・一時ファイルは含めません。Git管理されるManifest・独立ページ・assets・icons・service workerは、引き続き`Triadichrome-extension/`へ同期します。ZIP生成と実行時のExcel内容の検査には、実行用依存のJSZip（MITライセンスを選択）を使用します。続いて[確認用の.triadicファイル](#確認用のtriadicファイル)を再生成します。
 
 ## 検証とGitフック
 
