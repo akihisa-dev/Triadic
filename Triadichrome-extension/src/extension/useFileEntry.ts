@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type DragEvent } from "react";
-import { createTriadicDatabase, readPlanContents } from "./planProcessing";
+import { createTriadicDatabase } from "./planProcessing";
 import { TRIADIC_FILE_EXTENSION } from "../core/storage/triadicSchema";
 import { currentFiscalYear } from "../core/domain/calendar";
 import { writeTriadicFile } from "./triadicFile";
@@ -68,8 +68,7 @@ export function useFileEntry(session: PlanSession, savedName: string, clearClose
     if (!handle) throw new Error("この開き方では自動保存できません。「ファイルを開く」から選択してください。");
     if (!file.name.toLowerCase().endsWith(TRIADIC_FILE_EXTENSION)) throw new Error(".triadicファイルを選択してください。");
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const contents = await readPlanContents(bytes);
-    await session.open({ name: file.name, bytes, ...contents, ...(handle ? { handle } : {}) });
+    await session.open({ name: file.name, bytes, handle });
     clearCloseError();
     // Failed reads and denied write access never replace the last opened file.
     await remember(handle);

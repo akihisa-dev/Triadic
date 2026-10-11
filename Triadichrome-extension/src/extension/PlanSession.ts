@@ -1,5 +1,5 @@
 import { emptyDataHistory, type DataHistoryStatus, type HistoryDeletion } from "../core/storage/dataHistory";
-import { deleteDataHistory, readDataHistory, readHistorySnapshot, recordDataHistory, restoreDataHistory, applyOperationSnapshot, readSnapshotContents } from "./planProcessing";
+import { deleteDataHistory, readDataHistory, readSavedPlan, readHistorySnapshot, recordDataHistory, restoreDataHistory, applyOperationSnapshot, readSnapshotContents } from "./planProcessing";
 import type { PlanContents } from "../core/domain/plan";
 import { writePlanChange, writePreparedPlanChange, planContents, type OpenPlan } from "./planFile";
 import { isAutomatic, validatePlanCommand, type PlanCommand } from "../core/domain/planCommands";
@@ -30,12 +30,12 @@ export class PlanSession {
   }
   private resetOperations() { this.undoStack = []; this.redoStack = []; this.operationRevision++; }
   private current(): OpenPlan { if (!this.plan) throw new Error("ファイルを開いてください。"); return this.plan; }
-  async open(plan: OpenPlan): Promise<void> {
+  async open(plan: Pick<OpenPlan, "name" | "bytes" | "handle">): Promise<void> {
     if (this.pending) throw new Error("ファイルの処理が終わるまでお待ちください。");
-    const history = await readDataHistory(plan.bytes);
-    this.plan = plan;
+    const { contents, savedHistory } = await readSavedPlan(plan.bytes);
+    this.plan = { ...plan, ...contents, savedHistory };
     this.resetOperations();
-    this.publish({ contents: planContents(plan), name: plan.name, history, historyError: "" });
+    this.publish({ contents, name: plan.name, history: savedHistory, historyError: "" });
   }
   /** Publish and remember only the file whose write has successfully committed. */
   private async acceptSaved(saved: OpenPlan): Promise<PlanContents> {

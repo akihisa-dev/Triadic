@@ -37,6 +37,7 @@ export async function processPlan<K extends keyof Tasks>(task: K, ...args: Param
 }
 export const createTriadicDatabase: Tasks["createTriadicDatabase"] = (...args) => processPlan("createTriadicDatabase", ...args);
 export const readPlanContents: Tasks["readPlanContents"] = bytes => processPlan("readPlanContents", bytes, typeof Worker === "undefined");
+export const readSavedPlan: Tasks["readSavedPlan"] = bytes => processPlan("readSavedPlan", bytes, typeof Worker === "undefined");
 export const readSnapshotContents: Tasks["readSnapshotContents"] = bytes => processPlan("readSnapshotContents", bytes, typeof Worker === "undefined");
 export const applyPlanCommand: Tasks["applyPlanCommand"] = (...args) => processPlan("applyPlanCommand", ...args);
 export const prepareAggregationSave: Tasks["prepareAggregationSave"] = (bytes, change) => processPlan("prepareAggregationSave", bytes, change, typeof Worker === "undefined");

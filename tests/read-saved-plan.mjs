@@ -5,6 +5,28 @@ export async function verifyReadSavedPlan(api) {
   const changed = await api.trackHistoryChange(original, await api.saveKindSelection(original, 'cost-table', [2]));
   const checkpoint = await api.recordDataHistory(changed, new Date().toISOString(), true);
   const read = api.processingTasks.readSavedPlan;
+  const { Database } = await api.initializeSqlite();
+  const exec = Database.prototype.exec;
+  let checks = 0;
+  Database.prototype.exec = function(sql, ...args) {
+    if (sql === 'PRAGMA integrity_check') checks++;
+    return exec.call(this, sql, ...args);
+  };
+  const session = new api.PlanSession();
+  try {
+    for (const bytes of [original, changed, checkpoint]) {
+      const expected = await read(bytes);
+      checks = 0;
+      await session.open({ name: '確認.triadic', bytes });
+      assert.equal(checks, 1, '開く際の完全検査は一回');
+      assert.deepEqual(session.getSnapshot().contents, expected.contents);
+      assert.deepEqual(session.getSnapshot().history, expected.savedHistory);
+      checks = 0;
+      await api.readPlanContents(bytes);
+      await api.readDataHistory(bytes);
+      assert.equal(checks, 2, '以前の分割読込は二回');
+    }
+  } finally { Database.prototype.exec = exec; }
   for (const bytes of [original, changed, checkpoint]) {
     const before = bytes.slice();
     for (const includeDetails of [true, false]) {
@@ -28,6 +50,9 @@ export async function verifyReadSavedPlan(api) {
   }
   for (const bytes of invalid) {
     const before = bytes.slice();
+    const snapshot = session.getSnapshot();
+    await assert.rejects(session.open({ name: '不正.triadic', bytes }));
+    assert.strictEqual(session.getSnapshot(), snapshot, '失敗しても元のセッションを公開したまま保持');
     await assert.rejects(read(bytes), '破損・旧形式・不正値・不正参照・履歴内部用データを拒否');
     assert.deepEqual(bytes, before, '拒否したファイルを変更しない');
   }
