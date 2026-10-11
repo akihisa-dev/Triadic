@@ -1,5 +1,5 @@
 import { ExpansionCategoryMasterPage } from "./ExpansionCategoryMasterPage";
-import { SpreadsheetIOPage } from "./SpreadsheetIOPage";
+import { DeferredSpreadsheetIOPage } from "./DeferredSpreadsheetIOPage";
 import { PreviousInputPage } from "./PreviousInputPage";
 import { AmountItemMasterPage } from "./AmountItemMasterPage";
 import { AccountTypeMasterPage } from "./AccountTypeMasterPage";
@@ -35,7 +35,7 @@ export function WorkspacePage({ displayed, workspace }: { displayed: Screen; wor
   const currentInitiative = initiatives.find(item => item.id === selectedInitiative?.id && item.fiscalYear === selectedInitiative?.fiscalYear);
   switch (displayed.page) {
     case "data-history": return <DataHistoryPage entries={dataHistory.entries} busy={navigationBlocked} error={historyError} onPreview={previewEntry} onDelete={onDeleteHistory} onRetry={onRetryHistory} />;
-    case "spreadsheet-io": return <SpreadsheetIOPage contents={contents} busy={isSaving || historyBusy || operationMutation.busy} onChangePlan={changePlan} onPendingChange={setEditPending} onPrepareSave={onPrepareSave} />;
+    case "spreadsheet-io": return <DeferredSpreadsheetIOPage contents={contents} busy={isSaving || historyBusy || operationMutation.busy} onChangePlan={changePlan} onPendingChange={setEditPending} onPrepareSave={onPrepareSave} />;
     case "previous-input": return <PreviousInputPage contents={contents} onSave={input => changePlan({ type: "previous", input })} onPendingChange={setEditPending} onPrepareSave={onPrepareSave} />;
     case "home": return <HomeRelationsPage view={relationView} disabled={navigationBlocked} onNavigate={target => { dismissNotice(); setPage(target); }} />;
     case "initiative-entry": return <InitiativeEntryPage onBack={() => setPage("initiative-list")} draft={initiativeDraft} onDraftChange={setInitiativeDraft} accounts={accounts} expansions={contents.expansions} expansionCategories={contents.expansionCategories} departments={contents.departments} periodTypes={contents.periodTypes} industries={contents.industries} onOpenMaster={() => setPage("account-master")} isSaving={isSaving} onRegister={() => { void register(); }} />;

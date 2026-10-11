@@ -1,6 +1,8 @@
 import { useHomeWorkspace, type HomePageProps } from "./useHomeWorkspace";
 import { WorkspaceHeader, WorkspaceSidebar } from "./WorkspaceChrome";
 import { WorkspacePage } from "./WorkspacePage";
+import { useEffect } from "react";
+import { preloadSpreadsheetIO } from "./DeferredSpreadsheetIOPage";
 import { createInitiativeDraft } from "../core/domain/initiativeRules";
 import { HistoryReadOnlyContext } from "./HistoryReadOnly";
 import { SavedOperationRevisionContext } from "./SavedOperationRevision";
@@ -19,6 +21,9 @@ export function HomePage(props: HomePageProps) {
     currentContents, restoreRequested, restoreError, isSaving, historyBusy, setRestoreRequested,
     onPrepareSave, restorePreview, setRestoreError
   } = workspace;
+  useEffect(() => {
+    if (screen.page === "spreadsheet-io") preloadSpreadsheetIO();
+  }, [screen.page]);
   return (
     <HistoryReadOnlyContext value={preview !== null}><SavedOperationRevisionContext value={operationRevision}><div className="home-page">
       <WorkspaceHeader workspace={workspace} />

@@ -18,8 +18,8 @@ function download(bytes: Uint8Array, name: string) {
   document.body.append(link); link.click(); link.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-type Props = { contents: PlanContents; busy: boolean; onChangePlan: (change: PlanChange) => Promise<void>; onPrepareSave: () => Promise<void>; onPendingChange: (pending: boolean) => void };
-export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave, onPendingChange }: Props) {
+export type SpreadsheetIOProps = { contents: PlanContents; busy: boolean; onChangePlan: (change: PlanChange) => Promise<void>; onPrepareSave: () => Promise<void>; onPendingChange: (pending: boolean) => void };
+export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave, onPendingChange }: SpreadsheetIOProps) {
   const readOnly = useHistoryReadOnly();
   const [tables, setTables] = useState<ExportTable[]>(["cost-table", "expansion-table", "initiative-list"]);
   const [selections, setSelections] = useState<KindSelections>(() => ({ "cost-table": [1], "expansion-table": [1], "initiative-list": [2] }));
