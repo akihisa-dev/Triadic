@@ -1,7 +1,5 @@
 import type { AggregationChange } from "../domain/aggregationMaster";
-import { listAccounts } from "./accountMaster";
-import { listAggregations } from "./aggregations";
-import { applyAggregationChange } from "./aggregationMaster";
+import { prepareAggregationChange } from "./aggregationMaster";
 import { prepareSave } from "./prepareSave";
 import { readContents } from "./readPlan";
 
@@ -11,11 +9,11 @@ import { readContents } from "./readPlan";
  */
 export async function prepareAggregationSave(bytes: Uint8Array, change: AggregationChange, includeDetails = true, now = new Date().toISOString()) {
   return prepareSave(bytes, now, database => {
-    const master = () => JSON.stringify([listAccounts(database), listAggregations(database)]);
-    const originalMaster = master();
+    const apply = prepareAggregationChange(database, change);
+    if (apply === null) return null;
     return () => {
-      applyAggregationChange(database, change);
-      return originalMaster !== master();
+      apply();
+      return true;
     };
   }, database => readContents(database, includeDetails));
 }

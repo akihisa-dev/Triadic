@@ -1,5 +1,5 @@
 import { orderedMasterRows, validateMasterOrder } from "../domain/masterRows";
-import { reconcileMasterOrder, saveMasterOrder } from "./masterPresentation";
+import { readMasterPresentation, reconcileMasterOrder, saveMasterOrder } from "./masterPresentation";
 import { listAccounts } from "./accountMaster";
 import { listAggregations } from "./aggregations";
 import { changedAggregations, type AggregationChange } from "../domain/aggregationMaster";
@@ -10,10 +10,18 @@ export async function changeAggregationMaster(bytes: Uint8Array, change: Aggrega
 }
 /** Operates only on the caller’s private, validated connection. */
 export function applyAggregationChange(database: Database, change: AggregationChange): void {
+  prepareAggregationChange(database, change)?.();
+}
+/** Validate and capture affected masters before any write. Null is a proven semantic no-op. */
+export function prepareAggregationChange(database: Database, change: AggregationChange): (() => void) | null {
     const accounts = listAccounts(database), groups = listAggregations(database);
     const order = change.presentationOrder ?? orderedMasterRows(accounts,groups);
     if (change.presentationOrder) validateMasterOrder(change.presentationOrder,accounts,groups);
     const next = changedAggregations(groups, accounts, change);
+    const nextOrder = change.type === "reorder" ? change.order : order;
+    if (JSON.stringify(next) === JSON.stringify(groups)
+      && JSON.stringify(nextOrder) === JSON.stringify(readMasterPresentation(database).order)) return null;
+    return () => {
     if (change.type === "reorder") { saveMasterOrder(database,change.order); return; }
     if (change.type === "add") {
       const added = next[next.length - 1]!;
@@ -39,4 +47,5 @@ export function applyAggregationChange(database: Database, change: AggregationCh
         [change.id, member.kind === "account" ? member.id : null, member.kind === "group" ? member.id : null, member.sign, position]));
     }
     reconcileMasterOrder(database,order);
+    };
 }

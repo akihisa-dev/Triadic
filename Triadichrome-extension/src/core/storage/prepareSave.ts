@@ -7,10 +7,11 @@ import { openTriadicDatabase, exportTriadicDatabase } from "./triadicDatabase";
  * Selection callers need no full contents projection.
  */
 export async function prepareSave<T>(bytes: Uint8Array, now: string,
-  prepare: (database: Database) => () => boolean, project: (database: Database) => T) {
+  prepare: (database: Database) => (() => boolean) | null, project: (database: Database) => T) {
   const database = await openTriadicDatabase(bytes);
   try {
     const apply = prepare(database);
+    if (apply === null) return { bytes, contents: project(database), savedHistory: historyFromDatabase(database), operation: null };
     const before = await snapshotFromDatabase(database);
     database.run("BEGIN");
     const changed = apply();
