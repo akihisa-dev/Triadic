@@ -1,3 +1,4 @@
+import { mergeRebaseOrder } from "./rebaseOrder";
 import { BUSINESS_TABLES } from "./triadicSchema";
 import { exportTriadicDatabase, openTriadicDatabase } from "./triadicDatabase";
 import { trackHistoryChange, createBusinessSnapshot } from "./dataHistory";
@@ -40,9 +41,18 @@ export async function rebasePlan(baseBytes: Uint8Array, editedBytes: Uint8Array,
     for (const table of BUSINESS_TABLES) {
       if (table === "document_info") continue;
       const original = readRebaseRows(base, table), local = readRebaseRows(edited, table), latest = readRebaseRows(current, table);
+      const externalRows = new Map([...latest].map(([key, row]) => [key, [...row]]));
+      const comparable = (row: SqlValue[] | undefined) => {
+        if (!row) return row;
+        if (table === "previous_amounts") return row.slice(1);
+        if (table === "initiative_rows") return row.filter((_, index) => index !== 3 && index !== 4);
+        if (table === "aggregation_members") return row.slice(0, 4);
+        if (table === "initiatives") return row.slice(0, -1);
+        return row;
+      };
       // Previous cells are identified by their business coordinates, not a copy's auto-increment ID.
       const sameRow = (a: SqlValue[] | undefined, b: SqlValue[] | undefined) =>
-        equal(table === "previous_amounts" ? a?.slice(1) : a, table === "previous_amounts" ? b?.slice(1) : b);
+        equal(comparable(a), comparable(b));
       let nextId = table === "previous_amounts" ? Math.max(0, ...databases.map(db =>
         Number(db.exec("SELECT seq FROM sqlite_sequence WHERE name = 'previous_amounts'")[0]?.values[0]?.[0] ?? 0))) : 0;
       let changed = false;
@@ -63,6 +73,10 @@ export async function rebasePlan(baseBytes: Uint8Array, editedBytes: Uint8Array,
           latest.set(key, row);
         } else latest.delete(key);
         changed = true;
+      }
+      if (table === "initiative_rows" || table === "aggregation_members") {
+        if (!mergeRebaseOrder(table, original, local, externalRows, latest)) return null;
+        changed ||= !equal([...externalRows], [...latest]);
       }
       if (changed) replacements.set(table, [...latest.values()]);
     }

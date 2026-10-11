@@ -1,3 +1,4 @@
+import { verifyOrderRebase } from "../tests/order-rebase.mjs";
 import { verifyPreviousRebase } from "../tests/previous-rebase.mjs";
 import { verifyNoChangeSave } from "../tests/no-change-save.mjs";
 import { verifyExpansionCategories } from "../tests/expansion-categories.mjs";
@@ -49,6 +50,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   const api = { ...production, createTriadicDatabase: (year = 2026) => production.createTriadicDatabase(year) };
   await verifyFileRecovery(api);
   await verifyPreviousRebase(api);
+  await verifyOrderRebase(api);
   await verifyAggregationRebase(api);
   await verifyAggregationPositions(api);
   await verifyUnifiedMaster(api);
