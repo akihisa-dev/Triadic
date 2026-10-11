@@ -1,6 +1,7 @@
 import { mergeRebaseOrder } from "./rebaseOrder";
 import { canMergeRowAccounts } from "./rebaseRowAccounts";
 import { canMergeClassifications } from "./rebaseClassifications";
+import { remapAddedAccounts } from "./rebaseAccounts";
 import { BUSINESS_TABLES } from "./triadicSchema";
 import { exportTriadicDatabase, openTriadicDatabase } from "./triadicDatabase";
 import { trackHistoryChange, createBusinessSnapshot } from "./dataHistory";
@@ -14,8 +15,8 @@ export function readRebaseRows(database: Database, table: string): Map<string, S
     keys.splice(0, keys.length, ...["account_id", "industry_id", "department_id", "month"].map(name => columns.findIndex(column => column[1] === name)));
     if (keys.some(index => index < 0)) throw new Error("前年金額の識別項目がありません。");
   }
-  const account = columns.findIndex(column => column[1] === "account_id"), group = columns.findIndex(column => column[1] === "group_id");
-  const membership = table === "aggregation_members";
+  const account = columns.findIndex(column => column[1] === "account_id"), group = columns.findIndex(column => column[1] === (table === "master_order" ? "aggregation_group_id" : "group_id"));
+  const membership = table === "aggregation_members" || table === "master_order";
   if (membership ? account < 0 || group < 0 : !keys.length) throw new Error("統合対象の行識別子がありません。");
   const result = new Map<string, SqlValue[]>();
   for (const row of database.exec(`SELECT * FROM ${table}`)[0]?.values ?? []) {
@@ -39,6 +40,7 @@ export async function rebasePlan(baseBytes: Uint8Array, editedBytes: Uint8Array,
     const [base, edited, current] = databases as [Database, Database, Database];
     const identity = (db: Database) => db.exec("SELECT fiscal_year, created_at FROM document_info")[0]?.values;
     if (!equal(identity(base), identity(current))) return null;
+    if (!remapAddedAccounts(base, edited, current)) return null;
     if (!canMergeRowAccounts(base, edited, current)) return null;
     if (!canMergeClassifications(base, edited, current)) return null;
     const replacements = new Map<string, SqlValue[][]>();
@@ -51,6 +53,7 @@ export async function rebasePlan(baseBytes: Uint8Array, editedBytes: Uint8Array,
         if (table === "previous_amounts") return row.slice(1, -1);
         if (table === "initiative_rows") return row.filter((_, index) => index !== 3 && index !== 4);
         if (table === "aggregation_members") return row.slice(0, 4);
+        if (table === "master_order") return row.slice(1);
         if (table === "initiatives") return row.slice(0, -1);
         return row;
       };
@@ -78,7 +81,7 @@ export async function rebasePlan(baseBytes: Uint8Array, editedBytes: Uint8Array,
         } else latest.delete(key);
         changed = true;
       }
-      if (table === "initiative_rows" || table === "aggregation_members") {
+      if (table === "initiative_rows" || table === "aggregation_members" || table === "master_order") {
         if (!mergeRebaseOrder(table, original, local, externalRows, latest)) return null;
         changed ||= !equal([...externalRows], [...latest]);
       }

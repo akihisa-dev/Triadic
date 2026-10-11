@@ -7,9 +7,11 @@ const equal = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b
  */
 export function mergeRebaseOrder(table: string, original: Rows, local: Rows, external: Rows, combined: Map<string, SqlValue[]>): boolean {
   const initiative = table === "initiative_rows";
-  const parent = initiative ? 1 : 0, position = initiative ? 3 : 4;
-  const parents = new Set([...original.values(), ...local.values()].map(row => row[parent]!));
-  const sequence = (rows: Rows, owner: SqlValue) => [...rows].filter(([, row]) => row[parent] === owner)
+  const master = table === "master_order";
+  const parent = initiative ? 1 : 0, position = master ? 0 : initiative ? 3 : 4;
+  const ownerOf = (row: SqlValue[]) => master ? 0 : row[parent]!;
+  const parents = new Set([...original.values(), ...local.values()].map(ownerOf));
+  const sequence = (rows: Rows, owner: SqlValue) => [...rows].filter(([, row]) => ownerOf(row) === owner)
     .sort((a, b) => Number(a[1][position]) - Number(b[1][position]) || a[0].localeCompare(b[0])).map(([key]) => key);
   for (const owner of parents) {
     const baseOrder = sequence(original, owner), localOrder = sequence(local, owner), latestOrder = sequence(external, owner);
@@ -17,7 +19,7 @@ export function mergeRebaseOrder(table: string, original: Rows, local: Rows, ext
     for (const [rows, order] of [[original, baseOrder], [local, localOrder], [external, latestOrder]] as const) {
       if (new Set(order.map(key => rows.get(key)![position])).size !== order.length) return false;
     }
-    const survives = (key: string) => combined.get(key)?.[parent] === owner;
+    const survives = (key: string) => combined.has(key) && ownerOf(combined.get(key)!) === owner;
     const localKeys = new Set(localOrder), latestKeys = new Set(latestOrder);
     const shared = new Set(baseOrder.filter(key => survives(key) && localKeys.has(key) && latestKeys.has(key)));
     const baseShared = baseOrder.filter(key => shared.has(key)), localShared = localOrder.filter(key => shared.has(key)), latestShared = latestOrder.filter(key => shared.has(key));
@@ -31,7 +33,7 @@ export function mergeRebaseOrder(table: string, original: Rows, local: Rows, ext
     const committed = new Set(order);
     const incoming = localOrder.filter(key => survives(key) && !committed.has(key));
     order.push(...incoming);
-    if (initiative) {
+    if (initiative || master) {
       order.forEach((key, index) => { combined.get(key)![position] = index; });
     } else {
       // Retain legal gaps and the committed slots, including a reorder's positions.
