@@ -55,6 +55,14 @@ function assertDatabase(db: Database, documentType: DocumentType): void {
   const documentInfo = db.exec("SELECT id, fiscal_year, created_at, updated_at FROM document_info")[0]?.values ?? [];
   if (documentInfo.length !== 1 || documentInfo[0]?.[0] !== 1 || !Number.isInteger(documentInfo[0]?.[1]) || Number(documentInfo[0]?.[1]) < 1 || Number(documentInfo[0]?.[1]) > 9998) invalid();
   if (db.exec("PRAGMA integrity_check")[0]?.values[0]?.[0] !== "ok" || db.exec("PRAGMA foreign_key_check").length) invalid();
+  // SQLite trim removes ASCII spaces only. Use the same Unicode whitespace rule as normal input.
+  const validName = (value: unknown) => typeof value === "string" && value.trim().length > 0;
+  for (const table of ["accounts", "expansions", "industries", "departments", "period_types", "expansion_categories", "initiatives", "aggregation_groups"]) {
+    const display = table === "accounts" || table === "aggregation_groups";
+    for (const [name, displayName] of db.exec(`SELECT name${display ? ", display_name" : ""} FROM ${table}`)[0]?.values ?? []) {
+      if (!validName(name) || display && displayName !== null && !validName(displayName)) invalid();
+    }
+  }
   if (db.exec(`SELECT id FROM accounts WHERE typeof(code) != 'text' OR code NOT GLOB '[0-9][0-9][0-9]' OR attribute NOT IN ('sales','cost','expense','profit') OR trim(name) = '' OR (display_name IS NOT NULL AND (typeof(display_name) != 'text' OR trim(display_name) = ''))
     UNION ALL SELECT id FROM expansions WHERE typeof(code) != 'text' OR code = '' OR code GLOB '*[^0-9]*' OR trim(name) = ''
     UNION ALL SELECT id FROM industries WHERE typeof(code) != 'text' OR code = '' OR code GLOB '*[^0-9]*' OR trim(name) = ''
