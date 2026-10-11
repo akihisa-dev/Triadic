@@ -1,5 +1,6 @@
 import { mergeRebaseOrder } from "./rebaseOrder";
 import { canMergeRowAccounts } from "./rebaseRowAccounts";
+import { canMergeClassifications } from "./rebaseClassifications";
 import { BUSINESS_TABLES } from "./triadicSchema";
 import { exportTriadicDatabase, openTriadicDatabase } from "./triadicDatabase";
 import { trackHistoryChange, createBusinessSnapshot } from "./dataHistory";
@@ -39,6 +40,7 @@ export async function rebasePlan(baseBytes: Uint8Array, editedBytes: Uint8Array,
     const identity = (db: Database) => db.exec("SELECT fiscal_year, created_at FROM document_info")[0]?.values;
     if (!equal(identity(base), identity(current))) return null;
     if (!canMergeRowAccounts(base, edited, current)) return null;
+    if (!canMergeClassifications(base, edited, current)) return null;
     const replacements = new Map<string, SqlValue[][]>();
     for (const table of BUSINESS_TABLES) {
       if (table === "document_info") continue;
