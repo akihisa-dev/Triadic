@@ -1,4 +1,5 @@
 import { verifyOrderRebase } from "../tests/order-rebase.mjs";
+import { verifyRowAccountRebase } from "../tests/row-account-rebase.mjs";
 import { verifyReadSavedPlan } from "../tests/read-saved-plan.mjs";
 import { verifyPreviousRebase } from "../tests/previous-rebase.mjs";
 import { verifyNoChangeSave } from "../tests/no-change-save.mjs";
@@ -52,6 +53,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyFileRecovery(api);
   await verifyPreviousRebase(api);
   await verifyOrderRebase(api);
+  await verifyRowAccountRebase(api);
   await verifyReadSavedPlan(api);
   await verifyAggregationRebase(api);
   await verifyAggregationPositions(api);
