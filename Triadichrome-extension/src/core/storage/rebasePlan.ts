@@ -48,7 +48,7 @@ export async function rebasePlan(baseBytes: Uint8Array, editedBytes: Uint8Array,
       const externalRows = new Map([...latest].map(([key, row]) => [key, [...row]]));
       const comparable = (row: SqlValue[] | undefined) => {
         if (!row) return row;
-        if (table === "previous_amounts") return row.slice(1);
+        if (table === "previous_amounts") return row.slice(1, -1);
         if (table === "initiative_rows") return row.filter((_, index) => index !== 3 && index !== 4);
         if (table === "aggregation_members") return row.slice(0, 4);
         if (table === "initiatives") return row.slice(0, -1);

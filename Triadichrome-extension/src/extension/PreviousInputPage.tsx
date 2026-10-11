@@ -1,5 +1,5 @@
 import { useHistoryReadOnly } from "./HistoryReadOnly";
-import { useLayoutEffect, useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPreviousInput } from "../core/domain/previousAmounts";
 import { type PlanContents } from "../core/domain/plan";
 import { filterPlan } from "../core/tables/planTables";
@@ -20,7 +20,12 @@ export function PreviousInputPage({ contents, onSave, onPendingChange, onPrepare
   const allowedIndustries = contents.departments.filter(item => !departmentIds.length || departmentIds.includes(item.id)).flatMap(item => item.industryIds);
   const autoSave = useAutoSave(onSave, onPendingChange);
   const { controller, draft, revision } = autoSave;
+  const savedSource = useRef<PlanContents | null>(null);
   useLayoutEffect(() => {
+    if (validPair && industryId !== null && departmentId !== null && (savedSource.current !== contents || !controller.getSnapshot().draft)) {
+      savedSource.current = contents;
+      controller.syncSaved(createPreviousInput(contents, industryId, departmentId));
+    }
     if (controller.getSnapshot().pending) return;
     const departments = departmentIds.filter(id => contents.departments.some(item => item.id === id));
     const allowed = new Set(contents.departments.filter(item => !departments.length || departments.includes(item.id)).flatMap(item => item.industryIds));

@@ -60,14 +60,17 @@ export async function verifySamplePlan(api) {
   assert.deepEqual(new Set(plan.expansions.find(item => item.expansionName === "コスト").categoryIds), new Set(plan.expansionCategories.filter(item => item.categoryName !== "確認用：未割当区分").map(item => item.id)));
   assert.equal(plan.initiatives.find(item => item.name === "既存商品の販売拡大").expansionCategoryId, plan.expansionCategories.find(item => item.categoryName === "設備投資").id);
   assert.ok(plan.initiatives.some(item => item.expansionCategoryId === null));
-  assert.equal(plan.previousAmounts.length, 9 * 2 * (4 * 12 + 4));
+  assert.equal(plan.previousAmounts.length, 9 * 2 * (4 * 12 + 3));
+  const groupSales = plan.accounts.find(item => item.accountName === "グループ売上高");
+  assert.ok(!plan.previousAmounts.some(item => item.accountId === groupSales.id && item.month === 6), "未入力の0行を保存しない");
+  assert.equal(api.createPreviousInput(plan, 1, 1).rows.find(item => item.accountId === groupSales.id).amounts[6], "0", "未入力も表示は0");
   assert.equal(api.previousTotals(plan)[4].sales, 20342250);
   assert.equal(api.previousTotals(plan)[4].profit, 16922250);
   const combined = api.buildKindExpansionTable(plan, [1, 2], "registered");
   assert.equal(combined.changes[0][4].sales, 415000);
   assert.equal(combined.total[0][4].sales, 20757250);
   assert.equal(combined.total[0][4].profit, 17290125);
-  assert.equal(plan.details.length, 1704);
+  assert.equal(plan.details.length, 1686);
   assert.deepEqual(plan.initiatives.find(item => item.name === "保守サービスの新規契約").startYearMonths, { 1: "2026-07", 2: "2026-08" });
   assert.deepEqual(plan.initiatives.find(item => item.name === "期間差の開始年月確認").startYearMonths, { 1: "2025-10", 2: "2025-11" });
   const starts = [

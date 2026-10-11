@@ -48,7 +48,9 @@ export async function verifyFileBoundaries(api) {
   await assert.rejects(api.changeAccountMaster(master.bytes, { type: "add", accountType: "expense", accountCode: "002", accountName: "売上" }), /同じ名前/);
   await assert.rejects(api.changeAccountMaster(master.bytes, { type: "add", accountType: "expense", accountCode: "001", accountName: "別科目" }), /同じ科目コード/);
   const contents = await api.readPlanContents(master.bytes);
-  const prior = await api.savePreviousAmounts(master.bytes, { industryId: contents.industries[0].id, departmentId: contents.departments[0].id, rows: [{ accountId: master.accounts[0].id, amounts: { 4: "0" } }] });
+  const priorInput = { industryId: contents.industries[0].id, departmentId: contents.departments[0].id, rows: [{ accountId: master.accounts[0].id, amounts: { 4: "1" } }] };
+  const priorNonzero = await api.savePreviousAmounts(master.bytes, priorInput);
+  const prior = await api.savePreviousAmounts(priorNonzero, { ...priorInput, rows: [{ accountId: master.accounts[0].id, amounts: { 4: "0" } }] });
   for (const [change, id] of [[api.changeAccountMaster, master.accounts[0].id], [api.changeIndustryMaster, contents.industries[0].id], [api.changeDepartmentMaster, contents.departments[0].id]]) await assert.rejects(change(prior, { type: "delete", id }), /前年|使用/);
   let stored = master.bytes;
   let writes = 0;

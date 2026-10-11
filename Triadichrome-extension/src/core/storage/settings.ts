@@ -63,9 +63,13 @@ export async function savePreviousAmounts(bytes: Uint8Array, input: PreviousInpu
     for (const row of input.rows) {
       if (!db.exec("SELECT id FROM accounts WHERE id = ?", [row.accountId]).length) throw new Error("勘定科目が見つかりません。");
       for (const [month, text] of Object.entries(row.amounts)) {
+        const monthNumber = Number(month);
+        if (!Number.isInteger(monthNumber) || monthNumber < 1 || monthNumber > 12) throw new Error("月が正しくありません。");
         const amount = amountToYen(text || "0");
+        const saved = db.exec("SELECT amount_yen FROM previous_amounts WHERE account_id = ? AND industry_id = ? AND department_id = ? AND month = ?", [row.accountId, input.industryId, input.departmentId, monthNumber])[0]?.values[0]?.[0] ?? 0;
+        if (amount === saved) continue;
         db.run(`INSERT INTO previous_amounts (account_id, industry_id, department_id, month, amount_yen) VALUES (?, ?, ?, ?, ?)
-          ON CONFLICT (account_id, industry_id, department_id, month) DO UPDATE SET amount_yen = excluded.amount_yen, revision = previous_amounts.revision + 1`, [row.accountId, input.industryId, input.departmentId, Number(month), amount]);
+          ON CONFLICT (account_id, industry_id, department_id, month) DO UPDATE SET amount_yen = excluded.amount_yen, revision = previous_amounts.revision + 1`, [row.accountId, input.industryId, input.departmentId, monthNumber, amount]);
       }
     }
   })).bytes;
