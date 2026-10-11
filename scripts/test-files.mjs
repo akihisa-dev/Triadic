@@ -15,6 +15,7 @@ import { verifyMasterOrderStorage } from "../tests/master-order-storage.mjs";
 import { verifyClassificationStorage } from "../tests/classification-storage.mjs";
 import { verifyKindAmountStorage } from "../tests/kind-amount-storage.mjs";
 import { verifyCostCancellation } from "../tests/cost-cancellation.mjs";
+import { verifyCostMonthlyAddition } from "../tests/cost-monthly-addition.mjs";
 import { verifyAggregationOrder } from "../tests/aggregation-order.mjs";
 import { verifyFileRecovery } from "../tests/file-recovery.mjs";
 import { verifyExpansionTableView } from "../tests/expansion-table-view.mjs";
@@ -74,6 +75,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifySchemaBoundary(api);
   await verifyYenPrecision(api);
   await verifyCostCancellation(api);
+  await verifyCostMonthlyAddition(api);
   verifyAggregationOrder(api);
   await verifyCostComparison(api);
   await verifyPeriodTables(api);

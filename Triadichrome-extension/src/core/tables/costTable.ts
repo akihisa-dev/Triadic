@@ -42,7 +42,10 @@ export function buildCostTable(accounts: Account[], groups: Aggregation[], initi
       if (!row) continue;
       for (const month of initiativeMonths) {
         const amount = input.amounts[month];
-        if (amount !== undefined && amount !== "") sum(changes.get(row.id)!, { [month]: amountToYen(amount) });
+        if (amount !== undefined && amount !== "") {
+          const target = changes.get(row.id)!;
+          target[month] = (target[month] ?? 0n) + BigInt(amountToYen(amount));
+        }
       }
     }
   }
