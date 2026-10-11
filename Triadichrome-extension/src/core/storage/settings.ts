@@ -3,15 +3,20 @@ import type { Database } from "./sqliteRuntime";
 import { amountToYen, yenToAmount } from "../domain/amounts";
 import { editDatabase } from "./transaction";
 import { isKindId, type KindId, type KindSelections, type KindScreen, type PlanSettings, type KindOverrides, type PlanChange, type PreviousInput } from "../domain/kinds";
-export function readPlanSettings(db: Database): PlanSettings {
+/** Read the fixed year without restoring unrelated selections or previous amounts. */
+export function readFiscalYear(db: Database): number {
   const [year] = db.exec("SELECT fiscal_year FROM document_info WHERE id = 1")[0]!.values[0]!;
+  return Number(year);
+}
+export function readPlanSettings(db: Database): PlanSettings {
+  const fiscalYear = readFiscalYear(db);
   const kindSelections: KindSelections = { "initiative-list": [2], "cost-table": [1], "expansion-table": [1] };
   for (const [screen, first, second] of db.exec("SELECT screen, first_kind, second_kind FROM kind_selections")[0]?.values ?? []) {
     kindSelections[String(screen) as KindScreen] = [Number(first) as KindId, ...(second === null ? [] : [Number(second) as KindId])];
   }
   const previousAmounts = (db.exec("SELECT account_id, industry_id, department_id, month, amount_yen, revision, id FROM previous_amounts ORDER BY industry_id, department_id, account_id, month")[0]?.values ?? [])
     .map(([account, industry, department, month, amount, revision, id]) => ({ accountId: Number(account), industryId: Number(industry), departmentId: Number(department), month: Number(month), amount: yenToAmount(Number(amount)), revision: Number(revision), id: Number(id) }));
-  return { fiscalYear: Number(year), kindSelections, previousAmounts };
+  return { fiscalYear, kindSelections, previousAmounts };
 }
 export function readRowOverrides(db: Database, rowId: string): KindOverrides {
   const result: KindOverrides = {};

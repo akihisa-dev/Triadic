@@ -10,7 +10,7 @@ import { listDepartments } from "./departmentMaster";
 import { listPeriodTypes } from "./periodMaster";
 import { listIndustries } from "./industryMaster";
 import { listInitiatives } from "./readPlan";
-import { readPlanSettings } from "./settings";
+import { readFiscalYear } from "./settings";
 import { editDatabase } from "./transaction";
 const listNames = (database: Database, except?: number) => (database.exec("SELECT id, name FROM initiatives")[0]?.values ?? [])
   .filter(([id]) => id !== except).map(([, name]) => ({ name: String(name) }));
@@ -18,7 +18,7 @@ const listNames = (database: Database, except?: number) => (database.exec("SELEC
 export async function registerInitiative(bytes: Uint8Array, draft: InitiativeEntryDraft, edit = editDatabase): Promise<Uint8Array> {
   return (await edit(bytes, database => {
     validateInitiative(draft, listAccounts(database), listNames(database), listExpansions(database), listDepartments(database), listPeriodTypes(database), listIndustries(database));
-    if (Number(draft.fiscalYear) !== readPlanSettings(database).fiscalYear) throw new Error("年度はファイルの基準年度と同じにしてください。");
+    if (Number(draft.fiscalYear) !== readFiscalYear(database)) throw new Error("年度はファイルの基準年度と同じにしてください。");
     database.run(`INSERT INTO initiatives (name, note, expansion_id, expansion_category_id, department_id, period_type_id, industry_id, sort_order)
       VALUES (?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM initiatives))`, [draft.name.trim(), draft.note, draft.expansionId, draft.expansionCategoryId ?? null, draft.departmentId ?? null, draft.periodTypeId ?? null, draft.industryId ?? null]);
     const id = Number(database.exec("SELECT last_insert_rowid()")[0]!.values[0]![0]);
@@ -49,11 +49,11 @@ function writeAmounts(db: Database, rowId: string, source: AmountSource): void {
 
 export async function updateInitiative(bytes: Uint8Array, id: number, previousYear: number | null, draft: InitiativeEntryDraft, edit = editDatabase): Promise<Uint8Array> {
   return (await edit(bytes, database => {
-    const settings = readPlanSettings(database);
-    const initiatives = listInitiatives(database, readPlanSettings(database).fiscalYear, id);
+    const fiscalYear = readFiscalYear(database);
+    const initiatives = listInitiatives(database, fiscalYear, id);
     const original = initiatives.find(item => item.id === id && item.fiscalYear === previousYear);
     if (!original) throw new Error("更新する施策が見つかりません。");
-    if (Number(draft.fiscalYear) !== settings.fiscalYear) throw new Error("年度はファイルの基準年度と同じにしてください。");
+    if (Number(draft.fiscalYear) !== fiscalYear) throw new Error("年度はファイルの基準年度と同じにしてください。");
     validateInitiative(draft, listAccounts(database), listNames(database, id), listExpansions(database), listDepartments(database), listPeriodTypes(database), listIndustries(database), true);
     const ids = draft.rows.flatMap(row => row.id === undefined ? [] : [row.id]);
     if (new Set(ids).size !== ids.length || ids.some(rowId => { const owner = database.exec("SELECT initiative_id FROM initiative_rows WHERE id = ?", [rowId])[0]?.values[0]?.[0]; return owner !== undefined && owner !== id; })) throw new Error("勘定科目行の識別子が正しくありません。");
