@@ -2,6 +2,7 @@ import { rebasePlan } from "../core/storage/rebasePlan";
 import * as history from "../core/storage/dataHistory";
 import { applyOperationSnapshot } from "../core/storage/operationSnapshot";
 import { readPlanContents, readSnapshotContents } from "../core/storage/readPlan";
+import { readSavedPlan } from "../core/storage/readSavedPlan";
 import { createTriadicDatabase } from "../core/storage/triadicDatabase";
 import { applyPlanCommand } from "../core/storage/planCommands";
 import { prepareAggregationSave } from "../core/storage/prepareAggregationSave";
@@ -17,6 +18,7 @@ export const processingTasks = {
   },
   createTriadicDatabase,
   readPlanContents,
+  readSavedPlan,
   readSnapshotContents,
   applyPlanCommand,
   applyOperationSnapshot,

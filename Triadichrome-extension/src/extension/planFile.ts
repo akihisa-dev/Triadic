@@ -1,10 +1,10 @@
 import { FileConflictError, recoverFileConflict } from "./fileConflict";
 import { TRIADIC_FILE_EXTENSION } from "../core/storage/triadicSchema";
-import { readPlanContents, processPlan } from "./planProcessing";
+import { processPlan } from "./planProcessing";
 import { type PlanContents } from "../core/domain/plan";
 import { writeTriadicFile } from "./triadicFile";
 import type { DataHistoryStatus } from "../core/storage/dataHistory";
-import { readDataHistory, trackHistoryChange } from "./planProcessing";
+import { trackHistoryChange } from "./planProcessing";
 export type PreparedPlanChange = { bytes: Uint8Array; contents: PlanContents; savedHistory: DataHistoryStatus };
 
 export type OpenPlan = PlanContents & { name: string; bytes: Uint8Array; handle?: FileSystemFileHandle; destinationBytes?: Uint8Array; savedHistory?: DataHistoryStatus; rebasedOperation?: { before: Uint8Array; after: Uint8Array } | null };
@@ -19,8 +19,7 @@ export function planContents(plan: OpenPlan): PlanContents {
 export async function writePlanChange(plan: OpenPlan, handle: FileSystemFileHandle, bytes: Uint8Array, options: { historyPrepared?: boolean; now?: string; allowRebase?: boolean } = {}): Promise<OpenPlan> {
   if (!handle.name.toLowerCase().endsWith(TRIADIC_FILE_EXTENSION)) throw new Error("拡張子は.triadicにしてください。");
   if (!options.historyPrepared) bytes = await trackHistoryChange(plan.bytes, bytes, options.now);
-  const contents = await readPlanContents(bytes);
-  const savedHistory = await readDataHistory(bytes);
+  const { contents, savedHistory } = await processPlan("readSavedPlan", bytes, typeof Worker === "undefined");
   return writeCheckedFile(plan, { ...contents, savedHistory, bytes, name: handle.name, handle }, options.allowRebase === true);
 }
 
@@ -40,7 +39,8 @@ async function writeCheckedFile(plan: OpenPlan, prepared: OpenPlan & { handle: F
       if (allowRebase && !plan.destinationBytes) {
         const merged = await processPlan("rebasePlan", plan.bytes, prepared.bytes, current);
         if (merged) {
-          saved = { ...await readPlanContents(merged.bytes), savedHistory: await readDataHistory(merged.bytes), bytes: merged.bytes, name: prepared.name, handle: prepared.handle, rebasedOperation: merged.operation };
+          const { contents, savedHistory } = await processPlan("readSavedPlan", merged.bytes, typeof Worker === "undefined");
+          saved = { ...contents, savedHistory, bytes: merged.bytes, name: prepared.name, handle: prepared.handle, rebasedOperation: merged.operation };
           return merged.bytes;
         }
       }
