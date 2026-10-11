@@ -1,3 +1,4 @@
+import { changeDetail } from "../Triadichrome-extension/src/core/storage/details";
 export * from "../Triadichrome-extension/src/core/storage/expansionCategoryMaster";
 export * from "../Triadichrome-extension/src/core/domain/expansionCategoryMaster";
 export * from "../Triadichrome-extension/src/core/domain/masterRows";
@@ -52,6 +53,7 @@ export * from "../Triadichrome-extension/src/core/tables/initiativeGrid";
 export * from "../Triadichrome-extension/src/core/tables/initiatives";
 export * from "../Triadichrome-extension/src/core/tables/planTables";
 export * from "../Triadichrome-extension/src/core/tables/previousGrid";
+export * from "../Triadichrome-extension/src/core/tables/grid";
 export * from "../Triadichrome-extension/src/core/tables/tableView";
 export * from "../Triadichrome-extension/src/extension/MasterPage";
 export * from "../Triadichrome-extension/src/extension/AccountTypeMasterPage";
@@ -63,12 +65,19 @@ export * from "./ui/previous-export-plan";
 export * from "../Triadichrome-extension/src/extension/triadicFile";
 export * from "../Triadichrome-extension/src/extension/planFile";
 export * from "../Triadichrome-extension/src/extension/recentFile";
-export * from "../Triadichrome-extension/src/extension/planCommands";
-import { writePlanCommand } from "../Triadichrome-extension/src/extension/planCommands";
+export * from "../Triadichrome-extension/src/core/domain/planCommands";
+export * from "../Triadichrome-extension/src/core/storage/planCommands";
+import { PlanSession } from "../Triadichrome-extension/src/extension/PlanSession";
 import { writePlanChange, type OpenPlan } from "../Triadichrome-extension/src/extension/planFile";
-import { changeDetail } from "../Triadichrome-extension/src/core/storage/details";
 import type { DetailChange } from "../Triadichrome-extension/src/core/domain/details";
-import type { PlanCommand } from "../Triadichrome-extension/src/extension/planCommands";
+import type { PlanCommand } from "../Triadichrome-extension/src/core/domain/planCommands";
+async function writePlanCommand(plan: OpenPlan, command: PlanCommand, destination: () => Promise<FileSystemFileHandle>): Promise<OpenPlan> {
+  const session = new PlanSession();
+  await session.open(plan);
+  const contents = await session.dispatch(command, destination);
+  const handle = session.getHandle()!;
+  return { ...contents, handle, name: handle.name, bytes: new Uint8Array(await (await handle.getFile()).arrayBuffer()), savedHistory: session.getSnapshot().history };
+}
 export const saveAccountMaster = (plan: OpenPlan, change: Extract<PlanCommand, { type: "account" }>["change"], destination: () => Promise<FileSystemFileHandle>) => writePlanCommand(plan, { type: "account", change }, destination);
 export const saveAggregationMaster = (plan: OpenPlan, change: Extract<PlanCommand, { type: "aggregation" }>["change"], destination: () => Promise<FileSystemFileHandle>) => writePlanCommand(plan, { type: "aggregation", change }, destination);
 export const saveDepartmentMaster = (plan: OpenPlan, change: Extract<PlanCommand, { type: "department" }>["change"], destination: () => Promise<FileSystemFileHandle>) => writePlanCommand(plan, { type: "department", change }, destination);

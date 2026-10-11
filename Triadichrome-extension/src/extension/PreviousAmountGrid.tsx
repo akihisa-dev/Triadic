@@ -1,3 +1,4 @@
+import { normalizeGridAmount } from "../core/tables/grid";
 import { useGridInteraction } from "./useGridInteraction";
 import { useMemo, useState } from "react";
 import { previousByAccount } from "../core/tables/planTables";
@@ -6,7 +7,7 @@ import { formatYen, formatRate, isValidAmount, amountToYen, yenToAmount } from "
 import { initiativeMonths } from "../core/domain/calendar";
 import { type PlanContents } from "../core/domain/plan";
 import type { PreviousInput } from "../core/domain/kinds";
-import { fillPreviousGrid, normalizeGridAmount, pastePreviousGrid } from "../core/tables/previousGrid";
+import { fillPreviousGrid, pastePreviousGrid } from "../core/tables/previousGrid";
 import { previousPeriods, previousPeriodAmount } from "../core/tables/previousPeriods";
 import { periodCellClass } from "./periodCellStyle";
 import { StatusNotice } from "./StatusNotice";

@@ -5,9 +5,16 @@ import { type PlanContents } from "../core/domain/plan";
 import { writeTriadicFile } from "./triadicFile";
 import type { DataHistoryStatus } from "../core/storage/dataHistory";
 import { readDataHistory, trackHistoryChange } from "./planProcessing";
-import type { prepareAggregationSave } from "../core/storage/prepareAggregationSave";
+export type PreparedPlanChange = { bytes: Uint8Array; contents: PlanContents; savedHistory: DataHistoryStatus };
 
 export type OpenPlan = PlanContents & { name: string; bytes: Uint8Array; handle?: FileSystemFileHandle; destinationBytes?: Uint8Array; savedHistory?: DataHistoryStatus; rebasedOperation?: { before: Uint8Array; after: Uint8Array } | null };
+
+/** Strip persistence metadata before publishing or comparing business contents. */
+export function planContents(plan: OpenPlan): PlanContents {
+  const { bytes, handle, name, destinationBytes, savedHistory, rebasedOperation, ...contents } = plan;
+  void bytes; void handle; void name; void destinationBytes; void savedHistory; void rebasedOperation;
+  return contents;
+}
 
 export async function writePlanChange(plan: OpenPlan, handle: FileSystemFileHandle, bytes: Uint8Array, options: { historyPrepared?: boolean; now?: string; allowRebase?: boolean } = {}): Promise<OpenPlan> {
   if (!handle.name.toLowerCase().endsWith(TRIADIC_FILE_EXTENSION)) throw new Error("拡張子は.triadicにしてください。");
@@ -18,7 +25,7 @@ export async function writePlanChange(plan: OpenPlan, handle: FileSystemFileHand
 }
 
 /** The preparation task already validated the complete bytes and read their contents. */
-export async function writePreparedPlanChange(plan: OpenPlan, handle: FileSystemFileHandle, prepared: Awaited<ReturnType<typeof prepareAggregationSave>>, allowRebase = false): Promise<OpenPlan> {
+export async function writePreparedPlanChange(plan: OpenPlan, handle: FileSystemFileHandle, prepared: PreparedPlanChange, allowRebase = false): Promise<OpenPlan> {
   if (!handle.name.toLowerCase().endsWith(TRIADIC_FILE_EXTENSION)) throw new Error("拡張子は.triadicにしてください。");
   return writeCheckedFile(plan, { ...prepared.contents, savedHistory: prepared.savedHistory, bytes: prepared.bytes, name: handle.name, handle }, allowRebase);
 }

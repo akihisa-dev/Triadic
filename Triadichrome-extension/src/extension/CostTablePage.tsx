@@ -11,7 +11,7 @@ import { type PlanContents } from "../core/domain/plan";
 
 import { formatTableYen, formatTableRate } from "./tableNumberFormat";
 
-type Props = { contents: PlanContents; selected: KindId[]; selection: ReactNode; onOpenMaster?: () => void };
+type Props = { contents: PlanContents; selected: KindId[]; selection: ReactNode };
 
 export function CostTablePage({ contents, selected, selection }: Props) {
   const [industryIds, setIndustries] = useState<number[]>([]);

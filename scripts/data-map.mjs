@@ -31,7 +31,7 @@ async function schemaText() {
 async function resolveModule(owner, specifier) {
   if (!specifier.startsWith(".")) return null;
   const base = path.resolve(projectRoot, path.dirname(owner), specifier);
-  for (const suffix of [".ts", ".tsx", "/index.ts", "/index.tsx"]) {
+  for (const suffix of [...(/\.tsx?$/.test(base) ? [""] : []), ".ts", ".tsx", "/index.ts", "/index.tsx"]) {
     try { await access(base + suffix); return path.relative(projectRoot, base + suffix); } catch { /* not a TypeScript module */ }
   }
   return null;
@@ -57,6 +57,17 @@ async function sourceModule(file, read = readSource) {
     if (clause?.namedBindings && ts.isNamedImports(clause.namedBindings))
       for (const item of clause.namedBindings.elements) if (!item.isTypeOnly) imports.set(item.name.text, target);
   }
+  const deferred = [];
+  const visit = node => {
+    if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword && ts.isStringLiteral(node.arguments[0])) deferred.push(node.arguments[0].text);
+    if (ts.isNewExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === "URL" && node.arguments && ts.isStringLiteral(node.arguments[0]) && node.arguments[1]?.getText(source) === "import.meta.url") deferred.push(node.arguments[0].text);
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  for (const specifier of deferred) {
+    const target = await resolveModule(file, specifier);
+    if (target) dependencies.add(target);
+  }
   return { text, source, imports, dependencies };
 }
 export async function screenImplementations(read = readSource) {
@@ -66,20 +77,22 @@ export async function screenImplementations(read = readSource) {
     return cache.get(file);
   };
   const home = await moduleFor(extension + "HomePage.tsx");
+  const renderer = await moduleFor(extension + "WorkspacePage.tsx");
+  const controller = await moduleFor(extension + "useHomeWorkspace.tsx");
   const cases = [];
   const visit = node => {
-    if (ts.isSwitchStatement(node) && node.expression.getText(home.source) === "displayed.page")
+    if (ts.isSwitchStatement(node) && node.expression.getText(renderer.source) === "displayed.page")
       cases.push(...node.caseBlock.clauses.filter(ts.isCaseClause));
     ts.forEachChild(node, visit);
   };
-  visit(home.source);
+  visit(renderer.source);
   const result = {};
   for (const item of cases) {
     const page = ts.isStringLiteral(item.expression) ? item.expression.text : null;
     if (!page || ["home", "master"].includes(page)) continue;
-    const seeds = new Set(["Triadichrome-extension/src/core/storage/readPlan.ts"]);
+    const seeds = new Set(["Triadichrome-extension/src/core/storage/readPlan.ts", extension + "useHomeWorkspace.tsx", extension + "ExtensionPage.tsx"]);
     const identifiers = node => {
-      if (ts.isIdentifier(node) && home.imports.has(node.text)) seeds.add(home.imports.get(node.text));
+      if (ts.isIdentifier(node) && renderer.imports.has(node.text)) seeds.add(renderer.imports.get(node.text));
       ts.forEachChild(node, identifiers);
     };
     identifiers(item);
@@ -91,7 +104,7 @@ export async function screenImplementations(read = readSource) {
       for (const target of module.dependencies) await collect(target);
     };
     for (const seed of seeds) await collect(seed);
-    result[page] = digest(JSON.stringify({ parent: digest(home.text), wiring: item.getText(home.source), sources: [...sources].sort(([a], [b]) => a.localeCompare(b)) }));
+    result[page] = digest(JSON.stringify({ parent: digest(home.text), renderer: digest(renderer.text), controller: digest(controller.text), wiring: item.getText(renderer.source), sources: [...sources].sort(([a], [b]) => a.localeCompare(b)) }));
   }
   if (Object.keys(result).length === 0) throw new Error("画面の切り替え実装を取得できません。");
   return result;

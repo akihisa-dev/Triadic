@@ -8,7 +8,7 @@ import { initiativeMonths as months } from "../core/domain/calendar";
 import { type InitiativeEntryDraft } from "../core/domain/plan";
 import { type Account } from "../core/domain/accountMaster";
 import { canEditInitiativeCell, cancelInitiativeCell, changeInitiativeCell, fillInitiativeGrid, pasteInitiativeGrid, initiativeAmountTotals } from "../core/tables/initiativeGrid";
-import { normalizeGridAmount, type GridCell } from "../core/tables/previousGrid";
+import { normalizeGridAmount, type GridCell } from "../core/tables/grid";
 import { StatusNotice } from "./StatusNotice";
 import "./InitiativeAmountGrid.css";
 

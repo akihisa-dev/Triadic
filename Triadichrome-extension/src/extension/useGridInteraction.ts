@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { gridBounds, type GridCell, type GridSelection } from "../core/tables/previousGrid";
+import { gridBounds, type GridCell, type GridSelection } from "../core/tables/grid";
 /** Selection/focus lifetime shared by grids; amount rules stay in their adapters. */
 export function useGridInteraction() {
   const [selection, setSelection] = useState<GridSelection | null>(null);

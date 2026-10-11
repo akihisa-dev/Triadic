@@ -4,7 +4,7 @@ import { amountToYen, checkedYen } from "../domain/amounts";
 import { initiativeMonths } from "../domain/calendar";
 import { type InitiativeEntryDraft, type InitiativeRow } from "../domain/plan";
 import { hasInvalidAmountInput, isKindId, resolvedAmount, type InvalidAmountInput, type KindId, type MonthAmounts } from "../domain/kinds";
-import { gridBounds, normalizeGridAmount, type GridCell, type GridSelection } from "./previousGrid";
+import { gridBounds, normalizeGridAmount, clipboardGrid, type GridCell, type GridSelection } from "./grid";
 
 export function canEditInitiativeCell(draft: InitiativeEntryDraft, kind: KindId, cell: GridCell): boolean {
   return isKindId(kind) && Number.isInteger(cell.row) && Number.isInteger(cell.column) && cell.row >= 0 && cell.column >= 0
@@ -74,7 +74,7 @@ function applyRectangle(draft: InitiativeEntryDraft, kind: KindId, start: GridCe
 }
 
 export function pasteInitiativeGrid(draft: InitiativeEntryDraft, kind: KindId, start: GridCell, text: string): InitiativeEntryDraft {
-  const values = text.replace(/\r\n?/g, "\n").replace(/\n$/, "").split("\n").map(line => line.split("\t"));
+  const values = clipboardGrid(text);
   return applyRectangle(draft, kind, start, values);
 }
 

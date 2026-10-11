@@ -16,21 +16,21 @@
 
 例えばcore内を業務規則・表計算・SQLiteへ、extension内を計画制御・ブラウザ処理・画面・共通操作へ分けられる。フォルダ階層は責任と実際の依存に必要なものだけ作る。型の共通化のために全領域が一つの巨大なモジュールへ依存する構造に戻さない。
 
-画面から計算と保存の詳細を追い出すだけでなく、更新依頼から検証・書き込み・保存済み状態の公開までの責任を一つにつなぐ。制御モジュールから画面を逆に読み込まない。sql.jsの初期化とWebAssemblyの配置はデータ処理の境界で扱い、service workerへReactやDOMの依存を持ち込まない。
+画面から計算と保存の詳細を追い出すだけでなく、更新依頼から検証・書き込み・保存済み状態の公開までの責任を一つにつなぐ。制御モジュールから画面を逆に読み込まない。公式SQLiteのWebAssembly版の初期化とWebAssemblyの配置はデータ処理の境界で扱い、service workerへReactやDOMの依存を持ち込まない。
 
 ## 現行構造で追う入口
 
-- `extension/ExtensionPage.tsx`と`filePicker.ts`：入口、選択・ドロップ・新規作成、前回ファイル。
-- `extension/PlanSession.ts`、`planCommands.ts`、`usePlanSession.ts`：保存済み計画、更新命令、保存と履歴の順序、記録期限、終了。
-- `extension/HomePage.tsx`と`useScreenHistory.ts`：画面移動履歴、登録前の下書き、過去閲覧、編集による移動禁止。
+- `extension/ExtensionPage.tsx`、`useFileEntry.ts`、`EntryPage.tsx`と`filePicker.ts`：入口、選択・ドロップ・新規作成、前回ファイル。
+- `extension/PlanSession.ts`、`preparePlanCommand.ts`、`usePlanSession.ts`：保存済み計画、更新命令、保存と履歴の順序、記録期限、終了。
+- `extension/HomePage.tsx`、`useHomeWorkspace.tsx`、`WorkspacePage.tsx`、`WorkspaceChrome.tsx`と`useScreenHistory.ts`：画面移動履歴、登録前の下書き、過去閲覧、編集による移動禁止。
 - `core/domain/`：施策と分類の型・検証、年度・金額・種別の規則、明細の編集対象。
 - `core/tables/`：種別別投影、前年の合算、三表と明細、集計図の計算、入力表の一括操作。
 - `core/storage/triadicSchema.ts`、関連Schema、`triadicDatabase.ts`、`transaction.ts`、`readPlan.ts`：現行形式の直接生成・検証・コピー上の更新・一括読込。
 - `core/autoSave.ts`、`extension/useAutoSave.ts`、`planFile.ts`、`triadicFile.ts`：入力待機から実ファイル確定まで。
 - `core/storage/dataHistory.ts`、`dataHistorySchema.ts`、`extension/DataHistoryPage.tsx`：時点記録、閲覧、復元、削除と業務snapshotの境界。
 - 各`*MasterPage.tsx`、`NamedMasterPage.tsx`、`useMasterOperation.ts`とcoreの対応マスタ：共通操作と固有の入力・削除制約。
-- 施策と前年の`*AmountGrid.tsx`、`useGridInteraction.ts`、対応するcoreのGrid：選択・フォーカスと、金額更新・貼り付け・セル移動の相違。
-- `HomeRelationsPage.tsx`、`AggregationGraph.tsx`と関連hooks：表示だけの移動と保存対象の所属変更の違い。
+- 施策と前年の`*AmountGrid.tsx`、`useGridInteraction.ts`、`core/tables/grid.ts`と対応する各入力表の処理：選択・フォーカスと、金額更新・貼り付け・セル移動の相違。
+- `HomeRelationsPage.tsx`と関連hooks、`AccountMasterPage.tsx`：表示だけの移動と保存対象の所属変更の違い。
 - `ExtensionPage.css`、`styles/`と個別CSS：共通設定、画面固有の寸法、親要素を変える指定、読み込みと上書きの順。
 
 パスを移したらこの入口一覧と正本文書の参照も更新する。存在を確認せず、一覧を現在の実装済み範囲の証明にしない。

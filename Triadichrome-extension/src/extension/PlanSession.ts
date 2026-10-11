@@ -1,17 +1,12 @@
 import { emptyDataHistory, type DataHistoryStatus, type HistoryDeletion } from "../core/storage/dataHistory";
-import { createBusinessSnapshot, deleteDataHistory, readDataHistory, readHistorySnapshot, recordDataHistory, restoreDataHistory, applyOperationSnapshot, readPlanContents, readSnapshotContents, applyPlanCommand, prepareAggregationSave, prepareKindSelectionSave } from "./planProcessing";
+import { deleteDataHistory, readDataHistory, readHistorySnapshot, recordDataHistory, restoreDataHistory, applyOperationSnapshot, readSnapshotContents } from "./planProcessing";
 import type { PlanContents } from "../core/domain/plan";
-import { writePlanChange, writePreparedPlanChange, type OpenPlan } from "./planFile";
+import { writePlanChange, writePreparedPlanChange, planContents, type OpenPlan } from "./planFile";
 import { isAutomatic, validatePlanCommand, type PlanCommand } from "../core/domain/planCommands";
 export const OPERATION_HISTORY_LIMIT = 100;
-type SavedOperation = { before: Uint8Array; after: Uint8Array };
+import { preparePlanCommand, type SavedOperation } from "./preparePlanCommand";
 export type SessionSnapshot = { contents: PlanContents | null; name: string; history: DataHistoryStatus; busy: boolean; historyError: string; canUndo: boolean; canRedo: boolean; operationRevision: number };
 type Destination = () => Promise<FileSystemFileHandle>;
-function operationContents(contents: PlanContents): string {
-  // Conflict counters describe write sequencing, not a user-visible change.
-  return JSON.stringify(contents, (key, value: unknown) =>
-    ["details", "revision", "initiativeRevision", "rowRevision", "amountRevisions", "overrideRevisions"].includes(key) ? undefined : value);
-}
 /** Owns the saved document. Drafts and navigation never enter this store. */
 export class PlanSession {
   private plan: OpenPlan | null = null;
@@ -40,17 +35,12 @@ export class PlanSession {
     const history = await readDataHistory(plan.bytes);
     this.plan = plan;
     this.resetOperations();
-    this.publish({ contents: this.contents(plan), name: plan.name, history, historyError: "" });
-  }
-  private contents(plan: OpenPlan): PlanContents {
-    const { bytes, handle, name, destinationBytes, savedHistory, rebasedOperation, ...contents } = plan;
-    void bytes; void handle; void name; void destinationBytes; void savedHistory; void rebasedOperation;
-    return contents;
+    this.publish({ contents: planContents(plan), name: plan.name, history, historyError: "" });
   }
   /** Publish and remember only the file whose write has successfully committed. */
   private async acceptSaved(saved: OpenPlan): Promise<PlanContents> {
     this.plan = saved;
-    const contents = this.contents(saved);
+    const contents = planContents(saved);
     this.publish({ contents, name: saved.name, history: saved.savedHistory ?? this.snapshot.history, historyError: "" });
     if (saved.handle) await Promise.all([...this.savedFileListeners].map(listener => listener(saved.handle!)));
     return contents;
@@ -92,24 +82,11 @@ export class PlanSession {
       const destinationPlan = await selected;
       const target = destinationPlan && !plan.handle ? { ...plan, ...destinationPlan } : plan;
       validatePlanCommand(target, command);
-      if (command.type === "settings" && command.change.type === "selection") {
-        const { screen, selected } = command.change;
-        const prepared = await prepareKindSelectionSave(target.bytes, screen, selected);
-        entry = prepared.operation ?? undefined;
-        // These references remain valid: only kind_selections and timestamps changed.
-        const contents = { ...this.contents(target), kindSelections: { ...target.kindSelections, [screen]: [...selected] } };
-        return writePreparedPlanChange(target, target.handle!, { ...prepared, contents }, true);
-      }
-      if (command.type === "aggregation") {
-        const prepared = await prepareAggregationSave(target.bytes, command.change);
-        entry = prepared.operation ?? undefined;
-        return writePreparedPlanChange(target, target.handle!, prepared, true);
-      }
-      const bytes = await applyPlanCommand(target.bytes, command, target.fiscalYear);
-      if (operationContents(this.contents(plan)) !== operationContents(await readPlanContents(bytes))) {
-        entry = { before: await createBusinessSnapshot(plan.bytes), after: await createBusinessSnapshot(bytes) };
-      }
-      return writePlanChange(target, target.handle!, bytes, { allowRebase: true });
+      const prepared = await preparePlanCommand(target, command);
+      entry = prepared.operation ?? undefined;
+      return prepared.kind === "prepared"
+        ? writePreparedPlanChange(target, target.handle!, prepared.prepared, true)
+        : writePlanChange(target, target.handle!, prepared.bytes, { allowRebase: true });
     }, destination, isAutomatic(command), saved => {
       if (saved.rebasedOperation !== undefined) entry = saved.rebasedOperation ?? undefined;
       if (!entry) return;

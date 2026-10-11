@@ -41,10 +41,25 @@ test("画面・計算・接続・対応説明の変更と画面の追加漏れ�
     assert.ok(staleScreens(review, calculation, screenData).includes("initiative-list"), "間接的に使う計算規則の変更も検出する");
     const wiring = await screenImplementations(async file => {
       const text = await read(file);
-      return file.endsWith("/HomePage.tsx") ? text.replace("contents.kindSelections[", "currentContents.kindSelections[") : text;
+      return file.endsWith("/WorkspacePage.tsx") ? text.replace("contents.kindSelections[", "currentContents.kindSelections[") : text;
     });
     assert.ok(staleScreens(review, wiring, screenData).includes("initiative-list"), "親画面から渡す表示元の変更も検出する");
-    assert.ok(staleScreens(review, { ...implementations, "new-screen": "new-source" }, screenData).includes("new-screen"));
+    for (const source of ["HomePage.tsx", "WorkspacePage.tsx", "useHomeWorkspace.tsx", "planProcessing.worker.ts", "planProcessingTasks.ts"]) {
+      const deferred = await screenImplementations(async file => {
+        const text = await read(file);
+        if (!file.endsWith("/" + source)) return text;
+        return source === "WorkspacePage.tsx"
+          ? text.replace("const { accounts, initiatives } = contents;", "const { accounts, initiatives } = workspace.currentContents;")
+          : text + "\n// Changed implementation\n";
+      });
+      assert.ok(staleScreens(review, deferred, screenData).includes("initiative-list"), source + "の変更も検出する");
+    }
+    const renamed = await screenImplementations(async file => {
+      const text = await read(file);
+      return file.endsWith("/WorkspacePage.tsx") ? text.replace('case "initiative-list":', 'case "new-screen":') : text;
+    });
+    assert.ok(staleScreens(review, renamed, screenData).includes("new-screen"), "新しい描画分岐に対応説明が必要");
+    assert.ok(staleScreens(review, renamed, screenData).includes("initiative-list"), "削除した描画分岐も検出する");
     assert.ok(staleScreens(review, implementations, screenData.filter(screen => screen.page !== "initiative-list")).includes("initiative-list"));
     const descriptions = screenData.map(screen => screen.page === "initiative-list" ? { ...screen, calculated: ["新しい説明"] } : screen);
     assert.ok(staleScreens(review, implementations, descriptions).includes("initiative-list"));

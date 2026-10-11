@@ -403,9 +403,13 @@ Chrome Web Store用のアイコン・販促画像2種類・スクリーンショ
 - `Triadichrome-extension/src/core/autoSave.ts`：入力待ち、日本語変換、保存中の追加入力、再試行。
 - `Triadichrome-extension/src/extension/PlanSession.ts`：履歴の表示情報をファイル確定前に準備し、確定後は保存基準と操作履歴を更新します。保存済み計画の正本と保存・許可準備・履歴・終了の直列実行。ファイル確定の成功後だけ画面へ公開します。
 - `Triadichrome-extension/src/core/domain/planCommands.ts`：型で区別した更新命令、自動保存の判定、保存先選択前の入力検証。`core/storage/planCommands.ts`が命令をSQLiteの更新処理へ接続し、計算用workerも直接利用します。
-- `Triadichrome-extension/src/extension/planCommands.ts`：更新命令と保存先選択・実ファイルへの保存の接続。`planFile.ts`が外部変更を確認し、`triadicFile.ts`が実ファイルへの確定を行います。
+- `Triadichrome-extension/src/extension/preparePlanCommand.ts`：更新命令から保存データと取り消し用の状態を準備します。`PlanSession.ts`が保存先選択・保存順序・保存後の公開を所有します。`planFile.ts`が外部変更を確認し、`triadicFile.ts`が実ファイルへの確定を行います。
 - `Triadichrome-extension/src/extension/ExtensionPage.tsx`：ファイル操作の入口。`filePicker.ts`が保存先選択、`usePlanSession.ts`が保存済み状態の購読と5分の記録期限を担当します。時計の後退で期限前に記録処理が終わった場合も、最新の期限で予約し直します。
-- `Triadichrome-extension/src/extension/HomePage.tsx`：共通ヘッダー・サイドバー・登録前の入力・過去閲覧。`useScreenHistory.ts`が画面移動の履歴を保持します。
+- `Triadichrome-extension/src/extension/HomePage.tsx`：共通画面の接続。`useHomeWorkspace.tsx`が登録前の入力・過去閲覧・移動制約を保持し、`WorkspacePage.tsx`が各画面を描画、`WorkspaceChrome.tsx`がヘッダーとサイドバーを表示します。`useScreenHistory.ts`が画面移動の履歴を保持します。
+- `Triadichrome-extension/src/extension/useFileEntry.ts`：ファイル選択・読込・前回参照を制御します。`EntryPage.tsx`は入口画面の表示を担当します。
+- `Triadichrome-extension/src/core/storage/prepareSave.ts`：集計・種別選択の更新、取り消し用の状態、時点履歴、書き出しを一つの専用接続で準備します。
+- `Triadichrome-extension/src/core/tables/grid.ts`：表入力の選択範囲、金額の正規化、貼り付け文字列の解析。施策と前年入力の固有制約は各表の処理に置きます。
+- ExcelのZIP内容の検査に直接利用するJSZipは実行用依存として宣言します。版と配布内容は維持し、MITライセンスで利用します。
 - `Triadichrome-extension/src/extension/*Page.tsx`：施策・前年・三表・マスタ・履歴の画面。名称マスタは`NamedMasterPage.tsx`、手動保存の通知は`useMasterOperation.ts`、月別入力の選択・フォーカスは`useGridInteraction.ts`を共有します。
 - `Triadichrome-extension/src/extension/ExtensionPage.css`：`styles/`の基本設定・入口・フォーム・ナビゲーション・マスタ・集計図・表・編集部品を元の適用順で読み込みます。
 - `Triadichrome-extension/src/extension/main.tsx`と`background.ts`：Reactの起動と拡張機能アイコンの入口。
