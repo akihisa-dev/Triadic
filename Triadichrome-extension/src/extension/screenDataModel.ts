@@ -79,5 +79,5 @@ export const screenData: ScreenData[] = [
   { page: "kind-master", name: "種別マスタ", tables: [documentInfo], calculated: ["前年・一次予算・確定予算はアプリの固定定義です。種別マスタの保存テーブルはありません。前年実額は previous_amounts、施策金額は initiative_amounts に種別IDで区別して保存します。一次予算は12か月、確定予算は手修正月だけを保存し、明示0と同額の明示手修正も保持します。"] },
   { page: "data-history", name: "履歴", tables: [documentInfo, use("data_history", "記録日時と計画全体の保存内容", "id", "recorded_at", "snapshot"),
     use("data_history_state", "記録の識別子と未記録の変更を管理", "next_id", "dirty_since", "saved_at", "version")],
-    calculated: ["過去閲覧では snapshot 内の計画テーブルを読み込みます。画面の移動履歴と操作の取り消し・やり直しはメモリ内に保持し、これらのテーブルへ保存しません。"] },
+    calculated: ["snapshot は業務テーブルと採番状態だけを転記して完全検査した保存内容です。過去履歴を中間コピーへ含めません。過去閲覧では snapshot 内の計画テーブルを読み込みます。画面の移動履歴と操作の取り消し・やり直しはメモリ内に保持し、これらのテーブルへ保存しません。"] },
 ];

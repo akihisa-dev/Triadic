@@ -6,7 +6,7 @@ export type QueryResult = { columns: string[]; values: SqlValue[][] };
 export interface Database {
   exec(sql: string, params?: BindingSpec): QueryResult[];
   run(sql: string, params?: BindingSpec): Database;
-  export(): Uint8Array;
+  export(schema?: string): Uint8Array;
   close(): void;
   getRowsModified(): number;
 }
@@ -68,7 +68,7 @@ export function initializeSqlite() {
         } finally { wasm.scopedAllocPop(scope); }
       }
       run(sql: string, params?: BindingSpec): Database { if (params === undefined) this.db.exec(sql); else this.db.exec({ sql, bind: params }); return this; }
-      export(): Uint8Array { return capi.sqlite3_js_db_export(this.db.pointer!); }
+      export(schema?: string): Uint8Array { return capi.sqlite3_js_db_export(this.db.pointer!, schema); }
       close(): void { this.db.close(); }
       getRowsModified(): number { return this.db.changes(); }
     }

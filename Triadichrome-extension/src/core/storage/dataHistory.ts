@@ -1,6 +1,7 @@
-import { initializeSqlite, type Database } from "./sqliteRuntime";
-import { exportTriadicDatabase, openTriadicDatabase, openBusinessSnapshot, exportBusinessSnapshot } from "./triadicDatabase";
+import type { Database } from "./sqliteRuntime";
+import { exportTriadicDatabase, openTriadicDatabase, openBusinessSnapshot, businessSchemaDefinitions } from "./triadicDatabase";
 import { DATA_HISTORY_SQL, isHistoryTimestamp } from "./dataHistorySchema";
+import { BUSINESS_TABLES, TRIADIC_FORMAT_VERSION } from "./triadicSchema";
 
 export const HISTORY_INTERVAL_MS = 5 * 60 * 1000;
 export type DataHistoryEntry = { id: number; recordedAt: string };
@@ -21,20 +22,32 @@ function state(database: Database) {
 export async function createBusinessSnapshot(bytes: Uint8Array): Promise<Uint8Array> {
   const database = await openTriadicDatabase(bytes);
   try {
-    return snapshot(database);
+    return await snapshotFromDatabase(database);
   } finally { database.close(); }
 }
 
-function snapshot(database: Database): Uint8Array {
-  database.exec("DROP TABLE IF EXISTS data_history; DROP TABLE IF EXISTS data_history_state; VACUUM;");
-  database.run("UPDATE triadic_metadata SET value = 'snapshot' WHERE key = 'document_type'");
-  return exportBusinessSnapshot(database);
-}
-/** Copy an already validated private connection; validate the resulting snapshot before returning. */
+/** Copy only canonical business rows from a validated private connection, including allocation high-water marks. */
 export async function snapshotFromDatabase(database: Database): Promise<Uint8Array> {
-  const sql = await initializeSqlite();
-  const copy = new sql.Database(database.export());
-  try { return snapshot(copy); } finally { copy.close(); }
+  // A private attached memory DB allows INSERT SELECT without transferring rows or history BLOBs through JS.
+  database.run("ATTACH DATABASE ':memory:' AS business_snapshot");
+  try {
+    for (const definition of businessSchemaDefinitions()) database.run(definition.replace(/^(CREATE (?:TABLE|INDEX|TRIGGER) )/, "$1business_snapshot."));
+    database.run(`PRAGMA business_snapshot.user_version = ${TRIADIC_FORMAT_VERSION}`);
+    database.run("PRAGMA defer_foreign_keys = ON");
+    // Schema order is canonical, but references may point forward; enforce all references in the completed snapshot.
+    database.run("BEGIN");
+    try {
+      for (const table of BUSINESS_TABLES) database.run(`INSERT INTO business_snapshot.${table} SELECT * FROM main.${table}`);
+      database.run("DELETE FROM business_snapshot.sqlite_sequence");
+      database.run("INSERT INTO business_snapshot.sqlite_sequence SELECT * FROM main.sqlite_sequence");
+      database.run("UPDATE business_snapshot.triadic_metadata SET value = 'snapshot' WHERE key = 'document_type'");
+      database.run("COMMIT");
+    } catch (error) { database.run("ROLLBACK"); throw error; }
+    const bytes = database.export("business_snapshot");
+    const checked = await openBusinessSnapshot(bytes);
+    checked.close();
+    return bytes;
+  } finally { database.run("DETACH DATABASE business_snapshot"); }
 }
 
 function initialize(database: Database, now: string): void {
@@ -90,7 +103,7 @@ export async function recordDataHistory(bytes: Uint8Array, now = new Date().toIS
   try {
     const { dirtySince } = state(database);
     if (dirtySince === null || (!force && Date.parse(now) - Date.parse(dirtySince) < HISTORY_INTERVAL_MS)) return bytes;
-    append(database, await createBusinessSnapshot(bytes), now);
+    append(database, await snapshotFromDatabase(database), now);
     database.run("UPDATE data_history_state SET dirty_since = NULL WHERE id = 1");
     return exportTriadicDatabase(database);
   } finally { database.close(); }
@@ -126,7 +139,7 @@ export async function restoreDataHistory(bytes: Uint8Array, id: number, now = ne
       restored.run("INSERT INTO data_history VALUES (?, ?, ?)", [Number(entryId), String(recordedAt), snapshot as Uint8Array]);
     }
     restored.run("UPDATE data_history_state SET next_id = ? WHERE id = 1", [state(current).nextId]);
-    append(restored, await createBusinessSnapshot(bytes), now);
+    append(restored, await snapshotFromDatabase(current), now);
     append(restored, selected, now);
     return exportTriadicDatabase(restored);
   } finally { current?.close(); restored.close(); }

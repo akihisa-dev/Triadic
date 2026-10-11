@@ -7,6 +7,7 @@ import { seedDefaultCostMaster } from "./defaultCostMaster";
 import { BUSINESS_TABLES, TRIADIC_FORMAT_ID, TRIADIC_FORMAT_VERSION, TRIADIC_SCHEMA_SQL } from "./triadicSchema";
 export { TRIADIC_FILE_EXTENSION, TRIADIC_MIME_TYPE } from "./triadicSchema";
 const allowedSchemas = new Map<DocumentType, string>();
+let businessDefinitions: string[] = [];
 const schemaObjects = (db: Database) => db.exec("SELECT type, name, tbl_name, sql FROM main.sqlite_master ORDER BY type, name")[0]?.values ?? [];
 const sqlitePromise = initializeSqlite().then(sql => {
   // Derive both exact allowlists from the authoritative DDL, including SQLite's internal objects.
@@ -16,10 +17,16 @@ const sqlitePromise = initializeSqlite().then(sql => {
       canonical.exec(TRIADIC_SCHEMA_SQL);
       if (type === "plan") canonical.exec(DATA_HISTORY_SQL);
       allowedSchemas.set(type, JSON.stringify(schemaObjects(canonical)));
+      if (type === "snapshot") businessDefinitions = schemaObjects(canonical)
+        .filter(([, name, , definition]) => definition !== null && name !== "sqlite_sequence")
+        .sort(([left], [right]) => Number(right === "table") - Number(left === "table"))
+        .map(([, , , definition]) => String(definition));
     } finally { canonical.close(); }
   }
   return sql;
 });
+/** Definitions come only from our canonical DDL, never from an input file. Tables precede indexes/triggers. */
+export function businessSchemaDefinitions(): readonly string[] { return businessDefinitions; }
 export class TriadicFileError extends Error {
   constructor(message: string) { super(message); this.name = "TriadicFileError"; }
 }
