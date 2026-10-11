@@ -23,11 +23,11 @@ test("操作説明を置かず、ホームのキャンバスを画面下端ま�
   await page.screenshot({ path: `/private/tmp/triadichrome-home-canvas-${testInfo.project.name}.png` });
 });
 
-test("グラフの全画面への入口と、1回クリック・キーボードの画面移動", async ({ app }) => {
+test("相関図の各入口と、1回クリック・キーボードの画面移動", async ({ app }) => {
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
   await expect(app.getByRole("main", { name: "ホーム", exact: true })).toBeVisible();
   const navigation = app.getByRole("navigation", { name: "メインナビゲーション" });
-  const screenNames = (await navigation.getByRole("button").allTextContents()).map(name => name.trim()).filter(name => name !== "Home" && name !== "マスタ" && name !== "履歴");
+  const screenNames = (await navigation.getByRole("button").allTextContents()).map(name => name.trim()).filter(name => name !== "Home" && name !== "マスタ" && name !== "履歴" && name !== "入出力");
   await navigation.getByRole("button", { name: "マスタ", exact: true }).click();
   await expect(app.locator(".master-menu-item strong").first()).toBeVisible();
   const masterNames = await app.locator(".master-menu-item strong").allTextContents();
@@ -126,18 +126,18 @@ test("ホバーとフォーカスで直接の関係を強調し、説明サブ�
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   const home = app.getByRole("main", { name: "ホーム", exact: true });
   await settleMotion(app.locator("body"));
-  await expect(home.locator(".home-relation-icon svg")).toHaveCount(12);
-  await expect(home.locator(".home-relation-subnode")).toHaveCount(14);
-  await expect(home.locator(".home-relation path")).toHaveCount(28);
+  await expect(home.locator(".home-relation-icon svg")).toHaveCount(13);
+  await expect(home.locator(".home-relation-subnode")).toHaveCount(17);
+  await expect(home.locator(".home-relation path")).toHaveCount(34);
   await expect(home.locator(".home-relation-subnode").filter({ hasText: /^科目を選択$/ })).toBeVisible();
   const input = home.getByRole("button", { name: "施策一覧", exact: true });
   const sizes = await home.locator(".home-relation-icon svg").evaluateAll(icons => icons.map(icon => ({ entry: !!icon.closest(".is-entry"), width: Number.parseFloat(getComputedStyle(icon).width) })));
   expect(sizes.filter(icon => icon.entry)[0]!.width).toBeGreaterThan(Math.max(...sizes.filter(icon => !icon.entry).map(icon => icon.width)));
   await input.locator(".home-relation-icon").hover();
-  await expect(home.locator(".home-relation.is-active")).toHaveCount(9);
+  await expect(home.locator(".home-relation.is-active")).toHaveCount(10);
   await input.focus();
-  await expect(home.locator(".home-relation.is-active")).toHaveCount(9);
-  await expect(home.locator(".home-relation > title")).toHaveCount(14);
+  await expect(home.locator(".home-relation.is-active")).toHaveCount(10);
+  await expect(home.locator(".home-relation > title")).toHaveCount(17);
   await expect(home.locator(".home-relation text, .home-relation rect")).toHaveCount(0);
   await expect(input.locator(".home-relation-icon")).toHaveCSS("color", "rgb(0, 51, 255)");
   await expect(home.locator(".home-relation.is-active path").first()).toHaveCSS("stroke-opacity", "0.55");

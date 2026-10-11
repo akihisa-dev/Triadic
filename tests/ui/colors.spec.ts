@@ -73,11 +73,13 @@ test("施策の文字・金額・科目・分類に青い編集枠が付き、�
   await attachImage(testInfo, "青い編集枠と選択アイコン", await page.locator("#app-preview").screenshot());
   await expectEditingColor(app.getByRole("textbox", { name: "備考", exact: true }));
   await expect(name).not.toHaveCSS("outline-color", blue);
+  await expect(app.getByRole("combobox", { name: "業種名", exact: true })).toBeDisabled();
+  await selectClassification(app.getByRole("combobox", { name: "部署名", exact: true }), "部署A");
   for (const label of ["展開名", "部署名", "期間名", "業種名"]) {
-    const select = app.getByRole("spinbutton", { name: label, exact: true });
+    const select = app.getByRole("combobox", { name: label, exact: true });
     await select.focus();
     await expect(select).toHaveCSS("outline-color", blue);
-    await expect(select.locator(".is-selected")).toHaveCSS("color", ink);
+    await expect(select).toHaveCSS("color", ink);
   }
   const account = app.getByRole("combobox", { name: "1行目の勘定科目", exact: true });
   await account.focus();
@@ -98,13 +100,12 @@ test("施策の文字・金額・科目・分類に青い編集枠が付き、�
 
 test("前年金額は編集位置だけ青く、範囲選択の背景と罫線はグレーを保つ", async ({ page, app }) => {
   await navigate(app, "前年入力");
-  const industry = app.getByLabel("業種名", { exact: true });
-  const industryChoice = industry.getByRole("button", { name: "直営自動車", exact: true });
-  await page.keyboard.press("Tab");
-  await industryChoice.focus();
-  await expect(industryChoice).toBeFocused();
+  const department = app.getByRole("combobox", { name: "部署名", exact: true });
+  await selectClassification(department, "部署A");
+  const industry = app.getByRole("combobox", { name: "業種名", exact: true });
+  await industry.focus();
+  await expect(industry).toBeFocused();
   await selectClassification(industry, "直営自動車");
-  await selectClassification(app.getByLabel("部署名", { exact: true }), "部署A");
   await page.mouse.move(page.viewportSize()!.width - 10, 200);
   await settleMotion(app.locator("body"));
   const april = app.getByRole("textbox", { name: "売上高 4月の前年金額", exact: true });
@@ -126,15 +127,15 @@ test("全マスタの登録・編集欄と集計編集にも青を適用する",
     await navigate(app, "マスタ");
     await app.locator(".master-menu").getByRole("button", { name: new RegExp(`^${master}`) }).click();
     await expect(app.getByRole("heading", { name: master, exact: true })).toBeVisible();
-    for (const input of await app.locator(".account-master-form input").all()) await expectEditingColor(input);
+    for (const input of await app.locator(".account-master-form input:not([type=checkbox])").all()) await expectEditingColor(input);
     await app.locator(".account-master-list").getByRole("button", { name: /を編集$/ }).first().click();
-    for (const input of await app.locator(".account-master-table input").all()) await expectEditingColor(input);
+    for (const input of await app.locator(".account-master-table input:not([type=checkbox])").all()) await expectEditingColor(input);
   }
   await navigate(app, "マスタ");
   await app.locator(".master-menu").getByRole("button", { name: /^勘定科目マスタ/ }).click();
   await app.getByRole("button", { name: "売上集計を編集", exact: true }).click();
-  for (const input of await app.locator(".account-master-table input:not(:disabled)").all()) await expectEditingColor(input);
-  const target = app.locator(".account-master-table input").first();
+  for (const input of await app.locator(".account-master-table input:not(:disabled):not([type=checkbox])").all()) await expectEditingColor(input);
+  const target = app.locator(".account-master-table input:not([type=checkbox])").first();
   await target.focus();
   await expect(target).toHaveCSS("outline-color", blue);
   await expect(app.locator('.sidebar-item[aria-current="page"] svg')).toHaveCSS("color", blue);

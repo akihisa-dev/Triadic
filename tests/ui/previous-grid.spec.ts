@@ -55,8 +55,8 @@ test("前年セルの範囲入力・集計・無効な貼り付け・保存後�
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("button", { name: "前年入力", exact: true }).first().click();
-  await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
   await selectClassification(app.getByRole("combobox", { name: "部署名", exact: true }), "部署A");
+  await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
   await page.mouse.move(page.viewportSize()!.width - 10, 200);
   await settleMotion(app.locator(".home-layout"));
   const cell = (name: string, month: number) => app.getByRole("textbox", { name: `${name} ${month}月の前年金額`, exact: true });
@@ -91,8 +91,8 @@ test("前年セルの範囲入力・集計・無効な貼り付け・保存後�
   await expect(app.getByRole("button", { name: "総原価表", exact: true })).toBeEnabled();
   await app.getByRole("button", { name: "総原価表", exact: true }).click();
   await app.getByRole("button", { name: "前年入力", exact: true }).click();
-  await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
   await selectClassification(app.getByRole("combobox", { name: "部署名", exact: true }), "部署A");
+  await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
   await expect(april).toHaveValue("0");
   await page.mouse.move(page.viewportSize()!.width - 10, 200);
   await settleMotion(app.locator(".home-layout"));

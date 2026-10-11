@@ -45,7 +45,7 @@ for (const data of ["full", "large"] as const) {
 }
 
 
-test("展開表の比較対象を単位のすぐ右に置き、狭い画面では折り返す", async ({ page, app }, testInfo) => {
+test("展開表の見出しと比較対象を表示し、狭い画面でもはみ出さない", async ({ page, app }, testInfo) => {
   await page.goto("/tests/ui/preview.html");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "展開表", exact: true }).click();
@@ -53,15 +53,18 @@ test("展開表の比較対象を単位のすぐ右に置き、狭い画面で�
   await settleMotion(app.locator("body"));
   const heading = app.locator(".expansion-table-page .initiative-list-heading");
   const inspect = async () => heading.evaluate(node => {
-    const unit = node.querySelector(".field-hint")!.getBoundingClientRect();
+    const title = node.querySelector("h1")!.getBoundingClientRect();
     const selection = node.querySelector(".kind-selection-slots")!.getBoundingClientRect();
-    return { gap: selection.left - unit.right, center: Math.abs(selection.top + selection.height / 2 - unit.top - unit.height / 2),
-      wrapped: selection.top >= unit.bottom, overflow: document.documentElement.scrollWidth > window.innerWidth,
+    return { gap: selection.left - title.right,
+      center: Math.abs(selection.top + selection.height / 2 - title.top - title.height / 2),
+      wrapped: selection.top >= title.bottom,
+      overflow: document.documentElement.scrollWidth > window.innerWidth,
       order: Array.from(node.children).map(child => child.className || child.tagName) };
   });
   let bounds = await inspect();
-  expect(bounds.order).toEqual(["H1", "field-hint", "kind-selection-slots"]);
+  expect(bounds.order).toEqual(["H1", "kind-selection-slots"]);
   expect(bounds.overflow).toBe(false);
+  await expect(heading.locator(".field-hint")).toHaveCount(0);
   if (testInfo.project.name === "desktop") {
     expect(bounds.gap).toBe(16);
     expect(bounds.center).toBeLessThan(1);
@@ -69,10 +72,9 @@ test("展開表の比較対象を単位のすぐ右に置き、狭い画面で�
   const second = app.getByRole("spinbutton", { name: "比較対象2", exact: true });
   await second.getByRole("button", { name: "確定予算", exact: true }).click();
   await expect(second).toHaveAttribute("aria-valuetext", "確定予算");
-  await expect(heading.getByText("比較：確定予算 − 一次予算", { exact: true })).toBeVisible();
   await settleMotion(heading);
   bounds = await inspect();
-  expect(bounds.order).toEqual(["H1", "field-hint", "kind-selection-slots", "field-hint"]);
+  expect(bounds.order).toEqual(["H1", "kind-selection-slots"]);
   expect(bounds.overflow).toBe(false);
   if (testInfo.project.name === "desktop") expect(bounds.gap).toBe(16);
 });

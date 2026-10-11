@@ -201,7 +201,7 @@ for (const leaveDetail of [false, true]) test(`登録取消後の画面履歴が
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "施策一覧", exact: true }).click();
   await app.getByRole("button", { name: "施策を追加", exact: true }).click();
   await app.getByRole("textbox", { name: "施策名", exact: true }).fill("画面履歴確認");
-  for (const [label, name] of ([["展開名", "コスト"], ["部署名", "部署A"], ["業種名", "直営自動車"]] as const)) await selectClassification(app.getByRole("spinbutton", { name: label, exact: true }), name);
+  for (const [label, name] of ([["展開名", "コスト"], ["部署名", "部署A"], ["業種名", "直営自動車"]] as const)) await selectClassification(app.getByRole("combobox", { name: label, exact: true }), name);
   await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).focus();
   await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).selectOption("1");
   await app.getByRole("button", { name: "登録", exact: true }).click();

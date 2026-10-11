@@ -110,7 +110,7 @@ test("ドラッグで矩形を選択して保存し、開き直しても維持�
   if (testInfo.project.name === "narrow") await page.setViewportSize({ width: 1280, height: 864 });
   await app.getByRole("textbox", { name: "施策名", exact: true }).fill("範囲入力の保存確認");
   for (const [name, value] of [["展開名", "コスト"], ["部署名", "部署A"], ["業種名", "直営自動車"]] as const) {
-    await selectClassification(app.getByRole("spinbutton", { name, exact: true }), value!);
+    await selectClassification(app.getByRole("combobox", { name, exact: true }), value!);
   }
   const cell = (row: number, month: number) => app.getByRole("spinbutton", { name: `売上高 ${month}月の金額`, exact: true }).nth(row);
   const start = (await cell(0, 4).boundingBox())!;

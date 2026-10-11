@@ -29,7 +29,7 @@ for (const scenario of ["monthly", "period", "previous", "difference", "normal"]
     // Display conditions remain available and can recover without leaving a table.
     if (scenario === "monthly") {
       await nav.getByRole("button", { name: "総原価表", exact: true }).click();
-      await app.getByRole("button", { name: "直営自動車", exact: true }).click();
+      await app.getByRole("combobox", { name: "業種名", exact: true }).selectOption({ label: "直営自動車" });
       await expect(app.getByRole("table", { name: "総原価表", exact: true })).toBeVisible();
       await expect(app.getByRole("alert")).toHaveCount(0);
     }

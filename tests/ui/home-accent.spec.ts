@@ -47,7 +47,7 @@ test("ドラッグ中は対象の青と接続線を保持し、終了後に他�
   await page.mouse.move(box.x + box.width / 2 + 40, box.y + box.height / 2 + 20, { steps: 8 });
   await expect(icon).toHaveCSS("color", blue);
   await expect(target).toHaveClass(/is-selected/);
-  await expect(home.locator(".home-relation.is-active")).toHaveCount(1);
+  await expect(home.locator(".home-relation.is-active")).toHaveCount(2);
   await expect(home.locator(".home-relation.is-active path").first()).toHaveCSS("stroke", blue);
   await page.mouse.up();
   await expect(home).toBeVisible();
