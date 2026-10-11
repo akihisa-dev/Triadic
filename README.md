@@ -1,4 +1,506 @@
 <p align="center">
+  <img src="branding/logo-512.png" alt="Triadichrome logo" width="96" height="96">
+</p>
+
+# Triadichrome
+
+[English](#english) · [日本語](#日本語)
+
+<a id="english"></a>
+
+## English
+
+**A Chrome extension for building budgets from initiatives and checking them in three tables.**
+
+Enter what each initiative will do, which accounts will change, in which months, and by how much compared with the previous year to build a company's annual budget. The initiative list, cost summary, and breakdown table all use the same previous-year actuals and initiative adjustments, so you do not need to copy figures between tables.
+
+This app is for people who want to prepare budgets currently handled in Excel in the order they think through initiatives. Plans are managed in local `.triadic` files; calculations and saving take place on your device. Plan data is not sent to external servers.
+
+[Getting started](#getting-started) · [Main features](#main-features) · [Detailed operations](#screens-and-operations-in-detail) · [Excel import and export](#excel-import-and-export) · [Development](#development)
+
+## One plan, three perspectives
+
+The budget formula is **previous-year actuals + total initiative adjustments = budget**. Enter changes from the previous year for each initiative, rather than the total budget. We call these three views of the same plan “three-way equivalence” (三面等価).
+
+| Table | What it shows | When to use it |
+|---|---|---|
+| Initiative list (施策一覧) | Monthly changes in revenue, expenses, and profit for each initiative | Review individual activities and edit them through their names |
+| Cost summary (総原価表) | Previous year, budget, differences, and profit margins by account and aggregation | Filter by industry and department to review overall income and expenses |
+| Breakdown table (展開表) | Revenue and profit changes by categories such as cost, rate revision, and sales expansion | Check which activities caused budget changes |
+
+```mermaid
+flowchart TD
+  previous[Previous-year actuals] --> plan[Calculate budget from previous year plus initiative adjustments]
+  initiatives[Monthly adjustments for each initiative] --> plan
+  initiatives --> list[Initiative list: adjustments by activity]
+  plan --> cost[Cost summary: income and expenses by account]
+  plan --> expansion[Breakdown table: changes by category]
+```
+
+For example, if an expense was 1,000 thousand yen in a month last year, entering −100 thousand yen for “Review contracts” and +50 thousand yen for “Operate new equipment” gives an account budget of 950 thousand yen. The cost summary compares this with the previous year, the initiative list shows each initiative's adjustment, and the breakdown table shows the impact by category. For this expense account, reducing expenses increases profit and adding expenses reduces it.
+
+## Main features
+
+| Capability | What it enables |
+|---|---|
+| Enter all 12 months from April through the following March | Edit an initiative's name, notes, classifications, and monthly amounts on one screen |
+| Manage initial and final budgets | The final budget inherits the initial budget, with manual overrides only for changed months |
+| Select, copy, and paste table ranges | Enter multiple months, paste from Excel, and fill a range with one value |
+| Configure accounts, aggregations, and classifications per file | Adapt account order, aggregation signs, industries, departments, breakdown categories, and periods to your plan |
+| Compare months, quarters, half-years, and the full year | Check period amounts and budget differences in the cost summary and breakdown table |
+| Export the three tables to Excel and import a previous-year template | Work with plan tables in Excel and update previous-year actuals in bulk from a dedicated template |
+| Autosave and undo/redo the latest 100 operations | Save edits to registered data and undo successful changes one at a time |
+| Record, view, and restore past states | Keep snapshots in the same plan file and restore the entire plan to a selected point |
+| Inspect data and calculation rules in the app | Check the basis of displayed values through “Screens and data,” “How calculations work,” and “Processing flow” on Home |
+
+Enter amounts in **thousands of yen with up to three decimal places**. `120` means 120,000 yen, and `0.001` means 1 yen. Calculations and storage use whole yen; only table displays round to whole thousands of yen. Rounded display values are never used as calculation inputs.
+
+## Getting started
+
+See [Load in Chrome](#load-in-chrome) for installation steps. The repository's `dist/extension/` contains the loadable distribution. To build from source, follow [Development](#development).
+
+1. **Create or open a file.** Open the entry screen through the extension icon and choose a fiscal year and save location with “New” (新規作成). Open existing plans with “Open file” (ファイルを開く) or drag and drop, and reopen the last file with “Continue” (続きから). Each file has one fiscal year, which cannot be changed after creation.
+2. **Prepare accounts and classifications.** New files include 57 accounts and 15 aggregations. Review accounts, aggregations, breakdown categories, departments, and industries under “Masters” (マスタ), adding or editing as needed. Set the industries assigned to each department.
+3. **Enter previous-year actuals.** In “Previous-year input” (前年入力), select one industry and one department and enter 12 months of amounts by account. You can also view totals for all departments and industries. To use Excel, export the previous-year template from “Import/export” (入出力), edit amounts, and import it.
+4. **Build up initiatives.** Choose “Add initiative” (施策を追加) in the initiative list, enter its name, breakdown category, department, industry, and monthly adjustments, then register it. Period is optional. Open registered initiatives by name to edit them; changes save automatically.
+5. **Review the three tables and export to Excel if needed.** Choose the initial or final budget and review income and expenses in the cost summary, category changes in the breakdown table, and individual activities in the initiative list. Select tables to export under “Import/export.”
+6. **Finish work.** Use “Close file” (ファイルを閉じる) in the sidebar. Unrecorded changes are added to snapshot history. If saving fails, retry while the input remains on screen. Forcibly closing or reloading a tab may lose unsaved input.
+
+To try the app before editing a real file, generate and open the [test .triadic file](#test-triadic-file). This development sample covers all features and large data sets and is not included in the distribution.
+
+### Initial and final budgets
+
+Entering initiative adjustments in the initial budget also supplies the final budget. Overriding a month in the final budget makes that month use the override while other months continue to follow the initial budget. **An explicit override of 0 is also an override.**
+
+“Apply initial budget” (一次予算を反映する) in the final budget removes overrides for every account and month in the displayed initiative and restores inheritance. Previous-year actuals are shared by both budgets and managed on the separate previous-year input screen.
+
+### Saving and history essentials
+
+Plans, masters, and snapshots are saved in the same `.triadic` file. Text and number edits to existing data autosave after 600 milliseconds without input. Registration and deletion are committed by their respective operations. If save permissions or external file updates prevent saving, the app explains why and offers recovery actions.
+
+“Undo operation” (操作を取り消す) reverses the latest 100 operations during the current file session. “History” (履歴) views and restores saved past states, including after reopening the file. Snapshots are recorded five minutes after the first successful save of an unrecorded change, on normal file closure, and before viewing past states. There is no retention expiry; delete snapshots as needed. See [Data history](#data-history).
+
+### Current scope and limitations
+
+- The app runs as a Chrome extension and handles local files for which you grant read/write permission. It does not transmit plans externally or synchronize across browsers.
+- The storage format is 25. Formats 24 and earlier, and unknown formats, are rejected without migration or overwriting. When a file changes externally, independent changes to other rows are automatically merged with your edits. Overlapping row changes or inconsistent changes are not overwritten; you can save the entire entered plan to another file and continue. Cancellation or failure preserves input and the original file. Applying external changes clears earlier undo history, leaving only your current edit undoable. Ordinary Save As is not implemented.
+- After successfully saving a conflict to another file, the displayed filename and “Continue” reference point to that file for normal editing, undo, history, and recording on closure. Cancellation or write failure leaves references unchanged. Failure to remember the reference on the device is reported; the current screen can still resume from the successful destination.
+- Excel export covers the three tables and calculation inputs; import accepts the previous-year template exported by the app. Arbitrary Excel workbooks and edits to exported three-table workbooks cannot be imported into the plan. Recalculation in an actual Excel installation has not been verified.
+- Input that fails to save remains on screen, but recovery after tab closure, reload, or forced termination is not guaranteed. Changes to the same file from multiple screens or external apps are detected to stop overwriting.
+
+See [Product policy and requirements](REQUIREMENTS.md) for goals and design decisions and [Data model](DATA_MODEL.md) for storage structure. This README describes implemented features, limitations, usage, and development. Source code is published under [AGPLv3](LICENSE).
+
+## Screens and operations in detail
+
+### Editing initiatives, navigation, and undo
+
+Select an initiative's name in the list to open its full-screen input directly. Edit its name, notes, classifications, and monthly amounts by budget kind with autosave, then use “Back to initiative list” (施策一覧へ戻る). There is no right-side input panel. Returning to the list and navigating are blocked while saving is pending or has failed, preserving input.
+
+Once a file is open, the fiscal year appears beside the logo and app name in the shared header. Fiscal-year display is centralized there. The left/right arrows beside it navigate backward and forward through screens visited during this file session. They are disabled without a destination or while saving or editing awaits confirmation. Visiting a different screen after going back replaces forward history. Details of initiatives that no longer exist, such as after undoing registration, are removed from history, so back/forward visits valid destinations. Navigation history is not saved in the file.
+
+The neighboring curved arrows are “Undo operation” and “Redo operation.” Up to the latest 100 successfully saved edits, registrations, and deletions of initiatives, previous-year amounts, masters, order, aggregations, and budget display settings can be undone one at a time. Each autosave is one operation; range input is reversed as the unit saved together. Undo results are also saved to the file; a new edit after undo replaces redo history. Saves with unchanged content do not enter history.
+
+Undo is unavailable during unsaved editing, unregistered initiative input, saving, confirmation dialogs, and past-state viewing. Failed saves preserve data and undo history for retry with the same button. Undo history exists only in memory and clears when closing/reopening a file or restoring a snapshot. Snapshot recording and deletion are excluded, and undo preserves snapshots. Outside input fields, Ctrl/Command+Z undoes, and Ctrl/Command+Shift+Z or Ctrl+Y redoes. Input fields use the browser's normal text editing.
+
+The entry screen and shared header display the version beside the app name. It is read from the root `package.json` and follows version updates.
+
+### File entry and sidebar
+
+Implemented screens include the `.triadic` entry screen, Home, previous-year input, initiative input/list/details, cost summary, breakdown table, masters, and account, aggregation, breakdown-category, industry, department, period, and budget-kind masters. Entry supports “Continue,” “Open file,” “New,” and file drops. The previous plan is above separate open/new areas. The open-file area says “Drop a .triadic file here”; dragging a file highlights the whole area with a pale blue background, blue dashed border, and “Drop here to open.” Choose the new file's year in a vertical slot, defaulting to the current April-based fiscal year with its date range shown. Numbers flow vertically, spin with wheel/drag momentum, then decelerate to a year position. Focus at drag start does not shift the page. Up/down keys and clicks on adjacent years move one year at a time; OS reduced-motion settings suppress inertia.
+
+The sidebar normally forms a 64px icon rail. Hovering shows item names and the filename; leaving collapses it. Keyboard focus within the rail also expands it. Opening with the top-left hamburger keeps it open after the pointer leaves or the screen changes. The hamburger, close button, or Esc returns to the rail. Expansion smoothly pushes the main panel aside; even on narrow screens it is limited to 280px and half the viewport width. Rail icons also open Home, Initiative list, Cost summary, Breakdown table, Previous-year input, Import/export, Masters, History, and Close file. Touch uses buttons rather than hover. Opening a file starts on Home with the rail collapsed.
+
+### Home and disclosure of calculations and data
+
+Home is a graph of screens and masters, using the same icons as the sidebar, names beneath them, and lines for relationships. The initiative-list icon is larger. Hovering, keyboard selection, or dragging turns the target icon blue and highlights directly connected lines in muted blue. This persists during dragging; names, backgrounds, relationship descriptions, and connected icons remain monochrome. Click or Enter/Space opens a screen; dragging freely moves an item without opening it. After release, attraction between connected items, repulsion between nearby items, and a force toward the center settle the layout rather than returning the item to its original position. Items and lines track dragging together and settle naturally after release even if the pointer stays. Attraction is balanced against connection counts, and movement speed is independent of refresh rate. Names are pushed apart to avoid overlap. Relationship descriptions remain visible as small subnodes connected to both endpoint items. Subnodes are draggable and do not open screens on click. The canvas extends from beneath the heading to the bottom of the screen without a height cap. Instructions for clicking, dragging, or keys are not shown on screen or in tooltips. Background dragging pans the graph; wheel, pinch, zoom buttons, and fit-all change position and scale continuously and smoothly without jumps when interrupted. Position and scale persist when returning to Home but are not saved to the plan. Reduced motion makes layout settle sooner and shortens zoom animation. The budget-kind master shows the three fixed entries: previous year, initial budget, and final budget. Previous year is the actuals baseline and is not an initiative input kind.
+
+In “Screens and data” (画面とデータ), select a screen to inspect how storage tables map to displayed items. Opening a table shows all stored fields and references and allows navigation to references used on the same screen. Previous-year input also shows storage sources for aggregation display names, membership, and signs, distinguishing subtotals, totals, and profit margins from stored actuals. Calculated tables and fixed budget-kind definitions are distinguished. This view only exposes structure, not actual data, editing, or SQL execution. “Relationship graph” (関連図) returns to the original navigation graph.
+
+“How calculations work” (計算の仕組み) and “Processing flow” (処理の流れ) show source information, processing order, conditions/exceptions, results, and storage locations for a selected topic. They cover amount precision, inheritance, three-table calculations, loading, autosave, conflicts, history, undo, and temporary state. They show neither actual plan values nor processing logs and do not change the plan. “Implementation corresponding to this explanation” (説明に対応する実装) lists supporting filenames.
+
+### Managing and selecting breakdown subcategories
+
+In Masters, “Breakdown subcategory master” (展開区分マスタ) supports registration, editing, and deletion. New files contain five subcategories—“下払いUP,” “ベースアップ,” “設備投資,” “燃料費UP,” and “電気料金UP”—all assigned to “コスト” (Cost). In the breakdown-category master's subcategory column, checkboxes assign multiple subcategories to each category. A subcategory may belong to multiple categories or none.
+
+When entering or editing an initiative, the “Breakdown subcategory” field beside the category name offers only assigned subcategories. It is optional, is not auto-selected, and may remain empty. Changing the category keeps a valid selection and clears one no longer offered. The field is disabled without a category or assigned subcategories. Assignments in use cannot be removed, and assigned subcategories cannot be deleted. Name edits and selection changes on registered initiatives autosave; failures preserve input and saved content. Subcategories, assignments, and selections are included in the same `.triadic` file, snapshots, and undo. They do not alter amounts or calculation methods.
+
+### Registering initiatives and entering monthly amounts
+
+Select monthly ranges by dragging or Shift+arrows. Copy uses tabs and line breaks; paste supports multiple rows/months, and one value fills the selected range. Ctrl/Command+Enter fills it with the value being edited; Delete/Backspace sets it to 0. Arrows, Enter, and Tab move between cells; F2 or double-click edits within a cell. Bulk input containing rows without accounts, cells outside the table, or invalid amounts is rejected entirely, preserving amounts. Input outside the initial budget creates overrides for each month in the range. Incomplete numeric input such as “-” or “1e” retains its invalid state and starting value by kind, account row, and month. Switching kinds, editing another cell, pasting, or clearing elsewhere does not release the save block. Only correcting that cell, explicitly clearing it, or canceling with Esc clears its invalid state. Cancellation restores its original amount, inheritance, and explicit override of 0. This temporary state is not saved to the plan. Ordinary blank cells mean 0.
+
+“Add initiative” in the list opens full-screen input and returns to the list after successful registration. Sidebar and Home lead to the list. Returning through the input back button, sidebar, or navigation history asks to discard entered input. Cancel or Esc preserves it; adding after discarding starts empty. Empty input returns without confirmation. Moving to master settings and canceling/failing a save preserve input.
+
+The input screen places initiative name, notes, and registration button in that order on the top row. Beneath them, dropdowns start at the left in this order: breakdown category, subcategory, department, period, industry. Name and notes are equally wide single-line inputs, each at most 20rem. Narrow screens wrap the top row in order and use two columns for selections. Dropdowns are 36px tall and use their opened candidate lists. New-input fields and registration button are also 36px tall. Category, department, and industry are required; period is optional.
+
+Changing the account or deleting a row on a registered initiative is allowed only when all kinds/months are 0 in both current input and saved data. After clearing a nonzero row, wait for a successful save. These actions also wait during autosave; if input returns to 0 after a nonzero save begins, the latest 0 must be saved first. Continuous amount entry remains available.
+
+Notifications stack vertically in a shared bottom-right area, so simultaneous total errors and save failures do not cover recovery buttons. They do not shift fields or tables.
+
+Blank rows without selected accounts are not saved. An existing all-kinds/all-months-zero row is also deleted when all months are blank and its account is deselected. Unselected rows with entered amounts or overrides remain as input errors.
+
+The period master manages only period names, initially “期間差” (carryover period) and “新規” (new). It rejects whitespace-only and duplicate names and supports registration, inline autosave editing, and confirmed deletion. Period selection is optional beside department in initiative input and autosaves after registration. Periods used by current input or registered initiatives cannot be deleted; renaming preserves references. Selecting a period does not change the fiscal year, monthly amounts, or calculations.
+
+The initiative list places breakdown category, period, initiative name, and start year/month to the left of numeric columns, fixing their headers and cells during horizontal scrolling. Category/period names reflect the current master names; unselected values are blank. Narrow screens shrink fixed columns and wrap long initiative names to leave room for amounts.
+
+Start year/month is automatically derived from the period classification and monthly amounts, separately for initial/final budgets at load time. The list shows the selected kind's result. “New” uses the first nonzero month in the current fiscal year. “Carryover period” treats April through the last nonzero month as continuous and uses the following month in the previous fiscal year as the start. Intermediate zero months count as continuous. The check occurs before positive and negative account rows cancel, and respects final-budget overrides of 0. It is blank for all-zero months, no period, custom classifications, or a carryover period starting after April or continuing through March. Renaming preserves classification rules, and saving amounts/periods derives it from the new source data. The start date cannot be edited directly.
+
+Amount areas do not permanently display unit, precision, or comparison-formula notes. See this document and Home's calculation explanation. Initiative input/detail cells display numbers only. Above the final-budget table, one “Apply initial budget” action clears every account/month override, including 0, for the displayed initiative. It then follows initial-budget changes. Before registration this changes input; afterward it saves as one autosave operation. Failed saves preserve input with retry/discard available. Storage format, units, and precision are unchanged.
+
+Monthly initiative input uses shaded month headers and light row/column borders. Account selection and deletion share each row, with compact amount padding. Three monthly total rows—revenue, expenses, profit—always appear at the bottom in the order and composition defined by the amount-item master. Rows without accounts or attributes are excluded, and no rows still displays 0. Effective amounts for the selected budget are added/subtracted in yen according to the composition signs and rounded to whole thousands only for display. Totals follow input, account changes, row addition/deletion, kind changes, and applying the initial budget; totals themselves are not saved. Invalid amounts or out-of-range totals leave affected totals blank and report why. Input the browser cannot interpret numerically leaves totals blank.
+
+### Entering previous-year actuals
+
+Previous-year input places heading, department, and industry in that order, with the industry dropdown directly beside department. Narrow screens wrap controls and the table uses remaining height. Initially it shows totals for all departments/industries. Selecting a department restricts industries to its memberships and auto-selects a sole candidate. Valid selections remain; an invalid selection returns to all-industry totals. If either selection is “all,” totals are read-only; selecting both individually enables monthly entry. Selections are not saved to the plan. Read-only first-half (April–September), second-half (October–March), and full-year totals follow April–March. Unrounded monthly yen amounts are summed; period profit margin is ordinary profit divided by revenue aggregation. Period columns are excluded from editing, range paste, and saving; overflow leaves affected period cells blank with a notification and preserves monthly input. During vertical scrolling, account/aggregation and month headers through the revenue aggregation row (initial display name “社内控除後売上”) stay at the top; account/aggregation names stay left during horizontal scrolling. Account cells are editable; subtotals, totals, and profit margins calculate automatically. Drag/Shift+arrows selects ranges; copy, multirow/column Excel paste, Delete/Backspace to 0, and Ctrl/Command+Enter filling are supported. Single-value paste also fills selected account cells. Arrows/Enter/Tab move among account cells; F2/double-click edits text; Esc restores the value at edit start. Paste containing invalid values, cells outside the table, or aggregation rows is rejected entirely with a notification. Classification-total overflow leaves amount/aggregation cells blank and reports it; narrow classifications to inspect and correct source amounts. Save failure preserves input with “Retry saving” (保存を再試行) and “Discard input” (入力を取り消す) in the notification.
+
+### Cost summary and breakdown comparisons and period totals
+
+The cost summary shows previous year and one or two budget kinds saved in file display settings for each month. Budget amounts equal previous-year actuals plus that kind's initiative adjustments. With only initial budget, columns are previous year, initial budget, year-on-year difference; with only final budget, previous year, final budget, year-on-year difference; with both, previous year, initial budget, final budget, year-on-year difference, initial-budget difference, regardless of selection order. Year-on-year difference is displayed budget minus previous year (final minus previous with both); initial-budget difference is final minus initial. Differences use unrounded amounts; profit-margin differences use percentage points (pt). Unconfigured aggregations and incalculable margin differences are blank. Missing previous-year and initiative input means 0. Both tables leave displayed amounts/differences blank when rounded to 0; the cost summary does so for zero margins and margin differences too. Storage and calculations are unchanged. Names stay left while months scroll horizontally. Heading and comparison targets 1/2 share a row, labels beside selectors, wrapping narrowly. Rows, columns, and padding are compact; only the table scrolls both ways, with its horizontal scrollbar at the visible bottom. Vertical scrolling fixes month/kind headers through the revenue aggregation row (initially “社内控除後売上”), scrolling expense rows below.
+
+Both tables add quarters 1–4 after June, September, December, and March; first-half total follows September's quarter, and second-half/full-year totals follow March's. First half is April–September, second half October–following March, full year April–following March. Each period uses the same kind/difference columns as months and sums unrounded whole-yen monthly amounts. Cost-summary margins are recalculated as period ordinary profit / period revenue aggregation ×100, with differences in points. Existing rules for unconfigured values/attributes and zero revenue remain; period totals are not saved. Period-column backgrounds extend from headers through amounts: light gray and a left border for quarters, darker gray and bold for halves, darkest gray and stronger bold for annual totals.
+
+If the table viewport is shorter than the full fixed header block, scrolling to the bottom can hide the top of fixed headers. Screen tests check narrow-width operations and test fixed positions at heights that fit the headers.
+
+The breakdown table fixes category, period, and initiative-name columns at the left. Within each category it groups by period-master order, puts unselected periods last as blanks, and vertically merges identical period names. Initiatives within a period retain registration order; category subtotals and calculations remain. Title is left and comparison slots right on the same row to maximize table space; slots wrap on narrow screens.
+
+### Masters, aggregations, and amount precision
+
+New files contain the 57 accounts and 15 aggregations in the [agreed defaults](REQUIREMENTS.md#新規ファイルのデフォルト科目集計). Existing masters are not supplemented or overwritten. Cost-summary subtotals/totals may share display names on multiple rows; profit margin follows ordinary profit. Amount input keeps up to three decimal places in thousands of yen (one yen). Saving, initiative/previous-year aggregation, differences, and period totals use whole-yen integers without converting to fractional thousands before display. Both signs are exact up to 9,007,199,254,740,991 yen; sums/differences exceeding this range are errors. These tables display reasons in the table area while sidebar, back, kind, and classification controls remain usable. Correcting amounts or conditions recalculates; display failure does not rewrite the plan. Tables, charts, and breakdowns round to whole thousands, including negative absolute values, with negative zero shown as 0; editing preserves original precision. Margins round to one decimal place; division by zero is blank.
+
+All masters share headings, counts, compact registration fields, and bordered tables. Headers remain fixed while scrolling; light alternating backgrounds and borders separate rows. Monochrome is the base, with pale gray for editing rows. Narrow screens wrap registration fields and keep horizontal scrolling inside the table.
+
+The account master integrates accounts and aggregations, distinguishing them by account attribute without a separate type column. It lists order, account code, name, display name, attribute, aggregation, sign, and actions. Aggregation rows have attribute “Aggregation” and no code. Membership is set in the aggregation column; sign uses +/− buttons with a selection background that slides over 0.4 seconds. Selection appears immediately, further changes wait during saving, and unassigned rows cannot select a sign. Failure/cancellation restores the saved sign. Sign-only changes preserve membership order and do not rewrite unchanged shared order. Aggregation changes share a working database to prepare undo before/after states, snapshots, and display data together, avoiding duplicate full reads/validation. Full validation of before/after plans and undo states and external-update checks immediately before writing remain. Reduced motion switches the background instantly. There is no breakdown column or selection of calculation targets from the aggregation side. New attributes are revenue, cost of sales, expenses, profit, or aggregation; aggregations register without codes. Existing account/aggregation types remain. Required revenue/expense aggregations, operating profit, and ordinary profit cannot be deleted or renamed.
+
+Drag accounts or aggregations, or use up/down keys on order buttons, to reorder. Saved order applies to cost summary, previous-year input, and cost-summary Excel export. Reordering changes neither membership/signs nor amounts. Profit margin follows ordinary profit. Display name normally equals name; initial aggregations use subtotal/total names. While equal, they update together; distinct display names remain. Duplicates are permitted, whitespace-only display names rejected.
+
+Membership is limited to one parent; self-membership, membership beneath descendants, and cycles are prevented. Unassigned removes membership only, and moving an aggregation preserves descendants. Accounts in use and required, assigned, or nonempty aggregations cannot be deleted. Aggregations with no members or unconfigured child aggregations have unconfigured amounts. Failure preserves saved order/membership/signs and offers retry/discard for text edits.
+
+Shared order is stored as consecutive `master_order` positions referencing accounts/aggregations by foreign keys; custom account display names use `accounts.display_name`. Existing identifiers, amounts, and memberships remain and are included in snapshots and undo. Display names equal to official names are omitted as NULL; only custom names are stored on account rows. Information stays in the same `.triadic` without external transmission. Account deletion removes its display-name and shared-order rows.
+
+The cost summary also shows unassigned accounts. Department precedes industry dropdowns, offering individual classifications or all totals. Selecting a department limits industries to memberships and auto-selects a sole candidate. Valid selections remain; invalid ones return to all-industry totals. Classifications without amounts/initiatives are still offered. Initially all departments/industries are totaled; narrow screens wrap selectors. Selection is not saved in the plan.
+
+### Autosave and recovery
+
+Initiatives and masters belong to each plan file and save to `.triadic` when registration/change/deletion succeeds, persisting after reopening without external transmission. Registration/deletion asks for a destination if none exists. When autosave needs a destination or write permission, follow “Retry saving” to select/grant it. Cancellation/failure preserves saved data, the original file, and editing fields. While autosave waits, runs, or has failed, screen changes and file closure are blocked; reload/tab closure requests browser confirmation regardless of unsaved input. External updates trigger validation and merging of independent row changes; overlapping changes protect original content and offer saving the entered plan to another file.
+
+Except registration/deletion, edits to existing initiatives, accounts, aggregations, categories, industries, departments, and periods autosave. Text, numbers, and selections wait 600ms without input, then validate and save the entire editing target; Japanese IME composition delays saving. Account reorder and graph membership/sign changes save when operated. Input continues during saving, with later input saved in order. Normal saving shows no status/recovery controls; only failures show reasons, retry, and discard in notifications. Notifications persist until recovery without shifting fields/tables. Discard restores the last successfully saved state; it does not undo saved changes. Unsaved input exists only in memory and is lost on forced reload/closure. Independent external row changes merge automatically. Overlapping/inconsistent changes do not overwrite; save the entire entered plan to another file to continue. Cancellation/failure preserves input/original file. Applying external changes resets old undo history, leaving your current edit undoable. Ordinary Save As is not implemented.
+
+Closing/reloading app tabs/windows, including entry, or leaving for another page requests standard browser confirmation, whose wording is browser-controlled. It may not appear without prior interaction or on browser/OS forced termination. The [browser unload specification](https://html.spec.whatwg.org/multipage/nav-history-apis.html#prompt-to-unload-a-document) means not all exits can be prevented.
+
+Delete confirmation appears in a centered dialog independent of list size/scroll position and blocks background interaction. Cancel is initially focused; Esc also cancels. Cancellation returns focus to the original delete button and preserves list position.
+
+### Three-table display and budget selection
+
+The initiative-list heading, kind selector, and “Add initiative” share one row, wrapping on narrow screens. Monthly revenue/expenses/profit are shown; expenses total expense-attribute accounts and reductions are negative. Only the table scrolls both ways inside the viewport, retaining its bottom scrollbar, top month/item headers, and left initiative names.
+
+The breakdown table shows monthly revenue/profit for one or two kinds chosen in slots. Only with two kinds does it show final-minus-initial comparison, independent of selection order. Previous year appears in top rows, not kind columns. Top rows are previous year, total, and breakdown total; total is previous year plus breakdown total. Initiatives group by category, including zero subtotals for categories without initiatives, then by period-master order and registration order within a period. Unselected periods are blank and last. Initiative names open editing and allow return to the original table. Category/period/name columns remain left. Only the table scrolls; its three header tiers (month/kind/revenue-profit) through previous year/total/breakdown total stay at the top, while initiatives and category subtotals below scroll. Header, amount, and subtotal boundaries align; long names wrap and narrow screens shrink name columns.
+
+Kind slots appear above headers in all three tables. The initiative list selects one; the other tables select one or two, with only the second optionally empty and no duplicate kinds. Defaults are final budget for the initiative list and initial budget/empty for the others. Click adjacent candidates or use arrows. Selections save per screen and persist after reopening. Cost summary shows three columns for one budget (previous year/budget/year-on-year difference) and five for both (previous year/initial/final/year-on-year/initial-budget difference). Year-on-year subtracts previous year from the displayed budget, using final with both; initial-budget difference is final minus initial. Failed saves keep the saved display and report why. Past viewing allows temporary unsaved selection. Initiative list and breakdown table include all industries/departments; cost summary filters by department then industry dropdowns. The initiative list's four fixed columns sort through headers. No screen has header filters.
+
+Monthly revenue/expense/profit totals sit at the initiative table's bottom, at the visible bottom even for short lists and fixed there during long-list scrolling. Rows do not stretch; extra height becomes space above totals. All initiatives for the displayed kind are summed in yen before rounding to thousands. Sorting never moves totals. Empty months total 0; months with unset attributes have unconfigured revenue/profit totals. Totals are not saved. Table-wide overflow displays reasons in totals while names remain editable; overflow within one initiative displays a reason in that row, preserves valid initiative amounts and all edit links, and hides totals. List calculations run only when displaying the list and do not block Home, editing, kind changes, undo, reload, or history viewing.
+
+Click category/period/name/start-date headers to toggle ascending ▲/descending ▼, initially ascending and resetting ascending on a different column. Names use Japanese name order; dates use the displayed kind's year/month; blanks always last and ties retain registration order. Only display order changes, returning to registration order on leaving and never saving to the file. Sorting also works in past viewing. Other tables and master headers show names only, without filters or “Clear.” Account-master drag/keyboard reorder remains available. See [Monthly amount requirements](REQUIREMENTS.md#月別金額と保存データ) and [Monthly amounts and storage](DATA_MODEL.md).
+
+## Excel import and export
+
+In sidebar “Import/export,” select the cost summary, breakdown table, and/or initiative list. Only selected tables and “Calculation inputs” (計算元) are exported to `yyyy年度予算.xlsx` using the plan's fiscal year (for example, `2026年度予算.xlsx`). Original headers, borders, backgrounds, column widths, and body merges of category names remain. The breakdown table exports the same period column, ordering, vertical merges, and three fixed left columns. The initiative list fixes category, period, initiative name, and start year/month at the left, as on screen.
+
+Calculation inputs arrange source classifications, initiatives, kinds, accounts, and monthly amounts. They include the whole plan's previous-year actuals and initial/final amounts; table display conditions retain export-time choices. Editing source amounts recalculates and keeps up to three decimal places. Initial/final amounts are independent inputs. There are no master or override-only sheets; displayed rows/names/start dates/memberships remain as exported.
+
+Account/initiative sums use `SUMIFS`, period totals use `SUMIF` over contiguous ranges and `SUM` of existing subtotals, and differences/margins use arithmetic and `IF`. Account signs use addition/subtraction groups of `SUM`. Even with many nonadjacent subtotals, each `SUM` has at most 255 arguments and sums only the intended subtotals. There are no Microsoft 365-only functions, named functions, array formulas, macros, or external links. Hidden identification columns distinguish identically named initiatives/accounts. Amounts in existing calculation-input rows copied to the end are included in calculations. Display rows for new initiatives/accounts are not added automatically.
+
+For previous-year input, select multiple needed industry/department combinations and export a template, with one sheet per combination containing current amounts. Cell, row, and item counts are checked before generation; actual compressed/uncompressed sizes and structure are then checked using shared import validation. Exceeding limits prevents download and advises splitting fewer combinations across files. With no accounts, the app directs you to register accounts in Masters. Amounts that cannot retain yen precision within Excel's 15 significant digits or numeric conversion are exported as text cells; edit them as text. Ordinary amounts are numeric. Sheet names stay within 31 characters; invalid symbols and trailing apostrophes after truncation are replaced, preserving master names and displayed sheet content. Keep account/month placement and edit amounts only. Use “Import template” (フォーマットを取り込む) or drop one `.xlsx` onto the previous-year input area, review changes, and confirm. Blank cells preserve current values; 0 sets 0.
+
+Industry/department identifiers are stored as each row's `identity`, removed with deletion, preserved by renaming, and included in undo/snapshots. Old storage formats are rejected without migration. Excel import compares these identities on load and save, rejecting recreated classifications even with the same number/name; renaming is permitted. Re-export old Excel templates without identities. Formula cells, invalid amounts, wrong fiscal years, changed row/column/sheet structure, and conflicts since export reject the entire file. Successful import is one undoable operation; failed import keeps review content for retry. Past viewing permits export only.
+
+Import files are limited to 20MB. Before reading, ZIP checks enforce 2,048 entries, 8MiB per expanded entry, 32MiB total, 100,000 rows, 20 columns, 200,000 cells, and 1,000,000 XML tags; unnecessary merged cells in previous-year templates are rejected. Only canonical internal paths are accepted for ZIP entries parsed as sheets; extra prefix paths, extensions, or trailing paths are rejected before Excel parsing. Structure metadata uses exact XML attribute-name matching, avoiding confusion from similar names or quoted text when checking columns/cell positions. Parsing runs in a dedicated processing context and stops after 30 seconds. Rejection/timeout does not change the plan, and a normal file can be retried.
+
+ExcelJS 4.4.0 (MIT) and its existing XML parser saxes 5.0.1 (ISC) are bundled in the browser. saxes is pinned as a direct dependency for structural prechecks. Generation/reading remain on-device, adding no communication, Chrome permissions, or `.triadic` storage format. ExcelJS's indirect uuid dependency is pinned to patched 11.1.1. Export stores current calculated results and requests automatic recalculation when opened in Excel. Tests read generated files directly, independently evaluate formulas from source data without cached results, and compare app amounts. Actual Excel recalculation remains unverified. See [Import/export design](docs/spreadsheet-io-design.md) for design and validation scope.
+
+## Amount-item and account-attribute masters
+
+Open the amount-item master from Masters or Home's graph to view three fixed items (revenue, expenses, profit), their order, and signed account-attribute composition. Revenue = revenue − cost of sales; expenses = expenses; profit = revenue − cost of sales − expenses + profit, where right-hand terms are totals by account attribute. Addition/editing/deletion is unavailable. Display and calculations share definitions without changing storage format, calculation rules, or existing data; nothing is transmitted externally.
+
+The account-attribute master, also reached from Masters or Home, shows revenue, cost of sales, expenses, and profit in fixed names/order. It cannot be added to, edited, or deleted. It shares definitions with account-master choices and excludes aggregations. There are no new tables, migrations, or external transmission; viewing does not rewrite plans/results.
+
+## Colors
+
+Monochrome is the base; `#0033FF` marks the selected sidebar icon, active input/selection borders and text caret, and the active Home icon with directly connected lines. It applies to initiative input/details, classification choices, previous-year amounts, master registration/editing, and aggregation editing. There is no selection bar. Normal buttons, kind tabs, tables, graph names/backgrounds/descriptions, and notifications remain monochrome. Entry file-drop targets use the required pale blue background and blue dashed border with monochrome text. Import/export drop instructions use gray backgrounds/black dashed borders; history-selection checkboxes remain monochrome.
+
+`styles/base.css` manages accent via `--accent`, separate from keyboard-focus `--focus` for buttons/graphs/tables. `npm run test:ui:colors` checks application/removal, navigation, monochrome elements, drop instructions, and history selection on wide/narrow screens. See [Browser checks and automated screen tests](#browser-checks-and-automated-screen-tests) for Chrome and test environments.
+
+## Screen motion
+
+Budget/comparison slots in all three tables select adjacent candidates by click/arrows; the selection background smoothly moves to the candidate's position/width. Breakdown-table comparisons sit right of its heading. Previous-year department/industry dropdowns choose individuals or all totals. Initiative category/subcategory/department/period/industry use dropdown lists.
+
+UI positions change only with intended user actions. Save/error notifications use a fixed bottom-right area independent of body layout, so showing/updating/removing them does not shift fields/tables. Notifications change opacity only, without focus/scroll changes. Normal result notifications disappear after four seconds; errors persist until closed or the next operation.
+
+User-operated sidebar/body widths change over 320ms. Screens, drop instructions, and notifications fade out over 160ms, then new content fades in over 160ms. Button hover/press/focus/disabled states and navigation selection colors use the same timing/deceleration.
+
+Repeated operations continue from current width/opacity toward the newest state. Disappearing content remains until invisible but immediately stops accepting interaction. Reduced motion suppresses movement/press displacement and shortens width changes to 140ms and fades/button responses to 100ms, without instant switches. OS dialogs such as file pickers are outside this animation control.
+
+New screens/states also use common variables in `ExtensionPage.css` and `FadeSwap`; notifications use `StatusNotice`, confirmations `ConfirmationDialog`. Height changes are limited to areas intentionally expanded/collapsed by users.
+
+## Resume the previous file
+
+“Continue” opens the last successfully opened or saved file, showing its filename and disabled if none is remembered. It works after closing/reopening the extension, requesting read/write permission on click, then validating/loading latest contents. Startup neither reads the file nor requests permission. Moved/deleted files or denied permission produce guidance to select again with “Open file.” Cancellation/invalid files do not update memory.
+
+Because the browser does not expose absolute paths, one reopening reference (`FileSystemFileHandle`) is retained in the extension's IndexedDB with no expiry, replaced by the next successfully opened/saved reference. “Clear history” (履歴を消す), uninstalling the extension, or clearing browser storage removes it. Clear history does not delete the plan. Neither plan contents nor absolute paths are copied into browser storage, sent externally, or synchronized across browsers. No extra extension permissions are needed. This follows [Chrome's file reference/permission documentation](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access).
+
+Chrome file selection, creation, and drops yielding file references are supported. Read/write permission is checked and granted before editing opens. A drop without a reference does not start editing and directs you to “Open file.” Permission denial/canceled selection preserves the original file and last memory. Failure to remember a reference does not invalidate opening/saving; entry explains reselecting after restart. Storage compatibility follows [Storage-format policy](#storage-format-policy).
+
+## Data history
+
+“History” below Masters in the sidebar lets you select a recorded time and view past state. Screens become read-only; “Return to present” (現在に戻る) restores the current plan. Confirming “Restore this point” (この時点に戻す) restores initiatives, all-kind amounts, previous-year actuals, masters, aggregations, and saved settings together. The pre-restore state and a new snapshot remain, allowing another selection to reverse restoration.
+
+History stays in the same `.triadic`. It records five minutes after the first successful save of an unrecorded change; further saves do not extend the deadline. Normal closure and entering past viewing also record unrecorded changes. Unregistered or failed-save input is excluded. New format-25 files include history-management state and record the state before the first change on first saving. Viewing alone never rewrites files.
+
+There is no automatic deletion or expiry. Select multiple records with checkboxes to delete, or enter a device-local date/time to bulk-delete earlier records. Confirmed deletion cannot be undone and does not change the current plan. Full snapshots increase file size; deletion compacts unused space.
+
+Recording/restoring/deleting uses the current plan's destination, permissions, and conflict checks. Failures protect the original file and show guidance/retry. If recording on normal closure fails, the file remains open. Asynchronous writes during browser closure are not guaranteed; tab closure/reload/forced termination keeps only the latest successfully recorded history. No extra permissions or external transmission are added. See [Design and implementation boundaries](docs/data-history-design.md) and [Test-data coverage](samples/README.md).
+
+## Department and industry combinations
+
+Department masters assign one or more industries with checkboxes; industries may belong to multiple departments. Initial departments A/B have nine industries; new departments start unselected. Initiative candidates and previous-year input are limited to memberships; a sole industry auto-selects on department selection. Removing a combination in use or deleting an industry assigned to a department is rejected. Previous-year template import/export uses the same constraints. Memberships are stored in `department_industries`, snapshots, and undo/redo. Save failure preserves saved memberships/amounts, without transmission or automatic deletion. Format 17 and earlier are not migrated; loading rejects them without changing the original file.
+
+## Storage-format policy
+
+There is no standalone detail screen. Monthly amounts are viewed/edited in initiative details and previous-year input, including final-budget overrides, results, and snapshots.
+
+Plans use dedicated `.triadic` files, initially named `Untitled.triadic`. Each file holds one plan in a standard SQLite database. Loading/saving checks canonical storage definitions, rejecting unknown/modified tables, triggers, views, and indexes while retaining the canonical fiscal-year lock. Plans in history pass the same checks before viewing/restoration. Rejected files are not rewritten. JSON, CSV, and Excel are not storage formats.
+
+Initiatives, accounts, months, and plan amounts are shared data represented differently in the three tables. Aggregation results are not duplicated as a separate authority. Implemented features include creation, validated loading, viewing account/aggregation/category/industry/department/period/fixed-kind/fixed-attribute masters, and saving initiatives/previous-year input.
+
+Storage format is 25. Compatibility with 24 and earlier has been removed; start from new files. Unsupported old or unknown formats are rejected without migration/overwriting. New-format files cannot open in older apps.
+
+“Basic information” (`document_info`) stores fiscal year and creation/update timestamps, covering the entire saved document. Format metadata uses `triadic_metadata`. Initial/final budgets are fixed business definitions; kind tables and per-initiative years are not stored. Start year/month derives on loading from fiscal year, period rules, and effective monthly amounts by kind/account row, with no saved column. Common attributes use `initiatives`, common account rows `initiative_rows`, using the same string identifiers from addition onward. `initiative_amounts` stores whole-yen integers by row/kind ID/month. Kind 1 (initial) retains 12 months; kind 2 (final) only overridden months. Explicit 0 and overrides equal to initial values remain records; only unspecified months inherit. Shared resolution computes inheritance without duplicating stored values. Previous-year actuals use `previous_amounts` by account/industry/department/month. Screen-specific ordered kind choices use `kind_selections`. See [Monthly amounts and storage](DATA_MODEL.md) and [Implementation design](docs/single-year-plan-design.md). Nothing is transmitted externally.
+
+Master IDs are separate from names, preserving references across name/code changes. Unique constraints apply to accounts/child aggregations; required aggregations, references, duplicates, and cycles are checked on load/save. Changes and format validation complete on a copy before writing. The destination is exclusively locked against concurrent writes, latest content compared, and the lock held through commit. Concurrent saves/external updates preserve input and stop writing.
+
+## Development
+
+Use Node.js 22.12 or later and npm.
+
+For comprehensive internal restructuring, use the [Triadichrome refactoring skill](.agents/skills/refactor-triadichrome/SKILL.md). It surveys the entire repository every time and proposes an overall design preserving features, operations, and stored data. Migration/validation follows design approval; existing defects are plainly reported for a decision on fixing them.
+
+```sh
+npm ci
+npm run setup:hooks
+npm run dev
+npm run typecheck
+npm run build
+```
+
+The stack is TypeScript, React, Vite, the official SQLite WebAssembly distribution (`@sqlite.org/sqlite-wasm` 3.53.4-build2, SQLite 3.53.4), and Chrome Extension Manifest V3.
+
+SQLite is bundled and works in memory without external communication or extra permissions. Storage/history structures remain. The official npm distribution is Apache-2.0, SQLite itself is public domain, and supporting code is MIT/NCSA. Keep bundled license notices when distributing.
+
+`npm run build` typechecks, builds/validates in temporary storage, and generates loadable `dist/extension/` and distributable `dist/Triadichrome-<version>.zip`. ZIPs remain local and are excluded from Git/commit/push. Manifest is at ZIP root; source, test data, and temporary files are excluded. Tracked Manifest, standalone pages, assets, icons, and service worker continue to synchronize to `Triadichrome-extension/`. ZIP generation and runtime Excel ZIP inspection use runtime JSZip with the MIT license selected. Build then regenerates the [test .triadic file](#test-triadic-file).
+
+## Verification and Git hooks
+
+[AGENTS.md](AGENTS.md) defines scope, safety, dependency, commit/version, and Issue rules. Normally run `npm run verify`. Regular tests compare all masters in the master entry and Home graph, detecting omissions, duplicates, and extras. No dedicated browser installation is needed. See the browser section below for screen-impacting changes.
+
+| Command | Purpose |
+|---|---|
+| `npm run setup:hooks` | Enable repository Git hooks |
+| `npm run verify` | Check hooks, build including typechecks, regular tests, and matching versions |
+| `npm run verify:full` | Optional additional verification: add Playwright screen tests to verify |
+| `npm run verify:release` | Add uncommitted-change and same-name local-tag checks to verify |
+| `npm run version:next -- patch` | Show next version candidate; accept multiple classifications such as `patch patch minor patch` in oldest-commit order; change no files |
+| `npm run version:check-staged` | Check matching staged package/lockfile/Manifest versions; unchanged-version commits are allowed |
+| `npm run samples:generate` | Generate/update the test `.triadic` file; also run during build |
+| `npm run samples:check` | Check saved test file against current generator; also run during tests |
+
+Normal commits record changes without version numbers, increment classifications, or future update plans. Numbers belong only in dedicated version-update commits. Follow [AGENTS.md version rules](AGENTS.md#versioncommitrelease) to classify each historical change. For a combined update, inspect `git log --reverse <last-applied-commit>..HEAD` excluding already-applied commits, and pass classifications in order, for example `npm run version:next -- patch patch minor patch`. This computes a candidate without changing files; set it in package, lockfile, and Manifest template, build, and commit separately with the covered range recorded.
+
+After cloning, run `npm run setup:hooks`. `pre-commit` checks staged whitespace/version; `pre-push` runs `npm run verify` for build, regular tests, versions, etc. Screen tests do not run on push. Normal verification also stops without configured hooks. If setup detects other existing hooks, inspect their settings.
+
+## Display and processing of large plans
+
+Normal cost-summary rows use 24px; initiative-list/breakdown rows use 28px with compact vertical padding. Long names wrap with enough height in normal display.
+
+Above 200 rows, initiative/breakdown tables render only rows near the viewport. Scrolling accesses all rows; totals, sorting, and Excel export still use all data. Large displays fix row heights and truncate long strings.
+
+Database validation, updates, history, and pre-save file comparison run on-device in a Web Worker separate from screen interaction. Permission acquisition, exclusive writing, and post-commit screen publication retain their order. Saving takes time according to data size.
+
+`npm run perf:sample` loads the managed sample and measures loading, detail generation, change detection, one-initiative updates, and initiative-list HTML generation three times each. It does not write the sample; HTML-generation time excludes browser rendering. Use `large-plan.spec.ts` for large-data screen checks.
+
+## Updating screen-to-data mappings
+
+Mapping table names, fields, and references are generated from the authoritative storage schema using an empty in-memory database into `Triadichrome-extension/src/core/storage/dataMapSchema.generated.ts`. Japanese names, per-screen mappings, and calculation explanations live in `Triadichrome-extension/src/extension/screenDataModel.ts`. New items show storage names before Japanese labels are registered. User files are neither read nor written.
+
+`dev`, `dev:ui`, typechecks, and build generate mappings; regular tests check matching results. Changes to screen routing, screen components and their statically referenced TypeScript logic, calculation/loading logic, or mapping explanations since review stop processing with the affected screen ID. CSS-only changes are excluded, as are Home/master entry because they do not show business data in their body.
+
+After screen/field/calculation changes, reconcile mappings and explanations against implementation. Only then record review with `npm run data-map:review -- <screen-ID>` and pass `npm run verify`. Separate multiple IDs with spaces; omit IDs only after reviewing every screen. Records use `screenDataReview.json` and belong in the same commit as relevant changes/generated results. This does not automatically judge the meaning of explanations.
+
+| Command | Purpose |
+|---|---|
+| `npm run data-map:generate` | Generate storage structure and check mapping review status |
+| `npm run data-map:check` | Read-only check of generated file and review records |
+| `npm run data-map:review -- initiative-list` | Mark reconciled initiative-list implementation and mapping explanation reviewed |
+
+Calculation/processing explanations live in `mechanismModel.ts`, reviews in `mechanismReview.json`. Changes in supporting implementation/static references, descriptions, or display components are detected; unreviewed changes stop the same development/build/test paths. After reconciling inputs, order, conditions, results, and storage scope, record with `npm run mechanism-map:review -- <target-ID>`. Omit IDs only after reviewing all targets. IDs/evidence appear in explanation definitions. Adding references and reviewing also prevents omissions of new files. See [Disclosure design](docs/user-openness-design.md).
+
+## Test .triadic file
+
+Generate `samples/全機能確認用.triadic` with `npm run samples:generate` and select it in the app's Open file to operate registered test data. Amounts are thousands of yen: 120 is 120,000 yen; 0.001 is 1 yen. The baseline sample contains 140 initiatives and 516 account rows: 14 boundary-value initiatives plus 126 practical initiatives covering all seven categories × nine industries × two departments. Each specifies purpose, amount assumptions, seasonality, and start timing; it includes three snapshots and stays at or below 50,000,000 bytes. Sources are [tests/ui/sample-plan.ts](tests/ui/sample-plan.ts) and [Practical initiative definitions](tests/ui/sample-portfolio.ts).
+
+`npm run samples:generate` alone updates the file; `npm run build` and `npm run verify` also regenerate, and `npm test` checks source agreement. It uses one current fiscal year at generation. Identical year/content does not rewrite the file. Regeneration replaces this sample, so copy it elsewhere first to preserve edits. Generated samples stay local, outside Git/GitHub and extension distribution; sources/check instructions are tracked. All `.triadic` files, including samples, are excluded regardless of extension case or Git settings; pre-commit and verify reject tracked ones. Feature-addition updates follow [AGENTS.md](AGENTS.md#検証と完了条件).
+
+## Browser checks and automated screen tests
+
+For screen-impacting changes, run `npm run dev:ui` and open the [screen-test entry](http://127.0.0.1:4173/tests/ui/preview.html) in the Codex browser to check modified display/operations. Open file loads the all-feature test plan; New creates an in-memory plan with default accounts/aggregations and no initiatives. No real file selection/writing occurs. Top selectors switch to default new plans or old-format empty plans and reproduce cancellation, invalid files, save failures, and save conflicts from external updates. “Reset to entry” (入口に戻す) or reload resets test data.
+
+Regular screen data has 59 accounts, 16 aggregations, 14 initiatives, two fixed budget kinds, and previous-year actuals for nine industries × two departments. The baseline adds unused departments for multiple-industry testing (“直営自動車,” “自動車取扱”) and single-industry testing (“不動産A”) to check filtering/autoselection. It includes initial-budget 12 months, final overrides/explicit 0/second-half adjustments, and all-kinds-zero rows eligible for changes/deletion. It also covers positive/negative amounts, yen precision, multiple rows of the same account, unassigned accounts, and empty optional aggregations. To test the same 140 initiatives as the real sample, choose “基準全機能確認用（140施策）” in Test data or specify `?data=large`. The additional 126 initiatives each have nonzero effects, so initial/final totals differ from the regular 14-initiative screen tests. See [Test-data coverage](samples/README.md) for operations/expected results. `?data=overflow-monthly`, `overflow-period`, `overflow-previous`, and `overflow-difference` test aggregation overflow with savable artificial data; `overflow-previous-input` tests classification-total overflow and return to one combination; `overflow-initiative` tests final-only within-initiative overflow and edit access; `overflow-normal` is a normal-amount control.
+
+`?data=legacy` tests old-format rejection, `?data=empty` empty masters, and `?data=defaults` new defaults.
+
+The display loads the normal app entry unchanged. Components, CSS, and SQLite creation/validation are shared with the product; only file-selection/save boundaries are replaced in `tests/ui/memory-files.ts`. App changes arrive through the development server; test code is not included in distribution build entry points. Preview references exist only in memory, so Continue can be tested after closing a file within the same screen. Persistence across reload is checked by automated tests below.
+
+The following is only for optionally running existing automated screen tests. It is not required for routine development, commit, push, or release verification.
+
+```sh
+# Optional: after building, test wide/narrow screens with installed Chrome
+npm run test:ui
+
+# Inspect operation results, screenshots, and failure traces
+npm run test:ui:report
+```
+
+Screen tests launch installed Chrome headlessly (`channel: "chrome"`), without downloading a Playwright-specific browser. They use a temporary test environment rather than your normal Chrome profile/tabs. Without Chrome, these optional tests cannot run.
+
+Tests cover entry-to-Home navigation, creation/reload, sidebar toggle/keyboard interaction, screen changes with it open, selected items, cancellation, and load/save failures. Initiative tests cover single-line notes, independent amounts for repeated accounts, editing, blank-to-zero completion, input preservation across navigation, and reset after file closure. Dimensions verify sidebar/body do not overlap and body width recovers on collapse at widths 320px, 600px, and 1280px. Narrow tables remain within the body and allow editing the last month through horizontal scrolling. Preview and built distribution screens are operated at identical dimensions/data to compare entry, Home, sidebar, and initiative input targets/images. Excluding tiny rendering color/edge differences, compared differing pixels must be zero. This checks two screens generated from the same implementation rather than historical screenshots; judge design quality from saved images.
+
+Previous-file tests create actual file references in browser-specific temporary storage, checking IndexedDB memory, resume after reload, latest-content loading, replacement with one reference, clearing, creation/drop, permission denial, deletion, and invalid files. User files are not operated on.
+
+Results/images go to `playwright-report/`; failure images/traces to `test-results/ui/`, excluded from Git. Tests start/stop a dedicated port-4174 server, allowing manual port-4173 checks alongside. Extension-icon startup, permissions, service worker, and real-file saving are outside these screen tests. Startup uses [Playwright web-server configuration](https://playwright.dev/docs/test-webserver).
+
+Regular screen tests keep animations enabled and wait for completion before comparing dimensions/images. `tests/ui/motion.spec.ts` measures width, opacity, and position during rendering under normal/reduced-motion settings, checking intermediate states, no jumps on reversal, body tracking, and destinations under rapid navigation. Entry errors and master save results/errors are checked for stable field/table positions and dimensions during appearance/update/removal.
+
+Regular autosave tests check continuous input and serialized writes, IME waiting, retry, initiative updates, common-row identity, and override/inheritance protection. Screen tests verify updates without a save button, retained input/retry on failure, and persistence after reload on wide/narrow screens.
+
+Regular registration tests check four-attribute aggregation, fiscal/next-year months, repeated accounts, blanks/zero/negative/fractional amounts, old-format rejection, and protection during save cancellation/failure/external updates. Wide/narrow screen tests check return to list after registration, kind switching, recalculation after master attribute changes, reload persistence, fixed name columns, and input retention on failure.
+
+Regular cost-summary/aggregation-master tests check required aggregations, signed child aggregation, rejection of duplicate membership/cycles, bulk membership moves and descendant preservation, previous-year-plus-initiative calculation, sums by kind, reorder, old-format rejection, and failure/conflict/cancellation. Screen tests cover master setup through initiative registration, cost-summary display, membership/sign controls in the table, account order, reload persistence, and failed saves.
+
+## Load in Chrome
+
+1. Run `npm run build`.
+2. Enable Developer mode on Chrome's extensions page.
+3. Use “Load unpacked” and select `dist/extension/`.
+4. Click the extension icon to open file entry.
+
+After changes, rebuild and reload on the extensions page. Distribute `dist/Triadichrome-<version>.zip`; earlier ZIPs remain local. Distribution and same-version ZIP are copied/written/validated on the same filesystem before switching. Failed updates restore old distribution. If restoration also fails, the backup location is shown and old files remain undeleted. Automatic recovery across forced process termination/power loss is not guaranteed.
+
+## Store images
+
+`store-assets/` contains Chrome Web Store icons, two promotional images, and five screenshots. See the [Store image guide](store-assets/README.md) for placement/regeneration and [Preview](store-assets/preview.png) for images. The authoritative logo is `branding/logo.png`: three white geometric shapes on a dark-gray rounded background, no text, transparent outside the corners. Extension PNGs synchronize from `branding/icons/` during build. Entry/Home headers show the same 512px logo and browser tabs have icons. `node scripts/render-store-assets.mjs --icons-only` exports logos/icons without changing promotional images/screenshots.
+
+## Structure
+
+- `Triadichrome-extension/src/core/domain/`: Types/rules for amounts, fiscal year, kinds, classifications, initiatives, and details; independent of SQL/Chrome APIs. `aggregationOrder.ts` manages child-to-parent traversal shared by cost-summary calculations and initial master order, prioritizing saved order.
+- `Triadichrome-extension/src/core/tables/`: Display calculations for cost summary, breakdown, details, aggregation graph, and bulk input-table operations.
+- `Triadichrome-extension/src/core/storage/`: Direct SQLite creation, validation, loading, updates, history. `transaction.ts` handles updates on copies and connection cleanup.
+- `Triadichrome-extension/src/core/autoSave.ts`: Input waiting, Japanese composition, additional input during saving, retries.
+- `Triadichrome-extension/src/extension/PlanSession.ts`: Prepares history display information before file commit, then updates save baseline/undo history. Owns saved-plan authority and serializes saving, permission preparation, history, and closing; publishes to the screen only after successful file commit.
+- `Triadichrome-extension/src/core/domain/planCommands.ts`: Typed update commands, autosave decisions, input validation before destination selection. `core/storage/planCommands.ts` connects them to SQLite updates and is directly used by the calculation worker.
+- `Triadichrome-extension/src/extension/preparePlanCommand.ts`: Prepares save data/undo states from commands. `PlanSession.ts` owns destination choice, save ordering, and publication. `planFile.ts` checks external changes; `triadicFile.ts` commits to real files.
+- `Triadichrome-extension/src/core/storage/prepareOrdinarySave.ts`: Applies ordinary updates once in a dedicated connection; `commandComparison.ts` compares stored fields for target initiatives, previous-year classifications, related masters/order. Revision-only changes are not content changes; override addition/removal and explicit 0 remain distinct. Avoids full-plan reconstruction solely for change detection and screen-side string comparisons.
+- `Triadichrome-extension/src/extension/ExtensionPage.tsx`: File-operation entry. `filePicker.ts` chooses destinations; `usePlanSession.ts` subscribes to saved state and five-minute recording deadlines. If a backward clock shift ends recording before its deadline, it reschedules with the latest deadline.
+- `Triadichrome-extension/src/extension/HomePage.tsx`: Connects common screens. `useHomeWorkspace.tsx` holds preregistration input, past viewing, and navigation restrictions; `WorkspacePage.tsx` renders screens; `WorkspaceChrome.tsx` displays header/sidebar. `useScreenHistory.ts` holds navigation history.
+- `Triadichrome-extension/src/extension/useFileEntry.ts`: Controls selection/loading/last reference. `EntryPage.tsx` renders entry.
+- `Triadichrome-extension/src/core/storage/prepareSave.ts`: Prepares aggregation/kind-selection updates, undo states, snapshots, and export in one dedicated connection.
+- `Triadichrome-extension/src/core/tables/grid.ts`: Input ranges, amount normalization, pasted-text parsing; initiative/previous-year-specific constraints live in their table logic.
+- JSZip used directly for Excel ZIP inspection is a runtime dependency. Version/distributed contents remain; it uses MIT.
+- `Triadichrome-extension/src/extension/*Page.tsx`: Initiative, previous-year, three-table, master, and history screens. Name masters share `NamedMasterPage.tsx`, manual-save notices `useMasterOperation.ts`, monthly input selection/focus `useGridInteraction.ts`.
+- `Triadichrome-extension/src/extension/ExtensionPage.css`: Imports base, entry, form, navigation, master, graph, table, and editor styles from `styles/` in the original application order.
+- `Triadichrome-extension/src/extension/main.tsx` and `background.ts`: React startup and extension-icon entry.
+- `Triadichrome-extension/manifest.template.json`: Authoritative Manifest source.
+- `scripts/build.mjs`: Generates/synchronizes distribution. `node-bundle.mjs` shares temporary bundling/Wasm resolution for regular tests and sample generation.
+- `tests/core-api.ts` and `tests/sample-api.ts`: Explicit entries for regular tests and sample generation.
+- `dist/`: Loadable `extension/` is tracked so clones can immediately load the extension. ZIPs are generated locally by build and excluded from Git along with temporary build/verification files. When tracked artifacts change, update through build and include them in the same commit.
+
+See [AGENTS.md](AGENTS.md) for development, verification, and commit rules.
+
+The Excel initiative list includes monthly revenue/expense/profit total rows at the bottom. Totals cover all initiatives for the selected kind and recalculate from edits/copy-added input rows. Zero initiatives total 0.
+
+Excel recalculation uses hidden split-integer columns to preserve one-yen precision. Large source amounts are strings, split into upper integer thousands, lower six digits of integer thousands, and the yen remainder. Parts sum with SUMIFS/SUMIF/SUM; period totals, differences, and margins reference unrounded parts. Only display cells round to whole thousands. Edit source strings as thousands with up to three decimals, and copy whole rows including hidden columns when adding rows. Additional functions are IF, ISNUMBER, TEXT, ABS, LEFT, MID, LEN, FIND, VALUE, INT, and MOD. Do not enter scientific notation/invalid strings or edit hidden calculation columns.
+
+Previous-year Excel export/import indexes amounts once by industry/department/account/month IDs. `node --expose-gc scripts/measure-previous-workbook.mjs` measures equal-condition construction/validation time and memory allocation for 100/300/600 accounts, excluding compression, parsing, and screen rendering.
+
+Kind/comparison switching uses one working database to prepare saving, before/after undo data, and snapshots without rereading amounts/initiatives/masters. Full before/after validation and external comparison remain; selection applies only after successful saving. Cost summary reuses comparisons while inputs/classifications are unchanged and recalculates when they change.
+
+Breakdown tables reuse monthly amounts, subtotals, and period row structures within the screen per comparison combination/order while inputs remain unchanged. Initiative/account/previous-year/category/period/year changes rebuild them. Comparison direction, unset attributes, and range validation remain; results are not saved.
+
+The initiative list reuses monthly amounts, calculation errors, and all-initiative totals for initial/final budgets against current source data. Amount/account/year changes rebuild them, and attribute changes, undo, and snapshot restoration never reuse stale results. Sorting consults names/start dates; scrolling/save-status changes do not reorder every initiative.
+
+Breakdown computation indexes initiatives by initiative ID per kind and groups once by category ID. `node --expose-gc scripts/measure-expansion-table.mjs` observes time/memory for concentrated/distributed 100/500/1,000 initiatives. Optional screen measurement uses `PERF_MODE=expansion npx playwright test grid-performance.spec.ts --project desktop` to record React rendering, DOM count, and heap. These development-build measurements do not guarantee real-plan or whole-product performance.
+
+Previous-year drafts index amounts by industry/department/account/month and cells locate draft rows by account ID. Unchanged classifications/content reuse display aggregation; edits recalculate. Optional measurements are `node --expose-gc scripts/measure-previous-grid.mjs` (aggregation/initialization) and `PERF_MODE=previous npx playwright test grid-performance.spec.ts --project desktop` (input reflection, renders, DOM, heap).
+
+Each initiative input row retains a standard account selector. Inactive rows keep only the selected account candidate; focus/click expands all candidates, retains them while the native popup is active, and shrinks after moving to another input. Click/key selection by account ID and amount-input/save conditions remain. `PERF_MODE=initiative npx playwright test grid-performance.spec.ts --project desktop` optionally records rendering, input reflection, DOM, and heap for 100/300/600 accounts (up to 200 detail rows).
+
+Saving changed department-industry memberships auto-selects a sole candidate even in retained new-initiative input. Name, notes, amounts, and other classifications remain; failure changes neither saved memberships nor input.
+
+Cost-summary account adjustments, previous-year classification totals, aggregations, and period totals in the three tables validate the final net sum after positive/negative cancellation. Intermediate addition order does not affect results; final overflow still reports an error. Input/storage yen precision and limits remain.
+
+Industry/department creation IDs are required and unique in each row's `identity`, preserved by name/membership changes. Recreation with the same numeric ID changes identity and rejects earlier Excel templates. Missing identities are not filled, and old formats are not migrated.
+
+`master_order` with `position`, `account_id`, and `aggregation_group_id` is the only authoritative account/aggregation order. It references each item once with positions consecutive from 0. No per-item order columns or JSON order dictionaries are stored. Type-specific order is a subsequence; deletion closes gaps and addition appends.
+
+New files create/store shared order from agreed defaults. Missing/inconsistent current-format order is rejected on load, without filling from initial order. NULL `accounts.display_name` is a valid state showing the official name, not acceptance of missing columns or old formats.
+
+External merging identifies aggregation memberships by target type (account/aggregation) and ID. Parent/order/sign changes still compare as the same target, preserving unrelated memberships. Empty, inappropriate NULL, or duplicate keys that prevent safe identification reject merging and return to input preservation/separate-file saving.
+
+`aggregation_members.position` accepts only integers 0–9,007,199,254,740,991 for save/load; strings, fractions, negatives, and overflow are rejected. Valid gaps remain; addition/reassignment appends. At the numbering limit, addition is rejected before changing the plan. Sign changes within the same parent do not move order.
+
+If a save command produces unchanged saved business content, it leaves update timestamps, snapshots, and unrecorded deadlines unchanged and starts no file reads/writes or conflict resolution. Existing undo/redo remains. External changes are checked at the next actual change.
+
+Kind selection/aggregation settings validate input/current values; confirmed no-ops return original bytes without creating undo copies or starting updates. Invalid input/storage is rejected even for equal values; real changes prepare before/after undo data and snapshots.
+
+External merging identifies previous-year actuals by account/industry/department/month. New amounts in different cells both remain; local new rows receive unique IDs above existing numbering ranges. Different changes to the same cell and invalid merged references are rejected.
+
+Independent simultaneous additions of initiative rows/aggregation memberships keep previously saved order and append local additions in input order. One-sided existing-row reorder merges with additions; opposing reorders reject. Legal membership gaps remain; numbering overflow or ambiguous existing equal ranks falls back to separate-file saving. Existing load rules/storage structure remain.
+
+Excel screens and ExcelJS/JSZip/Saxes processing load on first opening import/export. Plans and other screens remain usable during loading/failure; after failure work can continue elsewhere and import/export reopened after reloading. Existing export/import and failure input preservation remain.
+
+See [Import/export loading measurements](docs/spreadsheet-loading.md) for initial/first-open methods and comparisons.
+
+Ordinary saving and external merging read plan/history together once from the same fully validated connection. Corruption/reference/input/history checks and pre-save comparison remain. [Ordinary-save performance](docs/save-performance.md) records comparisons by size/history volume, reproduction, and limits of measurements substituting for real-file saves.
+
+Undo/snapshot content copies only canonical business tables and numbering state into separate memory, without cloning/deleting all past history. Completed content passes the same full history validation. Source plans/history remain unchanged; failures release working memory. [Business-snapshot comparison](docs/business-snapshot-performance.md) records copying/time differences by history volume and conditions increasing cost.
+
+External merging does not simultaneously accept account changes/deletion of an initiative row and the other side's monthly amounts/explicit overrides, instead returning to conflict recovery. Independent month edits merge if the account stays unchanged.
+
+Saved results incorporating external initiative updates become current editing values and the autosave baseline. Input added during saving is layered as changes since submission, so later unrelated edits do not revert imported external amounts.
+
+External merging compares creation identities of departments/industries referenced by initiatives, previous-year actuals, and memberships. Input is not transferred to deleted/recreated classifications with the same number; renaming with the same identity and independent additions can merge. Categories, periods, and aggregations have no creation identities, so overlapping master/reference-side changes fall back to separate-file saving instead of automatic merging. Storage format remains.
+
+Previous-year input updates only cells whose amounts actually changed among all account/12-month drafts. Unentered zero does not create a row; existing zero/unchanged rows keep IDs/revisions. Conflict comparison uses cell amounts, not revision-only differences. Merged save results apply to previous-year input and retain input added during saving.
+
+If different new accounts from the same copied file collide on numbers, local accounts receive numbers above all copies' ranges; initiative-row, aggregation-membership, previous-year, and display-order references remap together. Order comparison uses account/aggregation type and target ID, appending local additions to previously saved order. Number mappings are not stored. Duplicate code/name additions or opposing existing-account changes reject. New initiative, subcategory, and aggregation-number collisions do not auto-merge and fall back to separate-file saving.
+
+Plan/history load/export uses the same name validation as ordinary input, rejecting names/display names containing only whitespace such as full-width spaces, newlines, and tabs. Optional display-name NULL and valid Japanese names are accepted; saved names are not auto-corrected. Invalid files are rejected without rewriting originals or changing format.
+
+Initiative monthly totals are reused in the screen while rows, input errors, kind, and attributes remain unchanged. Moving/selecting cells, editing mode, expanding account candidates, or notes-only changes do not reaggregate every row. Amount/override/inheritance reset/row/account/attribute changes, undo, and save-baseline reflection recalculate, preserving invalid-input/overflow display rules. Totals are not saved.
+
+Initiative registration/update reads only fiscal year once from the validated storage connection for year comparison. Previous-year amounts/display kinds are not reconstructed solely for this check but remain available on full-plan loading. Year-mismatch rejection and full-file validation remain.
+
+Cost-summary initiative adjustments with known target months add directly to each month's yen integer. Multimonth aggregation retains its behavior; BigInt holds intermediate cancellation, and meaningful final totals are range-checked.
+
+Open, Continue, drop, and post-creation loading obtain plan/history together through one full validation in the same connection. Both must succeed before publication; failure preserves the original session/last reference. Opening alone does not update the file. Browser detail generation occurs when needed.
+
+History types, empty state, and five-minute interval use shared SQLite-independent definitions. Entry before opening a file does not initialize SQLite; the dedicated Worker prepares it on first data processing. Node verification without a Worker runs the same processing directly.
+
+---
+
+<a id="日本語"></a>
+
+## 日本語
+
+[English](#english) · [日本語](#日本語)
+
+<p align="center">
   <img src="branding/logo-512.png" alt="Triadichromeのロゴ" width="96" height="96">
 </p>
 
