@@ -1,3 +1,4 @@
+// 展開区分の取消・履歴復元後の番号再利用、旧参照の競合拒否、通常改名・独立編集、別ファイル保存と失敗保護は tests/classification-rebase.mjs で確認する。
 // SQLite準備の失敗・同時要求・再試行・正規スキーマの一括公開は tests/sqlite-runtime.test.mjs、実Workerの再選択は tests/ui/sqlite-entry.spec.ts で確認する。
 // 期間の未選択と実ID -1・0・正数の表示と昇降順は tests/initiative-sort.mjs と tests/ui/initiative-sort.spec.ts の正常なSQLite計画で確認する。
 // 集計候補はID索引を共有し、自己・子孫を禁止する。1000/5000独立集計の参照量は tests/aggregation-data.mjs、所属・保存失敗は tests/ui/aggregations.spec.ts で確認する。

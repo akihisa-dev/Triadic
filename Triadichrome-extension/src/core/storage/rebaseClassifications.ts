@@ -1,10 +1,10 @@
 import type { Database, SqlValue } from "./sqliteRuntime";
 
-/** Numeric references may be reused after deletion; compare the durable master identity too. */
+/** Numeric references may be reused after deletion or restoration; compare the durable master identity too. */
 export function canMergeClassifications(base: Database, local: Database, external: Database): boolean {
   const databases = [base, local, external];
-  const references: Record<string, string> = { department_id: "departments", industry_id: "industries", expansion_id: "expansions", period_type_id: "period_types", parent_id: "aggregation_groups", group_id: "aggregation_groups", aggregation_group_id: "aggregation_groups" };
-  const identities = new Map(Object.values(references).map(table => [table, databases.map(db => new Map((db.exec(`SELECT * FROM ${table}`)[0]?.values ?? []).map(row => [row[0], table === "departments" || table === "industries" ? String(row[1]) : JSON.stringify(row)])))]));
+  const references: Record<string, string> = { department_id: "departments", industry_id: "industries", expansion_id: "expansions", period_type_id: "period_types", category_id: "expansion_categories", expansion_category_id: "expansion_categories", parent_id: "aggregation_groups", group_id: "aggregation_groups", aggregation_group_id: "aggregation_groups" };
+  const identities = new Map([...new Set(Object.values(references))].map(table => [table, databases.map(db => new Map((db.exec(`SELECT * FROM ${table}`)[0]?.values ?? []).map(row => [row[0], table === "departments" || table === "industries" ? String(row[1]) : JSON.stringify(row)])))]));
   for (const table of ["initiatives", "previous_amounts", "department_industries", "expansion_category_assignments", "aggregation_members", "master_order"]) {
     const columns = base.exec(`PRAGMA table_info(${table})`)[0]!.values.map(row => String(row[1]));
     const keys = table === "initiatives" ? ["id"] : table === "previous_amounts" ? ["account_id", "industry_id", "department_id", "month"] : table === "department_industries" ? ["department_id", "industry_id"] : table === "expansion_category_assignments" ? ["expansion_id", "category_id"] : table === "aggregation_members" ? ["account_id", "group_id"] : ["account_id", "aggregation_group_id"];

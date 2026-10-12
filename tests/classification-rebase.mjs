@@ -57,4 +57,67 @@ export async function verifyClassificationRebase(api) {
   try {await assert.rejects(session.dispatch({type:'initiative.register',draft},async()=>handle),/入力は.*保持/);}finally{stop();}
   assert.equal(writes,0);assert.equal(aborts,1);assert.deepEqual(stored,recreated);assert.equal(session.getSnapshot().contents.initiatives.length,0);
   console.log('PASS: 部署・業種の同番号再作成と施策・前年参照の両方向拒否、改名・独立追加許可、元ファイルと保存境界保護、取消');
+  const originalCategory=await api.changeExpansionCategoryMaster(base,{type:'add',categoryName:'旧区分'});
+  const oldCategoryContents=await api.readPlanContents(originalCategory);
+  const categoryId=oldCategoryContents.expansionCategories.at(-1).id;
+  const expansion=oldCategoryContents.expansions.find(item=>item.id===1);
+  const assignCategory=source=>api.changeExpansionMaster(source,{type:'update',id:expansion.id,expansionCode:expansion.expansionCode,expansionName:expansion.expansionName,categoryIds:[...expansion.categoryIds,categoryId]});
+  const assignedCategory=await assignCategory(originalCategory);
+  const referencedCategory=await api.registerInitiative(assignedCategory,{...draft,departmentId:1,name:'旧区分への参照',expansionCategoryId:categoryId});
+  const beforeAddition=await api.createBusinessSnapshot(base);
+  const restoredCategory=await api.applyOperationSnapshot(originalCategory,beforeAddition);
+  const replacementCategory=await api.changeExpansionCategoryMaster(restoredCategory,{type:'add',categoryName:'別区分'});
+  assert.equal((await api.readPlanContents(replacementCategory)).expansionCategories.at(-1).id,categoryId,'操作取消で採番状態も復元される');
+  for(const local of [assignedCategory,referencedCategory])for(const [a,b] of [[local,replacementCategory],[replacementCategory,local]]) {
+    const before=[originalCategory.slice(),a.slice(),b.slice()];
+    assert.equal(await api.rebasePlan(originalCategory,a,b),null,'復元後の同番号・別区分へ旧参照を移さない');
+    assert.deepEqual([originalCategory,a,b],before);
+  }
+  const history=await api.recordDataHistory(await api.trackHistoryChange(base,originalCategory), new Date().toISOString(), true);
+  const olderId=(await api.readDataHistory(history)).entries.at(-1).id;
+  const restoredHistory=await api.restoreDataHistory(history,olderId);
+  const fromHistory=await api.changeExpansionCategoryMaster(restoredHistory,{type:'add',categoryName:'履歴復元後の区分'});
+  assert.equal((await api.readPlanContents(fromHistory)).expansionCategories.at(-1).id,categoryId);
+  for(const local of [assignedCategory,referencedCategory])for(const [a,b] of [[local,fromHistory],[fromHistory,local]]) assert.equal(await api.rebasePlan(originalCategory,a,b),null,'時点履歴の復元後も旧参照を拒否');
+  const removedCategory=await api.changeExpansionCategoryMaster(originalCategory,{type:'delete',id:categoryId});
+  const normallyAdded=await api.changeExpansionCategoryMaster(removedCategory,{type:'add',categoryName:'通常削除の対照'});
+  assert.ok((await api.readPlanContents(normallyAdded)).expansionCategories.at(-1).id>categoryId,'通常削除では番号を再利用しない');
+  const renamedCategory=await api.changeExpansionCategoryMaster(originalCategory,{type:'update',id:categoryId,categoryName:'旧区分の改名'});
+  assert.equal((await api.readPlanContents(await assignCategory(renamedCategory))).expansionCategories.at(-1).categoryName,'旧区分の改名','通常の改名後も割当可');
+  for(const [a,b] of [[assignedCategory,renamedCategory],[renamedCategory,assignedCategory]]) assert.equal(await api.rebasePlan(originalCategory,a,b),null,'区分改名と新たな参照の同時変更も安全側で拒否');
+  const unrelatedCategory=await api.changeExpansionCategoryMaster(originalCategory,{type:'add',categoryName:'無関係な区分'});
+  assert.ok(await api.rebasePlan(originalCategory,assignedCategory,unrelatedCategory),'無関係な区分追加と割当は統合');
+  const renamedExisting=await api.changeExpansionCategoryMaster(referencedCategory,{type:'update',id:categoryId,categoryName:'参照を保った改名'});
+  const independentKind=await api.saveKindSelection(referencedCategory,'initiative-list',[1]);
+  for(const [a,b] of [[renamedExisting,independentKind],[independentKind,renamedExisting]]) {
+    const merged=await api.rebasePlan(referencedCategory,a,b);assert.ok(merged);
+    const actual=await api.readPlanContents(merged.bytes);
+    assert.equal(actual.expansionCategories.at(-1).categoryName,'参照を保った改名');
+    assert.equal(actual.initiatives.at(-1).expansionCategoryId,categoryId,'通常改名と独立編集は既存の参照を維持');
+  }
+  for(const mode of ['cancel','failure','save-as']) {
+    let externalStored=replacementCategory.slice(),savedElsewhere=null,originalWrites=0;
+    const sourceHandle={name:'区分外部競合.triadic',async isSameEntry(other){return other===this;},async getFile(){return new File([externalStored],this.name);},async createWritable(){let pending;return {async write(value){originalWrites++;pending=new Uint8Array(value).slice();},async close(){if(pending)externalStored=pending;},async abort(){}};}};
+    const destination={name:'区分入力を保持.triadic',async getFile(){return new File([savedElsewhere??new Uint8Array()],this.name);},async createWritable(){let pending;return {async write(value){pending=new Uint8Array(value).slice();},async close(){if(mode==='failure')throw new Error('別ファイル保存失敗');savedElsewhere=pending;},async abort(){}};}};
+    const categorySession=new api.PlanSession();await categorySession.open({...oldCategoryContents,bytes:originalCategory,name:sourceHandle.name,handle:sourceHandle});
+    const command={type:'expansion',change:{type:'update',id:expansion.id,expansionCode:expansion.expansionCode,expansionName:expansion.expansionName,categoryIds:[...expansion.categoryIds,categoryId]}};
+    const commandBefore=structuredClone(command);
+    const unregister=api.registerFileConflictRecovery(async()=>mode==='cancel'?null:destination);
+    try {
+      if(mode==='save-as') {
+        const saved=await categorySession.dispatch(command,async()=>sourceHandle);
+        assert.equal(saved.expansionCategories.at(-1).categoryName,'旧区分','選んだ区分を別ファイルへ保存');
+        assert.ok(saved.expansions.find(item=>item.id===expansion.id).categoryIds.includes(categoryId));
+        assert.equal(categorySession.getHandle(),destination);
+        await api.validateTriadicDatabase(savedElsewhere);
+      } else {
+        await assert.rejects(categorySession.dispatch(command,async()=>sourceHandle),mode==='cancel'?/入力は.*保持/:/保存失敗/);
+        assert.deepEqual(command,commandBefore,'取消・保存失敗で入力操作を変更しない');
+        assert.equal(savedElsewhere,null);
+        assert.deepEqual(categorySession.getSnapshot().contents.expansions,oldCategoryContents.expansions);
+      }
+    } finally {unregister();}
+    assert.equal(originalWrites,0);assert.deepEqual(externalStored,replacementCategory,'外部の別区分と保存データを保護');
+  }
+
 }
