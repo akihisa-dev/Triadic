@@ -73,7 +73,7 @@ export async function verifyReportWorkbooks(api, sample) {
   const expectedSheet = api.createReportWorkbook(sample, settings(tables)).getWorksheet('計算元');
   const expectedSources = expectedSheet.getRows(1, expectedSheet.rowCount).map(row => row.values.slice(1, 25));
   const indexedPlan = { ...sample };
-  for (const key of ['accounts', 'industries', 'departments', 'kinds', 'expansions', 'periodTypes']) {
+  for (const key of ['accounts', 'industries', 'departments', 'kinds', 'expansions', 'periodTypes', 'expansionCategories']) {
     indexedPlan[key] = [...sample[key]].reverse();
     if (key !== 'kinds') indexedPlan[key].find = () => { throw new Error(`${key}: 出力行ごとの全件検索は禁止`); };
   }
@@ -93,8 +93,8 @@ export async function verifyReportWorkbooks(api, sample) {
     const expansion = wb.getWorksheet('展開表');
     if (expansion) {
       assert.ok(expansion.getCell('A9').isMerged, '元の展開名の本文結合を維持');
-      assert.deepEqual([1, 2, 3].map(col => expansion.getCell(3, col).value), ['展開名', '期間名', '施策名']);
-      assert.equal(expansion.views[0].xSplit, 3);
+      assert.deepEqual([1, 2, 3, 4].map(col => expansion.getCell(3, col).value), ['展開名', '期間名', '展開区分', '施策名']);
+      assert.equal(expansion.views[0].xSplit, 4);
       const grouped = api.buildKindExpansionTable(sample, selected, 'registered');
       let row = 9;
       for (const group of grouped.groups) {
@@ -102,7 +102,8 @@ export async function verifyReportWorkbooks(api, sample) {
           const start = row;
           for (const item of period.initiatives) {
             assert.equal(expansion.getCell(row, 2).value, period.name);
-            assert.equal(expansion.getCell(row++, 3).value, item.name);
+            assert.equal(expansion.getCell(row, 3).value ?? "", sample.expansionCategories.find(category => category.id === item.expansionCategoryId)?.categoryName ?? "");
+            assert.equal(expansion.getCell(row++, 4).value, item.name);
           }
           if (row - start > 1) assert.equal(expansion.getCell(row - 1, 2).master.address, `B${start}`);
         }
@@ -130,12 +131,12 @@ export async function verifyReportWorkbooks(api, sample) {
       assert.equal(list.getCell('E5').result, rounded(sign * (remainder + kind - 1)));
       assert.equal(list.getCell('E6').result, rounded(sign * (remainder + kind - 1)));
       const expansion = output.getWorksheet('展開表');
-      assert.equal(expansion.getCell('D8').result, rounded(sign * remainder));
-      assert.equal(expansion.getCell('F8').result, rounded(sign * (remainder + 1)));
-      assert.equal(expansion.getCell(8, 4 + 3 * 6).result, rounded(sign * remainder * 3));
-      assert.equal(expansion.getCell(8, 6 + 3 * 6).result, rounded(sign * (remainder + 1) * 3));
-      assert.equal(expansion.getCell('H8').result, 0, '比較差は表示の丸め前の1円を使う');
-      assert.equal(expansion.getCell('D6').result, rounded(sign * remainder), '前年も大きい正負を正確に相殺する');
+      assert.equal(expansion.getCell('E8').result, rounded(sign * remainder));
+      assert.equal(expansion.getCell('G8').result, rounded(sign * (remainder + 1)));
+      assert.equal(expansion.getCell(8, 5 + 3 * 6).result, rounded(sign * remainder * 3));
+      assert.equal(expansion.getCell(8, 7 + 3 * 6).result, rounded(sign * (remainder + 1) * 3));
+      assert.equal(expansion.getCell('I8').result, 0, '比較差は表示の丸め前の1円を使う');
+      assert.equal(expansion.getCell('E6').result, rounded(sign * remainder), '前年も大きい正負を正確に相殺する');
       const source = output.getWorksheet('計算元');
       const input = source.getRows(2, source.rowCount - 1).find(row => row.getCell(23).value === kind);
       const oppositeRow = source.getRows(2, source.rowCount - 1).filter(row => row.getCell(23).value === kind)[1];
@@ -212,14 +213,14 @@ export async function verifyReportWorkbooks(api, sample) {
     }));
     const values = evaluator(output);
     selected.forEach((kind, i) => {
-      assert.equal(values(report, report.getCell(8, 4 + i * 2).address), count * kind);
-      assert.equal(values(report, report.getCell(8, 4 + i * 2 + 1).address), count * kind);
+      assert.equal(values(report, report.getCell(8, 5 + i * 2).address), count * kind);
+      assert.equal(values(report, report.getCell(8, 5 + i * 2 + 1).address), count * kind);
     });
-    if (selected.length === 2) assert.equal(values(report, 'H8'), count);
+    if (selected.length === 2) assert.equal(values(report, 'I8'), count);
     const source = output.getWorksheet('計算元');
     const changedRow = source.getRows(2, source.rowCount - 1).find(row => row.getCell(23).value === selected[0]);
     changedRow.getCell(9).value += 0.625;
-    assert.equal(evaluator(output)(report, 'D8'), count * selected[0] + 1, '元金額の編集を二重計上せず円精度で反映');
+    assert.equal(evaluator(output)(report, 'E8'), count * selected[0] + 1, '元金額の編集を二重計上せず円精度で反映');
     assert.equal(report.rowCount, 8 + count * 2 + 3, '空展開を保ち、補助セルで表示行を増やさない');
   }
   // #81: positive and negative non-contiguous cost members share the same limit.

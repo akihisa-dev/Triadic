@@ -192,7 +192,7 @@ Delete confirmation appears in a centered dialog independent of list size/scroll
 
 The initiative-list heading, kind selector, and “Add initiative” share one row, wrapping on narrow screens. Monthly revenue/expenses/profit are shown; expenses total expense-attribute accounts and reductions are negative. Only the table scrolls both ways inside the viewport, retaining its bottom scrollbar, top month/item headers, and left initiative names.
 
-The breakdown table shows monthly revenue/profit for one or two kinds chosen in slots. Only with two kinds does it show final-minus-initial comparison, independent of selection order. Previous year appears in top rows, not kind columns. Top rows are previous year, total, and breakdown total; total is previous year plus breakdown total. Initiatives group by category, including zero subtotals for categories without initiatives, then by period-master order and registration order within a period. Unselected periods are blank and last. Initiative names open editing and allow return to the original table. Category/period/name columns remain left. Only the table scrolls; its three header tiers (month/kind/revenue-profit) through previous year/total/breakdown total stay at the top, while initiatives and category subtotals below scroll. Header, amount, and subtotal boundaries align; long names wrap and narrow screens shrink name columns.
+The breakdown table shows monthly revenue/profit for one or two kinds chosen in slots. Only with two kinds does it show final-minus-initial comparison, independent of selection order. Previous year appears in top rows, not kind columns. Top rows are previous year, total, and breakdown total; total is previous year plus breakdown total. Initiatives group by category, including zero subtotals for categories without initiatives, then by period-master order and registration order within a period. Unselected periods are blank and last. Initiative names open editing and allow return to the original table. Category/period/subcategory/name columns remain fixed at the left. Subcategories show the current master name for each initiative; unselected ones are blank. This does not change period ordering or subtotals. Only the table scrolls; its three header tiers (month/kind/revenue-profit) through previous year/total/breakdown total stay at the top, while initiatives and category subtotals below scroll. Header, amount, and subtotal boundaries align; long names wrap and narrow screens shrink name columns.
 
 Kind slots appear above headers in all three tables. The initiative list selects one; the other tables select one or two, with only the second optionally empty and no duplicate kinds. Defaults are final budget for the initiative list and initial budget/empty for the others. Click adjacent candidates or use arrows. Selections save per screen and persist after reopening. Cost summary shows three columns for one budget (previous year/budget/year-on-year difference) and five for both (previous year/initial/final/year-on-year/initial-budget difference). Year-on-year subtracts previous year from the displayed budget, using final with both; initial-budget difference is final minus initial. Failed saves keep the saved display and report why. Past viewing allows temporary unsaved selection. Initiative list and breakdown table include all industries/departments; cost summary filters by department then industry dropdowns. The initiative list's four fixed columns sort through headers. No screen has header filters.
 
@@ -202,7 +202,7 @@ Click category/period/name/start-date headers to toggle ascending ▲/descending
 
 ## Excel import and export
 
-In sidebar “Import/export,” select the cost summary, breakdown table, and/or initiative list. Only selected tables and “Calculation inputs” (計算元) are exported to `yyyy年度予算.xlsx` using the plan's fiscal year (for example, `2026年度予算.xlsx`). Original headers, borders, backgrounds, column widths, and body merges of category names remain. The breakdown table exports the same period column, ordering, vertical merges, and three fixed left columns. The initiative list fixes category, period, initiative name, and start year/month at the left, as on screen.
+In sidebar “Import/export,” select the cost summary, breakdown table, and/or initiative list. Only selected tables and “Calculation inputs” (計算元) are exported to `yyyy年度予算.xlsx` using the plan's fiscal year (for example, `2026年度予算.xlsx`). Original headers, borders, backgrounds, column widths, and body merges of category names remain. The breakdown table exports the same period and subcategory columns, ordering, vertical merges, and four fixed left columns. The initiative list fixes category, period, initiative name, and start year/month at the left, as on screen.
 
 Calculation inputs arrange source classifications, initiatives, kinds, accounts, and monthly amounts. They include the whole plan's previous-year actuals and initial/final amounts; table display conditions retain export-time choices. Editing source amounts recalculates and keeps up to three decimal places. Initial/final amounts are independent inputs. There are no master or override-only sheets; displayed rows/names/start dates/memberships remain as exported.
 
@@ -658,7 +658,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 表の表示領域が固定見出し全体より低い場合、最下端までスクロールすると固定見出しの上部が隠れる制限があります。画面テストでは狭い幅の操作を確認し、固定位置の検査は見出しが収まる高さで行います。
 
-展開表は展開名・期間名・施策名の3列を左端に固定します。各展開内を期間マスタ順、未選択は空欄で最後にまとめ、同じ期間名は縦に結合します。同じ期間内は登録順で、展開別小計と金額計算は維持します。
+展開表は展開名・期間名・展開区分・施策名の4列を左端に固定します。各展開内を期間マスタ順、未選択は空欄で最後にまとめ、同じ期間名は縦に結合します。同じ期間内は登録順で、展開別小計と金額計算は維持します。
 
 展開表はタイトルを左側、比較対象スロットを右側に同じ横一列で配置し、表の表示領域を確保します。狭い画面ではスロットを次の行へ折り返します。
 
@@ -692,7 +692,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 施策一覧は見出し・種別選択・「施策を追加」を一行にまとめ、狭い画面では折り返します。各月の売上・費用・利益を表示します。費用は費用属性の科目の合計で、削減額は負数として表示します。表だけを画面内で縦横にスクロールでき、下端の横スクロールバー、上端の月・項目見出し、左端の施策名を表示し続けます。
 
-展開表はスロットで選んだ1〜2種別の月別売上・利益を表示します。2種選択時だけ、選択順に関係なく「確定予算−一次予算」の比較列を表示します。前年は上部の行で扱い、種別の列には加えません。上部は前年・合計・展開計で、合計は前年＋展開計です。展開名ごとに施策をまとめ、施策がない展開も小計0で表示します。各展開名の中は期間マスタ順にまとめ、同じ期間内は登録順で表示します。期間未選択の施策は最後に空欄の期間として表示します。施策名から編集へ進み、元の表へ戻れます。展開名・期間名・施策名の3列を左端に固定し、表の領域だけを縦横にスクロールできます。月・種別・売上／利益の3段の列見出しから前年・合計・展開計までをまとめて上端に固定し、縦スクロールでは下の施策行と展開別小計だけが移動します。見出し・金額・小計の列境界をそろえ、長い名称は折り返します。狭い画面では名称列を縮めて表示します。
+展開表はスロットで選んだ1〜2種別の月別売上・利益を表示します。2種選択時だけ、選択順に関係なく「確定予算−一次予算」の比較列を表示します。前年は上部の行で扱い、種別の列には加えません。上部は前年・合計・展開計で、合計は前年＋展開計です。展開名ごとに施策をまとめ、施策がない展開も小計0で表示します。各展開名の中は期間マスタ順にまとめ、同じ期間内は登録順で表示します。期間未選択の施策は最後に空欄の期間として表示します。施策名から編集へ進み、元の表へ戻れます。展開区分は各施策の選択済み区分の現在のマスタ名を表示し、未選択は空欄です。区分による並べ替えや小計は追加しません。展開名・期間名・展開区分・施策名の4列を左端に固定し、表の領域だけを縦横にスクロールできます。月・種別・売上／利益の3段の列見出しから前年・合計・展開計までをまとめて上端に固定し、縦スクロールでは下の施策行と展開別小計だけが移動します。見出し・金額・小計の列境界をそろえ、長い名称は折り返します。狭い画面では名称列を縮めて表示します。
 
 施策一覧・総原価表・展開表は、表の列見出しより上にスロット式の種別選択を置きます。施策一覧は1種、総原価表・展開表は1〜2種を選び、2つ目だけ未選択にできます。同じ種別の重複選択はできません。初期値は施策一覧が確定予算、他の2表が「一次予算・未選択」です。横並びの候補のクリックと矢印キーによる選択に対応し、選択は画面ごとにファイルへ保存して開き直しても保持します。総原価表は1予算時に「前年・選んだ予算・前年差」の3列、両予算時に「前年・一次予算・確定予算・前年差・一次予算差」の5列を表示します。前年差は表示する予算から前年を引き、両予算時は確定予算を使います。一次予算差は確定予算から一次予算を引きます。保存失敗時は保存済み表示を維持して理由を通知します。過去閲覧中は選択を一時的に変更でき、ファイルには保存しません。施策一覧・展開表は業種・部署の全件を表示し、総原価表では部署名・業種名の順に並べたドロップダウンで絞り込みます。施策一覧の4固定列は見出しから並べ替えられます。3画面とも列見出しのフィルターは設けません。
 
@@ -703,7 +703,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 ## Excelの入出力
 
-サイドバーの「入出力」で総原価表・展開表・施策一覧を選び、選んだ表と「計算元」だけを、計画の基準年度を使った`yyyy年度予算.xlsx`（例：2026年度予算.xlsx）へ出力します。元の見出し・罫線・背景・列幅・展開名の本文結合を維持します。展開表も画面と同じ期間名列・期間ごとの順序と縦結合を出力し、左端の3列を固定します。施策一覧の左端は画面と同じ「展開名・期間名・施策名・開始年月」の4列を固定します。
+サイドバーの「入出力」で総原価表・展開表・施策一覧を選び、選んだ表と「計算元」だけを、計画の基準年度を使った`yyyy年度予算.xlsx`（例：2026年度予算.xlsx）へ出力します。元の見出し・罫線・背景・列幅・展開名の本文結合を維持します。展開表も画面と同じ期間名列・展開区分列・期間ごとの順序と縦結合を出力し、左端の4列を固定します。施策一覧の左端は画面と同じ「展開名・期間名・施策名・開始年月」の4列を固定します。
 
 所属・業種・部署の変更や取消では有効な出力選択を保ち、失効した分類・前年フォーマットの組み合わせを除きます。やり直しで除いた選択を復活させず、改名では選択を保持します。選択は入出力画面内だけの情報で、計画ファイルへ保存しません。
 

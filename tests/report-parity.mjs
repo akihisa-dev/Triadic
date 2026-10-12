@@ -63,6 +63,26 @@ export function workbookCells(ws, evaluate) {
 }
 export async function verifyReportParity(api) {
   const sample = await api.readPlanContents(await api.createSamplePlan(2026));
+  // The subcategory is displayed per initiative, including windowed rows and current master names.
+  const categorized = sample.initiatives.find(item => item.expansionCategoryId != null);
+  assert.ok(categorized, '確認用データは展開区分の選択済み施策を含む');
+  const renamed = '改名 & <展開区分>';
+  for (const count of [2, 205]) {
+    const plan = { ...sample, expansionCategories: sample.expansionCategories.map(category => ({ ...category, categoryName: renamed })),
+      initiatives: Array.from({ length: count }, (_, index) => ({ ...categorized, id: index + 1, name: `区分確認${index}`,
+        expansionCategoryId: index % 2 ? null : categorized.expansionCategoryId })) };
+    const cells = markupCells(api.renderReportTables(plan, [1], 1).展開表);
+    assert.deepEqual(cells.filter(cell => cell.row === 1).slice(0, 4).map(cell => cell.text), ['展開名', '期間名', '展開区分', '施策名']);
+    const rows = cells.filter(cell => cell.col === 4 && cell.row > 6 && cell.text.startsWith('区分確認'));
+    assert.ok(rows.length >= 2);
+    if (count > 200) assert.ok(rows.length < count, '大規模表示は画面周辺の行だけを描画');
+    for (const row of rows) assert.equal(cells.find(cell => cell.row === row.row && cell.col === 3)?.text,
+      Number(row.text.replace('区分確認', '')) % 2 ? '' : renamed, '区分改名・未選択・特殊文字を通常表示と部分描画で保持');
+    const ws = api.createReportWorkbook(plan, { tables: ['expansion-table'], selections: { 'cost-table': [1], 'expansion-table': [1], 'initiative-list': [1] }, costFilter: { industries: null, departments: null } }).getWorksheet('展開表');
+    const exportedRows = ws.getRows(9, ws.rowCount - 8).filter(row => String(row.getCell(4).value).startsWith('区分確認'));
+    assert.equal(exportedRows.length, count, 'Excelは部分描画でも全施策を出力');
+    for (const row of exportedRows) assert.equal(row.getCell(3).value ?? '', Number(String(row.getCell(4).value).replace('区分確認', '')) % 2 ? '' : renamed);
+  }
   const empty = await api.readPlanContents(await api.createTriadicDatabase(2026));
   const boundaries = { ...sample, previousAmounts: [], initiatives: [{ ...sample.initiatives[0], name: '丸め 境界 & <確認>',
     rows: [{ ...sample.initiatives[0].rows[0], accountId: sample.accounts.find(a => a.accountType === 'sales').id,

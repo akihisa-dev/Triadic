@@ -55,9 +55,12 @@ test("展開表の見出しと比較対象を表示し、狭い画面でもは�
   const table = app.getByRole("table", { name: "展開表", exact: true });
   const group = table.getByRole("columnheader", { name: "展開名", exact: true });
   const period = table.getByRole("columnheader", { name: "期間名", exact: true });
+  const category = table.getByRole("columnheader", { name: "展開区分", exact: true });
   const name = table.getByRole("columnheader", { name: "施策名", exact: true });
   const groupBounds = (await group.boundingBox())!;
   const periodBounds = (await period.boundingBox())!;
+  const categoryBounds = (await category.boundingBox())!;
+  expect(categoryBounds.width).toBe(testInfo.project.name === "desktop" ? 120 : 80);
   expect(groupBounds.width).toBe(testInfo.project.name === "desktop" ? 80 : 60);
   expect(periodBounds.width).toBe(testInfo.project.name === "desktop" ? 80 : 60);
   const region = app.getByRole("region", { name: "展開表の月別種別・比較", exact: true });
@@ -65,7 +68,8 @@ test("展開表の見出しと比較対象を表示し、狭い画面でもは�
   const fixedGroupBounds = (await group.boundingBox())!;
   expect(Math.abs(fixedGroupBounds.x - groupBounds.x)).toBeLessThanOrEqual(1);
   expect((await period.boundingBox())!.x).toBeCloseTo(fixedGroupBounds.x + groupBounds.width, 0);
-  expect((await name.boundingBox())!.x).toBeCloseTo(fixedGroupBounds.x + groupBounds.width + periodBounds.width, 0);
+  expect((await category.boundingBox())!.x).toBeCloseTo(fixedGroupBounds.x + groupBounds.width + periodBounds.width, 0);
+  expect((await name.boundingBox())!.x).toBeCloseTo(fixedGroupBounds.x + groupBounds.width + periodBounds.width + categoryBounds.width, 0);
   const inspect = async () => heading.evaluate(node => {
     const title = node.querySelector("h1")!.getBoundingClientRect();
     const selection = node.querySelector(".kind-selection-slots")!.getBoundingClientRect();

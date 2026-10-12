@@ -38,6 +38,8 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
   const viewForSelection = useMemo(() => createExpansionTableView(contents),
     [contents.initiatives, contents.accounts, contents.previousAmounts, contents.expansions, contents.periodTypes, contents.fiscalYear]);
   const { table, groups, flat } = viewForSelection(selected);
+  const categoryNames = useMemo(() => new Map(contents.expansionCategories.map(category => [category.id, category.categoryName])), [contents.expansionCategories]);
+  const categoryName = (item: Initiative) => categoryNames.get(item.expansionCategoryId ?? -1) ?? "";
   const container = useRef<HTMLDivElement>(null);
   const window = useRowWindow(container, flat.length, 28, 200, 165);
   const virtual = flat.length > 200;
@@ -45,41 +47,44 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
   return <div ref={container} className="initiative-list-container" role="region" aria-label="展開表の月別種別・比較" tabIndex={0}>
       <table className={`initiative-list-table expansion-table${virtual ? " virtual-table" : ""}`} style={{ "--virtual-row-height": "28px" } as React.CSSProperties} aria-label="展開表" aria-rowcount={flat.length + 6}>
         <colgroup>
-          <col className="expansion-group-col" /><col className="expansion-period-col" /><col className="expansion-name-col" />
+          <col className="expansion-group-col" /><col className="expansion-period-col" /><col className="expansion-category-col" /><col className="expansion-name-col" />
           {tablePeriods.flatMap(period => labels.flatMap((_, index) => ["sales", "profit"].map(metric =>
             <col key={`${period.id}-${index}-${metric}`} className="expansion-amount-col" />)))}
         </colgroup><thead>
         <tr><th rowSpan={3} scope="col" className="expansion-group">展開名</th>
           <th rowSpan={3} scope="col" className="expansion-period">期間名</th>
+          <th rowSpan={3} scope="col" className="expansion-category">展開区分</th>
           <th rowSpan={3} scope="col" className="expansion-name">施策名</th>
           {tablePeriods.map(period => <th key={period.id} colSpan={labels.length * 2} scope="colgroup" className={periodCellClass(period, true)}>{period.label}</th>)}
         </tr>
         <tr>{tablePeriods.map(period => <Fragment key={period.id}>{labels.map((label, index) => <th key={index} scope="colgroup" colSpan={2} className={periodCellClass(period, index === 0)}>{label}</th>)}</Fragment>)}</tr>
         <tr>{tablePeriods.map(period => <Fragment key={period.id}>{labels.flatMap((_, index) => (["sales", "profit"] as const).map(key => <th key={`${index}-${key}`} scope="col" className={periodCellClass(period, key === "sales" && index === 0)}>{key === "sales" ? "売上" : "利益"}</th>))}</Fragment>)}</tr>
-        <tr className="expansion-previous"><th colSpan={3} scope="row" className="expansion-summary">前年</th><AmountCells values={table.previous} /></tr>
-        <tr className="expansion-total"><th colSpan={3} scope="row" className="expansion-summary">合計</th><AmountCells values={table.total} /></tr>
-        <tr className="expansion-total"><th colSpan={3} scope="row" className="expansion-summary">展開計</th><AmountCells values={table.changes} /></tr>
+        <tr className="expansion-previous"><th colSpan={4} scope="row" className="expansion-summary">前年</th><AmountCells values={table.previous} /></tr>
+        <tr className="expansion-total"><th colSpan={4} scope="row" className="expansion-summary">合計</th><AmountCells values={table.total} /></tr>
+        <tr className="expansion-total"><th colSpan={4} scope="row" className="expansion-summary">展開計</th><AmountCells values={table.changes} /></tr>
       </thead>
-      {virtual ? <tbody><WindowRows items={flat.slice(window.start, window.end).map((item, offset) => ({ item, index: window.start + offset }))} count={flat.length} height={28} columns={3 + labels.length * tablePeriods.length * 2} render={(row, index) => {
+      {virtual ? <tbody><WindowRows items={flat.slice(window.start, window.end).map((item, offset) => ({ item, index: window.start + offset }))} count={flat.length} height={28} columns={4 + labels.length * tablePeriods.length * 2} render={(row, index) => {
         const firstGroup = row.groupOffset === 0 || index === window.start;
         const groupSpan = Math.min(row.groupCount - row.groupOffset, window.end - index);
         const firstPeriod = row.periodOffset === 0 || index === window.start;
         const periodSpan = Math.min((row.period?.initiatives.length ?? 0) - row.periodOffset, window.end - index);
         return <tr key={row.item?.id ?? `subtotal:${row.group.expansion.id}`} className={row.subtotal ? "expansion-subtotal" : undefined} aria-rowindex={index + 7}>
           {firstGroup && <th rowSpan={groupSpan} scope="rowgroup" className="expansion-group" title={row.group.expansion.expansionName}>{row.group.expansion.expansionName}</th>}
-          {row.subtotal ? <><th colSpan={2} scope="row" className="expansion-subtotal-name">{row.group.expansion.expansionName}計</th><AmountCells values={row.group.values} /></>
+          {row.subtotal ? <><th colSpan={3} scope="row" className="expansion-subtotal-name">{row.group.expansion.expansionName}計</th><AmountCells values={row.group.values} /></>
             : <>{firstPeriod && <th rowSpan={periodSpan} className="expansion-period">{row.period!.name}</th>}
+              <td className="expansion-category" title={categoryName(row.item!)}>{categoryName(row.item!)}</td>
               <th scope="row" className="expansion-name"><button className="initiative-name-button" type="button" title={row.item!.note || row.item!.name} onClick={() => onOpenInitiative(row.item!)}>{row.item!.name}</button></th><AmountCells values={row.item!.values} /></>}
         </tr>;
       }} /></tbody> : groups.map(({ group, periods }) => { return <tbody key={group.expansion.id}>
         {periods.map((period, periodIndex) => period.initiatives.map((item, index) => <tr key={item.id}>
           {periodIndex === 0 && index === 0 && <th rowSpan={group.initiatives.length + 1} scope="rowgroup" className="expansion-group">{group.expansion.expansionName}</th>}
           {index === 0 && <th rowSpan={period.initiatives.length} className="expansion-period">{period.name}</th>}
+          <td className="expansion-category" title={categoryName(item)}>{categoryName(item)}</td>
           <th scope="row" className="expansion-name"><button className="initiative-name-button" type="button" title={item.note || item.name} onClick={() => onOpenInitiative(item)}>{item.name}</button></th>
           <AmountCells values={item.values} />
         </tr>))}
         <tr className="expansion-subtotal">{group.initiatives.length === 0 && <th scope="rowgroup" className="expansion-group">{group.expansion.expansionName}</th>}
-          <th colSpan={2} scope="row" className="expansion-subtotal-name">{group.expansion.expansionName}計</th><AmountCells values={group.values} />
+          <th colSpan={3} scope="row" className="expansion-subtotal-name">{group.expansion.expansionName}計</th><AmountCells values={group.values} />
         </tr>
       </tbody>; })}</table>
     </div>;

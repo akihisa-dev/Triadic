@@ -1,3 +1,4 @@
+// 展開表の期間名・展開区分・施策名の列順、設備投資の選択済み名称と未選択の空欄を画面・Excelで確認する。
 // 施策の科目欄はコードなしの全文表示と狭幅での横スクロールを tests/ui/initiative-table-layout.spec.ts で確認する。
 import { PORTFOLIO_COUNT, portfolioScenario } from "./sample-portfolio";
 // 集計所属順は現行DDLの非負・安全な整数で生成する。不正型・値域・採番境界の拒否は tests/aggregation-positions.mjs の合成DBで確認する。

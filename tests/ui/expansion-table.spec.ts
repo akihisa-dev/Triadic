@@ -13,7 +13,10 @@ test("展開名ごとの集計・並び順・編集からの移動と再読込�
   await expect(table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "撤退計", exact: true }) }).getByRole("cell").first()).toHaveText("");
   await expect(table.locator("thead tr").first().locator("th").first()).toHaveText("展開名");
   await expect(table.locator("thead tr").first().locator("th").nth(1)).toHaveText("期間名");
-  await expect(table.locator("thead tr").first().locator("th").nth(2)).toHaveText("施策名");
+  await expect(table.locator("thead tr").first().locator("th").nth(2)).toHaveText("展開区分");
+  await expect(table.locator("thead tr").first().locator("th").nth(3)).toHaveText("施策名");
+  await expect(table.getByRole("row").filter({ has: app.getByRole("button", { name: "既存商品の販売拡大", exact: true }) }).locator(".expansion-category")).toHaveText("設備投資");
+  await expect(table.getByRole("row").filter({ has: app.getByRole("button", { name: "通信運搬費と消耗品費の削減", exact: true }) }).locator(".expansion-category")).toHaveText("");
   const salesGroup = table.locator("tbody").filter({ has: app.locator(".expansion-group").filter({ hasText: /^拡販$/ }) });
   await expect(salesGroup.locator(".expansion-period")).toHaveText(["期間差", "新規"]);
   await expect(salesGroup.locator(".expansion-period").nth(1)).toHaveAttribute("rowspan", "7");

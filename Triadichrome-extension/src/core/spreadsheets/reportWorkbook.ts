@@ -66,6 +66,7 @@ function indexReportMasters(contents: PlanContents) {
     kinds: new Map(contents.kinds.map(item => [item.id, item])),
     expansions: new Map(contents.expansions.map(item => [item.id, item])),
     periods: new Map(contents.periodTypes.map(item => [item.id, item])),
+    expansionCategories: new Map(contents.expansionCategories.map(item => [item.id, item])),
     aggregations: new Map(contents.aggregations.map(item => [item.id, item])),
   };
 }
@@ -259,11 +260,11 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
     const table = expansionTable!;
     const labels = [...selected.map(k => masters.kinds.get(k)!.kindName), ...(selected.length === 2 ? ["比較"] : [])];
     const width = labels.length * 2;
-    const ws = sheet(wb, "展開表", [17, 14, 34, ...tablePeriods.flatMap(() => labels.flatMap(() => [14, 14]))], 3, 3);
+    const ws = sheet(wb, "展開表", [11, 11, 17, 34, ...tablePeriods.flatMap(() => labels.flatMap(() => [14, 14]))], 3, 4);
     ws.getCell("A2").value = `${contents.fiscalYear}年度 · 単位：千円`;
-    ws.mergeCells("A3:A5"); ws.mergeCells("B3:B5"); ws.mergeCells("C3:C5"); ws.getCell("A3").value = "展開名"; ws.getCell("B3").value = "期間名"; ws.getCell("C3").value = "施策名";
+    ws.mergeCells("A3:A5"); ws.mergeCells("B3:B5"); ws.mergeCells("C3:C5"); ws.mergeCells("D3:D5"); ws.getCell("A3").value = "展開名"; ws.getCell("B3").value = "期間名"; ws.getCell("C3").value = "展開区分"; ws.getCell("D3").value = "施策名";
     tablePeriods.forEach((p, pi) => {
-      const start = 4 + pi * width;
+      const start = 5 + pi * width;
       ws.mergeCells(3, start, 3, start + width - 1); ws.getCell(3, start).value = p.label;
       labels.forEach((label, li) => { ws.mergeCells(4, start + li * 2, 4, start + li * 2 + 1); ws.getCell(4, start + li * 2).value = label; ws.getCell(5, start + li * 2).value = "売上"; ws.getCell(5, start + li * 2 + 1).value = "利益"; });
     });
@@ -272,16 +273,16 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
     let next = 9;
     const amountRow = (r: number, values: typeof table.total, monthly: (ki: number, metric: "sales" | "profit", month: number, col: number) => string) => {
       tablePeriods.forEach((p, pi) => values.forEach((value, ki) => (["sales", "profit"] as const).forEach((metric, mi) => {
-        const col = 4 + pi * width + ki * 2 + mi;
+        const col = 5 + pi * width + ki * 2 + mi;
         let expr: string;
-        if (ki === selected.length) expr = `${ws.getCell(r, 4 + pi * width + selected.indexOf(2) * 2 + mi).address}-${ws.getCell(r, 4 + pi * width + selected.indexOf(1) * 2 + mi).address}`;
+        if (ki === selected.length) expr = `${ws.getCell(r, 5 + pi * width + selected.indexOf(2) * 2 + mi).address}-${ws.getCell(r, 5 + pi * width + selected.indexOf(1) * 2 + mi).address}`;
         else if (p.months.length === 3) {
-          const first = 4 + tablePeriods.findIndex(t => t.id === String(p.months[0])) * width + ki * 2;
-          const last = 4 + tablePeriods.findIndex(t => t.id === String(p.months[2])) * width + ki * 2 + 1;
+          const first = 5 + tablePeriods.findIndex(t => t.id === String(p.months[0])) * width + ki * 2;
+          const last = 5 + tablePeriods.findIndex(t => t.id === String(p.months[2])) * width + ki * 2 + 1;
           expr = `SUMIF(${ws.getCell(4, first).address}:${ws.getCell(4, last - 1).address},${ws.getCell(4, col - mi).address},${ws.getCell(r, first + mi).address}:${ws.getCell(r, last - 1 + mi).address})`;
         } else if (p.months.length > 3) {
           const size = p.months.length === 12 ? 6 : 3;
-          expr = sum(tablePeriods.flatMap((t, index) => t.months.length === size && t.months.every(m => p.months.includes(m)) ? [ws.getCell(r, 4 + index * width + ki * 2 + mi).address] : []));
+          expr = sum(tablePeriods.flatMap((t, index) => t.months.length === size && t.months.every(m => p.months.includes(m)) ? [ws.getCell(r, 5 + index * width + ki * 2 + mi).address] : []));
         }
         else expr = monthly(ki, metric, p.months[0]!, col);
         formula(ws.getCell(r, col), expr, expansionPeriodAmount(value, p, metric), true);
@@ -294,7 +295,8 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
         const periodStart = next;
         for (const item of period.initiatives) {
           const r = next++; members.push(r);
-          ws.getCell(r, 3).value = item.name;
+          ws.getCell(r, 3).value = lookup(masters.expansionCategories, item.expansionCategoryId)?.categoryName ?? "";
+          ws.getCell(r, 4).value = item.name;
           amountRow(r, item.values, (ki, metric, m) => effectFormula(item.id, selected[ki]!, m, metric));
         }
         ws.getCell(periodStart, 2).value = period.name;
@@ -303,16 +305,16 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
       const r = next++; subtotals.push(r); shaded.add(r);
       ws.getCell(start, 1).value = group.expansion.expansionName;
       if (start < r) ws.mergeCells(start, 1, r, 1);
-      ws.mergeCells(r, 2, r, 3);
+      ws.mergeCells(r, 2, r, 4);
       ws.getCell(r, 2).value = `${group.expansion.expansionName}計`;
       amountRow(r, group.values, (_, __, ___, col) => sum(members.map(ri => ws.getCell(ri, col).address)));
     }
-    ["前年", "合計", "展開計"].forEach((label, i) => { ws.mergeCells(6 + i, 1, 6 + i, 3); ws.getCell(6 + i, 1).value = label; });
+    ["前年", "合計", "展開計"].forEach((label, i) => { ws.mergeCells(6 + i, 1, 6 + i, 4); ws.getCell(6 + i, 1).value = label; });
     amountRow(6, table.previous, (_, metric, m) => effectFormula(null, 0, m, metric));
     amountRow(8, table.changes, (_, __, ___, col) => sum(subtotals.map(ri => ws.getCell(ri, col).address)));
     amountRow(7, table.total, (_, __, ___, col) => `${ws.getCell(6, col).address}+${ws.getCell(8, col).address}`);
     finish(ws, 5, shaded);
-    periodStyles(ws, 4, width);
+    periodStyles(ws, 5, width);
   }
   installPreciseCalculations(wb, monetary);
   // ExcelJS exposes orderNo for workbook tab ordering.
