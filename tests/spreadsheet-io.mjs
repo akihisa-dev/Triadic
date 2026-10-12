@@ -9,6 +9,15 @@ async function roundtrip(wb) {
 }
 export async function verifySpreadsheetIO(api) {
   const bytes = await api.createSamplePlan(2026), plan = await api.readPlanContents(bytes);
+  const classification = { industries: [{ id: 1 }, { id: 2 }], departments: [{ id: 1, industryIds: [1, 2] }, { id: 2, industryIds: [2] }] };
+  const selected = { industries: [1, 2], departments: [1, 2], pairs: [{ industryId: 1, departmentId: 1 }, { industryId: 2, departmentId: 1 }, { industryId: 2, departmentId: 2 }] };
+  const canceled = { ...classification, departments: [{ id: 1, industryIds: [1] }] };
+  const corrected = api.normalizeExportClassificationSelection(canceled, selected);
+  assert.deepEqual(corrected, { industries: [1, 2], departments: [1], pairs: [{ industryId: 1, departmentId: 1 }] }, '所属・部署の取消で有効な出力条件だけを保持');
+  assert.deepEqual(api.normalizeExportClassificationSelection(classification, corrected), corrected, 'やり直しで無効化した選択を復活させない');
+  assert.deepEqual(api.normalizeExportClassificationSelection({ industries: [{ id: 1 }], departments: classification.departments }, selected),
+    { industries: [1], departments: [1, 2], pairs: [{ industryId: 1, departmentId: 1 }] }, '業種の取消で絞り込みと組み合わせを補正');
+  assert.deepEqual(api.normalizeExportClassificationSelection({ industries: classification.industries.map(i => ({ ...i, industryName: '改名' })), departments: classification.departments }, selected), selected, '改名で出力選択を失わない');
   const pairsForIndex = plan.industries.slice(0, 2).flatMap(i => plan.departments.map(d => ({ industryId: i.id, departmentId: d.id })));
   const sparse = { ...plan, previousAmounts: pairsForIndex.flatMap((pair, i) => plan.accounts.slice(0, 2).map((a, n) => ({ ...pair, accountId: a.id, month: 4, amount: String(i * 10 + n) + ".001", id: i * 2 + n, revision: 0 }))) };
   sparse.previousAmounts.find = () => { throw new Error("前年金額の繰り返し全件検索は禁止"); };

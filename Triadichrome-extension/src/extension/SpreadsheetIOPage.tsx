@@ -7,8 +7,9 @@ import { KindSelectionSlots } from "./KindSelectionSlots";
 import { ChoiceChips } from "./ChoiceChips";
 import { StatusNotice } from "./StatusNotice";
 import { useSavedOperationRevision } from "./SavedOperationRevision";
-import { createReportWorkbook, createPreviousWorkbookBytes, serializeWorkbook, type ExportTable, type PreviousPair } from "../core/spreadsheets/workbook";
+import { createReportWorkbook, createPreviousWorkbookBytes, serializeWorkbook, type ExportTable } from "../core/spreadsheets/workbook";
 import { previousWorkbookLimits } from "../core/spreadsheets/previousWorkbookBoundary";
+import { normalizeExportClassificationSelection, type ExportClassificationSelection } from "../core/spreadsheets/exportSelection";
 import "./SpreadsheetIOPage.css";
 
 const tableNames: Record<ExportTable, string> = { "cost-table": "総原価表", "expansion-table": "展開表", "initiative-list": "施策一覧" };
@@ -23,9 +24,15 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
   const readOnly = useHistoryReadOnly();
   const [tables, setTables] = useState<ExportTable[]>(["cost-table", "expansion-table", "initiative-list"]);
   const [selections, setSelections] = useState<KindSelections>(() => ({ "cost-table": [1], "expansion-table": [1], "initiative-list": [2] }));
-  const [industries, setIndustries] = useState<number[]>([]);
-  const [departments, setDepartments] = useState<number[]>([]);
-  const [pairs, setPairs] = useState<PreviousPair[]>([]);
+  const [classificationSelection, setClassificationSelection] = useState<ExportClassificationSelection>({ industries: [], departments: [], pairs: [] });
+  const [classificationSources, setClassificationSources] = useState(() => ({ industries: contents.industries, departments: contents.departments }));
+  let currentSelection = classificationSelection;
+  if (classificationSources.industries !== contents.industries || classificationSources.departments !== contents.departments) {
+    currentSelection = normalizeExportClassificationSelection(contents, classificationSelection);
+    setClassificationSources({ industries: contents.industries, departments: contents.departments });
+    setClassificationSelection(currentSelection);
+  }
+  const { industries, departments, pairs } = currentSelection;
   const [working, setWorking] = useState(false);
   const running = useRef(false);
   const previewPending = useRef(false);
@@ -72,8 +79,8 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
         {tables.includes(table) && <div className="io-table-conditions">
           <KindSelectionSlots screen={table} selected={selections[table]} disabled={disabled} onChange={selected => setSelections(current => ({ ...current, [table]: selected }))} />
           {table === "cost-table" && <div className="io-classifications">
-            <ChoiceChips id="export-industry" label="業種名" value={industries} emptyLabel="全業種の合計" options={contents.industries.map(i => ({ id: i.id, name: i.industryName }))} disabled={disabled} onChange={setIndustries} />
-            <ChoiceChips id="export-department" label="部署名" value={departments} emptyLabel="全部署の合計" options={contents.departments.map(d => ({ id: d.id, name: d.departmentName }))} disabled={disabled} onChange={setDepartments} />
+            <ChoiceChips id="export-industry" label="業種名" value={industries} emptyLabel="全業種の合計" options={contents.industries.map(i => ({ id: i.id, name: i.industryName }))} disabled={disabled} onChange={industries => setClassificationSelection(current => ({ ...current, industries }))} />
+            <ChoiceChips id="export-department" label="部署名" value={departments} emptyLabel="全部署の合計" options={contents.departments.map(d => ({ id: d.id, name: d.departmentName }))} disabled={disabled} onChange={departments => setClassificationSelection(current => ({ ...current, departments }))} />
           </div>}
         </div>}
       </div>)}
@@ -96,7 +103,7 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
       <div className="io-pair-list" role="group" aria-label="フォーマットに含める業種・部署">
         {contents.industries.map(i => <fieldset key={i.id}><legend>{i.industryName}</legend>{contents.departments.filter(d => d.industryIds.includes(i.id)).map(d => {
           const checked = pairs.some(p => p.industryId === i.id && p.departmentId === d.id);
-          return <label className="io-check" key={d.id}><input type="checkbox" aria-label={`${i.industryName}・${d.departmentName}`} checked={checked} disabled={disabled} onChange={event => setPairs(current => event.target.checked ? [...current, { industryId: i.id, departmentId: d.id }] : current.filter(p => p.industryId !== i.id || p.departmentId !== d.id))} />{d.departmentName}</label>;
+          return <label className="io-check" key={d.id}><input type="checkbox" aria-label={`${i.industryName}・${d.departmentName}`} checked={checked} disabled={disabled} onChange={event => setClassificationSelection(current => ({ ...current, pairs: event.target.checked ? [...current.pairs, { industryId: i.id, departmentId: d.id }] : current.pairs.filter(p => p.industryId !== i.id || p.departmentId !== d.id) }))} />{d.departmentName}</label>;
         })}</fieldset>)}
       </div>
       <div className="form-actions">

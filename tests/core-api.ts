@@ -98,6 +98,7 @@ export * from "../Triadichrome-extension/src/extension/tableNumberFormat";
 
 export * from "../Triadichrome-extension/src/core/tables/periodTables";
 export * from "../Triadichrome-extension/src/core/spreadsheets/workbook";
+export * from "../Triadichrome-extension/src/core/spreadsheets/exportSelection";
 
 export * from "../Triadichrome-extension/src/core/tables/initiativeSort";
 
