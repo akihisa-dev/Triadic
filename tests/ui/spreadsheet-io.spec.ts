@@ -4,6 +4,40 @@ import { currentFiscalYear } from "../../Triadichrome-extension/src/core/domain/
 import { readFile } from "node:fs/promises";
 import { test, expect } from "./fixtures";
 
+test("330科目17組の前年変更確認で全名称・値・保存失敗後の確認内容を保持する", async ({ page, app }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "大量DOMの観測は通常幅で実施し、通常操作は両幅で検証する");
+  test.setTimeout(120_000);
+  await page.goto("/tests/ui/preview.html?data=previous-export-limit");
+  await expect(page.getByRole("status")).toHaveText("操作できます");
+  await page.getByLabel("ファイル操作").selectOption("save-failure");
+  await expect(page.getByRole("status")).toHaveText("操作できます");
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "入出力", exact: true }).click();
+  const choices = app.getByRole("group", { name: "フォーマットに含める業種・部署" }).getByRole("checkbox");
+  await expect(choices).toHaveCount(18);
+  for (const choice of (await choices.all()).slice(0, 17)) await choice.check();
+  await expect(choices.first()).toBeChecked();
+  const pending = page.waitForEvent("download");
+  await app.getByRole("button", { name: "フォーマットを出力", exact: true }).click();
+  const wb = new ExcelJS.Workbook(); await wb.xlsx.load(await readFile((await (await pending).path())!) as unknown as ExcelJS.Buffer);
+  const sheets = wb.worksheets.filter(ws => ws.state === "visible");
+  expect(sheets).toHaveLength(17);
+  for (const sheet of sheets) for (let row = 4; row <= 333; row++) for (let column = 3; column <= 14; column++) sheet.getCell(row, column).value = 1;
+  const started = performance.now();
+  await app.locator('input[type="file"]').setInputFiles({ name: "大量前年.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: Buffer.from(await wb.xlsx.writeBuffer()) });
+  const preview = app.getByRole("region", { name: "前年金額の変更確認" });
+  await expect(preview.getByRole("heading")).toHaveText("変更内容 · 67320件", { timeout: 60_000 });
+  await expect(preview.locator("tbody tr")).toHaveCount(67320);
+  await expect(preview.locator("tbody tr").first().locator("td")).toContainText(["直営自動車", "部署A", "確認科目1"]);
+  const shown = performance.now();
+  await preview.getByRole("button", { name: "確認した内容を取り込む", exact: true }).click();
+  await expect(app.getByRole("alert")).toContainText("保存失敗", { timeout: 60_000 });
+  await expect(preview.locator("tbody tr")).toHaveCount(67320);
+  console.log(`前年67320変更: ファイル準備・解析・確認DOM ${Math.round(shown - started)}ms、保存失敗再表示 ${Math.round(performance.now() - shown)}ms（名称取得単体の時間ではない）`);
+  await preview.getByRole("button", { name: "キャンセル", exact: true }).click();
+  await expect(preview).toHaveCount(0);
+});
+
 test("所属追加の取消で出力の無効選択を除き、有効選択とやり直し後の出力を保つ", async ({ page, app }) => {
   await page.getByLabel("テストデータ", { exact: true }).selectOption("defaults");
   await expect(page.getByRole("status")).toHaveText("操作できます");

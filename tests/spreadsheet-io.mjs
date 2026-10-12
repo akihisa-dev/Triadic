@@ -9,6 +9,28 @@ async function roundtrip(wb) {
 }
 export async function verifySpreadsheetIO(api) {
   const bytes = await api.createSamplePlan(2026), plan = await api.readPlanContents(bytes);
+  const patchesForNames = [{ industryId: 1, departmentId: 2, accountId: 3, month: 4, before: '0', after: '0.001' },
+    { industryId: 2, departmentId: 1, accountId: 1, month: 5, before: '1', after: '-2' }];
+  const named = { industries: [{ id: 2, industryName: '同名' }, { id: 1, industryName: '業種A' }],
+    departments: [{ id: 2, departmentName: '部署B' }, { id: 1, departmentName: '同名' }],
+    accounts: [{ id: 3, accountName: '科目C' }, { id: 1, accountName: '同名' }] };
+  const labels = api.previousPatchPresentation(named, patchesForNames);
+  assert.deepEqual(labels.map(r => [r.industryName, r.departmentName, r.accountName]), [['業種A','部署B','科目C'],['同名','同名','同名']]);
+  assert.equal(labels[0].patch, patchesForNames[0], '確認用の名前取得で元の変更値を複製・変更しない');
+  assert.deepEqual(api.previousPatchPresentation(named, []), []);
+  assert.equal(api.previousPatchPresentation({ ...named, accounts: [{ id: 3, accountName: '改名' }] }, patchesForNames)[0].accountName, '改名');
+  assert.equal(api.previousPatchPresentation(named, [{ ...patchesForNames[0], accountId: 99 }])[0].accountName, undefined);
+  let reads = 0;
+  const master = { industries: [{ get id() { reads++; return 1; }, industryName: '業種' }],
+    departments: Array.from({ length: 17 }, (_, i) => ({ get id() { reads++; return i + 1; }, departmentName: `部署${i}` })),
+    accounts: Array.from({ length: 330 }, (_, i) => ({ get id() { reads++; return i + 1; }, accountName: `科目${i}` })) };
+  const many = Array.from({ length: 67320 }, (_, i) => ({ industryId: 1, departmentId: Math.floor(i / 3960) + 1,
+    accountId: Math.floor(i / 12) % 330 + 1, month: i % 12 + 1, before: '0', after: '1' }));
+  const shown = api.previousPatchPresentation(master, many);
+  assert.equal(reads, 348, '67320件の変更でもマスタIDは一度だけ走査');
+  assert.equal(shown.length, many.length);
+  assert.equal(shown.at(-1).accountName, '科目329');
+  assert.equal(shown.at(-1).departmentName, '部署16');
   const classification = { industries: [{ id: 1 }, { id: 2 }], departments: [{ id: 1, industryIds: [1, 2] }, { id: 2, industryIds: [2] }] };
   const selected = { industries: [1, 2], departments: [1, 2], pairs: [{ industryId: 1, departmentId: 1 }, { industryId: 2, departmentId: 1 }, { industryId: 2, departmentId: 2 }] };
   const canceled = { ...classification, departments: [{ id: 1, industryIds: [1] }] };

@@ -1,5 +1,5 @@
 import { processPreviousWorkbook } from "./previousWorkbookProcessing";
-import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import type { PlanContents } from "../core/domain/plan";
 import type { KindSelections, PlanChange, PreviousPatch } from "../core/domain/kinds";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
@@ -10,6 +10,7 @@ import { useSavedOperationRevision } from "./SavedOperationRevision";
 import { createReportWorkbook, createPreviousWorkbookBytes, serializeWorkbook, type ExportTable } from "../core/spreadsheets/workbook";
 import { previousWorkbookLimits } from "../core/spreadsheets/previousWorkbookBoundary";
 import { normalizeExportClassificationSelection, type ExportClassificationSelection } from "../core/spreadsheets/exportSelection";
+import { previousPatchPresentation } from "../core/spreadsheets/previousPatchPresentation";
 import "./SpreadsheetIOPage.css";
 
 const tableNames: Record<ExportTable, string> = { "cost-table": "総原価表", "expansion-table": "展開表", "initiative-list": "施策一覧" };
@@ -42,6 +43,8 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
   const dismiss = useCallback(() => { setNotice(""); setError(false); }, []);
   useEffect(dismiss, [revision, dismiss]);
   const [patches, setPatches] = useState<PreviousPatch[] | null>(null);
+  const previewRows = useMemo(() => patches ? previousPatchPresentation(contents, patches) : [],
+    [patches, contents.industries, contents.departments, contents.accounts]);
   const [retry, setRetry] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -116,8 +119,8 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
       {patches && <div className="io-import-preview" role="region" aria-label="前年金額の変更確認">
         <h3>変更内容 · {patches.length}件</h3>
         <div className="io-preview-table"><table><thead><tr>{["業種", "部署", "科目", "月", "変更前", "変更後"].map(label => <th key={label}>{label}</th>)}</tr></thead>
-          <tbody>{patches.map(p => <tr key={`${p.industryId}:${p.departmentId}:${p.accountId}:${p.month}`}>
-            <td>{contents.industries.find(i => i.id === p.industryId)?.industryName}</td><td>{contents.departments.find(d => d.id === p.departmentId)?.departmentName}</td><td>{contents.accounts.find(a => a.id === p.accountId)?.accountName}</td><td>{p.month}月</td><td>{p.before}</td><td>{p.after}</td>
+          <tbody>{previewRows.map(({ patch: p, industryName, departmentName, accountName }) => <tr key={`${p.industryId}:${p.departmentId}:${p.accountId}:${p.month}`}>
+            <td>{industryName}</td><td>{departmentName}</td><td>{accountName}</td><td>{p.month}月</td><td>{p.before}</td><td>{p.after}</td>
           </tr>)}</tbody></table></div>
         <div className="form-actions"><button type="button" className="secondary-button" disabled={working || busy} onClick={() => { previewPending.current = false; onPendingChange(false); setPatches(null); setRetry(false); setNotice(""); }}>キャンセル</button>
           <button type="button" className="primary-button" disabled={working || busy || readOnly} onClick={() => { void operation(async () => {

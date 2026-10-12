@@ -7,6 +7,7 @@ import { changeExpansionMaster } from "../../Triadichrome-extension/src/core/sto
 // Excel出力では選択した表と条件を保ち、従来の三表と計算元、および基本関数による金額の再計算を確認する。
 // Excel計算元の行順・分類名・種別・ID・元金額とマスタ索引の共有は tests/report-workbook.mjs で確認する。
 // 多数の展開・非連続集計の数式長と引数上限は tests/report-workbook.mjs の合成計画で確認する。
+// 前年Excelの確認表の名称取得・改名・大量変更の走査量は tests/spreadsheet-io.mjs、取消・保存失敗は tests/ui/spreadsheet-io.spec.ts で確認する。
 // 出力条件は現在の所属・分類へ整合させる。所属追加・マスタ追加の取消とやり直しは tests/ui/spreadsheet-io.spec.ts で確認する。
 import { editDatabase } from "../../Triadichrome-extension/src/core/storage/transaction";
 // 履歴の全選択・解除・日時入力・確認取消・削除失敗は tests/ui/data-history.spec.ts、1000/5000/10000件の選択走査量は tests/data-history.mjs で確認する。
