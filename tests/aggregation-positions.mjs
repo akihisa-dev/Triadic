@@ -65,4 +65,47 @@ export async function verifyAggregationPositions(api) {
     assert.deepEqual((await members(signed)).map(item => item.id), [a.id, b.id], "採番上限でも符号変更で順序を動かさない");
   } finally { boundary.close(); }
   console.log("PASS: 集計所属順の型・安全な整数域、位置の飛び、末尾追加・符号変更・再所属、採番境界と入力保護");
+  for (const size of [1000, 5000]) {
+    let visits = 0;
+    const rawMembers = Array.from({length:size}, (_,index) => {
+      const row = [index, index, null, index % 2 ? -1 : 1];
+      return new Proxy(row, {get(target,key) {if (key === '0') visits++;return Reflect.get(target,key);}});
+    });
+    const database = {exec(sql) {
+      const values = sql.includes('SELECT account_id, aggregation_group_id') ? Array.from({length:size},(_,id)=>[null,id])
+        : sql.includes('FROM aggregation_members') ? rawMembers
+        : Array.from({length:size},(_,id)=>[id,`集計${id}`,null,id % 2 ? `表示${id}` : null]);
+      return [{values}];
+    }};
+    const restored = api.listAggregations(database);
+    assert.equal(visits,size,'所属行の親IDは一度ずつ読む');
+    assert.deepEqual(restored[0].members,[{kind:'account',id:0,sign:1}]);
+    assert.deepEqual(restored.at(-1).members,[{kind:'account',id:size-1,sign:-1}]);
+    assert.equal(restored.at(-1).masterOrder,size-1);
+  }
+  const fixture = await api.openTriadicDatabase(original);
+  try {
+    fixture.exec('DELETE FROM aggregation_members');
+    const order = fixture.exec('SELECT MAX(position) FROM master_order')[0].values[0][0]+1;
+    for (let index=0;index<1000;index++) {
+      const id=10000+index;
+      fixture.run('INSERT INTO aggregation_groups(id,name,display_name) VALUES(?,?,?)',[id,`復元${index}`,`表示${index}`]);
+      fixture.run('INSERT INTO master_order(position,aggregation_group_id) VALUES(?,?)',[order+index,id]);
+      if(index) fixture.run('INSERT INTO aggregation_members(parent_id,group_id,sign,position) VALUES(?,?,?,?)',[id-1,id,index%2 ? -1 : 1,7]);
+    }
+    fixture.run('INSERT INTO aggregation_members(parent_id,account_id,sign,position) VALUES(?,?,?,?)',[10999,a.id,-1,0]);
+    fixture.run('INSERT INTO aggregation_members(parent_id,account_id,sign,position) VALUES(?,?,?,?)',[10999,b.id,1,7]);
+    const expected = api.listAggregations(fixture);
+    assert.deepEqual(expected.find(group=>group.id===10999).members,[{kind:'account',id:a.id,sign:-1},{kind:'account',id:b.id,sign:1}]);
+    assert.deepEqual(expected.find(group=>group.id===1).members,[],'空集計も保持');
+    const exported = api.exportTriadicDatabase(fixture);
+    assert.deepEqual((await api.readPlanContents(exported)).aggregations,expected,'実SQLiteの深い階層を保存・再読込');
+    const snapshot = await api.createBusinessSnapshot(exported);
+    assert.deepEqual((await api.readSnapshotContents(snapshot)).aggregations,expected,'履歴snapshotも同じ復元');
+    assert.throws(()=>fixture.run('INSERT INTO aggregation_members(parent_id,account_id,sign,position) VALUES(?,?,?,?)',[10000,a.id,1,0]),/UNIQUE/,'重複所属をDDLで拒否');
+    fixture.run('INSERT INTO aggregation_members(parent_id,group_id,sign,position) VALUES(?,?,?,?)',[10999,10000,1,17]);
+    assert.throws(()=>api.validateAggregations(api.listAggregations(fixture),new Set(initial.accounts.map(account=>account.id))),/循環/,'分類後も循環検証を維持');
+    await assert.rejects(api.openTriadicDatabase(fixture.export()),'循環した実ファイルも拒否');
+  } finally {fixture.close();}
+
 }

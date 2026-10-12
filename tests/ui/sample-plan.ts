@@ -1,3 +1,4 @@
+// 集計所属の一度の分類、1000階層の実SQLite保存・読込、1000/5000集計の走査量は tests/aggregation-positions.mjs で確認する。
 // 展開表の期間名・展開区分・施策名の列順、設備投資の選択済み名称と未選択の空欄を画面・Excelで確認する。
 // 施策の科目欄はコードなしの全文表示と狭幅での横スクロールを tests/ui/initiative-table-layout.spec.ts で確認する。
 import { PORTFOLIO_COUNT, portfolioScenario } from "./sample-portfolio";
