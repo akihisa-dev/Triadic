@@ -60,10 +60,9 @@ export function aggregationGraphItems(accounts: Account[], groups: Aggregation[]
   ]);
   return { owners, labels, unassigned: accounts.filter(account => !owners.has(`account:${account.id}`)) };
 }
-export function aggregationForbidden(groups: Aggregation[], selected: Pick<AggregationMember, "kind" | "id"> | null) {
+export function aggregationForbidden(byId: ReadonlyMap<number, Aggregation>, selected: Pick<AggregationMember, "kind" | "id"> | null) {
   const ids = new Set<number>();
   if (selected?.kind === "group") {
-    const byId = new Map(groups.map(group => [group.id, group]));
     const queue = [selected.id];
     for (let index = 0; index < queue.length; index++) {
       const id = queue[index]!;

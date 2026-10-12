@@ -155,4 +155,27 @@ export async function verifyAggregationData(api) {
   const removed = await changeAggregationMaster(saved.bytes, { type: "delete", id: saved.aggregations.at(-1).id });
   assert.deepEqual((await readPlanContents(removed)).aggregations, contents.aggregations);
   console.log("PASS: mandatory aggregations, nested +/- totals, unique membership, cycles, baseline expansion, ordering and protected saves");
+  const forest=[
+    {id:0,members:[{kind:'group',id:1},{kind:'account',id:2}]},
+    {id:1,members:[{kind:'group',id:2}]},
+    {id:2,members:[]},
+    {id:3,members:[]},
+  ];
+  const index=new Map(forest.map(group=>[group.id,group]));
+  assert.deepEqual([...api.aggregationForbidden(index,{kind:'group',id:0})],[0,1,2]);
+  assert.deepEqual([...api.aggregationForbidden(index,{kind:'group',id:1})],[1,2]);
+  assert.deepEqual([...api.aggregationForbidden(index,{kind:'account',id:0})],[],'科目と集計の同じIDを区別');
+  assert.deepEqual([...api.aggregationForbidden(index,null)],[]);
+  index.set(2,{id:2,members:[{kind:'group',id:0}]});
+  assert.deepEqual([...api.aggregationForbidden(index,{kind:'group',id:0})],[0,1,2],'循環の防護を維持');
+  for(const count of [1000,5000]) {
+    let reads=0,lookups=0;
+    const definitions=Array.from({length:count},(_,id)=>({get id(){reads++;return id;},members:[]}));
+    const shared=new Map(definitions.map(group=>[group.id,group]));
+    const original=shared.get.bind(shared);shared.get=id=>{lookups++;return original(id);};
+    for(let id=0;id<count;id++) assert.deepEqual([...api.aggregationForbidden(shared,{kind:'group',id})],[id]);
+    assert.equal(reads,count,'共有索引は集計数だけ登録');
+    assert.equal(lookups,count,'独立集計の探索は一件ずつ');
+  }
+
 }

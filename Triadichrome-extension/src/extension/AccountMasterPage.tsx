@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { type Account, type AccountChange } from "../core/domain/accountMaster";
 import { type Aggregation } from "../core/domain/aggregations";
 import { type AggregationChange } from "../core/domain/aggregationMaster";
@@ -21,7 +21,7 @@ export function AccountMasterPage({ accounts, groups, usedAccountIds, isSaving, 
   const readOnly = useHistoryReadOnly();
   const rows = orderedMasterRows(accounts,groups);
   const byAccount = new Map(accounts.map(item => [item.id,item]));
-  const byGroup = new Map(groups.map(item => [item.id,item]));
+  const byGroup = useMemo(() => new Map(groups.map(item => [item.id,item])), [groups]);
   const owners = new Map(groups.flatMap(group => group.members.map(member => [masterRowKey(member),{parent:group.id,sign:member.sign}] as const)));
   const empty = (): Draft => ({kind:"account",id:0,code:"",name:"",displayName:"",attribute:""});
   const [adding,setAdding] = useState<Draft>(empty);
@@ -78,7 +78,7 @@ export function AccountMasterPage({ accounts, groups, usedAccountIds, isSaving, 
         const key=masterRowKey(row),account=row.kind === "account" ? byAccount.get(row.id)! : null,group=row.kind === "group" ? byGroup.get(row.id)! : null;
         const name=account?.accountName ?? group!.name;
         const draft=editing && masterRowKey(editing) === key ? editing : null;
-        const owner=owners.get(key), forbidden=aggregationForbidden(groups,row);
+        const owner=owners.get(key), forbidden=aggregationForbidden(byGroup,row);
         const cannotDelete=account ? account.inUse || usedAccountIds.has(account.id) : !!group!.required || group!.members.length>0 || !!owner;
         return <tr key={key} ref={element => {if(element) elements.current.set(key,element);else elements.current.delete(key);}} className={`${draft ? "master-row-editing" : ""} ${drop?.key === key ? drop.before ? "drop-before" : "drop-after" : ""}`} onDragOver={event => {if(!dragged || disabled) return;event.preventDefault();setDrop({key,before:event.clientY < event.currentTarget.getBoundingClientRect().top+event.currentTarget.getBoundingClientRect().height/2});}} onDrop={event => {event.preventDefault();if(dragged && drop) reorder(dragged,row,drop.before);setDragged(null);setDrop(null);}} onKeyDown={event => {if(draft && event.key === "Escape" && !autoSave.pending){event.preventDefault();event.stopPropagation();end();}}}>
           <td><button type="button" className="text-button account-drag-handle" aria-label={`${name}を並べ替え`} disabled={disabled} draggable={!disabled} onDragStart={event => {event.dataTransfer.effectAllowed="move";event.dataTransfer.setData("text/plain",key);setDragged(row);}} onDragEnd={() => {setDragged(null);setDrop(null);}} onKeyDown={event => {if(event.key !== "ArrowUp" && event.key !== "ArrowDown") return;event.preventDefault();const target=rows[index+(event.key === "ArrowUp" ? -1 : 1)];if(target) reorder(row,target,event.key === "ArrowUp");}}>⠿</button></td>

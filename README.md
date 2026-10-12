@@ -321,7 +321,7 @@ Normal cost-summary rows use 24px; initiative-list/breakdown rows use 28px with 
 
 Above 200 rows, initiative/breakdown tables render only rows near the viewport. Scrolling accesses all rows; totals, sorting, and Excel export still use all data. Large displays fix row heights and truncate long strings.
 
-Database validation, updates, history, and pre-save file comparison run on-device in a Web Worker separate from screen interaction. Permission acquisition, exclusive writing, and post-commit screen publication retain their order. Saving takes time according to data size. Aggregation membership rows are grouped by parent once on load, preserving membership order and signs.
+Database validation, updates, history, and pre-save file comparison run on-device in a Web Worker separate from screen interaction. Permission acquisition, exclusive writing, and post-commit screen publication retain their order. Saving takes time according to data size. Aggregation membership rows are grouped by parent once on load, preserving membership order and signs. Account-master destination checks share a group-ID index while group definitions remain unchanged. Self and descendant groups stay unavailable.
 
 `npm run perf:sample` loads the managed sample and measures loading, detail generation, change detection, one-initiative updates, and initiative-list HTML generation three times each. It does not write the sample; HTML-generation time excludes browser rendering. Use `large-plan.spec.ts` for large-data screen checks.
 
@@ -822,7 +822,7 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 
 施策一覧・展開表は200行を超えると、画面周辺の行だけを描画します。スクロールで全件を確認でき、合計・並べ替え・Excel出力は全件を対象にします。大規模表示では行の高さを固定し、長い文字列は省略表示します。
 
-データベースの検証・更新・履歴・保存前のファイル照合は、画面操作と別の処理（Web Worker）で端末内で実行します。ファイルの許可取得・排他的な書き込み・確定後の画面反映は従来の順序を維持します。保存の完了にはデータ量に応じた時間がかかります。集計の所属行は親の番号ごとに一度だけ分類して読み込み、所属順と加減算の符号を保持します。
+データベースの検証・更新・履歴・保存前のファイル照合は、画面操作と別の処理（Web Worker）で端末内で実行します。ファイルの許可取得・排他的な書き込み・確定後の画面反映は従来の順序を維持します。保存の完了にはデータ量に応じた時間がかかります。集計の所属行は親の番号ごとに一度だけ分類して読み込み、所属順と加減算の符号を保持します。勘定科目マスタの所属先候補は集計の定義が同じ間、集計IDの索引を共有し、自分自身と子孫の集計を選べない規則を維持します。
 
 `npm run perf:sample`で管理対象サンプルを読み込み、読込・明細生成・変更判定・施策1件の更新・施策一覧のHTML生成を各3回測定できます。サンプルへの書き込みは行いません。HTML生成の時間にはブラウザの描画を含みません。実画面の大規模データ確認は`large-plan.spec.ts`を使います。
 
