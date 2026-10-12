@@ -58,8 +58,21 @@ function workbook() {
   return wb;
 }
 
+function indexReportMasters(contents: PlanContents) {
+  return {
+    accounts: new Map(contents.accounts.map(item => [item.id, item])),
+    industries: new Map(contents.industries.map(item => [item.id, item])),
+    departments: new Map(contents.departments.map(item => [item.id, item])),
+    kinds: new Map(contents.kinds.map(item => [item.id, item])),
+    expansions: new Map(contents.expansions.map(item => [item.id, item])),
+    periods: new Map(contents.periodTypes.map(item => [item.id, item])),
+    aggregations: new Map(contents.aggregations.map(item => [item.id, item])),
+  };
+}
+const lookup = <T,>(index: ReadonlyMap<number, T>, id: number | null | undefined) => id == null ? undefined : index.get(id);
+
 /** Keep the original single source sheet; hidden identifiers avoid ambiguous names. */
-function sources(wb: ExcelJS.Workbook, contents: PlanContents, filter: ClassificationFilter) {
+function sources(wb: ExcelJS.Workbook, contents: PlanContents, filter: ClassificationFilter, masters: ReturnType<typeof indexReportMasters>) {
   const ws = wb.addWorksheet("計算元");
   ws.addRow(["区分", "業種", "部署", "施策", "種別", "科目コード", "科目名", "科目属性", ...initiativeMonths.map(m => `${m}月`), "科目ID", "施策ID", "種別ID", "総原価対象"]);
   const included = (industry: number | null, department: number | null) =>
@@ -72,18 +85,20 @@ function sources(wb: ExcelJS.Workbook, contents: PlanContents, filter: Classific
   }
   for (const records of classified.values()) {
     const value = records[0]!;
-    const account = contents.accounts.find(a => a.id === value.accountId);
-    ws.addRow(["前年", contents.industries.find(i => i.id === value.industryId)?.industryName,
-      contents.departments.find(d => d.id === value.departmentId)?.departmentName, "", "前年",
+    const account = masters.accounts.get(value.accountId);
+    ws.addRow(["前年", masters.industries.get(value.industryId)?.industryName,
+      masters.departments.get(value.departmentId)?.departmentName, "", "前年",
       account?.accountCode, account?.accountName, account?.accountType,
       ...initiativeMonths.map(m => excelAmount(records.find(v => v.month === m)?.amount ?? "0")),
       value.accountId, 0, 0, included(value.industryId, value.departmentId) ? 1 : 0]);
   }
   for (const item of contents.initiatives.filter(i => i.fiscalYear === contents.fiscalYear)) {
+    const industryName = lookup(masters.industries, item.industryId)?.industryName;
+    const departmentName = lookup(masters.departments, item.departmentId)?.departmentName;
     for (const kind of [1, 2] as const) for (const input of item.rows) {
-      const account = contents.accounts.find(a => a.id === input.accountId);
-      ws.addRow(["施策", contents.industries.find(i => i.id === item.industryId)?.industryName,
-        contents.departments.find(d => d.id === item.departmentId)?.departmentName, item.name, contents.kinds.find(k => k.id === kind)?.kindName,
+      const account = lookup(masters.accounts, input.accountId);
+      ws.addRow(["施策", industryName,
+        departmentName, item.name, masters.kinds.get(kind)?.kindName,
         account?.accountCode, account?.accountName, account?.accountType,
         ...initiativeMonths.map(m => excelAmount(resolvedAmount(input, kind, m))), input.accountId, item.id, kind,
         included(item.industryId ?? null, item.departmentId ?? null) ? 1 : 0]);
@@ -132,6 +147,7 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
     if (!selected.length || selected.length > (name === "initiative-list" ? 1 : 2) || new Set(selected).size !== selected.length || selected.some(k => k !== 1 && k !== 2)) throw new Error("出力する種別が正しくありません。");
   }
   const wb = workbook();
+  const masters = indexReportMasters(contents);
   const monetary: MonetaryCell[] = [];
   const formula = (cell: ExcelJS.Cell, expression: string, result: number | string | undefined | null, money = false) => {
     if (result === undefined) { cell.value = null; return; }
@@ -140,7 +156,7 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
   };
   const filtered = filterPlan(contents, options.costFilter);
   const expansionTable = options.tables.includes("expansion-table") ? buildKindExpansionTable(contents, options.selections["expansion-table"], "registered") : null;
-  const unfiltered = sources(wb, contents, options.costFilter);
+  const unfiltered = sources(wb, contents, options.costFilter, masters);
   const range = (col: number) => `'計算元'!$${unfiltered.ws.getColumn(col).letter}:$${unfiltered.ws.getColumn(col).letter}`;
   const conditionalSum = (month: number, criteria: [number, number | string][]) =>
     `SUMIFS(${range(9 + initiativeMonths.indexOf(month as typeof initiativeMonths[number]))},${criteria.flatMap(([col, value]) => [range(col), typeof value === "number" ? String(value) : `"${value}"`]).join(",")})`;
@@ -183,7 +199,7 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
           expression = sum(tablePeriods.flatMap((p, index) => p.months.length === size && p.months.every(m => period.months.includes(m)) ? [ws.getCell(r, 2 + index * width + vi).address] : []));
         }
         else if (row.kind === "group") {
-          const definition = contents.aggregations.find(g => g.id === row.id)!;
+          const definition = masters.aggregations.get(row.id)!;
           expression = `${sum(definition.members.filter(m => m.sign === 1).map(m => at(rowMap.get(`${m.kind}:${m.id}`)!)))}-${sum(definition.members.filter(m => m.sign === -1).map(m => at(rowMap.get(`${m.kind}:${m.id}`)!)))}`;
         } else {
           const prior = conditionalSum(period.months[0]!, [[21, row.id], [23, 0], [24, 1]]);
@@ -213,14 +229,14 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
   if (options.tables.includes("initiative-list")) {
     const kind = options.selections["initiative-list"][0]!;
     const ws = sheet(wb, "施策一覧", [17, 17, 34, 14, ...initiativeMonths.flatMap(() => [14, 14, 14])], 2, 4);
-    ws.getCell("A2").value = `${contents.fiscalYear}年度 · 単位：千円 · ${contents.kinds.find(k => k.id === kind)!.kindName}`;
+    ws.getCell("A2").value = `${contents.fiscalYear}年度 · 単位：千円 · ${masters.kinds.get(kind)!.kindName}`;
     for (const [col, name] of [[1, "展開名"], [2, "期間名"], [3, "施策名"], [4, "開始年月"]] as const) { ws.mergeCells(3, col, 4, col); ws.getCell(3, col).value = name; }
     initiativeMonths.forEach((m, mi) => { ws.mergeCells(3, 5 + mi * 3, 3, 7 + mi * 3); ws.getCell(3, 5 + mi * 3).value = `${m}月`; amountItems.map(item => item.name).forEach((s, i) => { ws.getCell(4, 5 + mi * 3 + i).value = s; }); });
     const items = initiativesForKind(contents.initiatives, contents.accounts, kind).filter(i => i.fiscalYear === contents.fiscalYear);
     items.forEach((item, index) => {
       const r = index + 5;
-      ws.getCell(r, 1).value = contents.expansions.find(e => e.id === item.expansionId)?.expansionName ?? "";
-      ws.getCell(r, 2).value = contents.periodTypes.find(p => p.id === item.periodTypeId)?.periodName ?? "";
+      ws.getCell(r, 1).value = lookup(masters.expansions, item.expansionId)?.expansionName ?? "";
+      ws.getCell(r, 2).value = lookup(masters.periods, item.periodTypeId)?.periodName ?? "";
       ws.getCell(r, 3).value = item.name; ws.getCell(r, 4).value = item.startYearMonths[kind];
       initiativeMonths.forEach((m, mi) => amountItems.map(item => item.id).forEach((metric, i) => {
         const cell = ws.getCell(r, 5 + mi * 3 + i);
@@ -241,7 +257,7 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
   if (options.tables.includes("expansion-table")) {
     const selected = options.selections["expansion-table"];
     const table = expansionTable!;
-    const labels = [...selected.map(k => contents.kinds.find(t => t.id === k)!.kindName), ...(selected.length === 2 ? ["比較"] : [])];
+    const labels = [...selected.map(k => masters.kinds.get(k)!.kindName), ...(selected.length === 2 ? ["比較"] : [])];
     const width = labels.length * 2;
     const ws = sheet(wb, "展開表", [17, 14, 34, ...tablePeriods.flatMap(() => labels.flatMap(() => [14, 14]))], 3, 3);
     ws.getCell("A2").value = `${contents.fiscalYear}年度 · 単位：千円`;

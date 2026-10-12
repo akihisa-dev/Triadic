@@ -70,6 +70,16 @@ function reconcile(wb) {
 }
 export async function verifyReportWorkbooks(api, sample) {
   const tables = ['cost-table', 'expansion-table', 'initiative-list'];
+  const expectedSheet = api.createReportWorkbook(sample, settings(tables)).getWorksheet('計算元');
+  const expectedSources = expectedSheet.getRows(1, expectedSheet.rowCount).map(row => row.values.slice(1, 25));
+  const indexedPlan = { ...sample };
+  for (const key of ['accounts', 'industries', 'departments', 'kinds', 'expansions', 'periodTypes']) {
+    indexedPlan[key] = [...sample[key]].reverse();
+    if (key !== 'kinds') indexedPlan[key].find = () => { throw new Error(`${key}: 出力行ごとの全件検索は禁止`); };
+  }
+  const indexedSources = api.createReportWorkbook(indexedPlan, settings(tables)).getWorksheet('計算元');
+  assert.deepEqual(indexedSources.getRows(1, indexedSources.rowCount).map(row => row.values.slice(1, 25)), expectedSources,
+    'マスタを並べ替えても計算元の行順・名称・属性・種別・元金額・IDを保持');
   for (let mask = 1; mask < 8; mask++) for (const selected of [[1], [2], [1, 2], [2, 1]]) {
     const chosen = tables.filter((_, index) => mask & (1 << index));
     const wb = await exported(api, sample, settings(chosen, selected));
