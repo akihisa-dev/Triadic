@@ -14,7 +14,8 @@ export interface Database {
 const initialize = sqlite3InitModule as unknown as (options: { locateFile: (name: string) => string }) => Promise<Sqlite3Static>;
 let runtime: Promise<{ Database: new (data?: ArrayLike<number>) => Database; version: string }> | undefined;
 export function initializeSqlite() {
-  return runtime ??= initialize({ locateFile: () => wasmUrl }).then(sqlite => {
+  if (runtime) return runtime;
+  const pending = initialize({ locateFile: () => wasmUrl }).then(sqlite => {
     const { capi, wasm } = sqlite;
     if (sqlite.version.libVersion !== "3.53.4") throw new Error("SQLite本体の版が検証済みの版と一致しません。");
     class MemoryDatabase implements Database {
@@ -73,5 +74,10 @@ export function initializeSqlite() {
       getRowsModified(): number { return this.db.changes(); }
     }
     return { Database: MemoryDatabase, version: sqlite.version.libVersion };
+  }).catch(error => {
+    if (runtime === pending) runtime = undefined;
+    throw error;
   });
+  runtime = pending;
+  return pending;
 }

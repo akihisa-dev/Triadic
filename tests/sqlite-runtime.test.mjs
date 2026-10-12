@@ -84,3 +84,64 @@ test("旧保存形式の計画・履歴は読み込みと編集を拒否し元�
     assert.deepEqual(snapshot, originalSnapshot);
   });
 });
+
+async function withInitializationFault({ failures = 0, schema = false }, operation) {
+  const { mkdtemp, rm } = await import('node:fs/promises');
+  const { pathToFileURL } = await import('node:url');
+  const temporary = await mkdtemp(path.resolve('dist/.initialization-retry-'));
+  try {
+    const bundle = path.join(temporary,'entry.mjs');
+    await build({stdin:{contents:`export * from './tests/core-api.ts'; export { initializationAttempts } from './Triadichrome-extension/src/core/storage/sqliteRuntime.ts';`,resolveDir:process.cwd(),loader:'ts'},outfile:bundle,bundle:true,format:'esm',platform:'node',packages:'external',loader:{'.css':'empty'},plugins:[{
+      name:'initialization-fault',setup(api) {
+        api.onResolve({filter:/\.wasm\?url$/},()=>({path:'wasm',namespace:'fault-wasm'}));
+        api.onLoad({filter:/.*/,namespace:'fault-wasm'},()=>({contents:`export default ${JSON.stringify(path.resolve('node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'))}`,loader:'js'}));
+        api.onLoad({filter:/\/sqliteRuntime\.ts$/},async({path:file})=>{
+          let contents=await readFile(file,'utf8');
+          contents=contents.replace('initialize({ locateFile: () => wasmUrl })','faultedInitialize({ locateFile: () => wasmUrl })');
+          contents+=`\nlet attempts=0; export function initializationAttempts(){return attempts;} async function faultedInitialize(options: {locateFile:(name:string)=>string}) { if (++attempts <= ${failures}) throw new Error('一時的な初期化失敗'); return initialize(options); }`;
+          return {contents,loader:'ts'};
+        });
+        if(schema) api.onLoad({filter:/\/triadicDatabase\.ts$/},async({path:file})=>{
+          let contents=await readFile(file,'utf8');
+          contents=contents.replace('canonical.exec(TRIADIC_SCHEMA_SQL);',`if(type === 'snapshot' && !faultedSchema) {faultedSchema=true;throw new Error('一時的なスキーマ準備失敗');} canonical.exec(TRIADIC_SCHEMA_SQL);`);
+          contents+='\nlet faultedSchema=false;';return {contents,loader:'ts'};
+        });
+      }
+    }]});
+    await operation(await import(pathToFileURL(bundle)));
+  } finally {await rm(temporary,{recursive:true,force:true});}
+}
+
+test('SQLite初期化の失敗は同時要求へ返し、次の明示要求で再準備する',async()=>{
+  await withInitializationFault({failures:1},async api=>{
+    const requests=await Promise.allSettled([api.createTriadicDatabase(2026),api.createTriadicDatabase(2026),api.openTriadicDatabase(new Uint8Array())]);
+    assert.ok(requests.every(result=>result.status==='rejected' && /一時的な初期化失敗/.test(result.reason.message)));
+    assert.equal(api.initializationAttempts(),1,'同時要求は初期化を共有');
+    assert.deepEqual(api.businessSchemaDefinitions(),[],'失敗状態を公開しない');
+    const bytes=await api.createTriadicDatabase(2026),before=bytes.slice();
+    await api.validateTriadicDatabase(bytes);
+    assert.equal(api.initializationAttempts(),2,'次の要求で一度だけ再初期化');
+    await assert.rejects(api.openTriadicDatabase(new Uint8Array([1,2,3])));
+    await api.validateTriadicDatabase(bytes);
+    assert.equal(api.initializationAttempts(),2,'不正ファイル拒否で成功済み本体は破棄しない');
+    assert.deepEqual(bytes,before);
+  });
+  await withInitializationFault({failures:100},async api=>{
+    await assert.rejects(api.createTriadicDatabase(2026),/初期化失敗/);
+    await assert.rejects(api.createTriadicDatabase(2026),/初期化失敗/);
+    assert.equal(api.initializationAttempts(),2,'自動の無制限再試行はしない');
+  });
+});
+
+test('正規スキーマは両形式の準備完了後に公開し、失敗後に再準備する',async()=>{
+  await withInitializationFault({schema:true},async api=>{
+    await assert.rejects(api.createTriadicDatabase(2026),/スキーマ準備失敗/);
+    assert.deepEqual(api.businessSchemaDefinitions(),[],'部分的な定義を公開しない');
+    const bytes=await api.createTriadicDatabase(2026);
+    await api.validateTriadicDatabase(bytes);
+    const snapshot=await api.createBusinessSnapshot(bytes);
+    const db=await api.openBusinessSnapshot(snapshot);db.close();
+    assert.ok(api.businessSchemaDefinitions().length>0);
+    assert.equal(api.initializationAttempts(),1,'成功済み本体を保ってスキーマだけ再準備');
+  });
+});

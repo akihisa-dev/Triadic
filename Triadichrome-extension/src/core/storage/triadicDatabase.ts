@@ -6,25 +6,38 @@ import { validateDataHistory, DATA_HISTORY_SQL } from "./dataHistorySchema";
 import { seedDefaultCostMaster } from "./defaultCostMaster";
 import { BUSINESS_TABLES, TRIADIC_FORMAT_ID, TRIADIC_FORMAT_VERSION, TRIADIC_SCHEMA_SQL } from "./triadicSchema";
 export { TRIADIC_FILE_EXTENSION, TRIADIC_MIME_TYPE } from "./triadicSchema";
-const allowedSchemas = new Map<DocumentType, string>();
+let allowedSchemas = new Map<DocumentType, string>();
 let businessDefinitions: string[] = [];
 const schemaObjects = (db: Database) => db.exec("SELECT type, name, tbl_name, sql FROM main.sqlite_master ORDER BY type, name")[0]?.values ?? [];
-const sqlitePromise = initializeSqlite().then(sql => {
-  // Derive both exact allowlists from the authoritative DDL, including SQLite's internal objects.
-  for (const type of ["plan", "snapshot"] as const) {
-    const canonical = new sql.Database();
-    try {
-      canonical.exec(TRIADIC_SCHEMA_SQL);
-      if (type === "plan") canonical.exec(DATA_HISTORY_SQL);
-      allowedSchemas.set(type, JSON.stringify(schemaObjects(canonical)));
-      if (type === "snapshot") businessDefinitions = schemaObjects(canonical)
-        .filter(([, name, , definition]) => definition !== null && name !== "sqlite_sequence")
-        .sort(([left], [right]) => Number(right === "table") - Number(left === "table"))
-        .map(([, , , definition]) => String(definition));
-    } finally { canonical.close(); }
-  }
-  return sql;
-});
+let sqlitePromise: ReturnType<typeof initializeSqlite> | undefined;
+function preparedSqlite() {
+  if (sqlitePromise) return sqlitePromise;
+  const pending = initializeSqlite().then(sql => {
+    const schemas = new Map<DocumentType, string>();
+    let definitions: string[] = [];
+    // Derive both exact allowlists from the authoritative DDL, including SQLite's internal objects.
+    for (const type of ["plan", "snapshot"] as const) {
+      const canonical = new sql.Database();
+      try {
+        canonical.exec(TRIADIC_SCHEMA_SQL);
+        if (type === "plan") canonical.exec(DATA_HISTORY_SQL);
+        schemas.set(type, JSON.stringify(schemaObjects(canonical)));
+        if (type === "snapshot") definitions = schemaObjects(canonical)
+          .filter(([, name, , definition]) => definition !== null && name !== "sqlite_sequence")
+          .sort(([left], [right]) => Number(right === "table") - Number(left === "table"))
+          .map(([, , , definition]) => String(definition));
+      } finally { canonical.close(); }
+    }
+    allowedSchemas = schemas;
+    businessDefinitions = definitions;
+    return sql;
+  }).catch(error => {
+    if (sqlitePromise === pending) sqlitePromise = undefined;
+    throw error;
+  });
+  sqlitePromise = pending;
+  return pending;
+}
 /** Definitions come only from our canonical DDL, never from an input file. Tables precede indexes/triggers. */
 export function businessSchemaDefinitions(): readonly string[] { return businessDefinitions; }
 export class TriadicFileError extends Error {
@@ -107,7 +120,7 @@ function assertDatabase(db: Database, documentType: DocumentType): void {
 }
 export async function createTriadicDatabase(fiscalYear = new Date().getFullYear() - (new Date().getMonth() < 3 ? 1 : 0)): Promise<Uint8Array> {
   if (!Number.isInteger(fiscalYear) || fiscalYear < 1 || fiscalYear > 9998) throw new TriadicFileError("年度は1〜9998の整数で入力してください。");
-  const sql = await sqlitePromise;
+  const sql = await preparedSqlite();
   const db = new sql.Database();
   try {
     db.exec(TRIADIC_SCHEMA_SQL);
@@ -121,7 +134,7 @@ export async function createTriadicDatabase(fiscalYear = new Date().getFullYear(
   } finally { db.close(); }
 }
 async function openDatabase(data: ArrayLike<number>, type: DocumentType): Promise<Database> {
-  const sql = await sqlitePromise;
+  const sql = await preparedSqlite();
   let db: Database | undefined;
   try { db = new sql.Database(data); assertDatabase(db, type); db.exec("PRAGMA foreign_keys = ON"); return db; }
   catch (error) {
