@@ -8,47 +8,47 @@ import { useRelationCamera, type RelationView } from "./useRelationCamera";
 export type { RelationView } from "./useRelationCamera";
 
 const nodes = [
-  { page: "amount-item-master", name: "金額項目マスタ", icon: "master", x: 100, y: 65, master: true },
-  { page: "account-type-master", name: "科目属性マスタ", icon: "master", x: -40, y: -39, master: true },
-  { page: "account-master", name: "勘定科目マスタ", icon: "master", x: 420, y: 26, master: true },
-  { page: "industry-master", name: "業種マスタ", icon: "master", x: 120, y: 130, master: true },
-  { page: "department-master", name: "部署マスタ", icon: "master", x: 160, y: 273, master: true },
-  { page: "period-master", name: "期間マスタ", icon: "master", x: 350, y: 377, master: true },
-  { page: "expansion-category-master", name: "展開区分マスタ", icon: "master", x: 620, y: 403, master: true },
-  { page: "expansion-master", name: "展開マスタ", icon: "master", x: 900, y: 403, master: true },
-  { page: "kind-master", name: "種別マスタ", icon: "master", x: 680, y: 84, master: true },
-  { page: "previous-input", name: "前年入力", icon: "previous", x: 1180, y: -39, master: false },
-  { page: "initiative-list", name: "施策一覧", icon: "list", x: 620, y: 208, master: false },
-  { page: "cost-table", name: "総原価表", icon: "cost", x: 1020, y: 52, master: false },
-  { page: "expansion-table", name: "展開表", icon: "expansion", x: 1120, y: 286, master: false },
+  { page: "amount-item-master", name: "金額項目マスタ", icon: "master", x: 0, y: 120, master: true },
+  { page: "account-type-master", name: "科目属性マスタ", icon: "master", x: 0, y: 0, master: true },
+  { page: "account-master", name: "勘定科目マスタ", icon: "master", x: 320, y: 0, master: true },
+  { page: "industry-master", name: "業種マスタ", icon: "master", x: 0, y: 240, master: true },
+  { page: "department-master", name: "部署マスタ", icon: "master", x: 320, y: 240, master: true },
+  { page: "period-master", name: "期間マスタ", icon: "master", x: 640, y: 360, master: true },
+  { page: "expansion-category-master", name: "展開区分マスタ", icon: "master", x: 0, y: 360, master: true },
+  { page: "expansion-master", name: "展開マスタ", icon: "master", x: 320, y: 360, master: true },
+  { page: "kind-master", name: "種別マスタ", icon: "master", x: 640, y: 120, master: true },
+  { page: "previous-input", name: "前年入力", icon: "previous", x: 960, y: 0, master: false },
+  { page: "initiative-list", name: "施策一覧", icon: "list", x: 640, y: 240, master: false },
+  { page: "cost-table", name: "総原価表", icon: "cost", x: 960, y: 120, master: false },
+  { page: "expansion-table", name: "展開表", icon: "expansion", x: 960, y: 360, master: false },
 ] as const;
 
 export type HomeDestination = typeof nodes[number]["page"];
-const edges: { from: HomeDestination; to: HomeDestination; label: string }[] = [
+const edges: { from: HomeDestination; to: HomeDestination; label: string; at?: { x: number; y: number } }[] = [
   { from: "account-type-master", to: "amount-item-master", label: "金額項目の構成" },
-  { from: "amount-item-master", to: "initiative-list", label: "売上・費用・利益を計算" },
+  { from: "amount-item-master", to: "initiative-list", label: "売上・費用・利益を計算", at: { x: 280, y: 120 } },
   { from: "account-type-master", to: "account-master", label: "科目属性を選択" },
   { from: "previous-input", to: "cost-table", label: "前年の実額" },
   { from: "kind-master", to: "initiative-list", label: "種別ごとに入力" },
   { from: "account-master", to: "cost-table", label: "表示順・集計・加減" },
-  { from: "account-master", to: "initiative-list", label: "科目を選択" },
+  { from: "account-master", to: "initiative-list", label: "科目を選択", at: { x: 480, y: 120 } },
   { from: "industry-master", to: "department-master", label: "所属業種を設定" },
-  { from: "industry-master", to: "initiative-list", label: "部署の所属から業種を選択" },
+  { from: "industry-master", to: "initiative-list", label: "部署の所属から業種を選択", at: { x: 160, y: 180 } },
   { from: "department-master", to: "initiative-list", label: "部署名を選択" },
   { from: "period-master", to: "initiative-list", label: "期間名を選択" },
-  { from: "expansion-category-master", to: "expansion-master", label: "展開区分を割り当て" },
-  { from: "expansion-category-master", to: "initiative-list", label: "展開の割当から区分を選択" },
+  { from: "expansion-category-master", to: "expansion-master", label: "展開区分を割り当て", at: { x: 160, y: 420 } },
+  { from: "expansion-category-master", to: "initiative-list", label: "展開の割当から区分を選択", at: { x: 160, y: 300 } },
   { from: "expansion-master", to: "initiative-list", label: "展開名を選択" },
   { from: "initiative-list", to: "cost-table", label: "同じ内容を科目別に確認" },
   { from: "initiative-list", to: "expansion-table", label: "同じ内容を展開別に確認" },
-  { from: "expansion-master", to: "expansion-table", label: "グループ分け" },
+  { from: "expansion-master", to: "expansion-table", label: "グループ分け", at: { x: 800, y: 420 } },
 ];
 
 // Relation descriptions are graph nodes, joined to both destinations.
 const subNodes = edges.map((edge, index) => {
   const from = nodes.find(node => node.page === edge.from)!, to = nodes.find(node => node.page === edge.to)!;
-  return { page: `relation-${index}`, name: edge.label, x: (from.x + to.x) / 2,
-    y: (from.y + to.y) / 2 + (edge.from === "expansion-category-master" ? edge.to === "initiative-list" ? 40 : 60 : 0), width: Math.max(112, edge.label.length * 12 + 24), height: 32, sub: true };
+  return { page: `relation-${index}`, name: edge.label, x: edge.at?.x ?? (from.x + to.x) / 2,
+    y: edge.at?.y ?? (from.y + to.y) / 2, width: Math.max(112, edge.label.length * 12 + 24), height: 32, sub: true };
 });
 const graphNodes = [...nodes.map(node => ({ ...node, width: 200, height: 56 })), ...subNodes];
 const graphEdges = edges.flatMap((edge, index) => [{ from: edge.from, to: subNodes[index]!.page }, { from: subNodes[index]!.page, to: edge.to }]);

@@ -275,12 +275,20 @@ test("初期配置は関係ごとに分散し、説明が重ならず、操作�
     const groups = [...svg.querySelectorAll("g[transform]")];
     const before = groups.map(group => group.getAttribute("transform"));
     for (let i = 0; i < 30; i++) await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
-    const x = (page: string) => svg.querySelector(`[data-page="${page}"]`)!.getBoundingClientRect().x;
-    return { overlaps, stable: groups.every((group, i) => group.getAttribute("transform") === before[i]),
+    const box = (page: string) => svg.querySelector(`[data-page="${page}"]`)!.getBoundingClientRect();
+    const x = (page: string) => box(page).x;
+    const columns = [["account-type-master", "amount-item-master", "industry-master", "expansion-category-master"],
+      ["account-master", "department-master", "expansion-master"], ["kind-master", "initiative-list", "period-master"],
+      ["previous-input", "cost-table", "expansion-table"]];
+    const rows = [["account-type-master", "account-master", "previous-input"], ["amount-item-master", "kind-master", "cost-table"],
+      ["industry-master", "department-master", "initiative-list"], ["expansion-category-master", "expansion-master", "period-master", "expansion-table"]];
+    return { aligned: columns.every(column => column.every(page => Math.abs(box(page).x - box(column[0]!).x) < 1)) &&
+      rows.every(row => row.every(page => Math.abs(box(page).y - box(row[0]!).y) < 1)), overlaps, stable: groups.every((group, i) => group.getAttribute("transform") === before[i]),
       center: x("initiative-list"), account: x("account-master"), department: x("department-master"),
       cost: x("cost-table"), expansion: x("expansion-table") };
   });
   expect(metrics.overlaps).toEqual([]);
+  expect(metrics.aligned).toBe(true);
   expect(metrics.stable).toBe(true);
   expect(metrics.account).toBeLessThan(metrics.center);
   expect(metrics.department).toBeLessThan(metrics.center);
