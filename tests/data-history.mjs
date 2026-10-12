@@ -1,6 +1,35 @@
 import assert from "node:assert/strict";
 
 export async function verifyDataHistory(api) {
+  for (const entries of [[], [{ id: 1 }], [{ id: 9 }, { id: 4 }, { id: 1 }]]) {
+    for (const selected of [[], [4], entries.map(entry => entry.id), [99, 1, 9]]) {
+      const before = structuredClone({ entries, selected });
+      const result = api.historySelection(entries, selected);
+      const expected = selected.filter(id => entries.some(entry => entry.id === id));
+      assert.deepEqual(result.ids, expected, '0件・1件・部分選択・全選択・失効IDの削除対象を維持');
+      assert.deepEqual(entries.map(entry => result.selectedIds.has(entry.id)), entries.map(entry => expected.includes(entry.id)));
+      assert.deepEqual({ entries, selected }, before, '選択判定で履歴と入力配列を変更しない');
+    }
+  }
+  const previous = api.historySelection([{ id: 1 }, { id: 2 }], [1, 2]);
+  const changed = api.historySelection([{ id: 3 }, { id: 1 }], previous.ids);
+  assert.deepEqual(changed.ids, [1], '消えたIDを削除対象から除き、新しい履歴を勝手に選択しない');
+  for (const count of [1000, 5000, 10000]) {
+    let entryReads = 0, selectionReads = 0, rowChecks = 0;
+    const entries = Array.from({ length: count }, (_, i) => ({ get id() { entryReads++; return count - i; } }));
+    const selected = new Proxy(Array.from({ length: count }, (_, i) => count - i), {
+      get(target, property, receiver) { if (/^\d+$/.test(String(property))) selectionReads++; return Reflect.get(target, property, receiver); },
+    });
+    const result = api.historySelection(entries, selected);
+    assert.equal(result.ids.length, count);
+    assert.equal(entryReads, count, '履歴IDは一覧を一度だけ走査');
+    assert.equal(selectionReads, count, '選択IDも一度だけ走査');
+    const has = result.selectedIds.has.bind(result.selectedIds);
+    result.selectedIds.has = id => { rowChecks++; return has(id); };
+    for (const entry of entries) assert.equal(result.selectedIds.has(entry.id), true);
+    assert.equal(rowChecks, count, '各行は共有集合で一度だけ判定');
+    assert.equal(entryReads + selectionReads + rowChecks, 4 * count, '全選択の走査量は件数に比例');
+  }
   const { createTriadicDatabase, readPlanContents, openTriadicDatabase, readDataHistory, readHistorySnapshot, trackHistoryChange,
     recordDataHistory, restoreDataHistory, deleteDataHistory, writePlanChange, saveKindSelection, registerInitiative,
     savePreviousAmounts, changeAccountMaster, changeDepartmentMaster } = api;

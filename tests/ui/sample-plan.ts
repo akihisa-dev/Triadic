@@ -6,6 +6,7 @@ import { changeExpansionMaster } from "../../Triadichrome-extension/src/core/sto
 // 多数の展開・非連続集計の数式長と引数上限は tests/report-workbook.mjs の合成計画で確認する。
 // 出力条件は現在の所属・分類へ整合させる。所属追加・マスタ追加の取消とやり直しは tests/ui/spreadsheet-io.spec.ts で確認する。
 import { editDatabase } from "../../Triadichrome-extension/src/core/storage/transaction";
+// 履歴の全選択・解除・日時入力・確認取消・削除失敗は tests/ui/data-history.spec.ts、1000/5000/10000件の選択走査量は tests/data-history.mjs で確認する。
 import { trackHistoryChange, recordDataHistory } from "../../Triadichrome-extension/src/core/storage/dataHistory";
 import { savePreviousAmounts } from "../../Triadichrome-extension/src/core/storage/settings";
 import { INITIAL_KINDS } from "../../Triadichrome-extension/src/core/domain/kinds";

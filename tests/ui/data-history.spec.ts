@@ -81,12 +81,18 @@ test("複数選択・指定日時より前の削除は確認後だけ行い、�
   const menu = await openFull(page, app);
   await menu.getByRole("button", { name: "履歴", exact: true }).click();
   const checks = app.getByRole("region", { name: "データの履歴", exact: true }).getByRole("checkbox");
-  await checks.nth(1).check(); await checks.nth(2).check();
+  await app.getByRole("checkbox", { name: "すべての履歴を選択", exact: true }).check();
+  for (const check of await checks.all()) await expect(check).toBeChecked();
+  await checks.nth(3).uncheck();
+  await expect(checks.first()).not.toBeChecked();
+  await app.getByLabel("指定日時より前を削除", { exact: true }).fill("2099-01-01T00:00");
+  await expect(checks.nth(1)).toBeChecked(); await expect(checks.nth(2)).toBeChecked();
   await app.getByRole("button", { name: "選択した履歴を削除", exact: true }).click();
   await expect(app.getByRole("alertdialog")).toContainText("2件");
   await app.getByRole("alertdialog").getByRole("button", { name: "キャンセル", exact: true }).click();
   await expect(app.getByRole("alertdialog")).not.toBeVisible();
   await expect(app.locator(".history-date")).toHaveCount(3);
+  await expect(checks.nth(1)).toBeChecked(); await expect(checks.nth(2)).toBeChecked();
   await app.getByRole("button", { name: "選択した履歴を削除", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "削除する", exact: true }).click();
   await expect(app.locator(".history-date")).toHaveCount(1);
@@ -97,6 +103,26 @@ test("複数選択・指定日時より前の削除は確認後だけ行い、�
   await menu.getByRole("button", { name: "施策一覧", exact: true }).click();
   await app.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();
   await expect(app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).first()).toHaveValue("120");
+});
+
+test("履歴の全選択削除が失敗しても選択と履歴を保ち、確認を取消できる", async ({ page, app }) => {
+  await page.goto("/tests/ui/preview.html?data=full");
+  await expect(page.getByRole("status")).toHaveText("操作できます");
+  await page.getByLabel("ファイル操作", { exact: true }).selectOption("save-failure");
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "履歴", exact: true }).click();
+  const all = app.getByRole("checkbox", { name: "すべての履歴を選択", exact: true });
+  await all.check(); await all.uncheck();
+  await expect(app.getByRole("button", { name: "選択した履歴を削除", exact: true })).toBeDisabled();
+  await all.check();
+  await app.getByRole("button", { name: "選択した履歴を削除", exact: true }).click();
+  const dialog = app.getByRole("alertdialog");
+  await expect(dialog).toContainText("3件");
+  await dialog.getByRole("button", { name: "削除する", exact: true }).click();
+  await expect(dialog).toContainText("保存失敗");
+  await dialog.getByRole("button", { name: "キャンセル", exact: true }).click();
+  await expect(app.locator(".history-date")).toHaveCount(3);
+  for (const check of await app.getByRole("region", { name: "データの履歴", exact: true }).getByRole("checkbox").all()) await expect(check).toBeChecked();
 });
 
 test("復元の保存失敗では閲覧中の状態と現在のデータを保持", async ({ page, app }) => {

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { DataHistoryEntry, HistoryDeletion } from "../core/domain/dataHistory";
+import { historySelection } from "../core/domain/historySelection";
 import { ConfirmationDialog } from "./ConfirmationDialog";
 import "./DataHistoryPage.css";
 
@@ -18,7 +19,7 @@ export function DataHistoryPage({ entries, busy, error, onPreview, onDelete, onR
   const [failure, setFailure] = useState("");
   const [working, setWorking] = useState(false);
   const locked = busy || working;
-  const ids = selected.filter(id => entries.some(entry => entry.id === id));
+  const { ids, selectedIds } = useMemo(() => historySelection(entries, selected), [entries, selected]);
   const before = cutoff && Number.isFinite(new Date(cutoff).getTime()) ? new Date(cutoff).toISOString() : null;
   const older = before ? entries.filter(entry => entry.recordedAt < before).length : 0;
   const count = deletion ? "ids" in deletion ? deletion.ids.length : entries.filter(entry => entry.recordedAt < deletion.before).length : 0;
@@ -43,7 +44,7 @@ export function DataHistoryPage({ entries, busy, error, onPreview, onDelete, onR
         <th scope="col"><input type="checkbox" aria-label="すべての履歴を選択" disabled={locked || !entries.length} checked={entries.length > 0 && ids.length === entries.length} onChange={event => setSelected(event.target.checked ? entries.map(entry => entry.id) : [])} /></th>
         <th scope="col">記録日時</th>
       </tr></thead><tbody>{entries.map(entry => <tr key={entry.id}>
-        <td><input type="checkbox" aria-label={`${historyDate(entry.recordedAt)}の履歴を選択`} disabled={locked} checked={ids.includes(entry.id)} onChange={event => setSelected(current => event.target.checked ? [...current, entry.id] : current.filter(id => id !== entry.id))} /></td>
+        <td><input type="checkbox" aria-label={`${historyDate(entry.recordedAt)}の履歴を選択`} disabled={locked} checked={selectedIds.has(entry.id)} onChange={event => setSelected(current => event.target.checked ? [...current, entry.id] : current.filter(id => id !== entry.id))} /></td>
         <td><button className="text-button history-date" type="button" disabled={locked} onClick={() => void perform(() => onPreview(entry))}><time dateTime={entry.recordedAt}>{historyDate(entry.recordedAt)}</time></button></td>
       </tr>)}</tbody></table>
       {!entries.length && <p className="page-description">履歴はまだありません。</p>}
