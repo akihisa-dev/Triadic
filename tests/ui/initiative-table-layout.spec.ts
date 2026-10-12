@@ -26,9 +26,59 @@ test("施策の月別入力を罫線付きのコンパクトな表で表示す�
   expect(layout.height).toBeLessThan(50);
   expect(layout.aligned).toBe(true);
   await table.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).focus();
-  await table.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).selectOption({ label: "401 売上高" });
+  await table.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).selectOption({ label: "売上高" });
   const amount = table.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true });
   await amount.fill("123.456");
   await expect(amount).toHaveValue("123.456");
   await expect(app.getByRole("button", { name: "1行目を削除", exact: true })).toBeDisabled();
+});
+
+test("狭い画面でも長い科目名をコードなしで全文表示し、最後の月を編集できる", async ({ page, app }) => {
+  await page.getByLabel("テストデータ", { exact: true }).selectOption("defaults");
+  await expect(page.getByRole("status")).toHaveText("操作できます");
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await openInitiativeEntry(app);
+  const table = app.getByRole("table", { name: "月別計画金額", exact: true });
+  const select = table.getByRole("combobox", { name: "1行目の勘定科目", exact: true });
+  await select.focus();
+  await select.selectOption({ label: "固定資産減価償却費" });
+  await app.getByRole("button", { name: "＋ 勘定科目を追加", exact: true }).click();
+  const shortName = table.getByRole("combobox", { name: "2行目の勘定科目", exact: true });
+  await shortName.focus();
+  await shortName.selectOption({ label: "旅費" });
+  await table.getByRole("columnheader", { name: "勘定科目", exact: true }).click();
+  await page.setViewportSize({ width: 375, height: 800 });
+  await settleMotion(app.locator("body"));
+  await expect(select.locator("option:checked")).toHaveText("固定資産減価償却費");
+  const dimensions = await select.evaluate(node => {
+    const select = node as HTMLSelectElement;
+    const style = getComputedStyle(select);
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d")!;
+    context.font = style.font;
+    const cell = select.closest("th")!;
+    const remove = cell.querySelector("button")!;
+    const container = select.closest(".initiative-amount-table-container")!;
+    return {
+      available: select.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 20,
+      text: context.measureText(select.selectedOptions[0]!.textContent!).width,
+      contained: select.getBoundingClientRect().right <= remove.getBoundingClientRect().left
+        && remove.getBoundingClientRect().right <= cell.getBoundingClientRect().right,
+      horizontalScroll: container.scrollWidth > container.clientWidth,
+    };
+  });
+  expect(dimensions.available).toBeGreaterThanOrEqual(dimensions.text);
+  expect(dimensions.contained).toBe(true);
+  expect(dimensions.horizontalScroll).toBe(true);
+  const edges = await table.getByRole("combobox").evaluateAll(nodes => nodes.map(node => {
+    const rect = node.getBoundingClientRect();
+    const remove = node.closest("th")!.querySelector("button")!.getBoundingClientRect();
+    return { left: rect.left, right: rect.right, remove: remove.left };
+  }));
+  expect(edges[0]).toEqual(edges[1]);
+  const lastMonth = table.getByRole("spinbutton", { name: "固定資産減価償却費 3月の金額", exact: true });
+  await lastMonth.fill("12.345");
+  await expect(lastMonth).toHaveValue("12.345");
+  await expect(select).toBeDisabled();
+  await expect(select.locator("option:checked")).toHaveText("固定資産減価償却費");
 });

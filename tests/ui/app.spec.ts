@@ -22,7 +22,7 @@ async function prepareAccountRows(target: FrameLocator | Page) {
   await selectClassification(target.getByRole("combobox", { name: "展開名", exact: true }), "コスト");
   await selectClassification(target.getByRole("combobox", { name: "部署名", exact: true }), "部署A");
   await selectClassification(target.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
-  for (const [index, name] of ["100 売上高", "501 消耗品費", "600 給与手当"].entries()) {
+  for (const [index, name] of ["売上高", "消耗品費", "給与手当"].entries()) {
     if (index > 0) await target.getByRole("button", { name: "＋ 勘定科目を追加", exact: true }).click();
     await target.getByRole("combobox", { name: `${index + 1}行目の勘定科目` }).focus();
     await target.getByRole("combobox", { name: `${index + 1}行目の勘定科目` }).selectOption({ label: name });
@@ -234,7 +234,7 @@ test("金額表の各セルを編集でき、狭い画面でも最後の月に�
   const table = app.getByRole("table", { name: "月別計画金額", exact: true });
   const region = app.locator("#kind-amount-panel");
   await expect(table.getByRole("columnheader")).toHaveText(["勘定科目", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月", "1月", "2月", "3月"]);
-  expect(await table.getByRole("combobox").evaluateAll(inputs => inputs.map(input => (input as HTMLSelectElement).selectedOptions[0]?.textContent))).toEqual(["100 売上高", "501 消耗品費", "600 給与手当"]);
+  expect(await table.getByRole("combobox").evaluateAll(inputs => inputs.map(input => (input as HTMLSelectElement).selectedOptions[0]?.textContent))).toEqual(["売上高", "消耗品費", "給与手当"]);
   await expect(table.getByRole("spinbutton")).toHaveCount(36);
   expect(await table.getByRole("spinbutton").evaluateAll(inputs => inputs.every(input => (input as HTMLInputElement).value === "0"))).toBe(true);
 

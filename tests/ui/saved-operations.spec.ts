@@ -40,7 +40,7 @@ test("保存済み施策の編集・登録を取り消してやり直し、新�
   await selectClassification(app.getByRole("combobox", { name: "部署名", exact: true }), "部署A");
   await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
   await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).focus();
-  await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).selectOption({ label: "401 売上高" });
+  await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).selectOption({ label: "売上高" });
   await app.getByRole("button", { name: "登録", exact: true }).click();
   await app.getByRole("button", { name: "取消確認施策", exact: true }).click();
   await undo.click();

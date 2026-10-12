@@ -142,7 +142,7 @@
   border-top: 1px solid var(--line);
   border-left: 1px solid var(--line);
   border-spacing: 0;
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 .initiative-amount-table th,
@@ -171,7 +171,7 @@
   position: sticky;
   z-index: 1;
   left: 0;
-  width: clamp(150px, 20vw, 220px);
+  width: 1px;
   padding-left: 6px;
   padding-right: 6px;
   text-align: left;
@@ -184,7 +184,7 @@
 .initiative-amount-table input {
   display: block;
   width: 100%;
-  min-width: 0;
+  min-width: 72px;
   min-height: 32px;
   padding: 6px 8px;
   appearance: textfield;
@@ -229,14 +229,13 @@
   font: inherit;
   outline: 2px solid transparent;
   outline-offset: -2px;
-  text-overflow: ellipsis;
   transition: border-color var(--motion-feedback) var(--motion-ease), outline-color var(--motion-feedback) var(--motion-ease);
 }
 
 .initiative-amount-table select:focus { outline-color: var(--accent); }
 .initiative-amount-table input:disabled { opacity: 0.45; }
-.initiative-account-cell { display: flex; align-items: center; gap: 4px; }
-.initiative-account-cell select { flex: 1; min-width: 0; }
+.initiative-account-cell { display: grid; grid-template-columns: minmax(max-content, 1fr) max-content; align-items: center; gap: 4px; }
+.initiative-account-cell select { min-width: max-content; }
 .initiative-account-cell .text-button { flex-shrink: 0; min-height: 32px; padding: 4px; font-size: 12px; }
 
 .initiative-row-actions { margin-top: 16px; }

@@ -176,7 +176,7 @@ test("金額項目の3合計は入力と種別に追従する", async ({ app }) 
   await expect(sales.getByRole("cell").first()).toHaveText("1,226");
   await app.getByRole("button", { name: "＋ 勘定科目を追加", exact: true }).click();
   await app.getByRole("combobox", { name: "3行目の勘定科目", exact: true }).focus();
-  await app.getByRole("combobox", { name: "3行目の勘定科目", exact: true }).selectOption({ label: "537 旅費" });
+  await app.getByRole("combobox", { name: "3行目の勘定科目", exact: true }).selectOption({ label: "旅費" });
   await expect(footer.getByRole("row")).toHaveCount(3);
   await expect(footer.getByRole("row", { name: /^費用合計/ }).getByRole("cell").first()).toHaveText("0");
   await expect(footer.getByRole("rowheader", { name: "売上原価合計", exact: true })).toHaveCount(0);
