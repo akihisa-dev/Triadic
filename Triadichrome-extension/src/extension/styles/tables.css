@@ -33,8 +33,8 @@
 .expansion-table-page .kind-selection-slots { margin-bottom: 0; }
 .expansion-table-page .initiative-list-container { flex: 1; min-height: 0; min-width: 0; margin: 0; overflow: auto; }
 .expansion-table {
-  --expansion-group-width: 120px;
-  --expansion-period-width: 100px;
+  --expansion-group-width: 80px;
+  --expansion-period-width: 80px;
   --expansion-name-width: 240px;
   width: max-content;
   min-width: 0;
@@ -47,6 +47,7 @@
 .expansion-name-col { width: var(--expansion-name-width); }
 .expansion-amount-col { width: 96px; }
 .expansion-table th, .expansion-table td { padding: 8px 10px; border-right: 1px solid var(--line); }
+.expansion-table :is(.expansion-group, .expansion-period) { padding-inline: 6px; }
 .expansion-table td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .expansion-table .expansion-group, .expansion-table .expansion-name, .expansion-table .expansion-period, .expansion-table .expansion-subtotal-name, .expansion-table .expansion-summary { position: sticky; z-index: 1; background: var(--canvas); text-align: left; overflow-wrap: anywhere; border-right: 1px solid var(--line); }
 .expansion-table .expansion-group, .expansion-table .expansion-summary { left: 0; }
@@ -61,7 +62,7 @@
 .expansion-table thead .expansion-group, .expansion-table thead .expansion-name, .expansion-table thead .expansion-period, .expansion-table .expansion-total > *, .expansion-table .expansion-subtotal > * { background: var(--soft); font-weight: 600; }
 .expansion-table thead + tbody tr:first-child > *, .expansion-table tbody + tbody tr:first-child > * { border-top: 1px solid var(--control-line); }
 @media (max-width: 600px) {
-  .expansion-table { --expansion-group-width: 72px; --expansion-period-width: 60px; --expansion-name-width: 144px; }
+  .expansion-table { --expansion-group-width: 60px; --expansion-period-width: 60px; --expansion-name-width: 144px; }
 }
 
 .expansion-table-page .initiative-list-heading .initiative-field:last-child { width: 12rem; max-width: 100%; }
