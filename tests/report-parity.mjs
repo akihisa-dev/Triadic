@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import ExcelJS from 'exceljs';
 import { SaxesParser } from 'saxes';
 import { withNodeBundle } from '../scripts/node-bundle.mjs';
@@ -98,4 +100,4 @@ export async function verifyReportParity(api) {
   }
   console.log('report parity ok: production React tables vs serialized XLSX, every visible cell and merge');
 }
-if (process.argv[1]?.endsWith('/report-parity.mjs')) await withNodeBundle('tests/report-parity-api.ts', verifyReportParity);
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await withNodeBundle('tests/report-parity-api.ts', verifyReportParity);

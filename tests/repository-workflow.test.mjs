@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { devNull, tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { runInNewContext } from "node:vm";
 import { projectRoot } from "../scripts/paths.mjs";
 
 const versionFiles = [
@@ -12,6 +14,33 @@ const versionFiles = [
   "Triadichrome-extension/manifest.template.json",
   "Triadichrome-extension/manifest.json",
 ];
+
+test("三表照合の入口はWindows・POSIXで直接実行だけを検証し、不一致を失敗にする", async t => {
+  const source = await readFile(path.join(projectRoot, "tests/report-parity.mjs"), "utf8");
+  const entry = source.trim().split("\n").at(-1);
+  // Run the actual production entry statement with each OS's path and URL rules.
+  for (const [paths, windows, url, filename] of [
+    [path.posix, false, "file:///repo/tests/report-parity.mjs", "/repo/tests/report-parity.mjs"],
+    [path.win32, true, "file:///C:/repo/tests/report-parity.mjs", "C:\\repo\\tests\\report-parity.mjs"],
+  ]) for (const argument of [filename, paths.join(paths.dirname(filename), "other.mjs"), undefined]) {
+    let calls = 0;
+    await runInNewContext(`(async () => { ${entry.replaceAll("import.meta.url", "moduleUrl")} })()`, {
+      path: paths, fileURLToPath: value => fileURLToPath(value, { windows }), moduleUrl: url,
+      process: { argv: ["node", argument] }, verifyReportParity: () => {},
+      withNodeBundle: async () => { calls++; },
+    });
+    assert.equal(calls, argument === filename ? 1 : 0);
+  }
+  const root = await realpath(await mkdtemp(path.join(tmpdir(), "triadichrome-parity-entry-")));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const fixture = path.join(root, "report-parity.mjs");
+  await writeFile(fixture, `import path from 'node:path';\nimport { fileURLToPath } from 'node:url';\nconst verifyReportParity = () => { throw new Error('照合不一致'); };\nconst withNodeBundle = async (_, operation) => operation();\n${entry}\n`);
+  const direct = spawnSync(process.execPath, [fixture], { encoding: "utf8" });
+  assert.notEqual(direct.status, 0);
+  assert.match(direct.stderr, /照合不一致/);
+  const imported = spawnSync(process.execPath, ["--input-type=module", "-e", `await import(${JSON.stringify(pathToFileURL(fixture).href)})`], { encoding: "utf8" });
+  assert.equal(imported.status, 0, imported.stderr);
+});
 
 async function repository(t) {
   const root = await mkdtemp(path.join(tmpdir(), "triadichrome-workflow-"));
