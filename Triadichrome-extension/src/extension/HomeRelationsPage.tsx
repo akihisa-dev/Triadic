@@ -8,19 +8,19 @@ import { useRelationCamera, type RelationView } from "./useRelationCamera";
 export type { RelationView } from "./useRelationCamera";
 
 const nodes = [
-  { page: "amount-item-master", name: "金額項目マスタ", icon: "master", x: 80, y: 530, master: true },
-  { page: "account-type-master", name: "科目属性マスタ", icon: "master", x: 70, y: 120, master: true },
-  { page: "account-master", name: "勘定科目マスタ", icon: "master", x: 260, y: 150, master: true },
-  { page: "industry-master", name: "業種マスタ", icon: "master", x: 180, y: 290, master: true },
-  { page: "department-master", name: "部署マスタ", icon: "master", x: 260, y: 430, master: true },
-  { page: "period-master", name: "期間マスタ", icon: "master", x: 390, y: 530, master: true },
-  { page: "expansion-category-master", name: "展開区分マスタ", icon: "master", x: 720, y: 620, master: true },
-  { page: "expansion-master", name: "展開マスタ", icon: "master", x: 550, y: 560, master: true },
-  { page: "kind-master", name: "種別マスタ", icon: "master", x: 370, y: 60, master: true },
-  { page: "previous-input", name: "前年入力", icon: "previous", x: 750, y: 60, master: false },
-  { page: "initiative-list", name: "施策一覧", icon: "list", x: 520, y: 308, master: false },
-  { page: "cost-table", name: "総原価表", icon: "cost", x: 850, y: 220, master: false },
-  { page: "expansion-table", name: "展開表", icon: "expansion", x: 950, y: 520, master: false },
+  { page: "amount-item-master", name: "金額項目マスタ", icon: "master", x: 100, y: 65, master: true },
+  { page: "account-type-master", name: "科目属性マスタ", icon: "master", x: -40, y: -39, master: true },
+  { page: "account-master", name: "勘定科目マスタ", icon: "master", x: 420, y: 26, master: true },
+  { page: "industry-master", name: "業種マスタ", icon: "master", x: 120, y: 130, master: true },
+  { page: "department-master", name: "部署マスタ", icon: "master", x: 160, y: 273, master: true },
+  { page: "period-master", name: "期間マスタ", icon: "master", x: 350, y: 377, master: true },
+  { page: "expansion-category-master", name: "展開区分マスタ", icon: "master", x: 620, y: 403, master: true },
+  { page: "expansion-master", name: "展開マスタ", icon: "master", x: 900, y: 403, master: true },
+  { page: "kind-master", name: "種別マスタ", icon: "master", x: 680, y: 84, master: true },
+  { page: "previous-input", name: "前年入力", icon: "previous", x: 1180, y: -39, master: false },
+  { page: "initiative-list", name: "施策一覧", icon: "list", x: 620, y: 208, master: false },
+  { page: "cost-table", name: "総原価表", icon: "cost", x: 1020, y: 52, master: false },
+  { page: "expansion-table", name: "展開表", icon: "expansion", x: 1120, y: 286, master: false },
 ] as const;
 
 export type HomeDestination = typeof nodes[number]["page"];
@@ -48,9 +48,9 @@ const edges: { from: HomeDestination; to: HomeDestination; label: string }[] = [
 const subNodes = edges.map((edge, index) => {
   const from = nodes.find(node => node.page === edge.from)!, to = nodes.find(node => node.page === edge.to)!;
   return { page: `relation-${index}`, name: edge.label, x: (from.x + to.x) / 2,
-    y: (from.y + to.y) / 2, width: Math.max(112, edge.label.length * 12 + 24), height: 32, sub: true };
+    y: (from.y + to.y) / 2 + (edge.from === "expansion-category-master" ? edge.to === "initiative-list" ? 40 : 60 : 0), width: Math.max(112, edge.label.length * 12 + 24), height: 32, sub: true };
 });
-const graphNodes = [...nodes, ...subNodes];
+const graphNodes = [...nodes.map(node => ({ ...node, width: 200, height: 56 })), ...subNodes];
 const graphEdges = edges.flatMap((edge, index) => [{ from: edge.from, to: subNodes[index]!.page }, { from: subNodes[index]!.page, to: edge.to }]);
 
 type Props = {
@@ -75,9 +75,9 @@ export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
   const fit = (animated = false) => {
     const node = viewport.current;
     if (!node || !node.clientWidth || !node.clientHeight) return;
-    const positions = graphNodes.map(item => ({ ...(view.current?.positions?.[item.page] ?? { x: item.x + 100, y: item.y + 12 }), halfWidth: "width" in item ? item.width / 2 + 6 : 106 }));
+    const positions = graphNodes.map(item => ({ ...(view.current?.positions?.[item.page] ?? { x: item.x + 100, y: item.y + 12 }), halfWidth: item.width / 2 + 6, halfHeight: item.height / 2 + 6 }));
     const left = Math.min(...positions.map(point => point.x - point.halfWidth)), right = Math.max(...positions.map(point => point.x + point.halfWidth));
-    const top = Math.min(...positions.map(point => point.y - 18)), bottom = Math.max(...positions.map(point => point.y + 66));
+    const top = Math.min(...positions.map(point => point.y - point.halfHeight)), bottom = Math.max(...positions.map(point => point.y + point.halfHeight));
     const scale = Math.max(MIN_SCALE, Math.min(1, (node.clientWidth - 80) / (right - left), (node.clientHeight - 80) / (bottom - top)));
     (animated ? smooth : update)({ x: node.clientWidth / 2 - (left + right) / 2 * scale, y: node.clientHeight / 2 - (top + bottom) / 2 * scale, scale, fitted: true });
   };
@@ -202,7 +202,7 @@ export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
             </foreignObject>
           </g>
         </g>)}
-        {nodes.map(node => <g key={node.page} ref={element => { if (element) graph.groups.current.set(node.page, element); else graph.groups.current.delete(node.page); }} className="home-relation-item"><foreignObject x={node.x - 6} y={node.y - 6} width="212" height={node.page === "initiative-list" ? 102 : 84}>
+        {nodes.map(node => <g key={node.page} ref={element => { if (element) graph.groups.current.set(node.page, element); else graph.groups.current.delete(node.page); }} className="home-relation-item"><foreignObject x={node.x - 6} y={node.y - 22} width="212" height="68">
           <button type="button" data-page={node.page} className={`home-relation-node${node.master ? " is-master" : ""}${node.page === "initiative-list" ? " is-entry" : ""}${related.has(node.page) ? " is-related" : ""}${active === node.page ? " is-selected" : ""}`}
             disabled={disabled} onMouseEnter={() => setActive(node.page)} onMouseLeave={() => setActive(null)} onFocus={() => {
               setActive(node.page);
@@ -210,10 +210,10 @@ export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
               const current = view.current ?? camera, box = viewport.current;
               if (!box) return;
               const position = current.positions?.[node.page] ?? { x: node.x + 100, y: node.y + 12 };
-              const x = current.x + (position.x - 100) * current.scale, y = current.y + (position.y - 12) * current.scale;
-              const width = 200 * current.scale, height = (node.page === "initiative-list" ? 90 : 72) * current.scale;
+              const x = current.x + (position.x - 100) * current.scale, y = current.y + (position.y - 28) * current.scale;
+              const width = 200 * current.scale, height = 56 * current.scale;
               if (x < 8 || y < 8 || x + width > box.clientWidth - 8 || y + height > box.clientHeight - 8)
-                update({ ...current, x: box.clientWidth / 2 - position.x * current.scale, y: box.clientHeight / 2 - (position.y - 12 + height / current.scale / 2) * current.scale, fitted: false });
+                update({ ...current, x: box.clientWidth / 2 - position.x * current.scale, y: box.clientHeight / 2 - position.y * current.scale, fitted: false });
             }} onBlur={() => setActive(null)} onClick={() => onNavigate(node.page)}>
             <span className="home-relation-icon"><SidebarIcon name={node.icon} /></span>
             <span className="home-relation-name">{node.name}</span>

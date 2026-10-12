@@ -257,3 +257,33 @@ test("関係サブノードを動かすと両側の線が追従し、画面を�
   await subnode.press("Enter");
   await expect(home).toBeVisible();
 });
+
+
+test("初期配置は関係ごとに分散し、説明が重ならず、操作前に密集しない", async ({ app }) => {
+  await app.getByRole("button", { name: "新規作成", exact: true }).click();
+  await settleMotion(app.locator("body"));
+  const home = app.getByRole("main", { name: "ホーム", exact: true });
+  const metrics = await home.locator(".home-relations-map").evaluate(async svg => {
+    const items = [...svg.querySelectorAll(".home-relation-node, .home-relation-subnode")];
+    const boxes = items.map(item => item.getBoundingClientRect());
+    const overlaps = items.flatMap((item, i) => boxes.slice(i + 1).flatMap((b, j) => {
+      const a = boxes[i]!;
+      return Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+        Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1
+        ? [`${item.textContent} / ${items[i + j + 1]!.textContent}`] : [];
+    }));
+    const groups = [...svg.querySelectorAll("g[transform]")];
+    const before = groups.map(group => group.getAttribute("transform"));
+    for (let i = 0; i < 30; i++) await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    const x = (page: string) => svg.querySelector(`[data-page="${page}"]`)!.getBoundingClientRect().x;
+    return { overlaps, stable: groups.every((group, i) => group.getAttribute("transform") === before[i]),
+      center: x("initiative-list"), account: x("account-master"), department: x("department-master"),
+      cost: x("cost-table"), expansion: x("expansion-table") };
+  });
+  expect(metrics.overlaps).toEqual([]);
+  expect(metrics.stable).toBe(true);
+  expect(metrics.account).toBeLessThan(metrics.center);
+  expect(metrics.department).toBeLessThan(metrics.center);
+  expect(metrics.cost).toBeGreaterThan(metrics.center);
+  expect(metrics.expansion).toBeGreaterThan(metrics.center);
+});

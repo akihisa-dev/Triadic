@@ -39,5 +39,10 @@ export function verifyHomeMotion({ HomeMotion, motionLine }) {
   const values = motionLine(a, b).match(/-?\d+(?:\.\d+)?/g).map(Number);
   assert.ok(values[0] <= values[2], "近接した線を反転させない");
   assert.ok(!motionLine(a, a).includes("NaN"));
+  const card = { x: 0, y: 0, width: 200, height: 56, sub: false };
+  const coordinates = body => motionLine(card, body).match(/-?\d+(?:\.\d+)?/g).map(Number);
+  assert.deepEqual(coordinates({ ...card, x: 400 }), [100, 0, 300, 0], "横の接続線はカードの左右端で止まる");
+  assert.deepEqual(coordinates({ ...card, y: 200 }), [0, 28, 0, 172], "縦の接続線はカードの上下端で止まる");
+
   console.log("PASS: home graph pointer response, settling, degree balance, refresh rate and line endpoints");
 }

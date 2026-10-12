@@ -16,11 +16,13 @@ export function useHomeGraphMotion(nodes: readonly MotionNode[], edges: readonly
 
   useLayoutEffect(() => {
     const preference = matchMedia("(prefers-reduced-motion: reduce)");
-    const motion = new HomeMotion(nodes, edges, view.current?.positions);
+    // Start from the readable relationship layout; only a drag wakes the forces.
+    const positions = view.current?.positions ?? Object.fromEntries(nodes.map(node => [node.page, { x: node.x + 100, y: node.y + 12 }]));
+    const motion = new HomeMotion(nodes, edges, positions);
     simulation.current = motion;
     for (const node of nodes) {
-      const label = groups.current.get(node.page)?.querySelector<HTMLElement>(".home-relation-name");
-      if (label) motion.bodies.get(node.page)!.width = Math.max(40, label.offsetWidth);
+      const card = groups.current.get(node.page)?.querySelector<HTMLElement>(".home-relation-node");
+      if (card) motion.bodies.get(node.page)!.width = card.offsetWidth;
     }
     paint.current = () => {
       for (const node of nodes) {

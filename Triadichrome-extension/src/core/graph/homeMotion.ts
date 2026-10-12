@@ -63,7 +63,7 @@ export class HomeMotion {
       const distance = Math.max(32, Math.hypot(dx, dy));
       const repel = 6000 / distance;
       let fx = dx / distance * repel, fy = dy / distance * repel;
-      const cy = dy + (a.sub ? 0 : 24) - (b.sub ? 0 : 24);
+      const cy = dy;
       const ox = (a.width + b.width) / 2 + 10 - Math.abs(dx);
       const oy = (a.height + b.height) / 2 + 10 - Math.abs(cy);
       if (ox > 0 && oy > 0) {
@@ -92,8 +92,7 @@ export function motionLine(a: Body, b: Body) {
   const dx = b.x - a.x, dy = b.y - a.y, distance = Math.hypot(dx, dy);
   if (distance < .001) return `M${a.x} ${a.y} L${a.x} ${a.y}`;
   const ux = dx / distance, uy = dy / distance;
-  const inset = (body: Body) => body.sub
-    ? Math.min(body.width / 2 / Math.max(.001, Math.abs(ux)), body.height / 2 / Math.max(.001, Math.abs(uy))) : 16;
+  const inset = (body: Body) => Math.min(body.width / 2 / Math.max(.001, Math.abs(ux)), body.height / 2 / Math.max(.001, Math.abs(uy)));
   const start = inset(a), end = inset(b), ratio = Math.min(1, distance / (start + end));
   return `M${a.x + ux * start * ratio} ${a.y + uy * start * ratio} L${b.x - ux * end * ratio} ${b.y - uy * end * ratio}`;
 }
