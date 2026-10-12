@@ -79,5 +79,35 @@ export function installPreciseCalculations(wb: ExcelJS.Workbook, money: Monetary
       const integer = `(${high}*1000000+${middle}+INT(${low}/1000))`;
       cell.value = { formula: yen === null ? '"属性未設定"' : `${integer}+INT((MOD(${low},1000)+IF(${integer}<0,499,500))/1000)`, result: yen === null ? "属性未設定" : roundedThousands(yen) };
     }
+    splitLongSums(ws);
+  }
+}
+
+/** Apply the length limit after column translation, which can lengthen references.
+ * Each leaf SUM already has at most 255 cell/range arguments. Move those sums
+ * into hidden cells until their parent expression fits Excel's separate limit. */
+function splitLongSums(ws: ExcelJS.Worksheet): void {
+  const limit = 8192;
+  const height = ws.rowCount, firstColumn = ws.columnCount + 1;
+  let next = 0;
+  const helper = (formula: string) => {
+    if (formula.length > limit) throw new Error("Excelの合計数式が長すぎます。");
+    const column = firstColumn + Math.floor(next / height), row = next++ % height + 1;
+    if (column > 16384) throw new Error("Excelの計算用列の上限を超えました。");
+    ws.getColumn(column).hidden = true;
+    const cell = ws.getCell(row, column);
+    cell.value = { formula };
+    return cell.address;
+  };
+  const long: ExcelJS.Cell[] = [];
+  ws.eachRow(row => row.eachCell(cell => { if (cell.formula && cell.formula.length > limit) long.push(cell); }));
+  for (const cell of long) {
+    let formula = cell.formula;
+    while (formula.length > limit) {
+      const shorter = formula.replace(/SUM\([^()]*\)/g, helper);
+      if (shorter.length >= formula.length) throw new Error("Excelの数式を上限内に分割できません。");
+      formula = shorter;
+    }
+    cell.value = { formula, ...(cell.result === undefined ? {} : { result: cell.result as number | string }) };
   }
 }

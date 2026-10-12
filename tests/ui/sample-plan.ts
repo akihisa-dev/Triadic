@@ -3,6 +3,7 @@ import { PORTFOLIO_COUNT, portfolioScenario } from "./sample-portfolio";
 import { changeExpansionCategoryMaster } from "../../Triadichrome-extension/src/core/storage/expansionCategoryMaster";
 import { changeExpansionMaster } from "../../Triadichrome-extension/src/core/storage/expansionMaster";
 // Excel出力では選択した表と条件を保ち、従来の三表と計算元、および基本関数による金額の再計算を確認する。
+// 多数の展開・非連続集計の数式長と引数上限は tests/report-workbook.mjs の合成計画で確認する。
 import { editDatabase } from "../../Triadichrome-extension/src/core/storage/transaction";
 import { trackHistoryChange, recordDataHistory } from "../../Triadichrome-extension/src/core/storage/dataHistory";
 import { savePreviousAmounts } from "../../Triadichrome-extension/src/core/storage/settings";

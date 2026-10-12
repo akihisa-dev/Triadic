@@ -182,7 +182,7 @@ export async function verifyReportWorkbooks(api, sample) {
     }
   }
   // #16: separated subtotals at and beyond Excel's argument limit; empty groups stay harmless.
-  for (const count of [255, 256]) for (const selected of [[1], [2], [1, 2], [2, 1]]) {
+  for (const count of [255, 256, 1500]) for (const selected of [[1], [2], [1, 2], [2, 1]]) {
     const large = { ...sample, previousAmounts: [],
       expansions: Array.from({ length: count + 3 }, (_, i) => ({ id: i + 1, expansionCode: String(i + 1), expansionName: `展開${i + 1}` })),
       initiatives: Array.from({ length: count }, (_, i) => ({ ...sample.initiatives[0], id: i + 1, name: `施策${i + 1}`, expansionId: i + 2,
@@ -192,6 +192,7 @@ export async function verifyReportWorkbooks(api, sample) {
     // Inspect all generated SUM calls independently of cached values or JS's unbounded arguments.
     report.eachRow(row => row.eachCell(cell => {
       if (!cell.formula) return;
+      assert.ok(cell.formula.length <= 8192, `${cell.address}: Excelの数式長上限`);
       const calls = [];
       for (const token of cell.formula.matchAll(/([A-Z]+)\(|[(),]/g)) {
         if (token[0].endsWith('(')) calls.push({ name: token[1], count: 1 });
@@ -207,8 +208,26 @@ export async function verifyReportWorkbooks(api, sample) {
     if (selected.length === 2) assert.equal(values(report, 'H8'), count);
     const source = output.getWorksheet('計算元');
     const changedRow = source.getRows(2, source.rowCount - 1).find(row => row.getCell(23).value === selected[0]);
-    changedRow.getCell(9).value += 0.125;
-    assert.equal(evaluator(output)(report, 'D8'), count * selected[0], '元金額の編集を二重計上せず反映');
+    changedRow.getCell(9).value += 0.625;
+    assert.equal(evaluator(output)(report, 'D8'), count * selected[0] + 1, '元金額の編集を二重計上せず円精度で反映');
+    assert.equal(report.rowCount, 8 + count * 2 + 3, '空展開を保ち、補助セルで表示行を増やさない');
   }
+  // #81: positive and negative non-contiguous cost members share the same limit.
+  const accounts = Array.from({ length: 1500 }, (_, i) => ({ ...account, id: i + 1000,
+    accountCode: String(i), accountName: `科目${i}`, masterOrder: i }));
+  const groups = api.initialAggregations();
+  groups[0].members = accounts.map((a, i) => ({ kind: 'account', id: a.id, sign: i % 2 ? -1 : 1 }));
+  const largeCost = { ...sample, accounts, aggregations: groups.map((g, i) => ({ ...g, masterOrder: accounts.length + i })),
+    previousAmounts: [], initiatives: [{ ...sample.initiatives[0], rows: accounts.map(a => ({ accountId: a.id, amounts: { 4: '1.001' } })) }] };
+  const cost = await exported(api, largeCost, settings(['cost-table'], [1]));
+  for (const ws of cost.worksheets) ws.eachRow(row => row.eachCell(cell => {
+    if (cell.formula) assert.ok(cell.formula.length <= 8192, `${ws.name}!${cell.address}`);
+  }));
+  const costSheet = cost.getWorksheet('総原価表');
+  const total = costSheet.getRows(5, costSheet.rowCount - 4).find(row => row.getCell(1).value === groups[0].name).getCell(3);
+  assert.equal(evaluator(cost)(costSheet, total.address), 0, '加減の相殺を保持');
+  const costSource = cost.getWorksheet('計算元');
+  costSource.getRows(2, costSource.rowCount - 1).find(row => row.getCell(21).value === accounts[0].id && row.getCell(23).value === 1).getCell(9).value = 1.502;
+  assert.equal(evaluator(cost)(costSheet, total.address), 1, '非連続集計の元金額編集と円精度');
   console.log('report workbook ok: original sheets, basic formulas, all selections, source edits, added source rows, filters and cached reconciliation');
 }
