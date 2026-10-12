@@ -20,4 +20,11 @@ export function verifyInitiativeSort(api) {
   assert.deepEqual(api.sortInitiatives(source, null, 1, expansions, periods), source, "初期表示は登録順");
   assert.deepEqual(source, snapshot, "保存データを変更しない");
   assert.deepEqual(api.sortInitiatives([], { column: "name", direction: "ascending" }, 1, expansions, periods), []);
+  const signed=[null,-1,0,2,-1].map((periodTypeId,id)=>({id,periodTypeId,expansionId:periodTypeId,name:String(id),startYearMonths:{1:null,2:null}}));
+  const signedNames=new Map([[-1,'あ'],[0,'か'],[2,'さ']]);
+  for(const column of ['period','expansion']) for(const kind of [1,2]) {
+    assert.deepEqual(api.sortInitiatives(signed,{column,direction:'ascending'},kind,signedNames,signedNames).map(item=>item.id),[1,4,2,3,0]);
+    assert.deepEqual(api.sortInitiatives(signed,{column,direction:'descending'},kind,signedNames,signedNames).map(item=>item.id),[3,2,1,4,0],'未選択を実ID -1 と区別し、同値順を保持');
+  }
+
 }

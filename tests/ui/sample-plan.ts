@@ -1,3 +1,4 @@
+// 期間の未選択と実ID -1・0・正数の表示と昇降順は tests/initiative-sort.mjs と tests/ui/initiative-sort.spec.ts の正常なSQLite計画で確認する。
 // 集計候補はID索引を共有し、自己・子孫を禁止する。1000/5000独立集計の参照量は tests/aggregation-data.mjs、所属・保存失敗は tests/ui/aggregations.spec.ts で確認する。
 // 集計所属の一度の分類、1000階層の実SQLite保存・読込、1000/5000集計の走査量は tests/aggregation-positions.mjs で確認する。
 // 展開表の期間名・展開区分・施策名の列順、設備投資の選択済み名称と未選択の空欄を画面・Excelで確認する。

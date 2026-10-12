@@ -53,4 +53,26 @@ export async function verifyInitiativeListRendering(api) {
 
   assert.equal(api.initiativesForKind(correctedContents.initiatives, accounts, 2)[0].months[4].sales, 5000000000001000);
   console.log('PASS: 確定予算の施策内超過、編集導線、正常行と種別切替、元データ保持、修正保存後の再表示');
+  const signedDb=await api.openTriadicDatabase(corrected);
+  let signedBytes;
+  try {
+    signedDb.run('INSERT INTO period_types(id,name) VALUES(-1,?),(0,?)',['負ID期間','ゼロID期間']);
+    signedDb.run('UPDATE initiatives SET period_type_id=-1 WHERE id=?',[correctedContents.initiatives[0].id]);
+    signedDb.run('UPDATE initiatives SET period_type_id=0 WHERE id=?',[correctedContents.initiatives[1].id]);
+    signedBytes=api.exportTriadicDatabase(signedDb);
+  } finally {signedDb.close();}
+  signedBytes=await api.registerInitiative(signedBytes,{...draft,name:'期間未選択確認',periodTypeId:null,rows:[{accountId,amounts:{4:'0'}}]});
+  const signedContents=await api.readPlanContents(signedBytes);
+  assert.deepEqual(signedContents.initiatives.map(item=>item.periodTypeId),[-1,0,null],'実SQLiteの読込は負IDと0と未選択を保持');
+  for(const kind of [1,2]) {
+    const rendered=api.renderInitiativeList(signedContents,kind);
+    assert.match(rendered,/initiative-list-period">負ID期間<\/td>/);
+    assert.match(rendered,/initiative-list-period">ゼロID期間<\/td>/);
+    assert.match(rendered,/initiative-list-period"><\/td>[\s\S]*?期間未選択確認<\/button>/);
+    const virtual={...signedContents,initiatives:Array.from({length:210},(_,index)=>({...signedContents.initiatives[index%3],id:1000+index,name:`表示${index}`}))};
+    const virtualHtml=api.renderInitiativeList(virtual,kind);
+    assert.match(virtualHtml,/initiative-list-period">負ID期間<\/td>/);
+    assert.match(virtualHtml,/initiative-list-period"><\/td>[\s\S]*?表示2<\/button>/,'仮想表示も未選択を空欄にする');
+  }
+
 }

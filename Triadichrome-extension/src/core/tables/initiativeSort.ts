@@ -10,8 +10,8 @@ export function sortInitiatives(source: Initiative[], sort: InitiativeSort | nul
   if (!sort) return source;
   const value = (item: Initiative) => {
     switch (sort.column) {
-      case "expansion": return expansionNames.get(item.expansionId ?? -1) ?? "";
-      case "period": return periodNames.get(item.periodTypeId ?? -1) ?? "";
+      case "expansion": return item.expansionId == null ? "" : expansionNames.get(item.expansionId) ?? "";
+      case "period": return item.periodTypeId == null ? "" : periodNames.get(item.periodTypeId) ?? "";
       case "name": return item.name;
       case "start": return item.startYearMonths[kind] ?? "";
     }

@@ -1,3 +1,4 @@
+import { createSignedPeriodPlan } from "./signed-period-plan";
 import { saveKindSelection } from "../../Triadichrome-extension/src/core/storage/settings";
 import { createOverflowPlan, type OverflowScenario } from "./overflow-plan";
 import { createEmptyTestPlan, createCurrentEmptyTestPlan } from "./empty-plan";
@@ -37,7 +38,7 @@ async function reload() {
   const value = dataset.value;
   status.textContent = "準備中";
   frame.inert = true;
-  const bytes = value === "large" ? (largeSampleBytes ??= new Uint8Array(await (await fetch("/samples/全機能確認用.triadic")).arrayBuffer())) : value === "previous-export-limit" ? await createPreviousExportPlan() : value.startsWith("overflow-") ? Array.from(await createOverflowPlan(value.slice(9) as OverflowScenario)) :
+  const bytes = value.startsWith("signed-periods") ? await createSignedPeriodPlan(value.endsWith("-large")) : value === "large" ? (largeSampleBytes ??= new Uint8Array(await (await fetch("/samples/全機能確認用.triadic")).arrayBuffer())) : value === "previous-export-limit" ? await createPreviousExportPlan() : value.startsWith("overflow-") ? Array.from(await createOverflowPlan(value.slice(9) as OverflowScenario)) :
     value === "legacy" ? legacyBytes : value === "empty" ? emptyBytes : value === "defaults" ? defaultBytes : sampleBytes;
   if (version !== reloadVersion) return;
   fixtureBytes = bytes;

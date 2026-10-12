@@ -79,8 +79,8 @@ export function InitiativeListPage({ selection, selectedKind, initiatives, accou
           </Fragment>)}</tr>
         </thead>
         <tbody><WindowRows items={displayed.slice(window.start, window.end).map((item, offset) => ({ item, index: window.start + offset }))} count={displayed.length} height={28} columns={40} render={(item, index) => <tr key={item.id} aria-rowindex={index + 3}>
-          <td className="initiative-list-fixed initiative-list-expansion">{expansionNames.get(item.expansionId ?? -1) ?? ""}</td>
-          <td className="initiative-list-fixed initiative-list-period">{periodNames.get(item.periodTypeId ?? -1) ?? ""}</td>
+          <td className="initiative-list-fixed initiative-list-expansion">{item.expansionId == null ? "" : expansionNames.get(item.expansionId) ?? ""}</td>
+          <td className="initiative-list-fixed initiative-list-period">{item.periodTypeId == null ? "" : periodNames.get(item.periodTypeId) ?? ""}</td>
           <th scope="row" className="initiative-list-fixed initiative-list-name" title={item.note || item.name}>
             <button className="initiative-name-button" type="button" disabled={navigationBlocked} onClick={() => onOpenInitiative(item)}>{item.name}</button>
           </th>

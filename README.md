@@ -198,7 +198,7 @@ Kind slots appear above headers in all three tables. The initiative list selects
 
 Monthly revenue/expense/profit totals sit at the initiative table's bottom, at the visible bottom even for short lists and fixed there during long-list scrolling. Rows do not stretch; extra height becomes space above totals. All initiatives for the displayed kind are summed in yen before rounding to thousands. Sorting never moves totals. Empty months total 0; months with unset attributes have unconfigured revenue/profit totals. Totals are not saved. Table-wide overflow displays reasons in totals while names remain editable; overflow within one initiative displays a reason in that row, preserves valid initiative amounts and all edit links, and hides totals. List calculations run only when displaying the list and do not block Home, editing, kind changes, undo, reload, or history viewing.
 
-Click category/period/name/start-date headers to toggle ascending ▲/descending ▼, initially ascending and resetting ascending on a different column. Names use Japanese name order; dates use the displayed kind's year/month; blanks always last and ties retain registration order. Only display order changes, returning to registration order on leaving and never saving to the file. Sorting also works in past viewing. Other tables and master headers show names only, without filters or “Clear.” Account-master drag/keyboard reorder remains available. See [Monthly amount requirements](REQUIREMENTS.md#月別金額と保存データ) and [Monthly amounts and storage](DATA_MODEL.md).
+Click category/period/name/start-date headers to toggle ascending ▲/descending ▼, initially ascending and resetting ascending on a different column. Names use Japanese name order; dates use the displayed kind's year/month; blanks always last and ties retain registration order. Unselected classifications are distinct from numeric IDs, including 0 and negative IDs. Only display order changes, returning to registration order on leaving and never saving to the file. Sorting also works in past viewing. Other tables and master headers show names only, without filters or “Clear.” Account-master drag/keyboard reorder remains available. See [Monthly amount requirements](REQUIREMENTS.md#月別金額と保存データ) and [Monthly amounts and storage](DATA_MODEL.md).
 
 ## Excel import and export
 
@@ -699,7 +699,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 施策一覧は表の最下部に月別の売上・費用・利益の合計行を置き、短い一覧でも表の表示領域の下端に置き、長い一覧では縦スクロール中も下端に追従して表示します。施策の行高は広げず、残る高さは合計の上の空白に割り当てます。表示中の種別の全施策を1円単位で合算してから千円表示に丸め、並べ替えで合計行は動きません。空の月は0、属性未設定を含む月の売上・利益の合計は属性未設定です。合計は保存せず、表全体の上限超過は合計部分に理由を表示し、施策名から編集へ進めます。一つの施策内で上限を超える場合はその行の金額欄へ理由を表示し、正常な施策の金額と全施策の編集導線を維持します。この場合は合計を表示しません。一覧用の計算は一覧表示時だけ行い、ホーム・施策編集・種別切り替え・取消・再読込・履歴閲覧を妨げません。
 
-施策一覧の「展開名・期間名・施策名・開始年月」は、見出しを押すたびに昇順▲・降順▼を切り替えます。初回と別の列を選んだときは昇順です。名称は日本語の名称順、開始年月は表示中の種別の年月順で、空欄は常に最後、同値は登録順です。表示順だけを変え、画面を離れると登録順へ戻り、ファイルへ保存しません。過去閲覧中も利用できます。総原価表・展開表とマスタ一覧の見出しは項目名だけです。フィルターと解除用の「クリア」はありません。勘定科目マスタの保存順を変えるドラッグ・キーボード操作は利用できます。詳細は[月別金額の要件](REQUIREMENTS.md#月別金額と保存データ)と[月別金額と保存構造](DATA_MODEL.md)を参照してください。
+施策一覧の「展開名・期間名・施策名・開始年月」は、見出しを押すたびに昇順▲・降順▼を切り替えます。初回と別の列を選んだときは昇順です。名称は日本語の名称順、開始年月は表示中の種別の年月順で、空欄は常に最後、同値は登録順です。未選択は実在する番号と区別し、0や負のIDでも登録された名称を使います。表示順だけを変え、画面を離れると登録順へ戻り、ファイルへ保存しません。過去閲覧中も利用できます。総原価表・展開表とマスタ一覧の見出しは項目名だけです。フィルターと解除用の「クリア」はありません。勘定科目マスタの保存順を変えるドラッグ・キーボード操作は利用できます。詳細は[月別金額の要件](REQUIREMENTS.md#月別金額と保存データ)と[月別金額と保存構造](DATA_MODEL.md)を参照してください。
 
 ## Excelの入出力
 
