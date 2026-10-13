@@ -1,6 +1,6 @@
 import { useMasterOperation } from "./useMasterOperation";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import { useAutoSave, type AutoSaveProps } from "./useAutoSave";
 import { AutoSaveStatus } from "./AutoSaveStatus";
@@ -26,6 +26,18 @@ export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange,
   const [deleting, setDeleting] = useState<NamedMasterRow | null>(null);
   const autoSave = useAutoSave<Extract<NamedMasterChange, { type: "update" }>>(onChange, onPendingChange);
   const { draft, controller } = autoSave;
+  const savedSource = useRef<string | null>(null);
+  useLayoutEffect(() => {
+    const editing = controller.getSnapshot().draft;
+    if (!editing) { savedSource.current = null; return; }
+    const row = rows.find(item => item.id === editing.id);
+    if (!row) return;
+    const saved = { type: "update" as const, ...row };
+    const key = JSON.stringify(saved);
+    if (key === savedSource.current) return;
+    savedSource.current = key;
+    controller.syncSaved(saved);
+  }, [rows, controller, draft?.id]);
   const { notice, dismiss: dismissNotice, save } = useMasterOperation<NamedMasterChange>({
     onChange,
     onSuccess: change => { if (change.type === "add") { setCode(""); setName(""); setRelationIds([]); } setDeleting(null); },

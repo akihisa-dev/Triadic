@@ -1,3 +1,4 @@
+import { verifyNamedMasterRebase } from "../tests/named-master-rebase.mjs";
 import { verifyHistoryDependencies } from "../tests/history-dependencies.mjs";
 import { verifyOrderRebase } from "../tests/order-rebase.mjs";
 import { verifyAutoSaveRebase } from "../tests/auto-save-rebase.mjs";
@@ -106,6 +107,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyAggregationData({ ...api, createTriadicDatabase: () => api.createCurrentEmptyTestPlan(2026) });
   await verifyAutoSave(api);
   await verifyAutoSaveRebase(api);
+  await verifyNamedMasterRebase(api);
   await verifyDataHistory(api);
   await verifyBusinessSnapshot(api);
   await verifyCommandComparison(api);

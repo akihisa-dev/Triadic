@@ -6,6 +6,12 @@ export function reconcileSavedDraft<T>(submitted: T, pending: T, persisted: T): 
   const merge = (base: unknown, local: unknown, saved: unknown): unknown => {
     if (equal(base, local)) return saved;
     if (Array.isArray(base) && Array.isArray(local) && Array.isArray(saved)) {
+      // Checkbox memberships are unique numeric IDs: preserve incoming additions/removals
+      // while applying only the memberships changed after submission.
+      if ([base, local, saved].every(items => items.every(Number.isSafeInteger) && new Set(items).size === items.length)) {
+        const removed = new Set(base.filter(id => !local.includes(id)));
+        return [...new Set([...saved.filter(id => !removed.has(id)), ...local.filter(id => !base.includes(id))])];
+      }
       const key = (item: unknown) => record(item) && (item.id !== undefined ? `id:${item.id}` : item.accountId !== undefined ? `account:${item.accountId}` : undefined);
       const maps = [base, local, saved].map(items => new Map(items.map(item => [key(item), item])));
       if (maps.some((map, index) => map.has(undefined) || map.size !== [base, local, saved][index]!.length)) return local;
