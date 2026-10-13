@@ -230,6 +230,8 @@ Monochrome is the base; `#0033FF` marks the selected sidebar icon, active input/
 
 ## Screen motion
 
+In the Home relation graph, Tab/Shift+Tab brings focused destinations and relationship descriptions fully into view, including their focus outline. Oversized items reduce the zoom only as needed. Relationship descriptions also accept arrows, +/−, and Home for graph movement; destination buttons keep their normal activation keys. Pointer dragging does not trigger focus-driven camera movement.
+
 Budget/comparison slots in all three tables select adjacent candidates by click/arrows; the selection background smoothly moves to the candidate's position/width. Breakdown-table comparisons sit right of its heading. Previous-year department/industry dropdowns choose individuals or all totals. Initiative category/subcategory/department/period/industry use dropdown lists.
 
 UI positions change only with intended user actions. Save/error notifications use a fixed bottom-right area independent of body layout, so showing/updating/removing them does not shift fields/tables. Notifications change opacity only, without focus/scroll changes. Normal result notifications disappear after four seconds; errors persist until closed or the next operation.

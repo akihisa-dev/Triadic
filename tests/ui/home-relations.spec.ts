@@ -295,3 +295,46 @@ test("初期配置は関係ごとに分散し、説明が重ならず、操作�
   expect(metrics.cost).toBeGreaterThan(metrics.center);
   expect(metrics.expansion).toBeGreaterThan(metrics.center);
 });
+
+
+test("画面外の関係説明へTabで移動すると枠まで表示し、説明から図を操作できる", async ({ app }) => {
+  await app.getByRole("button", { name: "新規作成", exact: true }).click();
+  await settleMotion(app.locator("body"));
+  const viewport = app.getByRole("region", { name: "画面とマスタの相関図" });
+  const map = app.locator(".home-relations-map");
+  const descriptions = app.locator(".home-relation-subnode");
+  await viewport.focus();
+  for (let i = 0; i < 20; i++) await viewport.press("ArrowLeft");
+  await viewport.press("+");
+  await settleMotion(app.locator("body"));
+  const hidden = await descriptions.first().evaluate(node => {
+    const box = node.closest(".home-relations-viewport")!.getBoundingClientRect(), rect = node.getBoundingClientRect();
+    return rect.right < box.left || rect.left > box.right;
+  });
+  expect(hidden).toBe(true);
+  await viewport.press("Tab");
+  const visible = (node: Element) => {
+    const box = node.closest(".home-relations-viewport")!.getBoundingClientRect(), rect = node.getBoundingClientRect();
+    return rect.left >= box.left + 2 && rect.right <= box.right - 2 && rect.top >= box.top + 2 && rect.bottom <= box.bottom - 2;
+  };
+  for (let i = 0; i < 17; i++) {
+    const description = descriptions.nth(i);
+    await expect(description).toBeFocused();
+    expect(await description.evaluate(visible)).toBe(true);
+    await expect(app.locator(".home-relation.is-active")).toHaveCount(1);
+    if (i < 16) await description.press("Tab");
+  }
+  for (let i = 16; i > 0; i--) {
+    await descriptions.nth(i).press("Shift+Tab");
+    await expect(descriptions.nth(i - 1)).toBeFocused();
+    expect(await descriptions.nth(i - 1).evaluate(visible)).toBe(true);
+  }
+  const before = await map.getAttribute("style");
+  await descriptions.first().press("ArrowLeft");
+  await expect(map).not.toHaveAttribute("style", before!);
+  const pan = await map.getAttribute("style");
+  await descriptions.first().press("Home");
+  await expect(map).not.toHaveAttribute("style", pan!);
+  await settleMotion(app.locator("body"));
+  expect(await descriptions.first().evaluate(visible)).toBe(true);
+});

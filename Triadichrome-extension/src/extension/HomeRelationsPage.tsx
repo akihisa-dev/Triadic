@@ -65,8 +65,9 @@ export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
   const graph = useHomeGraphMotion(graphNodes, graphEdges, view, () => { if (view.current?.fitted && !cameraTarget.current) fit(); });
   const viewport = useRef<HTMLDivElement>(null);
   const [highlighted, setActive] = useState<string | null>(null);
+  const [focused, setFocused] = useState<string | null>(null);
   const [grabbed, setGrabbed] = useState<string | null>(null);
-  const active = grabbed ?? highlighted;
+  const active = grabbed ?? focused ?? highlighted;
   const { camera, target: cameraTarget, update, smooth, cancel: cancelZoom } = useRelationCamera(view);
   const [dragging, setDragging] = useState(false);
   const points = useRef(new Map<number, { x: number; y: number }>());
@@ -89,6 +90,19 @@ export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
   const zoomCenter = (factor: number) => {
     const node = viewport.current;
     if (node) zoom(factor, node.clientWidth / 2, node.clientHeight / 2);
+  };
+  const focusNode = (node: typeof graphNodes[number]) => {
+    setFocused(node.page);
+    if (points.current.size) return;
+    const current = view.current ?? camera, box = viewport.current;
+    if (!box) return;
+    const position = current.positions?.[node.page] ?? { x: node.x + 100, y: node.y + 12 };
+    // Include the focus outline, and shrink only when the focused item cannot fit.
+    const width = node.width + 12, height = node.height + 12;
+    const scale = Math.min(current.scale, (box.clientWidth - 16) / width, (box.clientHeight - 16) / height);
+    const x = current.x + (position.x - width / 2) * scale, y = current.y + (position.y - height / 2) * scale;
+    if (scale !== current.scale || x < 8 || y < 8 || x + width * scale > box.clientWidth - 8 || y + height * scale > box.clientHeight - 8)
+      update({ ...current, x: box.clientWidth / 2 - position.x * scale, y: box.clientHeight / 2 - position.y * scale, scale, fitted: false });
   };
   useLayoutEffect(() => {
     const node = viewport.current;
@@ -178,8 +192,9 @@ export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
       onClick={event => { if (event.target === event.currentTarget || event.target instanceof SVGElement) setActive(null); }}
       onClickCapture={event => { if (moved.current && event.detail !== 0) { event.preventDefault(); event.stopPropagation(); } }}
       onKeyDown={event => {
-        if (event.key === "Escape") { event.preventDefault(); setActive(null); return; }
-        if (event.target !== event.currentTarget) return;
+        if (event.key === "Escape") { event.preventDefault(); setActive(null); setFocused(null); return; }
+        if (event.altKey || event.ctrlKey || event.metaKey || event.nativeEvent.isComposing) return;
+        if (event.target !== event.currentTarget && !(event.target instanceof Element && event.target.closest(".home-relation-subnode"))) return;
         const current = view.current ?? camera;
         const steps: Record<string, [number, number]> = { ArrowLeft: [60, 0], ArrowRight: [-60, 0], ArrowUp: [0, 60], ArrowDown: [0, -60] };
         const step = steps[event.key];
@@ -196,7 +211,7 @@ export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
             <foreignObject x={subNodes[index]!.x + 100 - subNodes[index]!.width / 2} y={subNodes[index]!.y - 4} width={subNodes[index]!.width} height="32">
               <div className="home-relation-subnode" data-page={subNodes[index]!.page} role="group" tabIndex={0}
                 aria-label={`${nodes.find(node => node.page === edge.from)!.name}と${nodes.find(node => node.page === edge.to)!.name}の関係：${edge.label}`}
-                onMouseEnter={() => setActive(subNodes[index]!.page)} onMouseLeave={() => setActive(null)} onFocus={() => setActive(subNodes[index]!.page)} onBlur={() => setActive(null)}>
+                onMouseEnter={() => setActive(subNodes[index]!.page)} onMouseLeave={() => setActive(null)} onFocus={() => focusNode(subNodes[index]!)} onBlur={() => setFocused(null)}>
                 {edge.label}
               </div>
             </foreignObject>
@@ -204,17 +219,7 @@ export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
         </g>)}
         {nodes.map(node => <g key={node.page} ref={element => { if (element) graph.groups.current.set(node.page, element); else graph.groups.current.delete(node.page); }} className="home-relation-item"><foreignObject x={node.x - 6} y={node.y - 22} width="212" height="68">
           <button type="button" data-page={node.page} className={`home-relation-node${node.master ? " is-master" : ""}${node.page === "initiative-list" ? " is-entry" : ""}${related.has(node.page) ? " is-related" : ""}${active === node.page ? " is-selected" : ""}`}
-            disabled={disabled} onMouseEnter={() => setActive(node.page)} onMouseLeave={() => setActive(null)} onFocus={() => {
-              setActive(node.page);
-              if (points.current.size) return;
-              const current = view.current ?? camera, box = viewport.current;
-              if (!box) return;
-              const position = current.positions?.[node.page] ?? { x: node.x + 100, y: node.y + 12 };
-              const x = current.x + (position.x - 100) * current.scale, y = current.y + (position.y - 28) * current.scale;
-              const width = 200 * current.scale, height = 56 * current.scale;
-              if (x < 8 || y < 8 || x + width > box.clientWidth - 8 || y + height > box.clientHeight - 8)
-                update({ ...current, x: box.clientWidth / 2 - position.x * current.scale, y: box.clientHeight / 2 - position.y * current.scale, fitted: false });
-            }} onBlur={() => setActive(null)} onClick={() => onNavigate(node.page)}>
+            disabled={disabled} onMouseEnter={() => setActive(node.page)} onMouseLeave={() => setActive(null)} onFocus={() => focusNode({ ...node, width: 200, height: 56 })} onBlur={() => setFocused(null)} onClick={() => onNavigate(node.page)}>
             <span className="home-relation-icon"><SidebarIcon name={node.icon} /></span>
             <span className="home-relation-name">{node.name}</span>
           </button>
