@@ -1,4 +1,5 @@
 import { verifyNamedMasterRebase } from "../tests/named-master-rebase.mjs";
+import { verifyAccountReferenceRebase } from "../tests/account-reference-rebase.mjs";
 import { verifyHistoryDependencies } from "../tests/history-dependencies.mjs";
 import { verifyOrderRebase } from "../tests/order-rebase.mjs";
 import { verifyAutoSaveRebase } from "../tests/auto-save-rebase.mjs";
@@ -69,6 +70,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyClassificationRebase(api);
   await verifyPreviousInputRebase(api);
   await verifyAccountAddRebase(api);
+  await verifyAccountReferenceRebase(api);
   await verifyUnicodeNames(api);
   await verifyReadSavedPlan(api);
   await verifyAggregationRebase(api);

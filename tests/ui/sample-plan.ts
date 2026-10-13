@@ -1,3 +1,4 @@
+// 科目の復元後の番号再利用は tests/account-reference-rebase.mjs で両保存順と回復を確認する。
 // 共通マスタの保存結果同期と保存中の所属変更は tests/named-master-rebase.mjs と tests/ui/named-master-rebase.html で確認する。
 // 展開区分の取消・履歴復元後の番号再利用、旧参照の競合拒否、通常改名・独立編集、別ファイル保存と失敗保護は tests/classification-rebase.mjs で確認する。
 // SQLite準備の失敗・同時要求・再試行・正規スキーマの一括公開は tests/sqlite-runtime.test.mjs、実Workerの再選択は tests/ui/sqlite-entry.spec.ts で確認する。
