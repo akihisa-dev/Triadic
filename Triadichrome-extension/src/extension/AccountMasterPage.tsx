@@ -58,7 +58,7 @@ export function AccountMasterPage({ accounts, groups, usedAccountIds, isSaving, 
     positions.current=new Map([...elements.current].map(([key,element]) => [key,element.getBoundingClientRect().top]));
     void save({kind:"group",change:{type:"reorder",order}});
   };
-  const rename = (draft:Draft,name:string) => ({...draft,name,displayName:draft.displayName === draft.name ? name : draft.displayName});
+  const rename = (draft:Draft,name:string) => ({...draft,name,displayName:draft.displayName.trim() === draft.name.trim() ? name : draft.displayName});
   const end = () => {if(editing) focus(editing);controller.end();dismiss();};
   return <main className="master-page account-master-page master-data-page unified-master-page" aria-labelledby="account-master-title" aria-busy={isSaving} onCompositionStart={() => controller.pause()} onCompositionEnd={() => controller.resume()}>
     <div className="account-master-heading"><button type="button" className="text-button master-back" disabled={isSaving || autoSave.pending} onClick={onBack}>← マスタへ戻る</button><h1 id="account-master-title">勘定科目マスタ</h1><span className="master-count">{accounts.length}科目・{groups.length}集計</span></div>
