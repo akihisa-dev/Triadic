@@ -1,3 +1,4 @@
+import { verifyInitiativeDraftReferences } from "../tests/initiative-draft-references.mjs";
 import { verifyNamedMasterRebase } from "../tests/named-master-rebase.mjs";
 import { verifyInitiativeOwnerRebase } from "../tests/initiative-owner-rebase.mjs";
 import { verifyAccountReferenceRebase } from "../tests/account-reference-rebase.mjs";
@@ -63,6 +64,7 @@ import { withNodeBundle } from "./node-bundle.mjs";
 import { projectRoot as root } from "./paths.mjs";
 await withNodeBundle("tests/core-api.ts", async production => {
   const api = { ...production, createTriadicDatabase: (year = 2026) => production.createTriadicDatabase(year) };
+  await verifyInitiativeDraftReferences(api);
   await verifyHistoryDependencies(api);
   await verifyFileRecovery(api);
   await verifyPreviousRebase(api);

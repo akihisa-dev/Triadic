@@ -262,6 +262,8 @@ Recording/restoring/deleting uses the current plan's destination, permissions, a
 
 ## Department and industry combinations
 
+When published current data changes while an unregistered initiative is retained, selected departments/industries are checked against their creation identities and memberships. Deleted or recreated targets become unselected; name, note, monthly amounts and overrides remain. Other selected masters without creation identities are checked by business fields; external changes require reselection, while a matching local master update preserves selection. A failed or canceled save does not change these references. Identical recreation of an identity-less master cannot be distinguished without changing the storage format.
+
 Department masters assign one or more industries with checkboxes; industries may belong to multiple departments. Initial departments A/B have nine industries; new departments start unselected. Initiative candidates and previous-year input are limited to memberships; a sole industry auto-selects on department selection. Removing a combination in use or deleting an industry assigned to a department is rejected. Previous-year template import/export uses the same constraints. Memberships are stored in `department_industries`, snapshots, and undo/redo. Save failure preserves saved memberships/amounts, without transmission or automatic deletion. Format 17 and earlier are not migrated; loading rejects them without changing the original file.
 
 ## Storage-format policy

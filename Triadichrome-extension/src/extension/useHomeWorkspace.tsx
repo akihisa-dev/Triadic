@@ -1,3 +1,4 @@
+import { reconcileInitiativeDraftReferences, type LocalDraftReference } from "../core/domain/initiativeDraftReferences";
 import type { ExpansionCategoryChange } from "../core/domain/expansionCategoryMaster";
 import { useMutation } from "./useMutation";
 import { useScreenHistory } from "./useScreenHistory";
@@ -8,7 +9,7 @@ import { type PeriodTypeChange } from "../core/domain/periodMaster";
 import { type DepartmentChange } from "../core/domain/departmentMaster";
 import { type IndustryChange } from "../core/domain/industryMaster";
 import { type ExpansionChange } from "../core/domain/expansionMaster";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createInitiativeDraft, hasInitiativeDraftInput } from "../core/domain/initiativeRules";
 import { type Initiative, type InitiativeEntryDraft, type PlanContents } from "../core/domain/plan";
 import { type AccountChange } from "../core/domain/accountMaster";
@@ -67,6 +68,8 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
   const navigate = screens.navigate;
   const [initiativeDraft, setInitiativeDraft] = useState(() => createInitiativeDraft(String(initialContents.fiscalYear)));
   const currentContents = initialContents;
+  const draftContents = useRef(initialContents);
+  const localDraftReference = useRef<LocalDraftReference | null>(null);
   const [preview, setPreview] = useState<{ entry: DataHistoryEntry; contents: PlanContents } | null>(null);
   const [restoreRequested, setRestoreRequested] = useState(false);
   const [restoreError, setRestoreError] = useState("");
@@ -89,6 +92,22 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
   };
   const [notice, setNotice] = useState({ message: "", error: false });
   const dismissNotice = useCallback(() => setNotice({ message: "", error: false }), []);
+  useLayoutEffect(() => {
+    const previous = draftContents.current;
+    if (previous === currentContents) return;
+    const reconciled = reconcileInitiativeDraftReferences(initiativeDraft, previous, currentContents, localDraftReference.current);
+    draftContents.current = currentContents;
+    localDraftReference.current = null;
+    if (reconciled !== initiativeDraft) {
+      setInitiativeDraft(reconciled);
+      setNotice({ message: "保持中の施策で選択したマスタが変更されています。入力内容は保持しています。未選択の項目を選び直してください。", error: true });
+    }
+  }, [currentContents, initiativeDraft]);
+  const saveReferencedMaster = async (reference: LocalDraftReference | null, save: () => Promise<PlanContents>) => {
+    localDraftReference.current = reference;
+    try { return await save(); }
+    catch (error) { localDraftReference.current = null; throw error; }
+  };
   const mutation = useMutation(assertWritable);
   const { busy: isSaving, running: saving } = mutation;
   const [editPending, setEditPending] = useState(false);
@@ -154,20 +173,23 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
     }} />;
   const changeMaster = (change: AccountChange) => mutation.run(async () => {
     if (change.type === "delete" && usedAccountIds.has(change.id)) throw new Error("施策入力で使用している勘定科目は削除できません。");
-    await onChangeMaster(change);
+    await saveReferencedMaster(change.type === "update" ? { collection: "accounts", id: change.id,
+      expected: { ...currentContents.accounts.find(item => item.id === change.id), ...change } } : null, () => onChangeMaster(change));
   });
   const changePeriodTypes = (change: PeriodTypeChange) => mutation.run(async () => {
     if (change.type === "delete" && initiativeDraft.periodTypeId === change.id) throw new Error("施策入力で選択している期間は削除できません。");
-    await onChangePeriodTypes(change);
+    await saveReferencedMaster(change.type === "update" ? { collection: "periodTypes", id: change.id,
+      expected: { ...currentContents.periodTypes.find(item => item.id === change.id), ...change } } : null, () => onChangePeriodTypes(change));
   });
   const changeDepartments = (change: DepartmentChange) => mutation.run(async () => {
     if (change.type === "delete" && initiativeDraft.departmentId === change.id) throw new Error("施策入力で選択している部署は削除できません。");
     if (change.type === "update" && change.id === initiativeDraft.departmentId && initiativeDraft.industryId != null && change.industryIds && !change.industryIds.includes(initiativeDraft.industryId)) throw new Error("施策入力で選択している業種は部署から外せません。");
     const saved = await onChangeDepartments(change);
     setInitiativeDraft(draft => {
-      const ids = saved.departments.find(item => item.id === draft.departmentId)?.industryIds ?? [];
-      return ids.length === 1 && draft.industryId !== ids[0]
-        ? { ...draft, industryId: ids[0]! } : draft;
+      const reconciled = reconcileInitiativeDraftReferences(draft, currentContents, saved);
+      const ids = saved.departments.find(item => item.id === reconciled.departmentId)?.industryIds ?? [];
+      return reconciled === draft && ids.length === 1 && draft.industryId !== ids[0]
+        ? { ...draft, industryId: ids[0]! } : reconciled;
     });
   });
   const changeIndustries = (change: IndustryChange) => mutation.run(async () => {
@@ -177,11 +199,13 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
   const changeExpansions = (change: ExpansionChange) => mutation.run(async () => {
     if (change.type === "delete" && initiativeDraft.expansionId === change.id) throw new Error("施策入力で選択している展開名は削除できません。");
     if (change.type === "update" && change.id === initiativeDraft.expansionId && initiativeDraft.expansionCategoryId != null && change.categoryIds && !change.categoryIds.includes(initiativeDraft.expansionCategoryId)) throw new Error("施策入力で選択している展開区分は展開から外せません。");
-    await onChangeExpansions(change);
+    await saveReferencedMaster(change.type === "update" ? { collection: "expansions", id: change.id,
+      expected: { ...currentContents.expansions.find(item => item.id === change.id), ...change } } : null, () => onChangeExpansions(change));
   });
   const changeExpansionCategories = (change: ExpansionCategoryChange) => mutation.run(async () => {
     if (change.type === "delete" && initiativeDraft.expansionCategoryId === change.id) throw new Error("施策入力で選択している展開区分は削除できません。");
-    await onChangeExpansionCategories(change);
+    await saveReferencedMaster(change.type === "update" ? { collection: "expansionCategories", id: change.id,
+      expected: { ...currentContents.expansionCategories.find(item => item.id === change.id), ...change } } : null, () => onChangeExpansionCategories(change));
   });
   const changeAggregations = (change: AggregationChange) => mutation.run(async () => { await onChangeAggregations(change); });
   const updateSelected = (target: { id: number; fiscalYear: number | null }, draft: InitiativeEntryDraft) => mutation.run(async () => {
