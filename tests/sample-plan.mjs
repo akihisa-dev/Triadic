@@ -56,7 +56,7 @@ export async function verifySamplePlan(api) {
     }
   }
   const plan = await readPlanContents(bytes);
-  assert.equal(plan.expansionCategories.length, 7);
+  assert.deepEqual(plan.expansionCategories.map(item => item.categoryName), ["下払いUP", "ベースアップ", "設備投資", "燃料費UP", "電気料金UP", "その他"], "確認用データの区分はデフォルト6件だけにする");
   assert.equal(plan.initiatives.find(item => item.name === "通信運搬費と消耗品費の削減").expansionCategoryId, plan.expansionCategories.find(item => item.categoryName === "その他").id);
   assert.deepEqual(new Set(plan.expansions.find(item => item.expansionName === "コスト").categoryIds), new Set(plan.expansionCategories.map(item => item.id)));
   assert.equal(plan.initiatives.find(item => item.name === "設備更新と償却費の見直し").expansionCategoryId, plan.expansionCategories.find(item => item.categoryName === "設備投資").id);
@@ -112,6 +112,7 @@ export async function verifySamplePlan(api) {
   const largeBytes = new Uint8Array(await readFile(new URL("../samples/全機能確認用.triadic", import.meta.url)));
   await validateTriadicDatabase(largeBytes);
   const large = await readPlanContents(largeBytes);
+  assert.deepEqual(large.expansionCategories, plan.expansionCategories, "再生成した実ファイルもデフォルトの区分だけを含む");
   assert.equal(large.departments.length, 4);
   const multiple = large.departments.find(item => item.departmentName === "複数業種確認部署");
   const single = large.departments.find(item => item.departmentName === "単一業種確認部署");

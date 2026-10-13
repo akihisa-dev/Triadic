@@ -10,8 +10,6 @@
 // 施策の科目欄はコードなしの全文表示と狭幅での横スクロールを tests/ui/initiative-table-layout.spec.ts で確認する。
 import { PORTFOLIO_COUNT, portfolioScenario } from "./sample-portfolio";
 // 集計所属順は現行DDLの非負・安全な整数で生成する。不正型・値域・採番境界の拒否は tests/aggregation-positions.mjs の合成DBで確認する。
-import { changeExpansionCategoryMaster } from "../../Triadichrome-extension/src/core/storage/expansionCategoryMaster";
-import { changeExpansionMaster } from "../../Triadichrome-extension/src/core/storage/expansionMaster";
 // Excel出力では選択した表と条件を保ち、従来の三表と計算元、および基本関数による金額の再計算を確認する。
 // Excel計算元の行順・分類名・種別・ID・元金額とマスタ索引の共有は tests/report-workbook.mjs で確認する。
 // 多数の展開・非連続集計の数式長と引数上限は tests/report-workbook.mjs の合成計画で確認する。
@@ -46,10 +44,7 @@ export const SAMPLE_MAX_BYTES = 50_000_000;
 
 export async function createSamplePlan(fiscalYear = currentFiscalYear(), large = false): Promise<Uint8Array> {
   let bytes = await createTriadicDatabase(fiscalYear);
-  for (const categoryName of ["確認用：追加区分"]) bytes = await changeExpansionCategoryMaster(bytes, { type: "add", categoryName });
   const categoryIdsByName = new Map((await readPlanContents(bytes)).expansionCategories.map(item => [item.categoryName, item.id]));
-  const cost = (await readPlanContents(bytes)).expansions.find(item => item.expansionCode === "1")!;
-  bytes = await changeExpansionMaster(bytes, { type: "update", id: cost.id, expansionCode: cost.expansionCode, expansionName: cost.expansionName, categoryIds: [...categoryIdsByName.values()] });
   if (Object.values(accountTypes).join("・") !== "売上・売上原価・費用・利益") throw new Error("科目属性マスタの固定4件が一致しません。");
   if (amountItems.map(item => item.name).join("・") !== "売上・費用・利益" || amountItems.map(amountItemComposition).join(";") !== "売上 − 売上原価;費用;売上 − 売上原価 − 費用 ＋ 利益") throw new Error("金額項目マスタの固定項目・構成が一致しません。");
   const kinds = (await readPlanContents(bytes)).kinds;
