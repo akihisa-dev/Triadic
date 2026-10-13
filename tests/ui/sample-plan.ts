@@ -46,13 +46,10 @@ export const SAMPLE_MAX_BYTES = 50_000_000;
 
 export async function createSamplePlan(fiscalYear = currentFiscalYear(), large = false): Promise<Uint8Array> {
   let bytes = await createTriadicDatabase(fiscalYear);
-  for (const categoryName of ["確認用：未割当区分"]) bytes = await changeExpansionCategoryMaster(bytes, { type: "add", categoryName });
+  for (const categoryName of ["確認用：追加区分"]) bytes = await changeExpansionCategoryMaster(bytes, { type: "add", categoryName });
   const categoryIdsByName = new Map((await readPlanContents(bytes)).expansionCategories.map(item => [item.categoryName, item.id]));
-  const sharedCategory = categoryIdsByName.get("設備投資")!;
-  for (const [id, categoryIds] of [[2, [sharedCategory]], [5, [sharedCategory]]] as const) {
-    const expansion = (await readPlanContents(bytes)).expansions.find(item => item.id === id)!;
-    bytes = await changeExpansionMaster(bytes, { type: "update", id, expansionCode: expansion.expansionCode, expansionName: expansion.expansionName, categoryIds: [...categoryIds] });
-  }
+  const cost = (await readPlanContents(bytes)).expansions.find(item => item.expansionCode === "1")!;
+  bytes = await changeExpansionMaster(bytes, { type: "update", id: cost.id, expansionCode: cost.expansionCode, expansionName: cost.expansionName, categoryIds: [...categoryIdsByName.values()] });
   if (Object.values(accountTypes).join("・") !== "売上・売上原価・費用・利益") throw new Error("科目属性マスタの固定4件が一致しません。");
   if (amountItems.map(item => item.name).join("・") !== "売上・費用・利益" || amountItems.map(amountItemComposition).join(";") !== "売上 − 売上原価;費用;売上 − 売上原価 − 費用 ＋ 利益") throw new Error("金額項目マスタの固定項目・構成が一致しません。");
   const kinds = (await readPlanContents(bytes)).kinds;
@@ -87,7 +84,7 @@ export async function createSamplePlan(fiscalYear = currentFiscalYear(), large =
     };
     const expansionId = expansions.find(item => item.expansionCode === (codes[name] ?? "5"))!.id;
     // Choose a meaningful period instead of cycling incompatible start-month rules.
-    bytes = await registerInitiative(bytes, { name, note, expansionId, expansionCategoryId: name === "既存商品の販売拡大" ? sharedCategory : null, industryId: industries[(await readPlanContents(bytes)).initiatives.filter(item => item.industryId != null).length % industries.length]!.id, periodTypeId: name === "未確定施策の入力準備" ? null : periodTypeId ?? periodTypes.find(item => item.periodName === "新規")!.id, departmentId: departments[(await readPlanContents(bytes)).initiatives.length % departments.length]!.id, fiscalYear: String(fiscalYear), rows: rows.map((row,index) => ({ ...row, id: `sample:${name}:${index}` })) });
+    bytes = await registerInitiative(bytes, { name, note, expansionId, expansionCategoryId: name === "設備更新と償却費の見直し" ? categoryIdsByName.get("設備投資")! : null, industryId: industries[(await readPlanContents(bytes)).initiatives.filter(item => item.industryId != null).length % industries.length]!.id, periodTypeId: name === "未確定施策の入力準備" ? null : periodTypeId ?? periodTypes.find(item => item.periodName === "新規")!.id, departmentId: departments[(await readPlanContents(bytes)).initiatives.length % departments.length]!.id, fiscalYear: String(fiscalYear), rows: rows.map((row,index) => ({ ...row, id: `sample:${name}:${index}` })) });
   };
 
   await add("既存商品の販売拡大", "直販と代理店の販路を増やす年間計画。直販売上は4月120千円から毎月5千円増、代理店は30千円から毎月1千円増。原価・広告・出張費と販売奨励金を計上。確定は4月130、10月170、11月0に見直す。", [

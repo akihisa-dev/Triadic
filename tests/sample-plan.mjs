@@ -57,8 +57,10 @@ export async function verifySamplePlan(api) {
   }
   const plan = await readPlanContents(bytes);
   assert.equal(plan.expansionCategories.length, 6);
-  assert.deepEqual(new Set(plan.expansions.find(item => item.expansionName === "コスト").categoryIds), new Set(plan.expansionCategories.filter(item => item.categoryName !== "確認用：未割当区分").map(item => item.id)));
-  assert.equal(plan.initiatives.find(item => item.name === "既存商品の販売拡大").expansionCategoryId, plan.expansionCategories.find(item => item.categoryName === "設備投資").id);
+  assert.deepEqual(new Set(plan.expansions.find(item => item.expansionName === "コスト").categoryIds), new Set(plan.expansionCategories.map(item => item.id)));
+  assert.equal(plan.initiatives.find(item => item.name === "設備更新と償却費の見直し").expansionCategoryId, plan.expansionCategories.find(item => item.categoryName === "設備投資").id);
+  assert.ok(plan.expansions.filter(item => item.expansionCode !== "1").every(item => item.categoryIds.length === 0), "コスト以外に区分を割り当てない");
+  assert.equal(plan.initiatives.find(item => item.name === "既存商品の販売拡大").expansionCategoryId, null);
   assert.ok(plan.initiatives.some(item => item.expansionCategoryId === null));
   assert.equal(plan.previousAmounts.length, 9 * 2 * (4 * 12 + 3));
   const groupSales = plan.accounts.find(item => item.accountName === "グループ売上高");
