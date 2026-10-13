@@ -52,3 +52,18 @@ export function groupExpansionPeriods<T extends { periodTypeId?: number | null }
       return items?.length ? [{ ...period, initiatives: items }] : [];
     });
 }
+
+/** Group within a period; keep registration order inside each subcategory. */
+export function groupExpansionCategories<T extends { expansionCategoryId?: number | null }>(initiatives: T[], categories: PlanContents["expansionCategories"]) {
+  const members = new Map<number | null, T[]>();
+  for (const item of initiatives) {
+    const id = item.expansionCategoryId ?? null;
+    const items = members.get(id) ?? [];
+    items.push(item);
+    members.set(id, items);
+  }
+  return [...categories.map(category => category.id), null].flatMap(id => {
+    const items = members.get(id);
+    return items?.length ? [{ id, initiatives: items }] : [];
+  });
+}

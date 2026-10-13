@@ -56,7 +56,8 @@ export async function verifySamplePlan(api) {
     }
   }
   const plan = await readPlanContents(bytes);
-  assert.equal(plan.expansionCategories.length, 6);
+  assert.equal(plan.expansionCategories.length, 7);
+  assert.equal(plan.initiatives.find(item => item.name === "通信運搬費と消耗品費の削減").expansionCategoryId, plan.expansionCategories.find(item => item.categoryName === "その他").id);
   assert.deepEqual(new Set(plan.expansions.find(item => item.expansionName === "コスト").categoryIds), new Set(plan.expansionCategories.map(item => item.id)));
   assert.equal(plan.initiatives.find(item => item.name === "設備更新と償却費の見直し").expansionCategoryId, plan.expansionCategories.find(item => item.categoryName === "設備投資").id);
   assert.ok(plan.expansions.filter(item => item.expansionCode !== "1").every(item => item.categoryIds.length === 0), "コスト以外に区分を割り当てない");

@@ -120,7 +120,7 @@ In “Screens and data” (画面とデータ), select a screen to inspect how s
 
 ### Managing and selecting breakdown subcategories
 
-In Masters, “Breakdown subcategory master” (展開区分マスタ) supports registration, editing, and deletion. New files contain five subcategories—“下払いUP,” “ベースアップ,” “設備投資,” “燃料費UP,” and “電気料金UP”—all assigned to “コスト” (Cost). In the breakdown-category master's subcategory column, checkboxes assign multiple subcategories to each category. A subcategory may belong to multiple categories or none.
+In Masters, “Breakdown subcategory master” (展開区分マスタ) supports registration, editing, and deletion. New files contain six subcategories—“下払いUP,” “ベースアップ,” “設備投資,” “燃料費UP,” “電気料金UP,” and “その他”—all assigned to “コスト” (Cost). In the breakdown-category master's subcategory column, checkboxes assign multiple subcategories to each category. A subcategory may belong to multiple categories or none.
 
 When entering or editing an initiative, the “Breakdown subcategory” field beside the category name offers only assigned subcategories. It is optional, is not auto-selected, and may remain empty. Changing the category keeps a valid selection and clears one no longer offered. The field is disabled without a category or assigned subcategories. Assignments in use cannot be removed, and assigned subcategories cannot be deleted. Name edits and selection changes on registered initiatives autosave; failures preserve input and saved content. Subcategories, assignments, and selections are included in the same `.triadic` file, snapshots, and undo. They do not alter amounts or calculation methods.
 
@@ -160,7 +160,7 @@ Both tables add quarters 1–4 after June, September, December, and March; first
 
 If the table viewport is shorter than the full fixed header block, scrolling to the bottom can hide the top of fixed headers. Screen tests check narrow-width operations and test fixed positions at heights that fit the headers.
 
-The breakdown table fixes category, period, and initiative-name columns at the left. Within each category it groups by period-master order, puts unselected periods last as blanks, and vertically merges identical period names. Initiatives within a period retain registration order; category subtotals and calculations remain. Title is left and comparison slots right on the same row to maximize table space; slots wrap on narrow screens.
+The breakdown table fixes category, period, subcategory, and initiative-name columns at the left. Within each category it groups by period-master order, puts unselected periods last as blanks, and vertically merges identical period names. Within each period, subcategories follow master order and equal subcategory cells merge vertically. Blank subcategories appear last; initiatives within a subcategory retain registration order. Category subtotals and calculations remain. Title is left and comparison slots right on the same row to maximize table space; slots wrap on narrow screens.
 
 ### Masters, aggregations, and amount precision
 
@@ -192,7 +192,7 @@ Delete confirmation appears in a centered dialog independent of list size/scroll
 
 The initiative-list heading, kind selector, and “Add initiative” share one row, wrapping on narrow screens. Monthly revenue/expenses/profit are shown; expenses total expense-attribute accounts and reductions are negative. Only the table scrolls both ways inside the viewport, retaining its bottom scrollbar, top month/item headers, and left initiative names.
 
-The breakdown table shows monthly revenue/profit for one or two kinds chosen in slots. Only with two kinds does it show final-minus-initial comparison, independent of selection order. Previous year appears in top rows, not kind columns. Top rows are previous year, total, and breakdown total; total is previous year plus breakdown total. Initiatives group by category, including zero subtotals for categories without initiatives, then by period-master order and registration order within a period. Unselected periods are blank and last. Initiative names open editing and allow return to the original table. Category/period/subcategory/name columns remain fixed at the left. Subcategories show the current master name for each initiative; unselected ones are blank. This does not change period ordering or subtotals. Only the table scrolls; its three header tiers (month/kind/revenue-profit) through previous year/total/breakdown total stay at the top, while initiatives and category subtotals below scroll. Header, amount, and subtotal boundaries align; long names wrap and narrow screens shrink name columns.
+The breakdown table shows monthly revenue/profit for one or two kinds chosen in slots. Only with two kinds does it show final-minus-initial comparison, independent of selection order. Previous year appears in top rows, not kind columns. Top rows are previous year, total, and breakdown total; total is previous year plus breakdown total. Initiatives group by category, including zero subtotals for categories without initiatives, then by period-master order and subcategory-master order within a period, merging equal subcategory names and placing blank subcategories last; registration order is retained within a subcategory. Unselected periods are blank and last. Initiative names open editing and allow return to the original table. Category/period/subcategory/name columns remain fixed at the left. Subcategories show the current master name for each initiative; unselected ones are blank. This does not change period ordering or subtotals. Only the table scrolls; its three header tiers (month/kind/revenue-profit) through previous year/total/breakdown total stay at the top, while initiatives and category subtotals below scroll. Header, amount, and subtotal boundaries align; long names wrap and narrow screens shrink name columns.
 
 Kind slots appear above headers in all three tables. The initiative list selects one; the other tables select one or two, with only the second optionally empty and no duplicate kinds. Defaults are final budget for the initiative list and initial budget/empty for the others. Click adjacent candidates or use arrows. Selections save per screen and persist after reopening. Cost summary shows three columns for one budget (previous year/budget/year-on-year difference) and five for both (previous year/initial/final/year-on-year/initial-budget difference). Year-on-year subtracts previous year from the displayed budget, using final with both; initial-budget difference is final minus initial. Failed saves keep the saved display and report why. Past viewing allows temporary unsaved selection. Initiative list and breakdown table include all industries/departments; cost summary filters by department then industry dropdowns. The initiative list's four fixed columns sort through headers. No screen has header filters.
 
@@ -617,7 +617,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 ### 展開区分の管理と選択
 
-「マスタ」の「展開区分マスタ」で区分名を登録・編集・削除できます。新規ファイルの区分は「下払いUP」「ベースアップ」「設備投資」「燃料費UP」「電気料金UP」の5件で、すべて展開名「コスト」に割り当てます。「展開マスタ」の展開区分列で、各展開に使う区分をチェックボックスで複数割り当てます。同じ区分を複数の展開へ設定でき、割当なしも可能です。
+「マスタ」の「展開区分マスタ」で区分名を登録・編集・削除できます。新規ファイルの区分は「下払いUP」「ベースアップ」「設備投資」「燃料費UP」「電気料金UP」「その他」の6件で、すべて展開名「コスト」に割り当てます。「展開マスタ」の展開区分列で、各展開に使う区分をチェックボックスで複数割り当てます。同じ区分を複数の展開へ設定でき、割当なしも可能です。
 施策入力・登録済み施策の編集では、展開名の右の「展開区分」から、その展開に割り当てた区分だけを選べます。任意項目で、自動選択せず、未選択のまま登録できます。展開の変更時は有効な区分を保持し、候補から外れた区分を未選択へ戻します。展開未選択・割当なしでは選択欄を無効にします。
 使用中の割当は解除できず、割当中の区分は削除できません。区分名の編集・登録済み施策の選択変更は自動保存し、保存失敗では入力と保存済み内容を保持します。区分・割当・選択は同じ.triadicファイル、時点履歴、操作取消に含めます。区分で金額と集計方法を変更しません。
 
@@ -658,7 +658,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 表の表示領域が固定見出し全体より低い場合、最下端までスクロールすると固定見出しの上部が隠れる制限があります。画面テストでは狭い幅の操作を確認し、固定位置の検査は見出しが収まる高さで行います。
 
-展開表は展開名・期間名・展開区分・施策名の4列を左端に固定します。各展開内を期間マスタ順、未選択は空欄で最後にまとめ、同じ期間名は縦に結合します。同じ期間内は登録順で、展開別小計と金額計算は維持します。
+展開表は展開名・期間名・展開区分・施策名の4列を左端に固定します。各展開内を期間マスタ順、未選択は空欄で最後にまとめ、同じ期間名は縦に結合します。同じ期間内を区分マスタ順にまとめて区分名も縦結合し、区分未選択は最後の空欄とします。区分内は登録順で、展開別小計と金額計算は維持します。
 
 展開表はタイトルを左側、比較対象スロットを右側に同じ横一列で配置し、表の表示領域を確保します。狭い画面ではスロットを次の行へ折り返します。
 
@@ -692,7 +692,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 施策一覧は見出し・種別選択・「施策を追加」を一行にまとめ、狭い画面では折り返します。各月の売上・費用・利益を表示します。費用は費用属性の科目の合計で、削減額は負数として表示します。表だけを画面内で縦横にスクロールでき、下端の横スクロールバー、上端の月・項目見出し、左端の施策名を表示し続けます。
 
-展開表はスロットで選んだ1〜2種別の月別売上・利益を表示します。2種選択時だけ、選択順に関係なく「確定予算−一次予算」の比較列を表示します。前年は上部の行で扱い、種別の列には加えません。上部は前年・合計・展開計で、合計は前年＋展開計です。展開名ごとに施策をまとめ、施策がない展開も小計0で表示します。各展開名の中は期間マスタ順にまとめ、同じ期間内は登録順で表示します。期間未選択の施策は最後に空欄の期間として表示します。施策名から編集へ進み、元の表へ戻れます。展開区分は各施策の選択済み区分の現在のマスタ名を表示し、未選択は空欄です。区分による並べ替えや小計は追加しません。展開名・期間名・展開区分・施策名の4列を左端に固定し、表の領域だけを縦横にスクロールできます。月・種別・売上／利益の3段の列見出しから前年・合計・展開計までをまとめて上端に固定し、縦スクロールでは下の施策行と展開別小計だけが移動します。見出し・金額・小計の列境界をそろえ、長い名称は折り返します。狭い画面では名称列を縮めて表示します。
+展開表はスロットで選んだ1〜2種別の月別売上・利益を表示します。2種選択時だけ、選択順に関係なく「確定予算−一次予算」の比較列を表示します。前年は上部の行で扱い、種別の列には加えません。上部は前年・合計・展開計で、合計は前年＋展開計です。展開名ごとに施策をまとめ、施策がない展開も小計0で表示します。各展開名の中は期間マスタ順にまとめ、同じ期間内を区分マスタ順にまとめて区分名も縦結合します。区分未選択は最後の空欄とし、区分内は登録順で表示します。期間未選択の施策は最後に空欄の期間として表示します。施策名から編集へ進み、元の表へ戻れます。展開区分は各施策の選択済み区分の現在のマスタ名を表示し、未選択は空欄です。区分別小計は追加しません。展開名・期間名・展開区分・施策名の4列を左端に固定し、表の領域だけを縦横にスクロールできます。月・種別・売上／利益の3段の列見出しから前年・合計・展開計までをまとめて上端に固定し、縦スクロールでは下の施策行と展開別小計だけが移動します。見出し・金額・小計の列境界をそろえ、長い名称は折り返します。狭い画面では名称列を縮めて表示します。
 
 施策一覧・総原価表・展開表は、表の列見出しより上にスロット式の種別選択を置きます。施策一覧は1種、総原価表・展開表は1〜2種を選び、2つ目だけ未選択にできます。同じ種別の重複選択はできません。初期値は施策一覧が確定予算、他の2表が「一次予算・未選択」です。横並びの候補のクリックと矢印キーによる選択に対応し、選択は画面ごとにファイルへ保存して開き直しても保持します。総原価表は1予算時に「前年・選んだ予算・前年差」の3列、両予算時に「前年・一次予算・確定予算・前年差・一次予算差」の5列を表示します。前年差は表示する予算から前年を引き、両予算時は確定予算を使います。一次予算差は確定予算から一次予算を引きます。保存失敗時は保存済み表示を維持して理由を通知します。過去閲覧中は選択を一時的に変更でき、ファイルには保存しません。施策一覧・展開表は業種・部署の全件を表示し、総原価表では部署名・業種名の順に並べたドロップダウンで絞り込みます。施策一覧の4固定列は見出しから並べ替えられます。3画面とも列見出しのフィルターは設けません。
 
@@ -933,7 +933,7 @@ Chrome Web Store用のアイコン・販促画像2種類・スクリーンショ
 
 種別・比較対象の切り替えは、一つの作業用データベースで保存・取消用の前後データ・時点履歴を準備し、金額・施策・マスタの読み直しを省きます。変更前後の全体検証と外部更新の照合を維持し、保存成功後に選択を反映します。総原価表は計算元と分類が同じ間、比較結果を再利用します。金額・分類の変更時には再計算します。
 
-展開表は計算元が同じ間、比較対象の組み合わせと順序ごとに月別金額・小計・期間別の行構成を画面内で再利用します。施策・科目・前年額・展開・期間・年度が変わると作り直します。比較の向き、属性未設定、計算上限の検証は維持し、結果をファイルへ保存しません。
+展開表は計算元が同じ間、比較対象の組み合わせと順序ごとに月別金額・小計・期間別の行構成を画面内で再利用します。施策・科目・前年額・展開・期間・展開区分・年度が変わると作り直します。比較の向き、属性未設定、計算上限の検証は維持し、結果をファイルへ保存しません。
 
 施策一覧は表示中の計算元に対して、一次予算・確定予算それぞれの月別金額・計算エラー・全件合計を画面内で再利用します。金額・科目・年度が変わると作り直し、科目属性の変更・操作取消・時点履歴の復元でも古い結果を使いません。並べ替えは名称と開始年月を参照し、スクロールや保存中の状態変更で全件を並べ直しません。
 

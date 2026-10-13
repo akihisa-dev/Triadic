@@ -10,7 +10,11 @@ export async function verifyExpansionTableView(api) {
     assert.equal(viewForSelection([...selected]), view, '選択配列が作り直されても同じ組み合わせの結果を再利用');
     assert.equal(view.flat.length, view.table.groups.reduce((sum, group) => sum + group.initiatives.length + 1, 0));
     for (const { group, periods } of view.groups) {
-      assert.deepEqual(periods, api.groupExpansionPeriods(group.initiatives, contents.periodTypes), '未設定を含む期間順と縦結合の対象を維持');
+      assert.deepEqual(periods.map(period => period.id), api.groupExpansionPeriods(group.initiatives, contents.periodTypes).map(period => period.id), '期間順を維持');
+      for (const period of periods) {
+        assert.equal(new Set(period.categories.map(category => category.id)).size, period.categories.length);
+        for (const category of period.categories) assert.deepEqual(category.initiatives.map(item => item.id), group.initiatives.filter(item => item.periodTypeId === period.id && (item.expansionCategoryId ?? null) === category.id).map(item => item.id), '区分内登録順を維持');
+      }
       assert.deepEqual(view.flat.filter(row => row.group === group && !row.subtotal).map(row => row.item.id), periods.flatMap(period => period.initiatives.map(item => item.id)));
     }
     for (const period of api.tablePeriods) for (const metric of ['sales', 'profit']) {
@@ -25,6 +29,7 @@ export async function verifyExpansionTableView(api) {
     { ...contents, expansions: contents.expansions.map(item => ({ ...item, expansionName: item.expansionName + '更新' })) },
     { ...contents, periodTypes: [...contents.periodTypes].reverse() },
     { ...contents, fiscalYear: 2025 },
+    { ...contents, expansionCategories: [...contents.expansionCategories].reverse() },
   ];
   for (const changed of variants) {
     const fresh = api.createExpansionTableView(changed)([1, 2]);
@@ -41,12 +46,23 @@ export async function verifyExpansionTableView(api) {
     const signed = await api.readPlanContents(await api.createSignedCategoryPlan(large, 2026));
     for (const selected of [[1], [2], [1, 2], [2, 1]]) {
       const html = api.renderExpansionTable(signed, selected);
-      for (const name of ['負ID区分', 'ゼロID区分', '正ID区分', '']) assert.ok(html.includes(`class="expansion-category" title="${name}">${name}</td>`), `通常・仮想表示の本文とtitle: ${name}`);
+      for (const name of (large ? ['負ID区分'] : ['負ID区分', 'ゼロID区分', '正ID区分', ''])) assert.ok(html.includes(`class="expansion-category" title="${name}">${name}</td>`), `通常・仮想表示の本文とtitle: ${name}`);
+    }
+    const view = api.createExpansionTableView(signed)([1]);
+    for (const row of view.flat.filter(row => !row.subtotal)) {
+      assert.ok(row.categoryOffset < row.categoryCount);
+      assert.equal(view.flat[view.flat.indexOf(row) - row.categoryOffset].categoryOffset, 0);
+    }
+    if (large) assert.ok(api.renderExpansionTable(signed, [1]).includes('rowSpan="40" class="expansion-category"'), '仮想表示末尾で区分の結合長を切る');
+    if (!large) {
+      const doubled = { ...signed, initiatives: [...signed.initiatives, ...signed.initiatives.map(item => ({ ...item, id: item.id + 10000 }))] };
+      const doubledHtml = api.renderExpansionTable(doubled, [1]);
+      assert.equal((doubledHtml.match(/rowSpan="2" class="expansion-category"/g) ?? []).length, 4, '通常表示では各区分と未選択を2行結合');
     }
     const renamed = { ...signed, expansionCategories: signed.expansionCategories.map(item => ({ ...item, categoryName: item.categoryName + '改名' })) };
     const html = api.renderExpansionTable(renamed);
     assert.ok(html.includes('title="負ID区分改名">負ID区分改名</td>'));
-    assert.ok(html.includes('class="expansion-category" title=""></td>'));
+    if (!large) assert.ok(html.includes('class="expansion-category" title=""></td>'));
   }
   console.log('PASS: 展開表の選択再利用、逆順比較、期間計と行順、計算元変更、上限超過と入力保持');
 }

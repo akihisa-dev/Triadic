@@ -36,6 +36,8 @@ export async function verifyReferenceSample(api, bytes, plan) {
   const sourceRow=(item,name)=>item.rows.find(row=>accounts.get(row.accountId).accountName===name);
   const costId=plan.expansions.find(item=>item.expansionName==="コスト").id;
   const categories=new Map(plan.expansionCategories.map(item=>[item.categoryName,item.id]));
+  assert.ok(categories.has("その他"), "初期区分のその他を実ファイルに保持");
+  assert.equal(plan.initiatives.find(item => item.name === "通信運搬費と消耗品費の削減").expansionCategoryId, categories.get("その他"));
   const requiredAccounts={"下払いUP":"下払作業賃","ベースアップ":"給料手当","設備投資":"固定資産減価償却費","燃料費UP":"燃料油脂費","電気料金UP":"動力光熱費"};
   for(const [name,accountName] of Object.entries(requiredAccounts)) {
     const items=catalog.filter(item=>item.expansionId===costId&&item.expansionCategoryId===categories.get(name));

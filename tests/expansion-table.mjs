@@ -68,5 +68,10 @@ export async function verifyExpansionTable(api) {
   assert.equal(api.groupExpansionPeriods(periodRows, [{ ...periods[0], periodName: "名称変更" }, periods[1]])[0].name, "名称変更");
   assert.deepEqual(periodRows, snapshot, "表示順と金額を保存データへ反映しない");
   assert.deepEqual(api.groupExpansionPeriods([], periods), []);
+  const categories = [{ id: -1 }, { id: 0 }, { id: 6 }];
+  const categoryRows = [null, 6, -1, 0, 6, null, -1].map((expansionCategoryId, id) => ({ id, expansionCategoryId }));
+  assert.deepEqual(api.groupExpansionCategories(categoryRows, categories).map(group => [group.id, group.initiatives.map(item => item.id)]), [[-1, [2, 6]], [0, [3]], [6, [1, 4]], [null, [0, 5]]], '区分順・同一区分内登録順・未選択の末尾を維持し、0と負IDを区別');
+  assert.deepEqual(api.groupExpansionCategories(categoryRows, [...categories].reverse()).map(group => group.id), [6, 0, -1, null]);
+  assert.deepEqual(categoryRows.map(item => item.expansionCategoryId), [null, 6, -1, 0, 6, null, -1], '保存順は変更しない');
   console.log("PASS: expansion assignment, grouped totals, sorting, year isolation, reassignment and deletion protection");
 }

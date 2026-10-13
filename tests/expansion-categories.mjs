@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 export async function verifyExpansionCategories(api) {
   const original = await api.createTriadicDatabase(2026);
-  const names = ["下払いUP", "ベースアップ", "設備投資", "燃料費UP", "電気料金UP"];
+  const names = ["下払いUP", "ベースアップ", "設備投資", "燃料費UP", "電気料金UP", "その他"];
   const initial = await api.readPlanContents(original);
   assert.deepEqual(initial.expansionCategories.map(item => item.categoryName), names);
-  assert.deepEqual(initial.expansions.find(item => item.expansionName === "コスト").categoryIds, [1, 2, 3, 4, 5]);
+  assert.deepEqual(initial.expansions.find(item => item.expansionName === "コスト").categoryIds, [1, 2, 3, 4, 5, 6]);
   assert.ok(initial.expansions.filter(item => item.expansionName !== "コスト").every(item => item.categoryIds.length === 0));
   let bytes = original;
   await assert.rejects(api.changeExpansionCategoryMaster(bytes, { type: "add", categoryName: "下払いUP" }), /同じ/);

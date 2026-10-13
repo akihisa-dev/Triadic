@@ -6,7 +6,7 @@
 // 期間の未選択と実ID -1・0・正数の表示と昇降順は tests/initiative-sort.mjs と tests/ui/initiative-sort.spec.ts の正常なSQLite計画で確認する。
 // 集計候補はID索引を共有し、自己・子孫を禁止する。1000/5000独立集計の参照量は tests/aggregation-data.mjs、所属・保存失敗は tests/ui/aggregations.spec.ts で確認する。
 // 集計所属の一度の分類、1000階層の実SQLite保存・読込、1000/5000集計の走査量は tests/aggregation-positions.mjs で確認する。
-// 展開表の期間名・展開区分・施策名の列順、設備投資の選択済み名称と未選択の空欄を画面・Excelで確認する。
+// 展開表では期間内の区分別結合・区分内登録順・未選択の末尾空欄を確認する。その他は通信運搬費と消耗品費の削減に設定する。
 // 施策の科目欄はコードなしの全文表示と狭幅での横スクロールを tests/ui/initiative-table-layout.spec.ts で確認する。
 import { PORTFOLIO_COUNT, portfolioScenario } from "./sample-portfolio";
 // 集計所属順は現行DDLの非負・安全な整数で生成する。不正型・値域・採番境界の拒否は tests/aggregation-positions.mjs の合成DBで確認する。
@@ -84,7 +84,7 @@ export async function createSamplePlan(fiscalYear = currentFiscalYear(), large =
     };
     const expansionId = expansions.find(item => item.expansionCode === (codes[name] ?? "5"))!.id;
     // Choose a meaningful period instead of cycling incompatible start-month rules.
-    bytes = await registerInitiative(bytes, { name, note, expansionId, expansionCategoryId: name === "設備更新と償却費の見直し" ? categoryIdsByName.get("設備投資")! : null, industryId: industries[(await readPlanContents(bytes)).initiatives.filter(item => item.industryId != null).length % industries.length]!.id, periodTypeId: name === "未確定施策の入力準備" ? null : periodTypeId ?? periodTypes.find(item => item.periodName === "新規")!.id, departmentId: departments[(await readPlanContents(bytes)).initiatives.length % departments.length]!.id, fiscalYear: String(fiscalYear), rows: rows.map((row,index) => ({ ...row, id: `sample:${name}:${index}` })) });
+    bytes = await registerInitiative(bytes, { name, note, expansionId, expansionCategoryId: name === "設備更新と償却費の見直し" ? categoryIdsByName.get("設備投資")! : name === "通信運搬費と消耗品費の削減" ? categoryIdsByName.get("その他")! : null, industryId: industries[(await readPlanContents(bytes)).initiatives.filter(item => item.industryId != null).length % industries.length]!.id, periodTypeId: name === "未確定施策の入力準備" ? null : periodTypeId ?? periodTypes.find(item => item.periodName === "新規")!.id, departmentId: departments[(await readPlanContents(bytes)).initiatives.length % departments.length]!.id, fiscalYear: String(fiscalYear), rows: rows.map((row,index) => ({ ...row, id: `sample:${name}:${index}` })) });
   };
 
   await add("既存商品の販売拡大", "直販と代理店の販路を増やす年間計画。直販売上は4月120千円から毎月5千円増、代理店は30千円から毎月1千円増。原価・広告・出張費と販売奨励金を計上。確定は4月130、10月170、11月0に見直す。", [

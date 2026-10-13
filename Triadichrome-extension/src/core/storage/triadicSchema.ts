@@ -44,7 +44,7 @@ CREATE TABLE expansion_categories (
  name TEXT NOT NULL UNIQUE CHECK (length(trim(name)) > 0)
 );
 INSERT INTO expansion_categories (id, name) VALUES
- (1, '下払いUP'), (2, 'ベースアップ'), (3, '設備投資'), (4, '燃料費UP'), (5, '電気料金UP');
+ (1, '下払いUP'), (2, 'ベースアップ'), (3, '設備投資'), (4, '燃料費UP'), (5, '電気料金UP'), (6, 'その他');
 CREATE TABLE expansion_category_assignments (
  expansion_id INTEGER NOT NULL REFERENCES expansions(id) ON DELETE CASCADE,
  category_id INTEGER NOT NULL REFERENCES expansion_categories(id),

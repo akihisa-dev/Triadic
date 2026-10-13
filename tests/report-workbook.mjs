@@ -100,10 +100,14 @@ export async function verifyReportWorkbooks(api, sample) {
       for (const group of grouped.groups) {
         for (const period of api.groupExpansionPeriods(group.initiatives, sample.periodTypes)) {
           const start = row;
-          for (const item of period.initiatives) {
+          for (const category of api.groupExpansionCategories(period.initiatives, sample.expansionCategories)) {
+            const categoryStart = row;
+            for (const item of category.initiatives) {
             assert.equal(expansion.getCell(row, 2).value, period.name);
             assert.equal(expansion.getCell(row, 3).value ?? "", sample.expansionCategories.find(category => category.id === item.expansionCategoryId)?.categoryName ?? "");
             assert.equal(expansion.getCell(row++, 4).value, item.name);
+            }
+            if (row - categoryStart > 1) assert.equal(expansion.getCell(row - 1, 3).master.address, `C${categoryStart}`);
           }
           if (row - start > 1) assert.equal(expansion.getCell(row - 1, 2).master.address, `B${start}`);
         }

@@ -6,7 +6,7 @@ import { resolvedAmount, type KindSelections } from "../domain/kinds";
 import type { PlanContents } from "../domain/plan";
 import { buildPeriodCostComparison, tablePeriods, expansionPeriodAmount } from "../tables/periodTables";
 import { buildKindExpansionTable, filterPlan, type ClassificationFilter } from "../tables/planTables";
-import { groupExpansionPeriods } from "../tables/expansionTable";
+import { groupExpansionCategories, groupExpansionPeriods } from "../tables/expansionTable";
 import { initiativeTotals } from "../tables/initiativeTotals";
 import { initiativesForKind } from "../tables/initiatives";
 import { amountItems } from "../domain/amountItems";
@@ -293,11 +293,15 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
       const members: number[] = [];
       for (const period of groupExpansionPeriods(group.initiatives, contents.periodTypes)) {
         const periodStart = next;
-        for (const item of period.initiatives) {
+        for (const category of groupExpansionCategories(period.initiatives, contents.expansionCategories)) {
+          const categoryStart = next;
+          for (const item of category.initiatives) {
           const r = next++; members.push(r);
           ws.getCell(r, 3).value = lookup(masters.expansionCategories, item.expansionCategoryId)?.categoryName ?? "";
           ws.getCell(r, 4).value = item.name;
           amountRow(r, item.values, (ki, metric, m) => effectFormula(item.id, selected[ki]!, m, metric));
+          }
+          if (categoryStart < next - 1) ws.mergeCells(categoryStart, 3, next - 1, 3);
         }
         ws.getCell(periodStart, 2).value = period.name;
         if (periodStart < next - 1) ws.mergeCells(periodStart, 2, next - 1, 2);

@@ -1,18 +1,25 @@
 import type { KindId } from "../domain/kinds";
 import type { PlanContents } from "../domain/plan";
-import { groupExpansionPeriods } from "./expansionTable";
+import { groupExpansionCategories, groupExpansionPeriods } from "./expansionTable";
 import { buildKindExpansionTable } from "./planTables";
 
 function buildView(contents: PlanContents, selected: KindId[]) {
   const table = buildKindExpansionTable(contents, selected, "registered");
-  const groups = table.groups.map(group => ({ group, periods: groupExpansionPeriods(group.initiatives, contents.periodTypes) }));
+  const groups = table.groups.map(group => ({ group, periods: groupExpansionPeriods(group.initiatives, contents.periodTypes).map(period => {
+    const categories = groupExpansionCategories(period.initiatives, contents.expansionCategories);
+    return { ...period, categories, initiatives: categories.flatMap(category => category.initiatives) };
+  }) }));
   const flat = groups.flatMap(({ group, periods }) => {
     const count = group.initiatives.length + 1;
     let offset = 0;
-    const items = periods.flatMap(period => period.initiatives.map((item, index) => ({
-      group, item, period, groupOffset: offset++, groupCount: count, periodOffset: index, subtotal: false,
-    })));
-    return [...items, { group, item: null, period: null, groupOffset: offset, groupCount: count, periodOffset: 0, subtotal: true }];
+    const items = periods.flatMap(period => {
+      let periodOffset = 0;
+      return period.categories.flatMap(category => category.initiatives.map((item, categoryOffset) => ({
+        group, item, period, groupOffset: offset++, groupCount: count, periodOffset: periodOffset++,
+        categoryOffset, categoryCount: category.initiatives.length, subtotal: false,
+      })));
+    });
+    return [...items, { group, item: null, period: null, groupOffset: offset, groupCount: count, periodOffset: 0, categoryOffset: 0, categoryCount: 0, subtotal: true }];
   });
   return { table, groups, flat };
 }
