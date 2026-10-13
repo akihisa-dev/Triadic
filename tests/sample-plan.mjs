@@ -113,24 +113,19 @@ export async function verifySamplePlan(api) {
   await validateTriadicDatabase(largeBytes);
   const large = await readPlanContents(largeBytes);
   assert.deepEqual(large.expansionCategories, plan.expansionCategories, "再生成した実ファイルもデフォルトの区分だけを含む");
-  assert.equal(large.departments.length, 4);
-  const multiple = large.departments.find(item => item.departmentName === "複数業種確認部署");
-  const single = large.departments.find(item => item.departmentName === "単一業種確認部署");
-  assert.deepEqual(multiple.industryIds, [1, 2]);
-  assert.deepEqual(single.industryIds, [3]);
-  for (const department of [multiple, single]) {
-    assert.ok(!large.initiatives.some(item => item.departmentId === department.id));
-    assert.ok(!large.previousAmounts.some(item => item.departmentId === department.id));
-  }
+  assert.deepEqual(large.departments.map(item => item.departmentName), ["東日本営業部", "西日本営業部"]);
   assert.ok(large.initiatives.every(item => large.departments.find(d => d.id === item.departmentId).industryIds.includes(item.industryId)));
   assert.ok(large.previousAmounts.every(item => large.departments.find(d => d.id === item.departmentId).industryIds.includes(item.industryId)));
+  // Filtering and unused-department edits use a private test plan, never the delivered sample.
+  const departmentBytes = await api.changeDepartmentMaster(largeBytes, { type: "add", departmentName: "所属確認部署", industryIds: [1, 2] });
+  const multiple = (await readPlanContents(departmentBytes)).departments.at(-1);
   const allowedDraft = { name: "所属業種の登録確認", note: "", fiscalYear: String(large.fiscalYear), expansionId: large.expansions[0].id, departmentId: multiple.id, industryId: 2, rows: [{ accountId: large.accounts[0].id, amounts: { 4: "1.001" } }] };
-  const registered = await readPlanContents(await api.registerInitiative(largeBytes, allowedDraft));
+  const registered = await readPlanContents(await api.registerInitiative(departmentBytes, allowedDraft));
   assert.equal(registered.initiatives.at(-1).industryId, 2);
-  await assert.rejects(api.registerInitiative(largeBytes, { ...allowedDraft, industryId: 3 }), /部署に設定/);
-  const modified = await api.changeDepartmentMaster(largeBytes, { type: "update", id: multiple.id, departmentName: multiple.departmentName, industryIds: [2] });
+  await assert.rejects(api.registerInitiative(departmentBytes, { ...allowedDraft, industryId: 3 }), /部署に設定/);
+  const modified = await api.changeDepartmentMaster(departmentBytes, { type: "update", id: multiple.id, departmentName: multiple.departmentName, industryIds: [2] });
   assert.deepEqual((await readPlanContents(modified)).departments.find(item => item.id === multiple.id).industryIds, [2]);
-  assert.deepEqual((await readPlanContents(largeBytes)).departments.find(item => item.id === multiple.id).industryIds, [1, 2], "変更検証で原本を更新しない");
+  assert.deepEqual((await readPlanContents(departmentBytes)).departments.find(item => item.id === multiple.id).industryIds, [1, 2], "変更検証で原本を更新しない");
   await verifyReferenceSample(api, largeBytes, large);
   console.log("PASS: sample plan years, monthly edge cases, configured totals and editable/deletable master data");
 }

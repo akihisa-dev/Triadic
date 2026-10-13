@@ -6,6 +6,19 @@ const yen = text => { const [whole, fraction = ""] = String(text).replace(/^-/, 
 export async function verifyReferenceSample(api, bytes, plan) {
   assert.ok(bytes.length <= 50_000_000, `履歴込み実ファイルのサイズ: ${bytes.length}`);
   const before = bytes.slice();
+  const assertBusinessData = data => {
+    assert.equal(data.accounts.length, 57, "確認用の追加科目を含めない");
+    assert.equal(data.aggregations.length, 15, "確認用の空集計を含めない");
+    assert.equal(data.departments.length, 2, "確認専用の部署を含めない");
+    const labels = [...data.accounts.flatMap(item => [item.accountName, item.displayName ?? ""]),
+      ...data.aggregations.flatMap(item => [item.name, item.displayName ?? ""]),
+      ...data.departments.map(item => item.departmentName), ...data.industries.map(item => item.industryName),
+      ...data.expansions.map(item => item.expansionName), ...data.expansionCategories.map(item => item.categoryName),
+      ...data.initiatives.flatMap(item => [item.name, item.note])];
+    assert.ok(labels.every(text => !/確認用|確認部署|確認$|サンプル|テスト|未所属費用|入力準備|手修正|ゼロ固定|部署[AB]/.test(text)), "業務データと全履歴に確認用の名称・説明を混入させない");
+    assert.ok(data.initiatives.every(item => item.rows.some(row => Object.values(row.amounts).some(amount => yen(amount) !== 0))), "金額未定の確認専用施策を含めない");
+  };
+  assertBusinessData(plan);
   const accounts = new Map(plan.accounts.map(item => [item.id,item]));
   const effect = (values, accountId, value) => {
     const type = accounts.get(accountId).accountType;
@@ -19,7 +32,7 @@ export async function verifyReferenceSample(api, bytes, plan) {
   const monthly = (item,kind,month) => { const result=empty(); for(const row of item.rows) effect(result,row.accountId,value(row,kind,month)); return result; };
   const catalog=plan.initiatives.filter(item=>item.rows[0]?.id?.startsWith("portfolio:"));
   assert.equal(catalog.length,126);
-  assert.equal(plan.initiatives.length,140);
+  assert.equal(plan.initiatives.length,136);
   assert.equal(new Set(catalog.map(item=>`${item.expansionId}/${item.industryId}/${item.departmentId}`)).size,126);
   assert.equal(new Set(catalog.map(item=>item.note)).size,126);
   const amountSignatures=catalog.map(item=>JSON.stringify(item.rows.map(row=>[
@@ -174,7 +187,8 @@ export async function verifyReferenceSample(api, bytes, plan) {
   const snapshots=[];
   for(const entry of history.entries) {
     const snapshot=await api.readSnapshotContents(await api.readHistorySnapshot(bytes,entry.id));
-    assert.equal(snapshot.initiatives.length,140);
+    assert.equal(snapshot.initiatives.length,136);
+    assertBusinessData(snapshot);
     const snapshotCatalog=snapshot.initiatives.filter(item=>item.rows[0]?.id?.startsWith("portfolio:"));
     assert.deepEqual(snapshotCatalog.map(item=>({name:item.name,note:item.note,rows:item.rows})),catalog.map(item=>({name:item.name,note:item.note,rows:item.rows})),"3時点とも改訂した実務データを保持");
     snapshots.push(snapshot.initiatives[0].rows[0].amounts[4]);
@@ -202,7 +216,7 @@ export async function verifyReferenceSample(api, bytes, plan) {
   const reopened=new ExcelJS.Workbook();await reopened.xlsx.load(workbook);
   assert.ok(reopened.getWorksheet("総原価表")&&reopened.getWorksheet("展開表")&&reopened.getWorksheet("施策一覧")&&reopened.getWorksheet("計算元"));
   const calculation=reopened.getWorksheet("計算元");
-  assert.ok(calculation.rowCount>140,"実サンプルの明細を出力");
+  assert.ok(calculation.rowCount>136,"実サンプルの明細を出力");
   assert.deepEqual(bytes,before,"履歴読込・出力で実サンプルを変更しない");
   console.log(`PASS: 新基準サンプル ${bytes.length} bytes、126実務施策、全分類・初期5区分、独立計算した三表/期間計、履歴3時点、Excel出力再読込`);
   console.log("REFERENCE_EXPECTATIONS",JSON.stringify({aprilPrimary:expectations["1/4"],aprilConfirmed:expectations["2/4"],annualPrimarySales:api.initiativeMonths.reduce((sum,m)=>sum+expectations[`1/${m}`].sales,0)}));

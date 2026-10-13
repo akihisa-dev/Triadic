@@ -60,17 +60,23 @@ export async function createSamplePlan(fiscalYear = currentFiscalYear(), large =
   if (departments.some(item => item.industryIds.length !== INITIAL_INDUSTRIES.length || INITIAL_INDUSTRIES.some(industry => !item.industryIds.includes(industry.id)))) throw new Error("部署の複数業種の対応が一致しません。");
   if (industries.length !== INITIAL_INDUSTRIES.length || industries.some((item, index) => item.industryName !== INITIAL_INDUSTRIES[index]!.industryName)) throw new Error("業種マスタの初期データが一致しません。");
   const accounts = new Map((await readPlanContents(bytes)).accounts.map(account => [account.accountName, account.id]));
-  for (const [accountCode, accountName] of [["001", "未所属費用"], ["599", "削除確認用科目"]]) {
+  for (const [accountCode, accountName] of (large ? [] : [["001", "未所属費用"], ["599", "削除確認用科目"]])) {
     const changed = await changeAccountMaster(bytes, { type: "add", accountCode: accountCode!, accountName: accountName!, accountType: "expense", ...(accountCode === "599" ? { displayName: "表示名確認用" } : {}) });
     bytes = changed.bytes;
     accounts.set(accountName!, changed.accounts.find(account => account.accountCode === accountCode)!.id);
   }
-  bytes = await changeAggregationMaster(bytes, { type: "add", name: "編集・削除確認用集計" });
+  if (!large) bytes = await changeAggregationMaster(bytes, { type: "add", name: "編集・削除確認用集計" });
 
   const row = (name: string, amounts: InitiativeRow["amounts"]): InitiativeRow => ({ accountId: accounts.get(name)!, amounts });
   const annual = (name: string, amount: number, growth = 0): InitiativeRow => row(name,
     Object.fromEntries(initiativeMonths.map((month, index) => [month, String(amount + index * growth)])));
   const add = async (name: string, note: string, rows: InitiativeRow[], periodTypeId?: number) => {
+    if (large && ["ゼロと相殺の確認", "未確定施策の入力準備", "科目変更と削除の確認", "期間差の開始年月確認"].includes(name)) return;
+    const businessNames: Record<string, string> = {
+      "確定予算の手修正": "代理店販路の追加契約",
+      "確定予算の下期調整": "法人向け定期受注の拡大",
+      "確定予算のゼロ固定": "グループ取引の契約更新",
+    };
     const codes: Record<string, string> = {
       "既存商品の販売拡大": "5", "保守サービスの新規契約": "5", "季節キャンペーン": "5",
       "通信運搬費と消耗品費の削減": "1", "サブスクリプション事業の拡大": "2",
@@ -79,7 +85,7 @@ export async function createSamplePlan(fiscalYear = currentFiscalYear(), large =
     };
     const expansionId = expansions.find(item => item.expansionCode === (codes[name] ?? "5"))!.id;
     // Choose a meaningful period instead of cycling incompatible start-month rules.
-    bytes = await registerInitiative(bytes, { name, note, expansionId, expansionCategoryId: name === "設備更新と償却費の見直し" ? categoryIdsByName.get("設備投資")! : name === "通信運搬費と消耗品費の削減" ? categoryIdsByName.get("その他")! : null, industryId: industries[(await readPlanContents(bytes)).initiatives.filter(item => item.industryId != null).length % industries.length]!.id, periodTypeId: name === "未確定施策の入力準備" ? null : periodTypeId ?? periodTypes.find(item => item.periodName === "新規")!.id, departmentId: departments[(await readPlanContents(bytes)).initiatives.length % departments.length]!.id, fiscalYear: String(fiscalYear), rows: rows.map((row,index) => ({ ...row, id: `sample:${name}:${index}` })) });
+    bytes = await registerInitiative(bytes, { name: large ? businessNames[name] ?? name : name, note: large ? note.replace("明示0", "0").replace("一次の変更へ追従する月と固定する月を区別する。", "10月分は翌年度へ延期し、それ以外は年間の契約計画を維持する。") : note, expansionId, expansionCategoryId: name === "設備更新と償却費の見直し" ? categoryIdsByName.get("設備投資")! : name === "通信運搬費と消耗品費の削減" ? categoryIdsByName.get("その他")! : null, industryId: industries[(await readPlanContents(bytes)).initiatives.filter(item => item.industryId != null).length % industries.length]!.id, periodTypeId: name === "未確定施策の入力準備" ? null : periodTypeId ?? periodTypes.find(item => item.periodName === "新規")!.id, departmentId: departments[(await readPlanContents(bytes)).initiatives.length % departments.length]!.id, fiscalYear: String(fiscalYear), rows: rows.map((row,index) => ({ ...row, id: `sample:${name}:${index}` })) });
   };
 
   await add("既存商品の販売拡大", "直販と代理店の販路を増やす年間計画。直販売上は4月120千円から毎月5千円増、代理店は30千円から毎月1千円増。原価・広告・出張費と販売奨励金を計上。確定は4月130、10月170、11月0に見直す。", [
@@ -152,12 +158,9 @@ export async function createSamplePlan(fiscalYear = currentFiscalYear(), large =
     })).bytes;
   }
   if (large) {
-    // Unused departments demonstrate candidate filtering without changing any totals.
-    // Keep a new draft with the multiple-industry department, leave industry unselected,
-    // then save membership [1]: industry 1 must be selected on return, retaining amounts.
-    // A failed membership save must retain the saved membership and draft.
-    bytes = await changeDepartmentMaster(bytes, { type: "add", departmentName: "複数業種確認部署", industryIds: [1, 2] });
-    bytes = await changeDepartmentMaster(bytes, { type: "add", departmentName: "単一業種確認部署", industryIds: [3] });
+    for (const [index, department] of departments.entries()) bytes = await changeDepartmentMaster(bytes, {
+      type: "update", id: department.id, departmentName: index === 0 ? "東日本営業部" : "西日本営業部", industryIds: department.industryIds,
+    });
   }
   const timestamp = `${String(fiscalYear).padStart(4, "0")}-04-01T00:00:00.000Z`;
   const stable = async (input: Uint8Array) => {
@@ -177,7 +180,7 @@ export async function createSamplePlan(fiscalYear = currentFiscalYear(), large =
   bytes = await stable(bytes);
   const initiative = (await readPlanContents(bytes)).initiatives[0]!;
   const draft: InitiativeEntryDraft = { ...initiative, fiscalYear: String(fiscalYear) };
-  const historic = (amount: string) => ({ ...draft, note: "履歴確認用の過去の状態", rows: draft.rows.map((row, index) => index === 0 ? { ...row, amounts: { ...row.amounts, 4: amount } } : row) });
+  const historic = (amount: string) => ({ ...draft, note: large ? `直販契約の年間計画。4月の見込額は${amount}千円。代理店販売・原価・広告費・出張費は年間の契約計画に従う。` : "履歴確認用の過去の状態", rows: draft.rows.map((row, index) => index === 0 ? { ...row, amounts: { ...row.amounts, 4: amount } } : row) });
   const initial = await stable(await updateInitiative(bytes, initiative.id, fiscalYear, historic("100")));
   bytes = await trackHistoryChange(initial, await stable(await updateInitiative(initial, initiative.id, fiscalYear, historic("110"))), timestamp);
   bytes = await recordDataHistory(bytes, timestamp.replace("00:00:00", "00:05:00"));
