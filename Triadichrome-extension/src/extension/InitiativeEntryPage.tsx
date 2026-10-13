@@ -96,7 +96,7 @@ export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions
         <ClassificationSelect id="initiative-period" label="期間名" value={draft.periodTypeId} disabled={readOnly || isSaving}
           options={periodTypes.map(item => ({ id: item.id, name: item.periodName }))}
           onChange={periodTypeId => onDraftChange({ ...draft, periodTypeId })} />
-        <ClassificationSelect id="initiative-industry" label="業種名" value={draft.industryId} disabled={readOnly || isSaving || draft.departmentId == null || allowedIndustries.length === 1} required
+        <ClassificationSelect id="initiative-industry" label="業種名" value={draft.industryId} disabled={readOnly || isSaving || draft.departmentId == null || (allowedIndustries.length === 1 && draft.industryId === allowedIndustries[0])} required
           options={industries.filter(item => allowedIndustries.includes(item.id)).map(item => ({ id: item.id, name: item.industryName }))}
           onChange={industryId => onDraftChange({ ...draft, industryId })} />
       </div>

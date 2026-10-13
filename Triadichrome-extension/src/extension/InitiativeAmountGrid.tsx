@@ -61,7 +61,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                 <th scope="row">
                   <div className="initiative-account-cell">
                   <AccountRowSelect label={`${index + 1}行目の勘定科目`} value={row.accountId} accounts={accounts} account={accountsById.get(row.accountId!)}
-                    disabled={readOnly || isSaving || rowOperationsDisabled || accounts.length === 0 || !canChangeAccountRow(row, savedById.get(row.id))}
+                    disabled={readOnly || isSaving || rowOperationsDisabled || accounts.length === 0 || (!(row.accountId === null && savedRows === undefined) && !canChangeAccountRow(row, savedById.get(row.id)))}
                     active={activeAccount === rowKey} onActivate={() => setActiveAccount(rowKey)}
                     onDeactivate={() => setActiveAccount(current => current === rowKey ? null : current)}
                     onChange={accountId => onDraftChange({ ...draft, rows: draft.rows.map((current, currentIndex) => currentIndex === index
