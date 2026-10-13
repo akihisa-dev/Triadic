@@ -17,3 +17,9 @@ export function renderInitiativeList(contents: PlanContents, selectedKind: KindI
 
 export { createInitiativeListView } from "../Triadichrome-extension/src/core/tables/initiativeListView";
 export { createExpansionTableView } from "../Triadichrome-extension/src/core/tables/expansionTableView";
+
+import { ExpansionTablePage } from "../Triadichrome-extension/src/extension/ExpansionTablePage";
+export function renderExpansionTable(contents: PlanContents, selected: KindId[] = [1]) {
+  return renderToStaticMarkup(createElement(ExpansionTablePage, { contents, selected, selection: null, onOpenInitiative() {} }));
+}
+export { createSignedCategoryPlan } from "./ui/sample-plan";

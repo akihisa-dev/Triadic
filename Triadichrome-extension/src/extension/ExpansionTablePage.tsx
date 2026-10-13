@@ -39,7 +39,7 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
     [contents.initiatives, contents.accounts, contents.previousAmounts, contents.expansions, contents.periodTypes, contents.fiscalYear]);
   const { table, groups, flat } = viewForSelection(selected);
   const categoryNames = useMemo(() => new Map(contents.expansionCategories.map(category => [category.id, category.categoryName])), [contents.expansionCategories]);
-  const categoryName = (item: Initiative) => categoryNames.get(item.expansionCategoryId ?? -1) ?? "";
+  const categoryName = (item: Initiative) => item.expansionCategoryId == null ? "" : categoryNames.get(item.expansionCategoryId) ?? "";
   const container = useRef<HTMLDivElement>(null);
   const window = useRowWindow(container, flat.length, 28, 200, 165);
   const virtual = flat.length > 200;

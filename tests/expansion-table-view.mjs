@@ -37,5 +37,16 @@ export async function verifyExpansionTableView(api) {
   assert.throws(() => overflowing([1]), /範囲/);
   assert.throws(() => overflowing([1]), /範囲/, '失敗した計算を有効な結果として登録しない');
   assert.deepEqual(contents, before, '計算・再利用・失敗で入力データを変更しない');
+  for (const large of [false, true]) {
+    const signed = await api.readPlanContents(await api.createSignedCategoryPlan(large, 2026));
+    for (const selected of [[1], [2], [1, 2], [2, 1]]) {
+      const html = api.renderExpansionTable(signed, selected);
+      for (const name of ['負ID区分', 'ゼロID区分', '正ID区分', '']) assert.ok(html.includes(`class="expansion-category" title="${name}">${name}</td>`), `通常・仮想表示の本文とtitle: ${name}`);
+    }
+    const renamed = { ...signed, expansionCategories: signed.expansionCategories.map(item => ({ ...item, categoryName: item.categoryName + '改名' })) };
+    const html = api.renderExpansionTable(renamed);
+    assert.ok(html.includes('title="負ID区分改名">負ID区分改名</td>'));
+    assert.ok(html.includes('class="expansion-category" title=""></td>'));
+  }
   console.log('PASS: 展開表の選択再利用、逆順比較、期間計と行順、計算元変更、上限超過と入力保持');
 }

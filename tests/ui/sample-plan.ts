@@ -204,3 +204,23 @@ export async function createCostCancellationPlan(fiscalYear = 2026) {
   });
   return bytes;
 }
+
+/** Valid saved IDs, including -1 and 0, must stay distinct from an unselected category. */
+export async function createSignedCategoryPlan(large = false, year = currentFiscalYear()): Promise<Uint8Array> {
+  return (await editDatabase(await createSamplePlan(year), db => {
+    db.run("INSERT INTO expansion_categories(id,name) VALUES(-1,'負ID区分'),(0,'ゼロID区分'),(10000,'正ID区分')");
+    db.run("INSERT INTO expansion_category_assignments(expansion_id,category_id) VALUES(1,-1),(1,0),(1,10000)");
+    db.run("DELETE FROM initiative_amounts");
+    db.run("DELETE FROM initiative_rows");
+    db.run("DELETE FROM initiatives");
+    const account = db.exec("SELECT id FROM accounts LIMIT 1")[0]!.values[0]![0]!;
+    for (let index = 0; index < (large ? 210 : 4); index++) {
+      const category = [-1, 0, 10000, null][index % 4]!;
+      db.run("INSERT INTO initiatives(name,expansion_id,expansion_category_id,industry_id,department_id,sort_order) VALUES(?,1,?,1,1,?)", [`区分確認${index}`, category, index]);
+      const id = db.exec("SELECT last_insert_rowid()")[0]!.values[0]![0]!;
+      const row = `signed-category:${id}`;
+      db.run("INSERT INTO initiative_rows(id,initiative_id,account_id,sort_order) VALUES(?,?,?,0)", [row, id, account]);
+      for (let month = 1; month <= 12; month++) db.run("INSERT INTO initiative_amounts(row_id,kind_id,month,amount_yen) VALUES(?,1,?,0)", [row, month]);
+    }
+  })).bytes;
+}
