@@ -90,7 +90,7 @@ const CostTableContents = memo(function CostTableContents({ contents, selected }
           <tr><th rowSpan={2} scope="col" className="initiative-list-name">科目・集計</th>
             {tablePeriods.map(period => <th key={period.id} colSpan={labels.length} scope="colgroup" className={periodCellClass(period, true)}>{period.label}</th>)}
           </tr>
-          <tr>{tablePeriods.map(period => <Fragment key={period.id}>{labels.map((_, index) => <th key={index} scope="col" className={periodCellClass(period, index === 0)}>{labels[index]}</th>)}</Fragment>)}</tr>
+          <tr>{tablePeriods.map(period => <Fragment key={period.id}>{labels.map((_, index) => <th key={index} scope="col" className={periodCellClass(period, index === 0, index === labels.length - 1)}>{labels[index]}</th>)}</Fragment>)}</tr>
           {rows.slice(0, salesIndex + 1).map(renderRow)}
         </thead>
         <tbody>{rows.slice(salesIndex + 1).map(renderRow)}</tbody>
