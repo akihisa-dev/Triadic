@@ -64,6 +64,7 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
   const screens = useScreenHistory<Screen>({ page: "home", selectedInitiative: null, detailOrigin: "initiative-list" },
     (left, right) => left.page === right.page && left.selectedInitiative?.id === right.selectedInitiative?.id && left.detailOrigin === right.detailOrigin);
   const screen = screens.current;
+  const currentScreens = useRef<ReturnType<typeof screens.snapshot> | null>(null);
   const { page, selectedInitiative } = screen;
   const navigate = screens.navigate;
   const [initiativeDraft, setInitiativeDraft] = useState(() => createInitiativeDraft(String(initialContents.fiscalYear)));
@@ -236,8 +237,16 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
     if (navigationBlocked || saving.current) return;
     await mutation.run(async () => {
       const past = await onPreviewHistory(entry.id);
+      currentScreens.current = screens.snapshot();
       setPreview({ entry, contents: past }); resetScreens("home"); dismissNotice();
     });
+  };
+  const returnToCurrent = () => {
+    if (navigationBlocked || saving.current) return;
+    setPreview(null);
+    if (currentScreens.current) screens.restore(currentScreens.current);
+    else resetScreens("data-history");
+    currentScreens.current = null;
   };
   const restorePreview = async () => {
     if (!preview || navigationBlocked || saving.current) return;
@@ -246,6 +255,7 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
       // Restoring is the sole write allowed while viewing a past state.
       await restoreMutation.run(async () => { await onRestoreHistory(preview.entry.id); });
       setPreview(null); setRestoreRequested(false); resetScreens("data-history");
+      currentScreens.current = null;
       setInitiativeDraft(createInitiativeDraft(String(contents.fiscalYear)));
       setNotice({ message: "選んだ時点に戻しました。復元前の状態も履歴に残っています。", error: false });
     } catch (failure) { setRestoreError(failure instanceof Error ? failure.message : "復元できませんでした。"); }
@@ -276,7 +286,7 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
     setDiscardRequest, operationBlocked, travelOperation, requestNavigation, setPage, startInitiative,
     usedAccountIds, changePlan, kindSelection, changeMaster, changePeriodTypes, changeDepartments,
     changeIndustries, changeExpansions, changeExpansionCategories, changeAggregations, update, register,
-    resetScreens, previewEntry, restorePreview, closeSidebar, screens, fileName,
+    resetScreens, previewEntry, returnToCurrent, restorePreview, closeSidebar, screens, fileName,
     dataHistory, historyError, historyBusy, onDeleteHistory, onRetryHistory, onPrepareSave,
     onCloseFile, canUndo, canRedo, operationRevision
   };

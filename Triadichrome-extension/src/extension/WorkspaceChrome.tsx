@@ -8,7 +8,7 @@ export function WorkspaceHeader({ workspace }: { workspace: HomeWorkspace }) {
   const {
     menuButton, isSidebarOpen, closeSidebar, sidebar, contents, navigationBlocked,
     screens, dismissNotice, requestNavigation, operationBlocked, canUndo, canRedo,
-    travelOperation, fileName, preview, setPreview, resetScreens, setRestoreError,
+    travelOperation, fileName, preview, returnToCurrent, setRestoreError,
     setRestoreRequested
   } = workspace;
   return (
@@ -65,7 +65,7 @@ export function WorkspaceHeader({ workspace }: { workspace: HomeWorkspace }) {
         <strong className="home-file-name" title={fileName}>{fileName}</strong>
         {preview ? <div className="history-preview-controls" aria-label="過去のデータを閲覧中">
           <span className="history-preview-label">{historyDate(preview.entry.recordedAt)} · 閲覧専用</span>
-          <button className="secondary-button" type="button" disabled={navigationBlocked} onClick={() => { setPreview(null); resetScreens("data-history"); }}>現在に戻る</button>
+          <button className="secondary-button" type="button" disabled={navigationBlocked} onClick={returnToCurrent}>現在に戻る</button>
           <button className="primary-button" type="button" disabled={navigationBlocked} onClick={() => { setRestoreError(""); setRestoreRequested(true); }}>この時点に戻す</button>
         </div> : null}
       </header>

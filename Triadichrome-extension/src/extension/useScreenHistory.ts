@@ -20,6 +20,8 @@ export function useScreenHistory<T>(initial: T, same: (left: T, right: T) => boo
     return { entries: kept.map(item => item.entry), index: Math.max(0, before - 1) };
   });
   const reset = (next: T) => setHistory({ entries: [next], index: 0 });
+  const snapshot = () => history;
+  const restore = (saved: typeof history) => setHistory(saved);
   const destination = (direction: -1 | 1) => history.entries[Math.max(0, Math.min(history.entries.length - 1, history.index + direction))]!;
-  return { current, navigate, travel, reset, prune, destination, canBack: history.index > 0, canForward: history.index < history.entries.length - 1 };
+  return { current, navigate, travel, reset, snapshot, restore, prune, destination, canBack: history.index > 0, canForward: history.index < history.entries.length - 1 };
 }

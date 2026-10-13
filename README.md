@@ -252,7 +252,7 @@ Chrome file selection, creation, and drops yielding file references are supporte
 
 ## Data history
 
-“History” below Masters in the sidebar lets you select a recorded time and view past state. Screens become read-only; “Return to present” (現在に戻る) restores the current plan. Confirming “Restore this point” (この時点に戻す) restores initiatives, all-kind amounts, previous-year actuals, masters, aggregations, and saved settings together. The pre-restore state and a new snapshot remain, allowing another selection to reverse restoration.
+“History” below Masters in the sidebar lets you select a recorded time and view past state. Screens become read-only; “Return to present” (現在に戻る) restores the current plan and its pre-preview screen navigation history, allowing retained unregistered input to be resumed with Back. Past viewing has separate navigation history; canceling or failing restoration preserves current drafts, while successful restoration clears drafts and resets navigation. Confirming “Restore this point” (この時点に戻す) restores initiatives, all-kind amounts, previous-year actuals, masters, aggregations, and saved settings together. The pre-restore state and a new snapshot remain, allowing another selection to reverse restoration.
 
 History stays in the same `.triadic`. It records five minutes after the first successful save of an unrecorded change; further saves do not extend the deadline. Normal closure and entering past viewing also record unrecorded changes. Unregistered or failed-save input is excluded. New format-25 files include history-management state and record the state before the first change on first saving. Viewing alone never rewrites files.
 
