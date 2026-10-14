@@ -83,7 +83,7 @@ Plans, masters, and snapshots are saved in the same `.triadic` file. Text and nu
 ### Current scope and limitations
 
 - The app runs as a Chrome extension and handles local files for which you grant read/write permission. It does not transmit plans externally or synchronize across browsers.
-- The storage format is 25. Formats 24 and earlier, and unknown formats, are rejected without migration or overwriting. When a file changes externally, independent changes to other rows are automatically merged with your edits. Overlapping row changes or inconsistent changes are not overwritten; you can save the entire entered plan to another file and continue. Cancellation or failure preserves input and the original file. Applying external changes clears earlier undo history, leaving only your current edit undoable. Ordinary Save As is not implemented. Category assignments and initiative category references also compare the category contents when merging. An ID reused after undo or history restoration cannot silently receive old references. Concurrent renaming and a new assignment/reference are rejected; ordinary renaming preserves existing references.
+- The storage format is 26. Formats 25 and earlier, and unknown formats, are rejected without migration or overwriting. When a file changes externally, independent changes to other rows are automatically merged with your edits. Overlapping row changes or inconsistent changes are not overwritten; you can save the entire entered plan to another file and continue. Cancellation or failure preserves input and the original file. Applying external changes clears earlier undo history, leaving only your current edit undoable. Ordinary Save As is not implemented. Category assignments and initiative category references also compare the category contents when merging. An ID reused after undo or history restoration cannot silently receive old references. Concurrent renaming and a new assignment/reference are rejected; ordinary renaming preserves existing references.
 - After successfully saving a conflict to another file, the displayed filename and “Continue” reference point to that file for normal editing, undo, history, and recording on closure. Cancellation or write failure leaves references unchanged. Failure to remember the reference on the device is reported; the current screen can still resume from the successful destination.
 - Excel export covers the three tables and calculation inputs; import accepts the previous-year template exported by the app. Arbitrary Excel workbooks and edits to exported three-table workbooks cannot be imported into the plan. Recalculation in an actual Excel installation has not been verified.
 - Input that fails to save remains on screen, but recovery after tab closure, reload, or forced termination is not guaranteed. Changes to the same file from multiple screens or external apps are detected to stop overwriting.
@@ -276,7 +276,7 @@ Plans use dedicated `.triadic` files, initially named `Untitled.triadic`. Each f
 
 Initiatives, accounts, months, and plan amounts are shared data represented differently in the three tables. Aggregation results are not duplicated as a separate authority. Implemented features include creation, validated loading, viewing account/aggregation/category/industry/department/period/fixed-kind/fixed-attribute masters, and saving initiatives/previous-year input.
 
-Storage format is 25. Compatibility with 24 and earlier has been removed; start from new files. Unsupported old or unknown formats are rejected without migration/overwriting. New-format files cannot open in older apps.
+Storage format is 26. Compatibility with 25 and earlier has been removed; start from new files. Unsupported old or unknown formats are rejected without migration/overwriting. New-format files cannot open in older apps.
 
 “Basic information” (`document_info`) stores fiscal year and creation/update timestamps, covering the entire saved document. Format metadata uses `triadic_metadata`. Initial/final budgets are fixed business definitions; kind tables and per-initiative years are not stored. Start year/month derives on loading from fiscal year, period rules, and effective monthly amounts by kind/account row, with no saved column. Common attributes use `initiatives`, common account rows `initiative_rows`, using the same string identifiers from addition onward. `initiative_amounts` stores whole-yen integers by row/kind ID/month. Kind 1 (initial) retains 12 months; kind 2 (final) only overridden months. Explicit 0 and overrides equal to initial values remain records; only unspecified months inherit. Shared resolution computes inheritance without duplicating stored values. Previous-year actuals use `previous_amounts` by account/industry/department/month. Screen-specific ordered kind choices use `kind_selections`. See [Monthly amounts and storage](DATA_MODEL.md) and [Implementation design](docs/single-year-plan-design.md). Nothing is transmitted externally.
 
@@ -486,7 +486,7 @@ External merging compares creation identities of departments/industries referenc
 
 Previous-year input updates only cells whose amounts actually changed among all account/12-month drafts. Unentered zero does not create a row; existing zero/unchanged rows keep IDs/revisions. Conflict comparison uses cell amounts, not revision-only differences. Merged save results apply to previous-year input and retain input added during saving.
 
-If different new accounts from the same copied file collide on numbers, local accounts receive numbers above all copies' ranges; initiative-row, aggregation-membership, previous-year, and display-order references remap together. Order comparison uses account/aggregation type and target ID, appending local additions to previously saved order. Number mappings are not stored. Duplicate code/name additions or opposing existing-account changes reject. New initiative, subcategory, and aggregation-number collisions do not auto-merge and fall back to separate-file saving. Independently registered initiatives remain separate even when names, notes, classifications, and amounts match; overlapping new IDs are rejected while preserving input and the previously saved file.
+If different new accounts from the same copied file collide on numbers, local accounts receive numbers above all copies' ranges; initiative-row, aggregation-membership, previous-year, and display-order references remap together. Order comparison uses account/aggregation type and target ID, appending local additions to previously saved order. Number mappings are not stored. Duplicate code/name additions or opposing existing-account changes reject. New initiative, subcategory, and aggregation-number collisions do not auto-merge and fall back to separate-file saving. Independently registered initiatives remain separate even when names, notes, classifications, and amounts match; overlapping new IDs are rejected while preserving input and the previously saved file. Initiatives retain a required, unique creation identity in initiatives.identity. Updates and snapshots preserve it; new registrations receive a new identity. Even without account rows, an initiative recreated with the same number/name cannot receive old input. Independent row additions to the same initiative still merge. Missing or invalid identities are rejected without repair.
 
 Plan/history load/export uses the same name validation as ordinary input, rejecting names/display names containing only whitespace such as full-width spaces, newlines, and tabs. Optional display-name NULL and valid Japanese names are accepted; saved names are not auto-corrected. Invalid files are rejected without rewriting originals or changing format.
 
@@ -587,7 +587,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 ### 現在の対応範囲と制限
 
 - Chrome拡張機能として動作し、利用者が読み書きを許可したローカルファイルを扱います。計画の外部送信やブラウザ間の同期は行いません。
-- 保存形式は25です。24以前や未知の形式は読み込みを拒否し、移行・上書きは行いません。ファイル更新時は、今回の編集と別の行への変更を自動で合わせて保存します。同じ行の変更や整合しない変更は上書きせず、入力済みの計画全体を別ファイルへ保存して編集を続けられます。キャンセル・保存失敗では入力と元ファイルを保持します。外部変更の反映時には過去の操作取消を初期化し、今回の編集だけを取り消せます。通常の別名保存は未実装です。
+- 保存形式は26です。25以前や未知の形式は読み込みを拒否し、移行・上書きは行いません。ファイル更新時は、今回の編集と別の行への変更を自動で合わせて保存します。同じ行の変更や整合しない変更は上書きせず、入力済みの計画全体を別ファイルへ保存して編集を続けられます。キャンセル・保存失敗では入力と元ファイルを保持します。外部変更の反映時には過去の操作取消を初期化し、今回の編集だけを取り消せます。通常の別名保存は未実装です。
 - 競合から別ファイルへ保存できた場合は、通常の編集・操作取消・履歴操作・終了時の記録を含め、画面のファイル名と「続きから」の参照を保存成功先へ揃えます。キャンセルや書き込み失敗では参照を変更しません。端末内への参照の記憶に失敗した場合は通知し、同じ画面内では成功先から再開できます。
 - Excel出力は三表と計算元を扱い、取り込みはアプリから出力した前年入力フォーマットが対象です。任意のExcelブックや、出力した三表の編集内容を計画へ取り込む機能はありません。Excel実機での再計算は未確認です。
 - 保存に失敗した入力は画面内で保持しますが、タブ終了・再読み込み・強制終了後の復元は保証しません。複数の画面や外部アプリで同じファイルを変更した場合は、外部更新を検出して上書きを止めます。
@@ -759,7 +759,7 @@ Chromeのファイル選択、新規作成、ファイル参照を取得でき�
 
 サイドバーの「マスタ」の下にある「履歴」から、記録日時を選んで過去の状態を閲覧できます。各画面は閲覧専用になり、ヘッダーの「現在に戻る」で現在の計画へ戻ります。「この時点に戻す」を確認すると、施策・全種別の金額・前年・マスタ・集計・保存済み設定をまとめて復元します。復元前の状態と新しい履歴も残るので、選び直して復元を取り消せます。
 
-履歴は同じ`.triadic`内に保存します。最初の未記録の変更の保存成功から5分後に記録し、追加の保存で期限を延ばしません。正常にファイルを閉じるときと過去閲覧に入るときも未記録分を残します。登録前・保存失敗中の入力は履歴に含みません。保存形式25の新規ファイルは履歴管理状態を備え、最初の変更前の状態を初回保存時に記録します。閲覧だけでは書き換えません。
+履歴は同じ`.triadic`内に保存します。最初の未記録の変更の保存成功から5分後に記録し、追加の保存で期限を延ばしません。正常にファイルを閉じるときと過去閲覧に入るときも未記録分を残します。登録前・保存失敗中の入力は履歴に含みません。保存形式26の新規ファイルは履歴管理状態を備え、最初の変更前の状態を初回保存時に記録します。閲覧だけでは書き換えません。
 
 自動削除や保持期限はありません。履歴一覧のチェックで複数件を選んで削除するか、端末時刻の日時を指定して、それより前を一括削除できます。確認後の削除は取り消せず、現在の計画は変わりません。全体の状態を記録するため容量は増えます。削除後はファイル内の不要領域を詰めます。選択の照合と各行のチェックは共有するID集合で判定し、一覧・選択が同じ間は判定結果を再利用します。消えた履歴は削除対象から除き、新しい履歴は自動選択しません。選択状態は画面内だけで保持します。
 
@@ -778,7 +778,7 @@ Chromeのファイル選択、新規作成、ファイル参照を取得でき�
 
 施策・勘定科目・年月と計画金額を同じデータとして持ち、施策一覧・総原価表・展開表はそのデータを異なる視点で表します。集計結果を別の正本として重複保存しません。現在はファイルの新規作成、形式検証を伴う読込、勘定科目マスタ・集計マスタ・展開マスタ・業種マスタ・部署マスタ・期間マスタ・固定種別マスタ・固定科目属性マスタの閲覧、施策・前年入力の保存を実装しています。
 
-保存形式は25です。保存形式24以前の既存ファイルとの互換性は廃止し、新規ファイルから使用します。対応しない旧形式や未知の形式は読み込み時に拒否し、移行や上書きは行いません。新しい形式のファイルは旧アプリで開けません。
+保存形式は26です。保存形式25以前の既存ファイルとの互換性は廃止し、新規ファイルから使用します。対応しない旧形式や未知の形式は読み込み時に拒否し、移行や上書きは行いません。新しい形式のファイルは旧アプリで開けません。
 
 「基本情報」（`document_info`）に基準年度・作成日時・更新日時を保存します。保存データ全体に関する情報だけを扱い、保存形式などは`triadic_metadata`で管理します。一次予算・確定予算の2種別は業務定義で固定します。種別表や施策ごとの年度は保存しません。開始年月は基準年度・期間の算出規則・各科目行の種別別有効月額から読み込み時に導出し、保存列は持ちません。共通属性は`initiatives`、共通科目行は`initiative_rows`へ保存し、追加時から同じ文字列識別子を使います。施策金額は`initiative_amounts`へ科目行・種別ID・月で区別して円の整数を保存します。種別1（一次予算）は12か月、種別2（確定予算）は手修正月だけを保持します。明示した0と一次予算と同額の手修正もレコードとして保持し、未指定月だけ一次予算を引き継ぎます。引き継ぎ値は共通の解決処理から求め、別の保存値へ複製しません。前年実額は`previous_amounts`へ科目・業種・部署・月ごとに保存します。種別選択は`kind_selections`に画面別の順序として保存します。詳細は[月別金額と保存構造](DATA_MODEL.md)と[実装設計](docs/single-year-plan-design.md)を参照してください。外部送信はありません。
 
@@ -1018,3 +1018,5 @@ Excel入出力画面とExcelJS・JSZip・Saxesの処理は、入出力を初め�
 計画・履歴の読込と保存結果の取得では、一覧用の施策合計を計算しません。一次予算・確定予算とも、各セルが有効で施策内の合計だけが上限を超える場合も、元の金額を開いて保存・訂正できます。一覧では該当行に理由を表示し、正常な施策の表示と編集への移動を維持します。合計の円精度と上限検出、保存形式は変更しません。確認用画面では「上限超過：一次予算の施策内合計」と「上限超過：確定予算の施策内合計」を選べます。
 
 総原価表の「全部署の合計」では、部署に未所属・金額未登録の業種も業種マスタ全件から選べます。個別部署を選んだ場合だけ所属業種へ絞り、一つなら自動選択します。全部署へ戻すと候補を全件へ戻し、有効な業種選択を保持します。表示条件の変更でファイルを書き換えません。確認用画面の「総原価表：部署未所属の業種」で確認できます。
+
+施策の作成識別子は `initiatives.identity` へ必須・一意の32桁の識別子として保存します。科目行が0件でも、取消・履歴復元後に同じ番号と名称で作り直した施策と区別し、旧施策への入力を新しい施策へ移しません。通常更新と履歴復元は識別子を保持し、新規登録では新しい識別子になります。同じ施策への独立行追加は0件の状態からでも統合します。識別子が欠落・不正なファイルは補完せず拒否します。確認用画面の「科目行0件の施策の同名再作成」と「ファイル更新」で競合回復を確認できます。

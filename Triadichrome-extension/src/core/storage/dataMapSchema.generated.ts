@@ -269,6 +269,9 @@ export const dataMapSchema = [
         "reference": "period_types.id"
       },
       {
+        "name": "identity"
+      },
+      {
         "name": "sort_order"
       },
       {

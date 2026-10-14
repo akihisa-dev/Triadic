@@ -1,5 +1,6 @@
 import { verifyInitiativeDraftReferences } from "../tests/initiative-draft-references.mjs";
 import { verifyConcurrentInitiative } from "../tests/concurrent-initiative.mjs";
+import { verifyInitiativeIdentity } from "../tests/initiative-identity.mjs";
 import { verifyCostClassification } from "../tests/cost-classification.mjs";
 import { verifyInitiativeOverflowRead } from "../tests/initiative-overflow-read.mjs";
 import { verifyNamedMasterRebase } from "../tests/named-master-rebase.mjs";
@@ -69,6 +70,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   const api = { ...production, createTriadicDatabase: (year = 2026) => production.createTriadicDatabase(year) };
   await verifyInitiativeDraftReferences(api);
   await verifyConcurrentInitiative(api);
+  await verifyInitiativeIdentity(api);
   await verifyInitiativeOverflowRead(api);
   await verifyHistoryDependencies(api);
   await verifyFileRecovery(api);

@@ -1,9 +1,10 @@
 import type { Database } from "./sqliteRuntime";
 
-/** New rows and edited amounts must still belong to the same initiative after a restore. */
+/** Stored creation identity and contents keep row edits on the same initiative after a restore. */
 export function canMergeInitiativeOwners(base: Database, local: Database, external: Database): boolean {
   const databases = [base, local, external];
   const columns = base.exec("PRAGMA table_info(initiatives)")[0]!.values.map(row => String(row[1]));
+  // identity is retained even when the baseline has no account rows; revision/order are mutable.
   const owners = databases.map(db => new Map((db.exec("SELECT * FROM initiatives")[0]?.values ?? []).map(row =>
     [row[0], JSON.stringify(row.filter((_, index) => !["revision", "sort_order"].includes(columns[index]!)))])));
   // Matching headers do not identify two independently registered initiatives.

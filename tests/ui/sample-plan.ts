@@ -169,10 +169,10 @@ export async function createSamplePlan(fiscalYear = currentFiscalYear(), large =
   const stable = async (input: Uint8Array) => {
     const database = await openTriadicDatabase(input);
     try {
-      // Normalize timestamps and classification attributes for deterministic fixtures.
+      // Normalize timestamps and creation identities for deterministic fixtures.
       database.run("UPDATE document_info SET created_at = ?, updated_at = ?", [timestamp, timestamp]);
       database.run("UPDATE data_history_state SET saved_at = ?", [timestamp]);
-      for (const [table, prefix] of [["industries", "1"], ["departments", "2"]]) {
+      for (const [table, prefix] of [["industries", "1"], ["departments", "2"], ["initiatives", "3"]]) {
         for (const [id] of database.exec(`SELECT id FROM ${table}`)[0]?.values ?? []) {
           database.run(`UPDATE ${table} SET identity = ? WHERE id = ?`, [prefix + Number(id).toString(16).padStart(31, "0"), Number(id)]);
         }
@@ -253,4 +253,17 @@ export async function createConcurrentInitiativeFixture() {
   const localDraft = { ...draft, rows: [{ id: "local-registration", accountId, amounts: { 4: "100" } }] };
   const externalDraft = { ...draft, rows: [{ id: "external-registration", accountId, amounts: { 4: "200" } }] };
   return { base, localDraft, externalDraft, local: await registerInitiative(base, localDraft), external: await registerInitiative(base, externalDraft) };
+}
+
+/** Empty old initiative versus a recreated same-number initiative after undo. */
+export async function createRecreatedInitiativeFixture() {
+  const initial = await createTriadicDatabase(2026);
+  const accountId = (await readPlanContents(initial)).accounts.find(account => account.accountType === "sales")!.id;
+  const draft = { ...createInitiativeDraft("2026"), name: "同じ名前", expansionId: 1, industryId: 1, departmentId: 1,
+    rows: [{ id: "old-zero-row", accountId, amounts: { 4: "0" } }] };
+  const registered = await registerInitiative(initial, draft);
+  const id = (await readPlanContents(registered)).initiatives[0]!.id;
+  const base = await updateInitiative(registered, id, 2026, { ...draft, rows: [] });
+  const external = await registerInitiative(initial, { ...draft, rows: [{ id: "recreated-row", accountId, amounts: { 4: "200" } }] });
+  return { base, external };
 }

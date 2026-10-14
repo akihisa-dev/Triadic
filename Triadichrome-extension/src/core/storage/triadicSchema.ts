@@ -6,7 +6,7 @@ import { AGGREGATION_SQL } from "./aggregationSchema";
 export const TRIADIC_FILE_EXTENSION = ".triadic";
 export const TRIADIC_MIME_TYPE = "application/vnd.triadichrome+sqlite";
 export const TRIADIC_FORMAT_ID = "triadichrome";
-export const TRIADIC_FORMAT_VERSION = 25;
+export const TRIADIC_FORMAT_VERSION = 26;
 const revision = "INTEGER NOT NULL DEFAULT 0 CHECK (typeof(revision) = 'integer' AND revision >= 0)";
 const amount = "INTEGER NOT NULL DEFAULT 0 CHECK (typeof(amount_yen) = 'integer' AND amount_yen BETWEEN -9007199254740991 AND 9007199254740991)";
 const month = "INTEGER NOT NULL CHECK (typeof(month) = 'integer' AND month BETWEEN 1 AND 12)";
@@ -67,6 +67,7 @@ CREATE TABLE initiatives (
  industry_id INTEGER NOT NULL REFERENCES industries(id),
  department_id INTEGER NOT NULL REFERENCES departments(id),
  period_type_id INTEGER REFERENCES period_types(id),
+ identity TEXT NOT NULL UNIQUE DEFAULT (lower(hex(randomblob(16)))) CHECK (typeof(identity) = 'text' AND length(identity) = 32 AND identity NOT GLOB '*[^0-9a-f]*'),
  sort_order INTEGER NOT NULL CHECK (typeof(sort_order) = 'integer' AND sort_order >= 0), revision ${revision},
  FOREIGN KEY (department_id, industry_id) REFERENCES department_industries(department_id, industry_id),
  FOREIGN KEY (expansion_id, expansion_category_id) REFERENCES expansion_category_assignments(expansion_id, category_id)
