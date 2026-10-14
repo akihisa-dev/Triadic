@@ -28,27 +28,34 @@ async function schemaText() {
     } finally { database.close(); }
   });
 }
-async function resolveModule(owner, specifier) {
-  if (!specifier.startsWith(".")) return null;
-  const base = path.resolve(projectRoot, path.dirname(owner), specifier);
-  for (const suffix of [...(/\.tsx?$/.test(base) ? [""] : []), ".ts", ".tsx", "/index.ts", "/index.tsx"]) {
-    try { await access(base + suffix); return path.relative(projectRoot, base + suffix); } catch { /* not a TypeScript module */ }
-  }
-  return null;
+export function createModuleResolver({ root = projectRoot, pathApi = path, exists = access } = {}) {
+  return async (owner, specifier) => {
+    if (!specifier.startsWith(".")) return null;
+    const base = pathApi.resolve(root, pathApi.dirname(owner), specifier);
+    for (const suffix of [...(/\.tsx?$/.test(base) ? [""] : []), ".ts", ".tsx", "/index.ts", "/index.tsx"]) {
+      try {
+        await exists(base + suffix);
+        // Filesystem paths stay native; graph keys and review hashes use repository identifiers.
+        return pathApi.relative(root, base + suffix).split(pathApi.sep).join("/");
+      } catch { /* not a TypeScript module */ }
+    }
+    return null;
+  };
 }
+const resolveModule = createModuleResolver();
 const readSource = file => readFile(path.join(projectRoot, file), "utf8");
-async function sourceModule(file, read = readSource) {
+async function sourceModule(file, read = readSource, resolve = resolveModule) {
   const text = await read(file);
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, file.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
   const imports = new Map();
   const dependencies = new Set();
   for (const statement of source.statements) {
     if (ts.isExportDeclaration(statement) && !statement.isTypeOnly && statement.moduleSpecifier && ts.isStringLiteral(statement.moduleSpecifier)) {
-      const target = await resolveModule(file, statement.moduleSpecifier.text);
+      const target = await resolve(file, statement.moduleSpecifier.text);
       if (target) dependencies.add(target);
     }
     if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier) || statement.importClause?.isTypeOnly) continue;
-    const target = await resolveModule(file, statement.moduleSpecifier.text);
+    const target = await resolve(file, statement.moduleSpecifier.text);
     if (!target) continue;
     dependencies.add(target);
     const clause = statement.importClause;
@@ -65,15 +72,15 @@ async function sourceModule(file, read = readSource) {
   };
   visit(source);
   for (const specifier of deferred) {
-    const target = await resolveModule(file, specifier);
+    const target = await resolve(file, specifier);
     if (target) dependencies.add(target);
   }
   return { text, source, imports, dependencies };
 }
-export async function screenImplementations(read = readSource) {
+export async function screenImplementations(read = readSource, resolve = resolveModule) {
   const cache = new Map();
   const moduleFor = file => {
-    if (!cache.has(file)) cache.set(file, sourceModule(file, read));
+    if (!cache.has(file)) cache.set(file, sourceModule(file, read, resolve));
     return cache.get(file);
   };
   const home = await moduleFor(extension + "HomePage.tsx");
@@ -114,10 +121,10 @@ export function staleScreens(review, implementations, screens) {
   return [...new Set([...Object.keys(implementations), ...Object.keys(review), ...descriptions.keys()])].filter(page =>
     !implementations[page] || !descriptions.has(page) || review[page]?.implementation !== implementations[page] || review[page]?.description !== descriptions.get(page));
 }
-export async function mechanismImplementations(topics, read = readSource) {
+export async function mechanismImplementations(topics, read = readSource, resolve = resolveModule) {
   const cache = new Map();
   const moduleFor = file => {
-    if (!cache.has(file)) cache.set(file, sourceModule(file, read));
+    if (!cache.has(file)) cache.set(file, sourceModule(file, read, resolve));
     return cache.get(file);
   };
   const result = {};

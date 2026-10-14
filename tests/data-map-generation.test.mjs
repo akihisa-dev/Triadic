@@ -1,10 +1,81 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 import { test } from "node:test";
-import { describeSchema, screenImplementations, staleScreens } from "../scripts/data-map.mjs";
+import { createModuleResolver, describeSchema, mechanismImplementations, screenImplementations, staleScreens } from "../scripts/data-map.mjs";
 import { withNodeBundle } from "../scripts/node-bundle.mjs";
 import { projectRoot } from "../scripts/paths.mjs";
+
+test("実際の画面・仕組みの依存グラフと確認用ハッシュがPOSIX・Windowsで一致する", async () => {
+  const read = file => readFile(path.join(projectRoot, file), "utf8");
+  const resolvers = [path.posix, path.win32].map(pathApi => {
+    const root = pathApi === path.win32 ? "C:\\repo" : "/repo";
+    return createModuleResolver({ root, pathApi, exists: file =>
+      access(path.join(projectRoot, pathApi.relative(root, file).split(pathApi.sep).join("/"))) });
+  });
+  const screens = await screenImplementations(read);
+  await withNodeBundle("Triadichrome-extension/src/extension/mechanismModel.ts", async ({ mechanisms }) => {
+    const topics = await mechanismImplementations(mechanisms, read);
+    for (const resolve of resolvers) {
+      assert.deepEqual(await screenImplementations(read, resolve), screens);
+      assert.deepEqual(await mechanismImplementations(mechanisms, read, resolve), topics);
+    }
+  });
+});
+
+test("両OSで相対import・再export・動的import・Worker・循環を追跡し、不正参照を拒否する", async () => {
+  const prefix = "Triadichrome-extension/src/";
+  const files = new Map([
+    [prefix + "extension/HomePage.tsx", "export const HomePage = null;"],
+    [prefix + "extension/WorkspacePage.tsx", 'import { Entry } from "../core/entry"; switch (displayed.page) { case "test": return <Entry />; }'],
+    [prefix + "extension/useHomeWorkspace.tsx", "export const controller = null;"],
+    [prefix + "extension/ExtensionPage.tsx", "export const extension = null;"],
+    [prefix + "extension/MechanismMap.tsx", "export const map = null;"],
+    [prefix + "extension/HomeRelationsPage.tsx", "export const relations = null;"],
+    [prefix + "core/storage/readPlan.ts", "export const plan = null;"],
+    [prefix + "core/entry.ts", 'import "./relative"; export { value } from "./barrel"; import("./dynamic.ts"); new Worker(new URL("./worker.ts", import.meta.url)); import "./storage/dataMapSchema.generated"; import type { Ignored } from "./typeOnly";'],
+    [prefix + "core/relative.ts", 'import "./entry"; export const relative = 1;'],
+    [prefix + "core/barrel/index.ts", "export const value = 1;"],
+    [prefix + "core/dynamic.ts", "export const dynamic = 1;"],
+    [prefix + "core/worker.ts", "export const worker = 1;"],
+    [prefix + "core/typeOnly.ts", "export type Ignored = number;"],
+    [prefix + "core/storage/dataMapSchema.generated.ts", "export const generated = 1;"],
+    ["outside.ts", "export const outside = 1;"],
+  ]);
+  const read = async file => {
+    assert.ok(!file.includes("\\"), "読み取りと依存グラフにはスラッシュ区切りの識別子を渡す");
+    if (!files.has(file)) throw Object.assign(new Error(file), { code: "ENOENT" });
+    return files.get(file);
+  };
+  const topics = [{ id: "test", sources: [prefix + "core/entry.ts"] }];
+  const hashes = [];
+  for (const pathApi of [path.posix, path.win32]) {
+    const root = pathApi === path.win32 ? "C:\\repo" : "/repo";
+    const resolve = createModuleResolver({ root, pathApi, exists: async file => {
+      if (!files.has(pathApi.relative(root, file).split(pathApi.sep).join("/"))) throw new Error("missing");
+    } });
+    assert.equal(await resolve(prefix + "core/entry.ts", "./barrel"), prefix + "core/barrel/index.ts");
+    assert.equal(await resolve(prefix + "core/entry.ts", "react"), null);
+    const screen = await screenImplementations(read, resolve);
+    const mechanism = await mechanismImplementations(topics, read, resolve);
+    hashes.push({ screen, mechanism });
+    for (const file of ["relative.ts", "barrel/index.ts", "dynamic.ts", "worker.ts"]) {
+      const changed = async id => (await read(id)) + (id === prefix + "core/" + file ? "\n// changed" : "");
+      assert.notDeepEqual(await screenImplementations(changed, resolve), screen, file);
+      assert.notDeepEqual(await mechanismImplementations(topics, changed, resolve), mechanism, file);
+    }
+    const excluded = async id => (await read(id)) + (/typeOnly|dataMapSchema\.generated/.test(id) ? "\n// changed" : "");
+    assert.deepEqual(await screenImplementations(excluded, resolve), screen);
+    const missing = async id => { if (id.endsWith("/worker.ts")) throw Object.assign(new Error("missing"), { code: "ENOENT" }); return read(id); };
+    await assert.rejects(mechanismImplementations(topics, missing, resolve), { code: "ENOENT" });
+    for (const invalid of ["outside.ts", prefix + "core/../../outside.ts"]) {
+      await assert.rejects(mechanismImplementations([{ id: "invalid", sources: [invalid] }], read, resolve), /実装参照が不正/);
+    }
+    await assert.rejects(mechanismImplementations(topics, async id => (await read(id)) +
+      (id.endsWith("/entry.ts") ? '\nimport "../../../outside";' : ""), resolve), /実装参照が不正/);
+  }
+  assert.deepEqual(hashes[0], hashes[1]);
+});
 
 test("保存項目の追加・削除・参照先変更を説明用の表へ自動反映する", async () => {
   const SQL = await withNodeBundle("Triadichrome-extension/src/core/storage/sqliteRuntime.ts", ({ initializeSqlite }) => initializeSqlite());

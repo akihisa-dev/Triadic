@@ -331,6 +331,8 @@ Database validation, updates, history, and pre-save file comparison run on-devic
 
 ## Updating screen-to-data mappings
 
+Dependency identifiers use repository-relative paths with forward slashes, so identical source contents produce the same screen/mechanism review hashes on Windows and POSIX systems. Regular tests compare both path conventions using TypeScript dependency analysis; they do not replace running the commands on a Windows machine.
+
 Mapping table names, fields, and references are generated from the authoritative storage schema using an empty in-memory database into `Triadichrome-extension/src/core/storage/dataMapSchema.generated.ts`. Japanese names, per-screen mappings, and calculation explanations live in `Triadichrome-extension/src/extension/screenDataModel.ts`. New items show storage names before Japanese labels are registered. User files are neither read nor written.
 
 `dev`, `dev:ui`, typechecks, and build generate mappings; regular tests check matching results. Changes to screen routing, screen components and their statically referenced TypeScript logic, calculation/loading logic, or mapping explanations since review stop processing with the affected screen ID. CSS-only changes are excluded, as are Home/master entry because they do not show business data in their body.
@@ -831,6 +833,8 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 `npm run perf:sample`で管理対象サンプルを読み込み、読込・明細生成・変更判定・施策1件の更新・施策一覧のHTML生成を各3回測定できます。サンプルへの書き込みは行いません。HTML生成の時間にはブラウザの描画を含みません。実画面の大規模データ確認は`large-plan.spec.ts`を使います。
 
 ## 画面とデータの対応情報の更新
+
+依存ファイルの識別子はリポジトリ相対のスラッシュ区切りに統一し、同じソース内容ならWindowsとPOSIX環境で画面・仕組みの確認用ハッシュが一致します。通常テストでは、TypeScriptの依存解析に両環境のパス処理を適用して照合します。Windows実機でのコマンド実行を代替する検証ではありません。
 
 対応図のテーブル名・項目・参照先は、保存形式の正本から空のメモリ内データベースを作り、自動生成します。生成先は`Triadichrome-extension/src/core/storage/dataMapSchema.generated.ts`です。日本語の名称と画面ごとの対応・計算説明は`Triadichrome-extension/src/extension/screenDataModel.ts`で管理します。新しい項目は、日本語名の登録前でも保存名で表示します。利用者のファイルは読み書きしません。
 
