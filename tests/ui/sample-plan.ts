@@ -244,3 +244,13 @@ export async function createCostUnassignedIndustryPlan() {
   bytes = await changeIndustryMaster(bytes, { type: "add", industryCode: "10", industryName: "未所属の確認業種" });
   return changeDepartmentMaster(bytes, { type: "add", departmentName: "単一業種確認部署", industryIds: [1] });
 }
+
+/** Two registrations from one base: matching headers, independent row IDs and amounts. */
+export async function createConcurrentInitiativeFixture() {
+  const base = await createTriadicDatabase(2026);
+  const accountId = (await readPlanContents(base)).accounts.find(account => account.accountType === "sales")!.id;
+  const draft = { ...createInitiativeDraft("2026"), name: "同名施策", expansionId: 1, industryId: 1, departmentId: 1 };
+  const localDraft = { ...draft, rows: [{ id: "local-registration", accountId, amounts: { 4: "100" } }] };
+  const externalDraft = { ...draft, rows: [{ id: "external-registration", accountId, amounts: { 4: "200" } }] };
+  return { base, localDraft, externalDraft, local: await registerInitiative(base, localDraft), external: await registerInitiative(base, externalDraft) };
+}

@@ -486,7 +486,7 @@ External merging compares creation identities of departments/industries referenc
 
 Previous-year input updates only cells whose amounts actually changed among all account/12-month drafts. Unentered zero does not create a row; existing zero/unchanged rows keep IDs/revisions. Conflict comparison uses cell amounts, not revision-only differences. Merged save results apply to previous-year input and retain input added during saving.
 
-If different new accounts from the same copied file collide on numbers, local accounts receive numbers above all copies' ranges; initiative-row, aggregation-membership, previous-year, and display-order references remap together. Order comparison uses account/aggregation type and target ID, appending local additions to previously saved order. Number mappings are not stored. Duplicate code/name additions or opposing existing-account changes reject. New initiative, subcategory, and aggregation-number collisions do not auto-merge and fall back to separate-file saving.
+If different new accounts from the same copied file collide on numbers, local accounts receive numbers above all copies' ranges; initiative-row, aggregation-membership, previous-year, and display-order references remap together. Order comparison uses account/aggregation type and target ID, appending local additions to previously saved order. Number mappings are not stored. Duplicate code/name additions or opposing existing-account changes reject. New initiative, subcategory, and aggregation-number collisions do not auto-merge and fall back to separate-file saving. Independently registered initiatives remain separate even when names, notes, classifications, and amounts match; overlapping new IDs are rejected while preserving input and the previously saved file.
 
 Plan/history load/export uses the same name validation as ordinary input, rejecting names/display names containing only whitespace such as full-width spaces, newlines, and tabs. Optional display-name NULL and valid Japanese names are accepted; saved names are not auto-corrected. Invalid files are rejected without rewriting originals or changing format.
 
@@ -991,7 +991,7 @@ Excel入出力画面とExcelJS・JSZip・Saxesの処理は、入出力を初め�
 
 前年入力では全科目・12か月の編集値のうち、実際に額が変わったセルだけを更新します。未入力の0は新規行にせず、既存の0行と変更のない行の識別子・改訂番号を保持します。競合照合はセルの額を比べ、改訂番号だけの違いでは拒否しません。外部更新を統合した保存結果を前年入力へ反映し、保存中の追加入力も保持します。
 
-異なる新規科目が同じコピー元から同じ番号で追加された場合は、今回側の科目に全コピーの採番範囲を超える番号を割り当て、施策行・集計所属・前年金額・表示順の参照を一緒に付け替えて統合します。表示順は科目／集計の種別と対象IDで照合し、先行保存の順序へ今回の追加を続けます。番号の対応表は保存しません。同じコード・名称の追加や既存科目の相反変更は拒否します。施策本体・展開区分・集計本体の新規番号衝突は自動統合せず、別ファイル保存へ戻します。
+異なる新規科目が同じコピー元から同じ番号で追加された場合は、今回側の科目に全コピーの採番範囲を超える番号を割り当て、施策行・集計所属・前年金額・表示順の参照を一緒に付け替えて統合します。表示順は科目／集計の種別と対象IDで照合し、先行保存の順序へ今回の追加を続けます。番号の対応表は保存しません。同じコード・名称の追加や既存科目の相反変更は拒否します。施策本体・展開区分・集計本体の新規番号衝突は自動統合せず、別ファイル保存へ戻します。独立して登録した新規施策は、名称・備考・分類・金額が一致しても一つにまとめず、先行保存と入力を保護して競合回復へ戻します。確認用画面では「同名施策の同時新規登録」と「ファイル更新」を選び、同名施策を登録して確認できます。
 
 計画ファイルと履歴の読込・出力では、通常の名称入力と同じ判定で、全角スペース・改行・タブなど空白だけの名称・表示名を拒否します。任意表示名のNULLと有効な日本語名称は受理し、保存名を自動修正しません。不正なファイルは元の内容を書き換えずに拒否し、保存形式も変更しません。
 
