@@ -28,7 +28,7 @@ export async function verifyYenPrecision(api) {
     const initiativeBytes = await api.registerInitiative(original, draft(text));
     const contents = await api.readPlanContents(initiativeBytes);
     assert.equal(contents.initiatives[0].rows[0].amounts[4], text);
-    assert.equal(contents.initiatives[0].months[4].sales, yen);
+    assert.equal(api.initiativesForKind(contents.initiatives, contents.accounts, 1)[0].months[4].sales, yen);
     assert.equal(api.amountToYen(contents.details.find(row => row.kindId === 1 && row.month === 4).sales), yen);
     assert.deepEqual(costAccount(contents).values.map(values => values[4]), [0, yen, yen, yen, 0]);
     const expansion = api.buildKindExpansionTable(contents, [1, 2], "registered");

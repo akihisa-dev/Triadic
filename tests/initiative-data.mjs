@@ -27,7 +27,7 @@ export async function verifyInitiativeData(api, root) {
   };
   const result = await registerInitiative(bytes, draft);
   const contents = await readPlanContents(result);
-  const record = contents.initiatives[0];
+  const record = api.initiativesForKind(contents.initiatives, contents.accounts, 1)[0];
   assert.equal(record.name, "登録する施策");
   assert.equal(record.note, draft.note);
   assert.equal(record.fiscalYear, 2026);
@@ -60,7 +60,8 @@ export async function verifyInitiativeData(api, root) {
     april.filter(row => row.accountId === account.id).reduce((sum, row) => api.addYen(sum, api.amountToYen(row.amount)), 0), "総原価表と明細は同じ金額を集計");
   database.close();
   const reclassified = await changeAccountMaster(result, { type: "update", id: initial.accounts[2].id, accountCode: "102", accountName: "expense", accountType: "profit" });
-  assert.deepEqual((await readPlanContents(reclassified.bytes)).initiatives[0].months[4], { sales: 95500, expense: 0, profit: 125500 });
+  const reclassifiedPlan = await readPlanContents(reclassified.bytes);
+  assert.deepEqual(api.initiativesForKind(reclassifiedPlan.initiatives, reclassifiedPlan.accounts, 1)[0].months[4], { sales: 95500, expense: 0, profit: 125500 });
   await assert.rejects(registerInitiative(result, { ...draft, name: "別年度の施策", fiscalYear: "2027" }), /基準年度/);
 
   let stored = bytes;

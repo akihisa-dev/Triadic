@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict';
 
 export async function verifyInitiativeListRendering(api) {
+  for (const kind of [1, 2]) {
+    const overflow = await api.readPlanContents(await api.createInitiativeOverflowPlan(kind));
+    const rendered = api.renderInitiativeList(overflow, kind);
+    assert.match(rendered, /範囲を超えています/);
+    assert.match(rendered, /<button[^>]*>上限確認A<\/button>/, '両種別で超過施策の編集導線を残す');
+    assert.match(rendered, /通常確認<\/button>/, '正常行も引き続き表示する');
+    const safeKind = kind === 1 ? 2 : 1;
+    assert.doesNotMatch(api.renderInitiativeList(overflow, safeKind), /role="alert"/);
+  }
   let bytes = await api.createTriadicDatabase(2026);
   const accounts = (await api.readPlanContents(bytes)).accounts;
   const accountId = accounts.find(account => account.accountType === 'sales').id;

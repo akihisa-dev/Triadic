@@ -5,7 +5,6 @@ import { deriveStartYearMonth } from "../domain/initiativeStartMonth";
 import { yenToAmount } from "../domain/amounts";
 import { INITIAL_KINDS, type KindOverrides } from "../domain/kinds";
 import type { Initiative, InitiativeRow, PlanContents } from "../domain/plan";
-import { initiativesForKind } from "../tables/initiatives";
 import { buildDetails } from "../tables/details";
 import { readPlanSettings } from "./settings";
 import { listAccounts } from "./accountMaster";
@@ -48,7 +47,7 @@ export function listInitiatives(db: Database, fiscalYear: number, initiativeId?:
 export function readContents(db: Database, includeDetails = true): PlanContents {
   const settings = readPlanSettings(db);
   const accounts = listAccounts(db);
-  const contents: PlanContents = { ...settings, accounts, initiatives: initiativesForKind(listInitiatives(db, settings.fiscalYear), accounts, 1),
+  const contents: PlanContents = { ...settings, accounts, initiatives: listInitiatives(db, settings.fiscalYear),
     aggregations: listAggregations(db), expansions: listExpansions(db), expansionCategories: listExpansionCategories(db), industries: listIndustries(db), departments: listDepartments(db), periodTypes: listPeriodTypes(db), kinds: INITIAL_KINDS.map(kind => ({ ...kind })) };
   return includeDetails ? { ...contents, details: buildDetails(contents) } : contents;
 }

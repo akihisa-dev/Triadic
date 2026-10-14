@@ -30,6 +30,8 @@ import { changeAggregationMaster } from "../../Triadichrome-extension/src/core/s
 import { createTriadicDatabase, openTriadicDatabase } from "../../Triadichrome-extension/src/core/storage/triadicDatabase";
 import { currentFiscalYear, initiativeMonths } from "../../Triadichrome-extension/src/core/domain/calendar";
 import { readPlanContents } from "../../Triadichrome-extension/src/core/storage/readPlan";
+import { createInitiativeDraft } from "../../Triadichrome-extension/src/core/domain/initiativeRules";
+import type { KindId } from "../../Triadichrome-extension/src/core/domain/kinds";
 import { registerInitiative, updateInitiative } from "../../Triadichrome-extension/src/core/storage/initiatives";
 import { type InitiativeEntryDraft, type InitiativeRow } from "../../Triadichrome-extension/src/core/domain/plan";
 
@@ -221,4 +223,16 @@ export async function createSignedCategoryPlan(large = false, year = currentFisc
       for (let month = 1; month <= 12; month++) db.run("INSERT INTO initiative_amounts(row_id,kind_id,month,amount_yen) VALUES(?,1,?,0)", [row, month]);
     }
   })).bytes;
+}
+
+/** Accepted cell amounts with an overflowing display total, for both budget kinds. */
+export async function createInitiativeOverflowPlan(kind: KindId) {
+  let bytes = await createTriadicDatabase(2026);
+  const contents = await readPlanContents(bytes);
+  const accountId = contents.accounts.find(account => account.accountType === "sales")!.id;
+  const draft = { ...createInitiativeDraft("2026"), name: "上限確認A", expansionId: 1, industryId: 1, departmentId: 1,
+    rows: [1, 2].map(() => ({ accountId, amounts: { 4: kind === 1 ? "5000000000000" : "0" },
+      overrides: { 2: { 4: kind === 2 ? "5000000000000" : "0" } } })) };
+  bytes = await registerInitiative(bytes, draft);
+  return registerInitiative(bytes, { ...draft, name: "通常確認", rows: [{ accountId, amounts: { 4: "1" }, overrides: { 2: { 4: "2" } } }] });
 }

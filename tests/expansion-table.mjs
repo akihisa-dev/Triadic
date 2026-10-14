@@ -15,7 +15,8 @@ export async function verifyExpansionTable(api) {
   bytes = await registerInitiative(bytes, { ...draft, name: "別展開", expansionId: 2 });
   await assert.rejects(registerInitiative(bytes, { ...draft, name: "別年度", expansionId: 1, fiscalYear: "2025" }), /基準年度/);
   const contents = await readPlanContents(bytes);
-  const build = sort => buildExpansionTable(contents, 2026, sort);
+  const projected = plan => ({ ...plan, initiatives: api.initiativesForKind(plan.initiatives, plan.accounts, 1) });
+  const build = sort => buildExpansionTable(projected(contents), 2026, sort);
   assert.equal(build("registered").groups.length, 7);
   assert.deepEqual(build("registered").groups.map(item => item.expansion.expansionCode), ["1", "2", "3", "4", "5", "8", "9"]);
   assert.deepEqual(build("registered").groups[0].initiatives.map(item => item.name), ["施策B", "施策A"]);
@@ -33,10 +34,10 @@ export async function verifyExpansionTable(api) {
   const reassigned = await updateInitiative(bytes, original.id, 2026, { ...draft, rows: original.rows, expansionId: 8 });
   const after = await readPlanContents(reassigned);
   assert.equal(after.initiatives[0].expansionId, 8);
-  assert.equal(buildExpansionTable(after, 2026, "registered").groups.find(item => item.expansion.id === 8).initiatives[0].id, original.id);
+  assert.equal(buildExpansionTable(projected(after), 2026, "registered").groups.find(item => item.expansion.id === 8).initiatives[0].id, original.id);
   assert.equal((await readPlanContents(bytes)).initiatives[0].expansionId, 1, "元ファイルを変更しない");
   const renamed = await changeExpansionMaster(reassigned, { type: "update", id: 8, expansionCode: "8", expansionName: "効率改善" });
-  assert.equal(buildExpansionTable(await readPlanContents(renamed), 2026, "registered").groups.find(item => item.expansion.id === 8).expansion.expansionName, "効率改善");
+  assert.equal(buildExpansionTable(projected(await readPlanContents(renamed)), 2026, "registered").groups.find(item => item.expansion.id === 8).expansion.expansionName, "効率改善");
   const database = await openTriadicDatabase(bytes);
   assert.throws(() => database.run("UPDATE initiatives SET expansion_id = 999 WHERE id = ?", [original.id]), /FOREIGN KEY/);
   database.close();
