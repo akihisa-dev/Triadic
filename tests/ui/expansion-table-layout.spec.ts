@@ -12,29 +12,58 @@ test("展開表の結合セル・固定列・全月の列境界をスクロー�
     const table = node.querySelector("table")!;
     const rect = (element: Element) => element.getBoundingClientRect();
     const headers = table.querySelectorAll("thead tr:first-child th");
-    const group = rect(headers[0]!); const period = rect(headers[1]!); const name = rect(headers[2]!);
-    const summary = rect(table.querySelector(".expansion-summary")!);
-    const amounts = [...table.querySelectorAll("tbody tr:first-child td")].slice(0, 114);
-    const monthHeaders = [...headers].slice(3);
-    const mismatch = monthHeaders.some((header, index) => {
-      const start = rect(amounts[index * 6]!); const end = rect(amounts[index * 6 + 5]!);
-      return Math.abs(rect(header).left - start.left) > 1 || Math.abs(rect(header).right - end.right) > 1;
+    const fixedHeaders = [...headers].slice(0, 4);
+    const [group, period, category, name] = fixedHeaders.map(rect);
+    const tableRight = rect(table).right;
+    const monthHeaders = [...headers].slice(4);
+    const rows = [...table.querySelectorAll("tbody tr")].map(row => {
+      const categoryCell = row.querySelector("td.expansion-category");
+      const amounts = [...row.querySelectorAll("td:not(.expansion-category)")];
+      const subtotal = row.querySelector<HTMLTableCellElement>(".expansion-subtotal-name");
+      return {
+        kind: subtotal ? "subtotal" : categoryCell ? "category-start" : "category-continuation",
+        amountCount: amounts.length,
+        cellCount: row.querySelectorAll("td").length,
+        mismatch: amounts.length !== 114 || monthHeaders.some((header, index) => {
+          const start = rect(amounts[index * 6]!); const end = rect(amounts[index * 6 + 5]!);
+          return Math.abs(rect(header).left - start.left) > 1 || Math.abs(rect(header).right - end.right) > 1;
+        }),
+        subtotalMismatch: subtotal !== null && (subtotal.colSpan !== 3 ||
+          Math.abs(rect(subtotal).left - Math.min(period!.left, tableRight - rect(subtotal).width)) > 1 ||
+          Math.abs(rect(subtotal).width - period!.width - category!.width - name!.width) > 1),
+      };
     });
-    const nameCells = [...table.querySelectorAll("tbody .expansion-name")];
-    return { gap: name.left - period.right, summaryWidth: summary.width, labelsWidth: group.width + period.width + name.width,
-      fixedNameMismatch: nameCells.some(cell => Math.abs(rect(cell).left - name.left) > 1), mismatch,
+    const summaries = [...table.querySelectorAll<HTMLTableCellElement>(".expansion-summary")];
+    return { labels: fixedHeaders.map(header => header.textContent), periods: monthHeaders.length,
+      // Sticky cells stop at the table's right edge. On narrow screens the four
+      // fixed columns exceed the viewport, so the last cells reach that edge first.
+      fixedOffsets: [period, category, name].map((bounds, index) => {
+        const offset = fixedHeaders.slice(0, index + 1).reduce((width, header) => width + rect(header).width, 0);
+        return bounds!.left - Math.min(group!.left + offset, tableRight - bounds!.width);
+      }),
+      summaryMismatch: summaries.some(cell => cell.colSpan !== 4 || Math.abs(rect(cell).width - group!.width - period!.width - category!.width - name!.width) > 1),
+      fixedMismatch: ["expansion-group", "expansion-period", "expansion-category", "expansion-name"].some((className, index) =>
+        [...table.querySelectorAll(`tbody .${className}`)].some(cell => Math.abs(rect(cell).left - rect(fixedHeaders[index]!).left) > 1)),
+      rows,
       bottom: rect(node).bottom, viewport: window.innerHeight,
-      horizontal: node.scrollWidth > node.clientWidth, counts: [...table.querySelectorAll("tbody tr")].map(row => row.querySelectorAll("td").length),
+      horizontal: node.scrollWidth > node.clientWidth,
       outside: document.documentElement.scrollWidth > window.innerWidth,
       lastRight: rect(table.querySelector("tbody tr td:last-child")!).right, regionRight: rect(node).right };
   });
   const check = async () => {
     const layout = await inspect();
-    expect(Math.abs(layout.gap)).toBeLessThan(1);
-    expect(Math.abs(layout.summaryWidth - layout.labelsWidth)).toBeLessThan(1);
-    expect(layout.fixedNameMismatch).toBe(false);
-    expect(layout.mismatch).toBe(false);
-    expect(layout.counts.every(count => count === 114)).toBe(true);
+    expect(layout.labels).toEqual(["展開名", "期間名", "展開区分", "施策名"]);
+    expect(layout.periods).toBe(19);
+    for (const offset of layout.fixedOffsets) expect(Math.abs(offset)).toBeLessThan(1);
+    expect(layout.summaryMismatch).toBe(false);
+    expect(layout.fixedMismatch).toBe(false);
+    expect(new Set(layout.rows.map(row => row.kind))).toEqual(new Set(["category-start", "category-continuation", "subtotal"]));
+    for (const row of layout.rows) {
+      expect(row.amountCount).toBe(114);
+      expect(row.cellCount).toBe(row.kind === "category-start" ? 115 : 114);
+      expect(row.mismatch).toBe(false);
+      expect(row.subtotalMismatch).toBe(false);
+    }
     expect(layout.bottom).toBeLessThanOrEqual(layout.viewport);
     expect(layout.outside).toBe(false);
     expect(layout.horizontal).toBe(true);
@@ -43,11 +72,11 @@ test("展開表の結合セル・固定列・全月の列境界をスクロー�
   // Stress cell contents without changing the saved plan or production sample.
   await region.evaluate(node => {
     node.querySelector(".initiative-name-button")!.textContent = "長い施策名".repeat(60);
-    node.querySelector("tbody td")!.textContent = "-9,007,199,254,741";
+    node.querySelector("tbody td:not(.expansion-category)")!.textContent = "-9,007,199,254,741";
   });
   await check();
   const overflow = await region.evaluate(node => {
-    const amount = node.querySelector("tbody td")!;
+    const amount = node.querySelector("tbody td:not(.expansion-category)")!;
     const name = node.querySelector(".initiative-name-button")!;
     return { amountClipped: getComputedStyle(amount).overflow === "hidden",
       nameFits: name.getBoundingClientRect().width <= name.parentElement!.getBoundingClientRect().width };
@@ -72,7 +101,7 @@ test("展開表の結合セル・固定列・全月の列境界をスクロー�
   await region.evaluate(node => { node.scrollLeft = 0; node.scrollTop = 0; });
   const initiative = region.locator(".initiative-name-button").first();
   await initiative.click();
-  await expect(app.getByRole("textbox", { name: "施策名", exact: true })).toHaveValue("通信運搬費と消耗品費の削減");
+  await expect(app.getByRole("textbox", { name: "施策名", exact: true })).toHaveValue("設備更新と償却費の見直し");
 });
 
 test("施策がない展開も名称とゼロの小計を同じ列で表示する", async ({ page, app }) => {
@@ -86,7 +115,23 @@ test("施策がない展開も名称とゼロの小計を同じ列で表示す�
   await expect(rows).toHaveCount(7);
   for (const row of await rows.all()) {
     await expect(row.locator("th")).toHaveCount(2);
+    await expect(row.locator(".expansion-subtotal-name")).toHaveAttribute("colspan", "3");
+    await expect(row.locator(".expansion-category")).toHaveCount(0);
     await expect(row.locator("td")).toHaveCount(114);
     expect((await row.locator("td").allTextContents()).every(value => value === "")).toBe(true);
+    const aligned = await row.evaluate(node => {
+      const headers = [...node.closest("table")!.querySelectorAll("thead tr:first-child th")];
+      const labels = headers.slice(1, 4).map(cell => cell.getBoundingClientRect());
+      const subtotal = node.querySelector(".expansion-subtotal-name")!.getBoundingClientRect();
+      const amounts = [...node.querySelectorAll("td:not(.expansion-category)")];
+      return Math.abs(subtotal.left - labels[0]!.left) <= 1 &&
+        Math.abs(subtotal.width - labels.reduce((width, label) => width + label.width, 0)) <= 1 &&
+        headers.slice(4).every((header, index) => {
+          const bounds = header.getBoundingClientRect();
+          return Math.abs(bounds.left - amounts[index * 6]!.getBoundingClientRect().left) <= 1 &&
+            Math.abs(bounds.right - amounts[index * 6 + 5]!.getBoundingClientRect().right) <= 1;
+        });
+    });
+    expect(aligned).toBe(true);
   }
 });
