@@ -1,4 +1,5 @@
 import { verifyInitiativeDraftReferences } from "../tests/initiative-draft-references.mjs";
+import { verifyCostClassification } from "../tests/cost-classification.mjs";
 import { verifyInitiativeOverflowRead } from "../tests/initiative-overflow-read.mjs";
 import { verifyNamedMasterRebase } from "../tests/named-master-rebase.mjs";
 import { verifyInitiativeOwnerRebase } from "../tests/initiative-owner-rebase.mjs";
@@ -129,6 +130,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
 });
 
 await withNodeBundle("tests/performance-api.ts", async api => {
+  await verifyCostClassification(api);
   await verifyInitiativeListRendering(api);
   await verifyExpansionTableView(api);
 });

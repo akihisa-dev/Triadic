@@ -13,12 +13,18 @@ import { formatTableYen, formatTableRate } from "./tableNumberFormat";
 
 type Props = { contents: PlanContents; selected: KindId[]; selection: ReactNode };
 
+function industryIdsForDepartments(contents: PlanContents, departmentIds: number[]) {
+  return departmentIds.length
+    ? contents.departments.filter(item => departmentIds.includes(item.id)).flatMap(item => item.industryIds)
+    : contents.industries.map(item => item.id);
+}
+
 export function CostTablePage({ contents, selected, selection }: Props) {
   const [industryIds, setIndustries] = useState<number[]>([]);
   const [departmentIds, setDepartments] = useState<number[]>([]);
   const available = contents;
   const departments = departmentIds.filter(id => available.departments.some(item => item.id === id));
-  const allowedIndustries = available.departments.filter(item => !departments.length || departments.includes(item.id)).flatMap(item => item.industryIds);
+  const allowedIndustries = industryIdsForDepartments(available, departments);
   const industries = industryIds.filter(id => allowedIndustries.includes(id) && available.industries.some(item => item.id === id));
   useLayoutEffect(() => {
     if (industries.length !== industryIds.length) setIndustries(industries);
@@ -44,7 +50,7 @@ export function CostTablePage({ contents, selected, selection }: Props) {
         <select id="cost-department" value={departments[0] ?? ""} onChange={event => {
           const value = event.target.value === "" ? [] : [Number(event.target.value)];
           setDepartments(value);
-          const ids = available.departments.filter(item => !value.length || value.includes(item.id)).flatMap(item => item.industryIds);
+          const ids = industryIdsForDepartments(available, value);
           setIndustries(current => value.length === 1 && ids.length === 1 ? ids : current.filter(id => ids.includes(id)));
         }}>
           <option value="">全部署の合計</option>

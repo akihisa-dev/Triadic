@@ -45,3 +45,27 @@ test("金額未登録の分類も候補に表示し、部署の所属に絞る",
   await industry.selectOption({ label: "自動車取扱" });
   await expect(app.locator(".cost-data-row").first().locator("td").first()).toHaveText("");
 });
+
+
+test("全部署では未所属業種を保持し、個別部署では所属業種へ絞る", async ({ page, app }) => {
+  await page.goto("/tests/ui/preview.html?data=cost-unassigned-industry");
+  await expect(page.getByRole("status")).toHaveText("操作できます");
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "総原価表", exact: true }).click();
+  const industry = app.getByRole("combobox", { name: "業種名", exact: true });
+  const department = app.getByRole("combobox", { name: "部署名", exact: true });
+  await expect(industry.locator("option")).toHaveCount(11);
+  await industry.selectOption({ label: "未所属の確認業種" });
+  await department.selectOption("");
+  await expect(industry.locator("option:checked")).toHaveText("未所属の確認業種");
+  await expect(app.locator(".cost-data-row").first().locator("td").first()).toHaveText("");
+  await department.selectOption({ label: "部署A" });
+  await expect(industry).toHaveValue("");
+  await expect(industry.locator("option")).toHaveCount(10);
+  await department.selectOption({ label: "単一業種確認部署" });
+  await expect(industry.locator("option:checked")).toHaveText("直営自動車");
+  await expect(industry.locator("option")).toHaveCount(2);
+  await department.selectOption("");
+  await expect(industry.locator("option")).toHaveCount(11);
+  await expect(industry.locator("option:checked")).toHaveText("直営自動車");
+});

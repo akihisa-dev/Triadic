@@ -25,6 +25,7 @@ import { INITIAL_DEPARTMENTS } from "../../Triadichrome-extension/src/core/stora
 import { INITIAL_INDUSTRIES } from "../../Triadichrome-extension/src/core/storage/industrySchema";
 import { INITIAL_EXPANSIONS } from "../../Triadichrome-extension/src/core/storage/expansionSchema";
 import { changeDepartmentMaster } from "../../Triadichrome-extension/src/core/storage/departmentMaster";
+import { changeIndustryMaster } from "../../Triadichrome-extension/src/core/storage/industryMaster";
 import { changeAccountMaster } from "../../Triadichrome-extension/src/core/storage/accountMaster";
 import { changeAggregationMaster } from "../../Triadichrome-extension/src/core/storage/aggregationMaster";
 import { createTriadicDatabase, openTriadicDatabase } from "../../Triadichrome-extension/src/core/storage/triadicDatabase";
@@ -235,4 +236,11 @@ export async function createInitiativeOverflowPlan(kind: KindId) {
       overrides: { 2: { 4: kind === 2 ? "5000000000000" : "0" } } })) };
   bytes = await registerInitiative(bytes, draft);
   return registerInitiative(bytes, { ...draft, name: "通常確認", rows: [{ accountId, amounts: { 4: "1" }, overrides: { 2: { 4: "2" } } }] });
+}
+
+/** Industry candidates without an assignment or amounts, plus a single-industry department. */
+export async function createCostUnassignedIndustryPlan() {
+  let bytes = await createTriadicDatabase(2026);
+  bytes = await changeIndustryMaster(bytes, { type: "add", industryCode: "10", industryName: "未所属の確認業種" });
+  return changeDepartmentMaster(bytes, { type: "add", departmentName: "単一業種確認部署", industryIds: [1] });
 }

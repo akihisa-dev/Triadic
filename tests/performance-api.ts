@@ -18,6 +18,11 @@ export function renderInitiativeList(contents: PlanContents, selectedKind: KindI
 export { createInitiativeListView } from "../Triadichrome-extension/src/core/tables/initiativeListView";
 export { createExpansionTableView } from "../Triadichrome-extension/src/core/tables/expansionTableView";
 
+import { CostTablePage } from '../Triadichrome-extension/src/extension/CostTablePage';
+export function renderCostTable(contents: PlanContents) {
+  return renderToStaticMarkup(createElement(CostTablePage, { contents, selected: [1], selection: null }));
+}
+
 import { ExpansionTablePage } from "../Triadichrome-extension/src/extension/ExpansionTablePage";
 export function renderExpansionTable(contents: PlanContents, selected: KindId[] = [1]) {
   return renderToStaticMarkup(createElement(ExpansionTablePage, { contents, selected, selection: null, onOpenInitiative() {} }));
