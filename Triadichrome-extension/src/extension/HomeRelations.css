@@ -14,7 +14,7 @@
 .home-relation { transition: opacity var(--motion-feedback) var(--motion-ease); }
 .home-relation path { fill: none; stroke: #aaa; stroke-width: 1.5; transition: stroke var(--motion-feedback), stroke-width var(--motion-feedback); }
 .home-relation.is-active path { stroke: var(--accent); stroke-opacity: .55; stroke-width: 2; }
-.home-relation.is-muted { opacity: .35; }
+.home-relation.is-muted { opacity: .65; }
 .home-relation-node { display: flex; box-sizing: border-box; flex-direction: row; align-items: center; justify-content: center; gap: 10px; margin: 6px; width: 200px; height: 56px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font-size: 16px; font-weight: 500; cursor: grab; }
 .home-relation-icon { display: grid; place-items: center; flex: 0 0 32px; width: 32px; background: transparent; color: #555; transition: color var(--motion-feedback), transform var(--motion-feedback); }
 .home-relation-icon svg { width: 28px; height: 28px; pointer-events: none; }
@@ -37,3 +37,16 @@
 /* Only the visible card intercepts pointers. */
 .home-relation-item > foreignObject { pointer-events: none; }
 .home-relation-node { pointer-events: auto; }
+
+/* Keep every relationship legible, including when another item is selected. */
+.home-relation-node[aria-pressed="true"] { border: 2px solid var(--ink); box-shadow: 0 2px 8px #00000012; }
+.home-relation.is-active .home-relation-subnode { font-weight: 500; }
+
+.home-relation.relation-reference path { stroke-dasharray: 8 5; }
+.home-relation.relation-structure path { stroke-dasharray: 1 5; stroke-linecap: round; stroke-width: 2; }
+.home-relation.relation-amount path { stroke-width: 2; }
+.home-relation.relation-view path { stroke-width: 1.25; }
+.home-relations-legend { position: absolute; left: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px 18px; max-width: calc(100% - 210px); padding: 8px 10px; background: var(--canvas); color: var(--muted); font-size: 12px; pointer-events: none; }
+.home-relations-legend > span { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.home-relations-legend path { stroke: #666; }
+@media (max-width: 600px) { .home-relations-legend { left: 4px; bottom: 70px; max-width: calc(100% - 8px); gap: 4px 12px; font-size: 11px; } }

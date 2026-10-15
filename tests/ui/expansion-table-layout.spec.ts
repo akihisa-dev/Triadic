@@ -5,6 +5,7 @@ test("展開表の結合セル・固定列・全月の列境界をスクロー�
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("main", { name: "ホーム", exact: true }).getByRole("button", { name: "展開表", exact: true }).click();
+  await app.getByRole("main", { name: "ホーム", exact: true }).getByRole("button", { name: "展開表", exact: true }).click();
   await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "確定予算");
   await settleMotion(app.locator("body"));
   const region = app.getByRole("region", { name: "展開表の月別種別・比較", exact: true });
@@ -108,6 +109,7 @@ test("施策がない展開も名称とゼロの小計を同じ列で表示す�
   await page.goto("/tests/ui/preview.html?data=defaults");
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("main", { name: "ホーム", exact: true }).getByRole("button", { name: "展開表", exact: true }).click();
   await app.getByRole("main", { name: "ホーム", exact: true }).getByRole("button", { name: "展開表", exact: true }).click();
   await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "確定予算");
   await settleMotion(app.locator("body"));

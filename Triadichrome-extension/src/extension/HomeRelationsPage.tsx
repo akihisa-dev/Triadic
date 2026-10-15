@@ -8,40 +8,45 @@ import { useRelationCamera, type RelationView } from "./useRelationCamera";
 export type { RelationView } from "./useRelationCamera";
 
 const nodes = [
-  { page: "amount-item-master", name: "金額項目マスタ", icon: "master", x: 0, y: 120, master: true },
-  { page: "account-type-master", name: "科目属性マスタ", icon: "master", x: 0, y: 0, master: true },
-  { page: "account-master", name: "勘定科目マスタ", icon: "master", x: 320, y: 0, master: true },
-  { page: "industry-master", name: "業種マスタ", icon: "master", x: 0, y: 240, master: true },
-  { page: "department-master", name: "部署マスタ", icon: "master", x: 320, y: 240, master: true },
-  { page: "period-master", name: "期間マスタ", icon: "master", x: 640, y: 360, master: true },
-  { page: "expansion-category-master", name: "展開区分マスタ", icon: "master", x: 0, y: 360, master: true },
-  { page: "expansion-master", name: "展開マスタ", icon: "master", x: 320, y: 360, master: true },
-  { page: "kind-master", name: "種別マスタ", icon: "master", x: 640, y: 120, master: true },
-  { page: "previous-input", name: "前年入力", icon: "previous", x: 960, y: 0, master: false },
-  { page: "initiative-list", name: "施策一覧", icon: "list", x: 640, y: 240, master: false },
-  { page: "cost-table", name: "総原価表", icon: "cost", x: 960, y: 120, master: false },
-  { page: "expansion-table", name: "展開表", icon: "expansion", x: 960, y: 360, master: false },
+  { page: "amount-item-master", name: "金額項目マスタ", icon: "master", x: 320, y: 0, master: true },
+  { page: "account-type-master", name: "科目属性マスタ", icon: "master", x: 320, y: -126, master: true },
+  { page: "account-master", name: "勘定科目マスタ", icon: "master", x: 640, y: -42, master: true },
+  { page: "industry-master", name: "業種マスタ", icon: "master", x: 0, y: 42, master: true },
+  { page: "department-master", name: "部署マスタ", icon: "master", x: 0, y: 210, master: true },
+  { page: "period-master", name: "期間マスタ", icon: "master", x: 320, y: 504, master: true },
+  { page: "expansion-category-master", name: "展開区分マスタ", icon: "master", x: 640, y: 546, master: true },
+  { page: "expansion-master", name: "展開マスタ", icon: "master", x: 1020, y: 448, master: true },
+  { page: "kind-master", name: "種別マスタ", icon: "master", x: 0, y: 378, master: true },
+  { page: "previous-input", name: "前年入力", icon: "previous", x: 1200, y: -70, master: false },
+  { page: "initiative-list", name: "施策一覧", icon: "list", x: 640, y: 252, master: false },
+  { page: "cost-table", name: "総原価表", icon: "cost", x: 1020, y: 56, master: false },
+  { page: "expansion-table", name: "展開表", icon: "expansion", x: 1120, y: 252, master: false },
 ] as const;
 
 export type HomeDestination = typeof nodes[number]["page"];
-const edges: { from: HomeDestination; to: HomeDestination; label: string; at?: { x: number; y: number } }[] = [
-  { from: "account-type-master", to: "amount-item-master", label: "金額項目の構成" },
-  { from: "amount-item-master", to: "initiative-list", label: "売上・費用・利益を計算", at: { x: 280, y: 120 } },
-  { from: "account-type-master", to: "account-master", label: "科目属性を選択" },
-  { from: "previous-input", to: "cost-table", label: "前年の実額" },
-  { from: "kind-master", to: "initiative-list", label: "種別ごとに入力" },
-  { from: "account-master", to: "cost-table", label: "表示順・集計・加減" },
-  { from: "account-master", to: "initiative-list", label: "科目を選択", at: { x: 480, y: 120 } },
-  { from: "industry-master", to: "department-master", label: "所属業種を設定" },
-  { from: "industry-master", to: "initiative-list", label: "部署の所属から業種を選択", at: { x: 160, y: 180 } },
-  { from: "department-master", to: "initiative-list", label: "部署名を選択" },
-  { from: "period-master", to: "initiative-list", label: "期間名を選択" },
-  { from: "expansion-category-master", to: "expansion-master", label: "展開区分を割り当て", at: { x: 160, y: 420 } },
-  { from: "expansion-category-master", to: "initiative-list", label: "展開の割当から区分を選択", at: { x: 160, y: 300 } },
-  { from: "expansion-master", to: "initiative-list", label: "展開名を選択" },
-  { from: "initiative-list", to: "cost-table", label: "同じ内容を科目別に確認" },
-  { from: "initiative-list", to: "expansion-table", label: "同じ内容を展開別に確認" },
-  { from: "expansion-master", to: "expansion-table", label: "グループ分け", at: { x: 800, y: 420 } },
+const relationKinds = [
+  ["reference", "選択・参照"], ["structure", "構成・所属"],
+  ["amount", "金額・計算"], ["view", "同じ内容の別表示"],
+] as const;
+type RelationKind = typeof relationKinds[number][0];
+const edges: { from: HomeDestination; to: HomeDestination; label: string; kind: RelationKind; at: { x: number; y: number } }[] = [
+  { from: "account-type-master", to: "amount-item-master", label: "金額項目の構成", kind: "structure", at: { x: 320, y: -63 } },
+  { from: "amount-item-master", to: "initiative-list", label: "売上・費用・利益を計算", kind: "amount", at: { x: 480, y: 126 } },
+  { from: "account-type-master", to: "account-master", label: "科目属性を選択", kind: "reference", at: { x: 550, y: -105 } },
+  { from: "previous-input", to: "cost-table", label: "前年の実額", kind: "amount", at: { x: 1200, y: 0 } },
+  { from: "kind-master", to: "initiative-list", label: "種別ごとに入力", kind: "reference", at: { x: 300, y: 315 } },
+  { from: "account-master", to: "cost-table", label: "表示順・集計・加減", kind: "structure", at: { x: 860, y: 0 } },
+  { from: "account-master", to: "initiative-list", label: "科目を選択", kind: "reference", at: { x: 640, y: 105 } },
+  { from: "industry-master", to: "department-master", label: "所属業種を設定", kind: "structure", at: { x: 0, y: 126 } },
+  { from: "industry-master", to: "initiative-list", label: "部署の所属から業種を選択", kind: "reference", at: { x: 240, y: 126 } },
+  { from: "department-master", to: "initiative-list", label: "部署名を選択", kind: "reference", at: { x: 300, y: 231 } },
+  { from: "period-master", to: "initiative-list", label: "期間名を選択", kind: "reference", at: { x: 480, y: 392 } },
+  { from: "expansion-category-master", to: "expansion-master", label: "展開区分を割り当て", kind: "structure", at: { x: 850, y: 532 } },
+  { from: "expansion-category-master", to: "initiative-list", label: "展開の割当から区分を選択", kind: "reference", at: { x: 640, y: 434 } },
+  { from: "expansion-master", to: "initiative-list", label: "展開名を選択", kind: "reference", at: { x: 850, y: 350 } },
+  { from: "initiative-list", to: "cost-table", label: "同じ内容を科目別に確認", kind: "view", at: { x: 850, y: 154 } },
+  { from: "initiative-list", to: "expansion-table", label: "同じ内容を展開別に確認", kind: "view", at: { x: 880, y: 252 } },
+  { from: "expansion-master", to: "expansion-table", label: "グループ分け", kind: "structure", at: { x: 1100, y: 378 } },
 ];
 
 // Relation descriptions are graph nodes, joined to both destinations.
@@ -51,7 +56,7 @@ const subNodes = edges.map((edge, index) => {
     y: edge.at?.y ?? (from.y + to.y) / 2, width: Math.max(112, edge.label.length * 12 + 24), height: 32, sub: true };
 });
 const graphNodes = [...nodes.map(node => ({ ...node, width: 200, height: 56 })), ...subNodes];
-const graphEdges = edges.flatMap((edge, index) => [{ from: edge.from, to: subNodes[index]!.page }, { from: subNodes[index]!.page, to: edge.to }]);
+const graphEdges = edges.flatMap((edge, index) => [{ from: edge.from, to: subNodes[index]!.page, double: edge.kind === "view" }, { from: subNodes[index]!.page, to: edge.to, double: edge.kind === "view" }]);
 
 type Props = {
   onNavigate: (page: HomeDestination) => void;
@@ -64,10 +69,11 @@ export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
   const [mode, setMode] = useState("relations");
   const graph = useHomeGraphMotion(graphNodes, graphEdges, view, () => { if (view.current?.fitted && !cameraTarget.current) fit(); });
   const viewport = useRef<HTMLDivElement>(null);
+  const [selected, setSelected] = useState<string | null>(null);
   const [highlighted, setActive] = useState<string | null>(null);
   const [focused, setFocused] = useState<string | null>(null);
   const [grabbed, setGrabbed] = useState<string | null>(null);
-  const active = grabbed ?? focused ?? highlighted;
+  const active = grabbed ?? focused ?? highlighted ?? selected;
   const { camera, target: cameraTarget, update, smooth, cancel: cancelZoom } = useRelationCamera(view);
   const [dragging, setDragging] = useState(false);
   const points = useRef(new Map<number, { x: number; y: number }>());
@@ -92,6 +98,7 @@ export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
     if (node) zoom(factor, node.clientWidth / 2, node.clientHeight / 2);
   };
   const focusNode = (node: typeof graphNodes[number]) => {
+    setActive(null);
     setFocused(node.page);
     if (points.current.size) return;
     const current = view.current ?? camera, box = viewport.current;
@@ -169,6 +176,7 @@ export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
         startGesture();
       }}
       onPointerMove={event => {
+        setFocused(null);
         if (!points.current.has(event.pointerId) || !gesture.current) return;
         points.current.set(event.pointerId, position(event));
         const values = [...points.current.values()], a = values[0];
@@ -189,10 +197,15 @@ export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
       }}
       onPointerUp={endPointer} onPointerCancel={endPointer} onLostPointerCapture={event => { if (points.current.has(event.pointerId)) endPointer(event); }}
       onPointerLeave={event => { if (!event.currentTarget.hasPointerCapture(event.pointerId)) endPointer(event); }}
-      onClick={event => { if (event.target === event.currentTarget || event.target instanceof SVGElement) setActive(null); }}
+      onClick={event => {
+        if (event.target instanceof Element && !event.target.closest(".home-relation-node, .home-relation-subnode")) {
+          setSelected(null); setActive(null); setFocused(null);
+          viewport.current?.focus({ preventScroll: true });
+        }
+      }}
       onClickCapture={event => { if (moved.current && event.detail !== 0) { event.preventDefault(); event.stopPropagation(); } }}
       onKeyDown={event => {
-        if (event.key === "Escape") { event.preventDefault(); setActive(null); setFocused(null); return; }
+        if (event.key === "Escape") { event.preventDefault(); setSelected(null); setActive(null); setFocused(null); viewport.current?.focus({ preventScroll: true }); return; }
         if (event.altKey || event.ctrlKey || event.metaKey || event.nativeEvent.isComposing) return;
         if (event.target !== event.currentTarget && !(event.target instanceof Element && event.target.closest(".home-relation-subnode"))) return;
         const current = view.current ?? camera;
@@ -204,8 +217,8 @@ export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
         else if (event.key === "Home" || event.key === "0") { event.preventDefault(); fit(true); }
       }}>
       <svg className="home-relations-map" viewBox="0 0 1240 640" aria-label="画面とマスタの関係" style={{ transform: `translate(${camera.x}px, ${camera.y}px) scale(${camera.scale})` }}>
-        {edges.map((edge, index) => <g key={`${edge.from}-${edge.to}`} className={`home-relation${active && isRelated(edge, index) ? " is-active" : active ? " is-muted" : ""}`}>
-          <title>{edge.label}</title>
+        {edges.map((edge, index) => <g key={`${edge.from}-${edge.to}`} data-kind={edge.kind} className={`home-relation relation-${edge.kind}${active && isRelated(edge, index) ? " is-active" : active ? " is-muted" : ""}`}>
+          <title>{relationKinds.find(([kind]) => kind === edge.kind)![1]}：{edge.label}</title>
           {[0, 1].map(part => <path key={part} ref={element => { const key = index * 2 + part; if (element) graph.paths.current.set(key, element); else graph.paths.current.delete(key); }} />)}
           <g ref={element => { const key = subNodes[index]!.page; if (element) graph.groups.current.set(key, element); else graph.groups.current.delete(key); }}>
             <foreignObject x={subNodes[index]!.x + 100 - subNodes[index]!.width / 2} y={subNodes[index]!.y - 4} width={subNodes[index]!.width} height="32">
@@ -219,12 +232,19 @@ export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
         </g>)}
         {nodes.map(node => <g key={node.page} ref={element => { if (element) graph.groups.current.set(node.page, element); else graph.groups.current.delete(node.page); }} className="home-relation-item"><foreignObject x={node.x - 6} y={node.y - 22} width="212" height="68">
           <button type="button" data-page={node.page} className={`home-relation-node${node.master ? " is-master" : ""}${node.page === "initiative-list" ? " is-entry" : ""}${related.has(node.page) ? " is-related" : ""}${active === node.page ? " is-selected" : ""}`}
-            disabled={disabled} onMouseEnter={() => setActive(node.page)} onMouseLeave={() => setActive(null)} onFocus={() => focusNode({ ...node, width: 200, height: 56 })} onBlur={() => setFocused(null)} onClick={() => onNavigate(node.page)}>
+            aria-pressed={selected === node.page} disabled={disabled} onMouseEnter={() => setActive(node.page)} onMouseLeave={() => setActive(null)} onFocus={() => focusNode({ ...node, width: 200, height: 56 })} onBlur={() => setFocused(null)} onClick={() => { if (selected === node.page) onNavigate(node.page); else setSelected(node.page); }}>
             <span className="home-relation-icon"><SidebarIcon name={node.icon} /></span>
             <span className="home-relation-name">{node.name}</span>
           </button>
         </foreignObject></g>)}
       </svg>
+    </div>
+    <div className="home-relations-legend" role="list" aria-label="関係の線の意味">
+      {relationKinds.map(([kind, label]) => <span role="listitem" key={kind}>
+        <svg viewBox="0 0 40 12" width="40" height="12" aria-hidden="true" className={`home-relation relation-${kind}`}>
+          <path d={kind === "view" ? "M1 4 L39 4 M1 8 L39 8" : "M1 6 L39 6"} />
+        </svg>{label}
+      </span>)}
     </div>
     <div className="home-relations-controls" role="group" aria-label="相関図の表示操作">
       <button type="button" aria-label="拡大" onClick={() => zoomCenter(1.25)} disabled={camera.scale >= MAX_SCALE}>＋</button>

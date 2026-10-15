@@ -16,9 +16,8 @@ export function useHomeGraphMotion(nodes: readonly MotionNode[], edges: readonly
 
   useLayoutEffect(() => {
     const preference = matchMedia("(prefers-reduced-motion: reduce)");
-    // Start from the readable relationship layout; only a drag wakes the forces.
-    const positions = view.current?.positions ?? Object.fromEntries(nodes.map(node => [node.page, { x: node.x + 100, y: node.y + 12 }]));
-    const motion = new HomeMotion(nodes, edges, positions);
+    // Always reopen at the layout anchors, including when a return was interrupted.
+    const motion = new HomeMotion(nodes);
     simulation.current = motion;
     for (const node of nodes) {
       const card = groups.current.get(node.page)?.querySelector<HTMLElement>(".home-relation-node");
@@ -29,7 +28,7 @@ export function useHomeGraphMotion(nodes: readonly MotionNode[], edges: readonly
         const body = motion.bodies.get(node.page)!;
         groups.current.get(node.page)?.setAttribute("transform", `translate(${body.x - node.x - 100} ${body.y - node.y - 12})`);
       }
-      edges.forEach((edge, index) => paths.current.get(index)?.setAttribute("d", motionLine(motion.bodies.get(edge.from)!, motion.bodies.get(edge.to)!)));
+      edges.forEach((edge, index) => paths.current.get(index)?.setAttribute("d", motionLine(motion.bodies.get(edge.from)!, motion.bodies.get(edge.to)!, edge.double)));
       if (view.current) view.current.positions = motion.positions();
       layout.current?.();
     };

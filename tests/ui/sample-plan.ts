@@ -1,3 +1,4 @@
+// ホームの選択後クリック・関係の4線種と凡例・強調・ドラッグ後の定位置復帰は tests/ui/home-relations.spec.ts で確認する。保存データは変更しない。
 // 施策の復元後の番号再利用は tests/initiative-owner-rebase.mjs で両保存順と回復を確認する。
 // 科目の復元後の番号再利用は tests/account-reference-rebase.mjs で両保存順と回復を確認する。
 // 共通マスタの保存結果同期と保存中の所属変更は tests/named-master-rebase.mjs と tests/ui/named-master-rebase.html で確認する。

@@ -24,10 +24,14 @@ test("操作説明を置かず、ホームのキャンバスを画面下端ま�
   }
   await page.setViewportSize({ width: page.viewportSize()!.width, height: 800 });
   await settleMotion(app.locator("body"));
+  if (testInfo.project.name === "desktop") {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await settleMotion(app.locator("body"));
+  }
   await page.screenshot({ path: `/private/tmp/triadichrome-home-canvas-${testInfo.project.name}.png` });
 });
 
-test("相関図の各入口と、1回クリック・キーボードの画面移動", async ({ app }) => {
+test("相関図の各入口と、選択後クリック・キーボードの画面移動", async ({ app }) => {
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
   await expect(app.getByRole("main", { name: "ホーム", exact: true })).toBeVisible();
   const navigation = app.getByRole("navigation", { name: "メインナビゲーション" });
@@ -44,14 +48,19 @@ test("相関図の各入口と、1回クリック・キーボードの画面移�
     await expect(home.locator(".home-relation-node")).toHaveCount(destinations.length);
     expect((await home.locator(".home-relation-node").allTextContents()).sort()).toEqual([...destinations].sort());
     await home.getByRole("button", { name, exact: true }).locator(".home-relation-name").click();
+    await expect(home.getByRole("button", { name, exact: true })).toHaveAttribute("aria-pressed", "true");
+    await expect(home).toBeVisible();
+    await home.getByRole("button", { name, exact: true }).locator(".home-relation-name").click();
     await expect(app.getByRole("heading", { name, exact: true })).toBeVisible();
     await navigation.getByRole("button", { name: "Home", exact: true }).click();
   }
   await app.getByRole("main", { name: "ホーム", exact: true }).getByRole("button", { name: "施策一覧", exact: true }).press("Enter");
+  await expect(app.getByRole("main", { name: "ホーム", exact: true })).toBeVisible();
+  await app.locator('.home-relation-node[data-page="initiative-list"]').press("Enter");
   await expect(app.getByRole("heading", { name: "施策一覧", exact: true })).toBeVisible();
 });
 
-test("自由なドラッグに接続線と周囲が追従し、離しても元の配置へ飛び戻らない", async ({ page, app }) => {
+test("ドラッグには接続線が追従し、離すと元の配置へ滑らかに戻る", async ({ page, app }) => {
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   const home = app.getByRole("main", { name: "ホーム", exact: true });
   await settleMotion(app.locator("body"));
@@ -60,7 +69,7 @@ test("自由なドラッグに接続線と周囲が追従し、離しても元�
   const box = (await input.boundingBox())!;
   const icon = (await input.locator(".home-relation-icon").boundingBox())!;
   const center = { x: icon.x + icon.width / 2, y: icon.y + icon.height / 2 };
-  const line = home.locator(".home-relation").filter({ hasText: "科目を選択" }).locator("path").first();
+  const line = home.locator(".home-relation").filter({ hasText: "科目を選択" }).locator("path").last();
   const path = await line.getAttribute("d");
   const neighbor = home.locator('.home-relation-item:has([data-page="account-master"])');
   const neighborBefore = (await neighbor.boundingBox())!;
@@ -72,14 +81,16 @@ test("自由なドラッグに接続線と周囲が追従し、離しても元�
   expect(dragged.x - box.x).toBeGreaterThan(80);
   await expect(line).not.toHaveAttribute("d", path!);
   await expect(map).toHaveAttribute("style", camera!);
-  await expect.poll(async () => {
-    const after = (await neighbor.boundingBox())!;
-    return Math.hypot(after.x - neighborBefore.x, after.y - neighborBefore.y);
-  }).toBeGreaterThan(.1);
+  const neighborAfter = (await neighbor.boundingBox())!;
+  expect(neighborAfter.x).toBeCloseTo(neighborBefore.x, 1);
+  expect(neighborAfter.y).toBeCloseTo(neighborBefore.y, 1);
   await page.mouse.up();
   await expect(home).toBeVisible();
   const released = (await input.boundingBox())!;
   expect(Math.abs(released.x - dragged.x)).toBeLessThan(15);
+  await expect.poll(async () => Math.abs((await input.boundingBox())!.x - box.x)).toBeLessThan(.1);
+  await input.locator(".home-relation-name").click();
+  await expect(input).toHaveAttribute("aria-pressed", "true");
   await input.locator(".home-relation-name").click();
   await expect(app.getByRole("heading", { name: "施策一覧", exact: true })).toBeVisible();
 });
@@ -111,6 +122,7 @@ test("背景のドラッグ・ズーム・現在の配置への全体表示と�
   });
   const saved = await map.getAttribute("style");
   await home.getByRole("button", { name: "施策一覧", exact: true }).press("Space");
+  await home.getByRole("button", { name: "施策一覧", exact: true }).press("Space");
   await expect(app.getByRole("heading", { name: "施策一覧", exact: true })).toBeVisible();
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
   await settleMotion(app.locator("body"));
@@ -125,14 +137,14 @@ test("背景のドラッグ・ズーム・現在の配置への全体表示と�
   })).toBe(true);
 });
 
-test("ホバーとフォーカスで直接の関係を強調し、説明サブノードを常時表示する", async ({ app }) => {
+test("ホバーとフォーカスで直接の関係を強調し、すべての説明を読み取れる", async ({ app }) => {
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   const home = app.getByRole("main", { name: "ホーム", exact: true });
   await settleMotion(app.locator("body"));
   await expect(home.locator(".home-relation-icon svg")).toHaveCount(13);
   await expect(home.locator(".home-relation-subnode")).toHaveCount(17);
-  await expect(home.locator(".home-relation path")).toHaveCount(34);
-  await expect(home.locator(".home-relation-subnode").filter({ hasText: /^科目を選択$/ })).toBeVisible();
+  await expect(home.locator(".home-relations-map .home-relation path")).toHaveCount(34);
+  await expect(home.locator(".home-relation-subnode").first()).toBeVisible();
   const input = home.getByRole("button", { name: "施策一覧", exact: true });
   const sizes = await home.locator(".home-relation-icon svg").evaluateAll(icons => icons.map(icon => ({ entry: !!icon.closest(".is-entry"), width: Number.parseFloat(getComputedStyle(icon).width) })));
   expect(sizes.filter(icon => icon.entry)[0]!.width).toBeGreaterThan(Math.max(...sizes.filter(icon => !icon.entry).map(icon => icon.width)));
@@ -231,6 +243,7 @@ test("動きを減らす設定でも項目は自由に動かせ、移動後の�
   await page.mouse.up();
   await expect(home).toBeVisible();
   await input.press("Enter");
+  await input.press("Enter");
   await expect(app.getByRole("heading", { name: "施策一覧", exact: true })).toBeVisible();
 });
 
@@ -241,7 +254,8 @@ test("関係サブノードを動かすと両側の線が追従し、画面を�
   await settleMotion(app.locator("body"));
   const relation = home.locator(".home-relation").filter({ hasText: "科目を選択" });
   const subnode = relation.locator(".home-relation-subnode");
-  await subnode.hover({ force: true });
+  await home.getByRole("button", { name: "施策一覧", exact: true }).click();
+  await subnode.hover();
   await expect(home.locator(".home-relation.is-active")).toHaveCount(1);
   const before = await relation.locator("path").evaluateAll(paths => paths.map(path => path.getAttribute("d")));
   const box = (await subnode.boundingBox())!;
@@ -272,25 +286,36 @@ test("初期配置は関係ごとに分散し、説明が重ならず、操作�
         Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1
         ? [`${item.textContent} / ${items[i + j + 1]!.textContent}`] : [];
     }));
+    const crossings: string[] = [];
+    const shortConnections: string[] = [];
+    for (const path of svg.querySelectorAll<SVGPathElement>(".home-relation path")) {
+      const length = path.getTotalLength(), matrix = path.getScreenCTM()!;
+      const strokes = path.getAttribute("d")!.match(/M/g)!.length;
+      if (length / strokes < 18) shortConnections.push(path.parentElement!.querySelector("title")!.textContent!);
+      for (let step = 1; step < 40; step++) {
+        const point = path.getPointAtLength(length * step / 40).matrixTransform(matrix);
+        items.forEach((item, index) => {
+          if (path.parentElement!.contains(item)) return;
+          const box = boxes[index]!;
+          if (point.x > box.left + 1 && point.x < box.right - 1 && point.y > box.top + 1 && point.y < box.bottom - 1)
+            crossings.push(`${path.parentElement!.querySelector("title")!.textContent} / ${item.textContent}`);
+        });
+      }
+    }
     const groups = [...svg.querySelectorAll("g[transform]")];
     const before = groups.map(group => group.getAttribute("transform"));
     for (let i = 0; i < 30; i++) await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
     const box = (page: string) => svg.querySelector(`[data-page="${page}"]`)!.getBoundingClientRect();
     const x = (page: string) => box(page).x;
-    const columns = [["account-type-master", "amount-item-master", "industry-master", "expansion-category-master"],
-      ["account-master", "department-master", "expansion-master"], ["kind-master", "initiative-list", "period-master"],
-      ["previous-input", "cost-table", "expansion-table"]];
-    const rows = [["account-type-master", "account-master", "previous-input"], ["amount-item-master", "kind-master", "cost-table"],
-      ["industry-master", "department-master", "initiative-list"], ["expansion-category-master", "expansion-master", "period-master", "expansion-table"]];
-    return { aligned: columns.every(column => column.every(page => Math.abs(box(page).x - box(column[0]!).x) < 1)) &&
-      rows.every(row => row.every(page => Math.abs(box(page).y - box(row[0]!).y) < 1)), overlaps, stable: groups.every((group, i) => group.getAttribute("transform") === before[i]),
+    return { overlaps, shortConnections, crossings: [...new Set(crossings)], stable: groups.every((group, i) => group.getAttribute("transform") === before[i]),
       center: x("initiative-list"), account: x("account-master"), department: x("department-master"),
       cost: x("cost-table"), expansion: x("expansion-table") };
   });
   expect(metrics.overlaps).toEqual([]);
-  expect(metrics.aligned).toBe(true);
+  expect(metrics.crossings).toEqual([]);
+  expect(metrics.shortConnections, "説明の両端に接続線の長さを確保する").toEqual([]);
   expect(metrics.stable).toBe(true);
-  expect(metrics.account).toBeLessThan(metrics.center);
+  expect(metrics.account).toBeCloseTo(metrics.center, 1);
   expect(metrics.department).toBeLessThan(metrics.center);
   expect(metrics.cost).toBeGreaterThan(metrics.center);
   expect(metrics.expansion).toBeGreaterThan(metrics.center);
@@ -337,4 +362,43 @@ test("画面外の関係説明へTabで移動すると枠まで表示し、説�
   await expect(map).not.toHaveAttribute("style", pan!);
   await settleMotion(app.locator("body"));
   expect(await descriptions.first().evaluate(visible)).toBe(true);
+});
+
+
+test("別項目は選択だけを切り替え、背景とEscapeで解除し、ドラッグでも開かない", async ({ page, app }, testInfo) => {
+  await app.getByRole("button", { name: "新規作成", exact: true }).click();
+  await settleMotion(app.locator("body"));
+  const home = app.getByRole("main", { name: "ホーム", exact: true });
+  const account = home.getByRole("button", { name: "勘定科目マスタ", exact: true });
+  const initiative = home.getByRole("button", { name: "施策一覧", exact: true });
+  await account.click();
+  await expect(account).toHaveAttribute("aria-pressed", "true");
+  await initiative.click();
+  await expect(initiative).toHaveAttribute("aria-pressed", "true");
+  await expect(account).toHaveAttribute("aria-pressed", "false");
+  await page.screenshot({ path: `/private/tmp/triadichrome-relations-selected-${testInfo.project.name}.png` });
+  await initiative.press("Escape");
+  await expect(initiative).toHaveAttribute("aria-pressed", "false");
+  await account.click();
+  const viewport = home.locator(".home-relations-viewport");
+  await viewport.click({ position: { x: 5, y: 5 } });
+  await expect(account).toHaveAttribute("aria-pressed", "false");
+  await expect(home).toBeVisible();
+});
+
+
+test("関係の意味を4種類の線と凡例で区別し、選択中も線種を維持する", async ({ app }) => {
+  await app.getByRole("button", { name: "新規作成", exact: true }).click();
+  const home = app.getByRole("main", { name: "ホーム", exact: true });
+  await expect(home.getByRole("list", { name: "関係の線の意味" }).getByRole("listitem")).toHaveText(["選択・参照", "構成・所属", "金額・計算", "同じ内容の別表示"]);
+  const paths = home.locator(".home-relations-map .home-relation");
+  await expect(paths.filter({ hasText: "前年の実額" })).toHaveAttribute("data-kind", "amount");
+  await expect(paths.filter({ hasText: "グループ分け" })).toHaveAttribute("data-kind", "structure");
+  await expect(paths.filter({ hasText: "科目を選択" })).toHaveAttribute("data-kind", "reference");
+  await expect(paths.filter({ hasText: "同じ内容を科目別に確認" })).toHaveAttribute("data-kind", "view");
+  await home.getByRole("button", { name: "施策一覧", exact: true }).click();
+  await expect(home.locator(".home-relations-map .relation-reference path").first()).toHaveCSS("stroke-dasharray", "8px, 5px");
+  await expect(home.locator(".home-relations-map .relation-structure path").first()).toHaveCSS("stroke-dasharray", "1px, 5px");
+  await expect(home.locator(".home-relations-map .relation-amount path").first()).toHaveCSS("stroke-dasharray", "none");
+  expect((await home.locator(".home-relations-map .relation-view path").first().getAttribute("d"))!.match(/M/g)).toHaveLength(2);
 });
