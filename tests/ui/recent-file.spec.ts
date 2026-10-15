@@ -214,3 +214,84 @@ for (const action of ["preview", "close"] as const) {
     })).toEqual(seed);
   });
 }
+
+test.describe("複数タブの再開先", () => {
+  test.setTimeout(60_000);
+
+  for (const [first, second] of [["A.triadic", "B.triadic"], ["B.triadic", "A.triadic"]] as const) {
+    test(`別タブで${second}を開いた後も${first}の保存成功を再開先へ反映する`, async ({ page, context }) => {
+      await filePicker(page, first);
+      await page.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+      await expect(page.locator(".home-file-name")).toHaveText(first);
+      const other = await context.newPage();
+      await other.goto("/");
+      await expect(other.locator("#recent-file-name")).toHaveText(first);
+      await filePicker(other, second);
+      await other.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+      await expect(other.locator(".home-file-name")).toHaveText(second);
+      const probe = await context.newPage();
+      await probe.goto("/");
+      await expect(probe.locator("#recent-file-name")).toHaveText(second);
+      await page.getByRole("button", { name: "マスタ", exact: true }).click();
+      await page.getByRole("button", { name: /^勘定科目マスタ/ }).click();
+      await page.getByRole("button", { name: "売上高を編集", exact: true }).click();
+      await page.getByRole("textbox", { name: "売上高の名称", exact: true }).fill("最後に保存した売上");
+      await page.getByRole("button", { name: "完了", exact: true }).click();
+      await expect(page.getByRole("button", { name: "最後に保存した売上を編集", exact: true })).toBeVisible();
+      await probe.reload();
+      await expect(probe.locator("#recent-file-name")).toHaveText(first);
+      await probe.getByRole("button", { name: "続きから", exact: true }).click();
+      await probe.getByRole("button", { name: "マスタ", exact: true }).click();
+      await probe.getByRole("button", { name: /^勘定科目マスタ/ }).click();
+      await expect(probe.getByRole("button", { name: "最後に保存した売上を編集", exact: true })).toBeVisible();
+    });
+  }
+
+  for (const outcome of ["変更なし", "保存失敗", "取消", "記憶失敗"] as const) {
+    test(`別タブの再開先を${outcome}では置き換えず、成功した保存と入力を保持する`, async ({ page, context }) => {
+      await filePicker(page, "A.triadic");
+      await page.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+      await expect(page.locator(".home-file-name")).toHaveText("A.triadic");
+      const other = await context.newPage();
+      await other.goto("/");
+      await filePicker(other, "B.triadic");
+      await other.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+      await expect(other.locator(".home-file-name")).toHaveText("B.triadic");
+      await page.evaluate(outcome => {
+        if (outcome === "記憶失敗") {
+          IDBObjectStore.prototype.put = () => { throw new DOMException("storage failure", "QuotaExceededError"); };
+        } else if (outcome !== "変更なし") {
+          FileSystemFileHandle.prototype.createWritable = async () => {
+            if (outcome === "取消") throw new DOMException("cancel", "AbortError");
+            throw new Error("保存失敗の確認");
+          };
+        }
+      }, outcome);
+      await page.getByRole("button", { name: "マスタ", exact: true }).click();
+      await page.getByRole("button", { name: /^勘定科目マスタ/ }).click();
+      await page.getByRole("button", { name: "売上高を編集", exact: true }).click();
+      const input = page.getByRole("textbox", { name: "売上高の名称", exact: true });
+      if (outcome !== "変更なし") await input.fill("保持する売上");
+      if (outcome === "保存失敗" || outcome === "取消") {
+        await expect(page.getByRole("alert")).toBeVisible();
+        await expect(input).toHaveValue("保持する売上");
+      } else {
+        await page.getByRole("button", { name: "完了", exact: true }).click();
+        await expect(page.getByRole("button", { name: outcome === "変更なし" ? "売上高を編集" : "保持する売上を編集", exact: true })).toBeVisible();
+      }
+      const probe = await context.newPage();
+      await probe.goto("/");
+      await expect(probe.locator("#recent-file-name")).toHaveText("B.triadic");
+      if (outcome === "記憶失敗") {
+        await closeFile(page);
+        await expect(page.locator("#recent-file-name")).toHaveText("A.triadic");
+        await expect(page.getByRole("status")).toContainText("履歴を保存できませんでした");
+        await page.getByRole("button", { name: "続きから", exact: true }).click();
+        await page.getByRole("button", { name: "マスタ", exact: true }).click();
+        await page.getByRole("button", { name: /^勘定科目マスタ/ }).click();
+        await expect(page.getByRole("button", { name: "保持する売上を編集", exact: true })).toBeVisible();
+      }
+    });
+  }
+
+});

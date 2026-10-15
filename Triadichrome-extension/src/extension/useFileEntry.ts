@@ -45,9 +45,8 @@ export function useFileEntry(session: PlanSession, savedName: string, clearClose
     }
   };
   const rememberSavedFile = useRef<(handle: FileSystemFileHandle) => Promise<void>>(async () => {});
-  rememberSavedFile.current = async handle => {
-    if (handle !== recentFile) await remember(handle);
-  };
+  // Another tab can replace the shared entry while this tab keeps the same handle.
+  rememberSavedFile.current = remember;
   useEffect(() => session.subscribeFileSave(handle => rememberSavedFile.current(handle)), [session]);
   useEffect(() => {
     if (savedName) setDisplayName(savedName);

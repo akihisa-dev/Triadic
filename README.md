@@ -246,6 +246,8 @@ New screens/states also use common variables in `ExtensionPage.css` and `FadeSwa
 
 ## Resume the previous file
 
+When different tabs open different plans, every successful save remembers its destination for the next entry page. Unchanged operations, failed saves, and cancellation preserve the shared entry. Failure to remember a handle preserves the successful plan save and the local resume handle, and shows a notice.
+
 “Continue” opens the last successfully opened or saved file, showing its filename and disabled if none is remembered. It works after closing/reopening the extension, requesting read/write permission on click, then validating/loading latest contents. Startup neither reads the file nor requests permission. Moved/deleted files or denied permission produce guidance to select again with “Open file.” Cancellation/invalid files do not update memory.
 
 Because the browser does not expose absolute paths, one reopening reference (`FileSystemFileHandle`) is retained in the extension's IndexedDB with no expiry, replaced by the next successfully opened/saved reference. “Clear history” (履歴を消す), uninstalling the extension, or clearing browser storage removes it. Clear history does not delete the plan. Neither plan contents nor absolute paths are copied into browser storage, sent externally, or synchronized across browsers. No extra extension permissions are needed. This follows [Chrome's file reference/permission documentation](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access).
@@ -750,6 +752,8 @@ UIの位置は、利用者が意図した操作以外では動かしません。
 新しい画面や状態を追加する際も、`ExtensionPage.css`の共通変数と`FadeSwap`を使います。通知には`StatusNotice`、操作の確認には`ConfirmationDialog`を使います。高さの変化は利用者が意図して開閉する領域に限定します。
 
 ## 前回のファイルから再開
+
+複数タブで別の計画を開いていても、最後に保存が成功したファイルの参照を端末内へ記憶します。変更なしの操作、保存失敗・取消では記憶を更新しません。記憶だけの失敗では計画の保存成功を維持し、通知と同じ画面内の再開先を保持します。
 
 入口の「続きから」は、最後に正常に開いた、または保存したファイルを開きます。ファイル名を併記し、記憶がない間は無効です。拡張機能を閉じて開き直した後も利用でき、クリック時に必要な読み書きの許可を求めて、ファイルの最新内容を検証して読み込みます。起動時にファイルを読んだり許可を求めたりはしません。移動・削除や許可拒否の場合は案内を表示し、「ファイルを開く」から選び直せます。キャンセル・不正なファイルでは記憶を更新しません。
 

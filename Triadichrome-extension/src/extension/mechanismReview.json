@@ -32,7 +32,7 @@
     "description": "e3ef77f611df3253d1dbd6f81b402912aaf2492a824c73a55b069be546206438"
   },
   "open": {
-    "implementation": "f86b64fcdd773a2fd770405fa42b6465c6caf500fcb1efbc02109491dcc7dbe6",
+    "implementation": "1ec89d5d4476fc1f5061d780c5697b7c6edbcfe4708ad3bf2dac8779ec7621bc",
     "description": "dedfbcb815e31711e1bd1893393edd3ada327142204aef2ef4e4467651f5b2bc"
   },
   "save": {
@@ -52,8 +52,8 @@
     "description": "bec96fc1e99f71a0f9c372d32d7aafecba9df1b86b8783a999a5cd7f71acdba1"
   },
   "storage": {
-    "implementation": "abbc930bbf9fcaec4e687f3971dea5a6ef1763dd39509dbf532e9077727620d0",
-    "description": "adbea380073f2fbfdbec1529508bbc87216fbbc48d2ed49a86a3834b2d7ccdde"
+    "implementation": "f3e38cd19d9f28e1f347eeae385ef7a919187852c14cc64ed492eda77c6bb1c6",
+    "description": "c20ab4fb3a183879d6f739c1fbe56360549811568959b1dd040d0ae692855509"
   },
   "validation": {
     "implementation": "3c08e984fb7f086473b6363623435fef8498a2fe4540848a400bb7596794a417",
