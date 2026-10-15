@@ -54,6 +54,8 @@ export async function verifyAggregationRebase(api) {
     finally { db.close(); }
     const mock = (columns,values) => ({exec: sql => [{values:sql.startsWith('PRAGMA') ? columns : values}]});
     const column = (name,pk) => [0,name,'TEXT',0,null,pk];
+    const reordered = mock(['month','revision','department_id','id','amount_yen','industry_id','account_id'].map(name => column(name, name === 'id' ? 1 : 0)), [[4,3,2,900,123,1,57]]);
+    assert.deepEqual([...api.readRebaseRows(reordered, 'previous_amounts').keys()], ['[57,1,2,4]'], '業務キーを列位置でなく列名から取得する');
     for (const [columns,values] of [[[column('id',0)],[]],[[column('id',1)],[[null]]],[[column('id',1)],[[1],[1]]]]) {
       assert.throws(() => api.readRebaseRows(mock(columns,values),'future_table'));
     }

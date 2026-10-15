@@ -1,14 +1,16 @@
 import type { SqlValue } from "./sqliteRuntime";
+import type { rebaseLayout } from "./rebaseLayout";
 type Rows = ReadonlyMap<string, SqlValue[]>;
 const equal = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 /** Keep the committed sequence; append this edit's incoming rows in their own order.
  * A single reorder of surviving base rows can be combined with independent additions.
  * Ambiguous reorders, pre-existing ties and exhausted positions stay unsaved.
  */
-export function mergeRebaseOrder(table: string, original: Rows, local: Rows, external: Rows, combined: Map<string, SqlValue[]>): boolean {
+export function mergeRebaseOrder(table: string, original: Rows, local: Rows, external: Rows, combined: Map<string, SqlValue[]>, layout: ReturnType<typeof rebaseLayout>): boolean {
   const initiative = table === "initiative_rows";
   const master = table === "master_order";
-  const parent = initiative ? 1 : 0, position = master ? 0 : initiative ? 3 : 4;
+  const parent = master ? 0 : layout.index(initiative ? "initiative_id" : "parent_id");
+  const position = layout.index(initiative ? "sort_order" : "position");
   const ownerOf = (row: SqlValue[]) => master ? 0 : row[parent]!;
   const parents = new Set([...original.values(), ...local.values()].map(ownerOf));
   const sequence = (rows: Rows, owner: SqlValue) => [...rows].filter(([, row]) => ownerOf(row) === owner)

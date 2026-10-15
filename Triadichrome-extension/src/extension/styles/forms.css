@@ -414,19 +414,3 @@
 .confirmation-dialog h2 { margin: 0; font-size: 20px; line-height: 1.5; }
 .confirmation-dialog p { margin: 16px 0 24px; overflow-wrap: anywhere; font-size: 15px; line-height: 1.7; }
 .confirmation-dialog .form-actions { justify-content: flex-end; }
-.account-master-list { max-width: 52rem; margin-top: 40px; overflow: auto; outline: 2px solid transparent; outline-offset: 2px; }
-.account-master-list:focus-visible { outline-color: var(--focus); }
-.account-master-table { width: 100%; min-width: 520px; border-collapse: collapse; table-layout: fixed; text-align: left; }
-.account-master-table th, .account-master-table td { padding: 12px 8px; }
-.account-master-table thead { border-bottom: 1px solid var(--line); }
-.account-master-table thead th { color: var(--muted); font-size: 13px; font-weight: 500; }
-.account-master-table thead th:first-child { width: 100px; }
-.account-master-table thead th:nth-child(3) { width: 120px; }
-.account-master-table thead th:last-child { width: 152px; }
-.account-master-table tr > :first-child { padding-left: 0; }
-.account-master-table tr > :last-child { padding-right: 0; }
-.account-master-table tbody { border-bottom: 1px solid var(--line); }
-.account-master-table .form-actions { flex-wrap: nowrap; }
-.account-master-table .text-button { min-height: 44px; }
-.account-master-table input, .account-master-table select { padding: 8px; font-size: 14px; outline-offset: -2px; }
-.account-master-name { overflow-wrap: anywhere; font-size: 15px; font-weight: 400; line-height: 1.7; }

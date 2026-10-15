@@ -2,6 +2,15 @@ import type { Database } from "./sqliteRuntime";
 import { historyFromDatabase, snapshotFromDatabase, trackHistoryInDatabase } from "./dataHistory";
 import { openTriadicDatabase, exportTriadicDatabase } from "./triadicDatabase";
 
+/** Finish an actual edit before it reaches the file boundary. */
+export async function finishPreparedSave<T>(database: Database, before: Uint8Array, now: string,
+  project: (database: Database) => T) {
+  const after = await snapshotFromDatabase(database);
+  trackHistoryInDatabase(database, before, now);
+  const bytes = exportTriadicDatabase(database);
+  return { bytes, contents: project(database), savedHistory: historyFromDatabase(database), operation: { before, after } };
+}
+
 /** One private connection owns editing, operation snapshots, history and export.
  * prepare captures the change's comparison before the business snapshot is taken.
  * Selection callers need no full contents projection.
@@ -21,9 +30,6 @@ export async function prepareSave<T>(bytes: Uint8Array, now: string,
     }
     database.run("UPDATE document_info SET updated_at = ? WHERE id = 1", [now]);
     database.run("COMMIT");
-    const after = await snapshotFromDatabase(database);
-    trackHistoryInDatabase(database, before, now);
-    const savedBytes = exportTriadicDatabase(database);
-    return { bytes: savedBytes, contents: project(database), savedHistory: historyFromDatabase(database), operation: after ? { before, after } : null };
+    return await finishPreparedSave(database, before, now, project);
   } finally { database.close(); }
 }

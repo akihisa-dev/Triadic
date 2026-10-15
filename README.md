@@ -417,9 +417,9 @@ After changes, rebuild and reload on the extensions page. Distribute `dist/Triad
 - `Triadichrome-extension/src/extension/preparePlanCommand.ts`: Prepares save data/undo states from commands. `PlanSession.ts` owns destination choice, save ordering, and publication. `planFile.ts` checks external changes; `triadicFile.ts` commits to real files.
 - `Triadichrome-extension/src/core/storage/prepareOrdinarySave.ts`: Applies ordinary updates once in a dedicated connection; `commandComparison.ts` compares stored fields for target initiatives, previous-year classifications, related masters/order. Revision-only changes are not content changes; override addition/removal and explicit 0 remain distinct. Avoids full-plan reconstruction solely for change detection and screen-side string comparisons.
 - `Triadichrome-extension/src/extension/ExtensionPage.tsx`: File-operation entry. `filePicker.ts` chooses destinations; `usePlanSession.ts` subscribes to saved state and five-minute recording deadlines. If a backward clock shift ends recording before its deadline, it reschedules with the latest deadline.
-- `Triadichrome-extension/src/extension/HomePage.tsx`: Connects common screens. `useHomeWorkspace.tsx` holds preregistration input, past viewing, and navigation restrictions; `WorkspacePage.tsx` renders screens; `WorkspaceChrome.tsx` displays header/sidebar. `useScreenHistory.ts` holds navigation history.
+- `Triadichrome-extension/src/extension/HomePage.tsx`: Connects common screens. `useHomeWorkspace.tsx` composes the separate draft, navigation, history, save-command and undo controllers in `extension/workspace/`; `WorkspacePage.tsx` renders screens; `WorkspaceChrome.tsx` displays header/sidebar. `useScreenHistory.ts` holds navigation history.
 - `Triadichrome-extension/src/extension/useFileEntry.ts`: Controls selection/loading/last reference. `EntryPage.tsx` renders entry.
-- `Triadichrome-extension/src/core/storage/prepareSave.ts`: Prepares aggregation/kind-selection updates, undo states, snapshots, and export in one dedicated connection.
+- `Triadichrome-extension/src/core/storage/prepareSave.ts`: Shares final undo snapshots, history preparation, validated export and projection across ordinary, aggregation and kind-selection updates. Unchanged ordinary input returns its original bytes without projection; selection changes reuse existing calculation inputs.
 - `Triadichrome-extension/src/core/tables/grid.ts`: Input ranges, amount normalization, pasted-text parsing; initiative/previous-year-specific constraints live in their table logic.
 - JSZip used directly for Excel ZIP inspection is a runtime dependency. Version/distributed contents remain; it uses MIT.
 - `Triadichrome-extension/src/extension/*Page.tsx`: Initiative, previous-year, three-table, master, and history screens. Name masters share `NamedMasterPage.tsx`, manual-save notices `useMasterOperation.ts`, monthly input selection/focus `useGridInteraction.ts`.
@@ -427,7 +427,8 @@ After changes, rebuild and reload on the extensions page. Distribute `dist/Triad
 - `Triadichrome-extension/src/extension/main.tsx` and `background.ts`: React startup and extension-icon entry.
 - `Triadichrome-extension/manifest.template.json`: Authoritative Manifest source.
 - `scripts/build.mjs`: Generates/synchronizes distribution. `node-bundle.mjs` shares temporary bundling/Wasm resolution for regular tests and sample generation.
-- `tests/core-api.ts` and `tests/sample-api.ts`: Explicit entries for regular tests and sample generation.
+- `Triadichrome-extension/src/extension/home/`: Home relation definitions and pointer/camera interactions. Master CSS has one owner in `styles/masters.css`; common Excel sheet formatting lives in `core/spreadsheets/workbookLayout.ts`. `core/storage/rebaseLayout.ts` resolves merge column positions from the validated SQLite schema.
+- `tests/core-api.ts` and `tests/sample-api.ts`: Explicit entries for regular tests and sample generation. `tests/api/` separates domain, SQLite, session/file, rendering and fixture boundaries while retaining one shared test bundle.
 - `dist/`: Loadable `extension/` is tracked so clones can immediately load the extension. ZIPs are generated locally by build and excluded from Git along with temporary build/verification files. When tracked artifacts change, update through build and include them in the same commit.
 
 See [AGENTS.md](AGENTS.md) for development, verification, and commit rules.
@@ -926,9 +927,9 @@ Chrome Web Store用のアイコン・販促画像2種類・スクリーンショ
 - `Triadichrome-extension/src/extension/preparePlanCommand.ts`：更新命令から保存データと取り消し用の状態を準備します。`PlanSession.ts`が保存先選択・保存順序・保存後の公開を所有します。`planFile.ts`が外部変更を確認し、`triadicFile.ts`が実ファイルへの確定を行います。
 - `Triadichrome-extension/src/core/storage/prepareOrdinarySave.ts`：通常更新を専用接続で一度適用し、`commandComparison.ts`で対象施策・前年分類・関連マスタと順序の保存項目を比較します。改訂番号だけの更新は変更と扱わず、手修正の追加・解除と明示0は区別します。変更判定専用の計画全体の復元と画面側の文字列比較を行いません。
 - `Triadichrome-extension/src/extension/ExtensionPage.tsx`：ファイル操作の入口。`filePicker.ts`が保存先選択、`usePlanSession.ts`が保存済み状態の購読と5分の記録期限を担当します。時計の後退で期限前に記録処理が終わった場合も、最新の期限で予約し直します。
-- `Triadichrome-extension/src/extension/HomePage.tsx`：共通画面の接続。`useHomeWorkspace.tsx`が登録前の入力・過去閲覧・移動制約を保持し、`WorkspacePage.tsx`が各画面を描画、`WorkspaceChrome.tsx`がヘッダーとサイドバーを表示します。`useScreenHistory.ts`が画面移動の履歴を保持します。
+- `Triadichrome-extension/src/extension/HomePage.tsx`：共通画面の接続。`useHomeWorkspace.tsx`が`extension/workspace/`の登録前入力・画面移動・過去閲覧・保存命令・操作取消を接続し、`WorkspacePage.tsx`が各画面を描画、`WorkspaceChrome.tsx`がヘッダーとサイドバーを表示します。`useScreenHistory.ts`が画面移動の履歴を保持します。
 - `Triadichrome-extension/src/extension/useFileEntry.ts`：ファイル選択・読込・前回参照を制御します。`EntryPage.tsx`は入口画面の表示を担当します。
-- `Triadichrome-extension/src/core/storage/prepareSave.ts`：集計・種別選択の更新、取り消し用の状態、時点履歴、書き出しを一つの専用接続で準備します。
+- `Triadichrome-extension/src/core/storage/prepareSave.ts`：通常・集計・種別選択の変更後に、取消用の状態、時点履歴、検証付き書き出しと表示用データの準備を共有します。通常入力の無変更時は表示用データを再取得せず元のbytesを返し、種別選択は既存の計算元を再利用します。
 - `Triadichrome-extension/src/core/tables/grid.ts`：表入力の選択範囲、金額の正規化、貼り付け文字列の解析。施策と前年入力の固有制約は各表の処理に置きます。
 - ExcelのZIP内容の検査に直接利用するJSZipは実行用依存として宣言します。版と配布内容は維持し、MITライセンスで利用します。
 - `Triadichrome-extension/src/extension/*Page.tsx`：施策・前年・三表・マスタ・履歴の画面。名称マスタは`NamedMasterPage.tsx`、手動保存の通知は`useMasterOperation.ts`、月別入力の選択・フォーカスは`useGridInteraction.ts`を共有します。
@@ -936,7 +937,8 @@ Chrome Web Store用のアイコン・販促画像2種類・スクリーンショ
 - `Triadichrome-extension/src/extension/main.tsx`と`background.ts`：Reactの起動と拡張機能アイコンの入口。
 - `Triadichrome-extension/manifest.template.json`：Manifestの正本。
 - `scripts/build.mjs`：配布物の生成と同期。`node-bundle.mjs`は通常テストと確認用データ生成で使う一時bundle・Wasm解決を共有します。
-- `tests/core-api.ts`と`tests/sample-api.ts`：通常テストと確認用データ生成の明示的な入口。
+- `Triadichrome-extension/src/extension/home/`：関連図の定義とポインター・表示位置の操作。マスタのCSSは`styles/masters.css`、Excel共通書式は`core/spreadsheets/workbookLayout.ts`へ集約します。`core/storage/rebaseLayout.ts`は検証済みSQLiteの列名から外部更新の統合に使う列位置を取得します。
+- `tests/core-api.ts`と`tests/sample-api.ts`：通常テストと確認用データ生成の明示的な入口。`tests/api/`で業務規則・SQLite・保存とファイル・描画・確認用データを分け、一つのテストbundleへ接続します。
 - `dist/`：読み込み用の`extension/`をGit管理し、リポジトリ取得後すぐに拡張機能を読み込めるようにします。配布ZIPはbuildでローカルに生成し、ビルドと検証の一時ファイルとともにGit管理から除外します。管理対象の成果物が変わる変更では、buildで更新して同じコミットに含めます。
 
 開発・検証・コミットのルールは[AGENTS.md](AGENTS.md)を参照してください。

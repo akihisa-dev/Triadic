@@ -8,24 +8,19 @@ import { BUSINESS_TABLES } from "./triadicSchema";
 import { exportTriadicDatabase, openTriadicDatabase } from "./triadicDatabase";
 import { trackHistoryChange, createBusinessSnapshot } from "./dataHistory";
 import type { Database, SqlValue } from "./sqliteRuntime";
+import { rebaseLayout } from "./rebaseLayout";
 
 const equal = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 export function readRebaseRows(database: Database, table: string): Map<string, SqlValue[]> {
-  const columns = database.exec(`PRAGMA table_info(${table})`)[0]?.values ?? [];
-  const keys = columns.map((column, index) => ({ index, order: Number(column[5]) })).filter(key => key.order).sort((a,b) => a.order-b.order).map(key => key.index);
-  if (table === "previous_amounts") {
-    keys.splice(0, keys.length, ...["account_id", "industry_id", "department_id", "month"].map(name => columns.findIndex(column => column[1] === name)));
-    if (keys.some(index => index < 0)) throw new Error("前年金額の識別項目がありません。");
-  }
-  const account = columns.findIndex(column => column[1] === "account_id"), group = columns.findIndex(column => column[1] === (table === "master_order" ? "aggregation_group_id" : "group_id"));
-  const membership = table === "aggregation_members" || table === "master_order";
-  if (membership ? account < 0 || group < 0 : !keys.length) throw new Error("統合対象の行識別子がありません。");
+  const { keys, membership, referenceKeys } = rebaseLayout(database, table);
+  const [account, group] = referenceKeys;
+  if (!membership && !keys.length) throw new Error("統合対象の行識別子がありません。");
   const result = new Map<string, SqlValue[]>();
   for (const row of database.exec(`SELECT * FROM ${table}`)[0]?.values ?? []) {
     let values: SqlValue[];
     if (membership) {
-      if ((row[account] === null) === (row[group] === null)) throw new Error("所属対象の識別子が不正です。");
-      values = row[account] === null ? ["group",row[group]!] : ["account",row[account]!];
+      if ((row[account!] === null) === (row[group!] === null)) throw new Error("所属対象の識別子が不正です。");
+      values = row[account!] === null ? ["group",row[group!]!] : ["account",row[account!]!];
     } else values = keys.map(index => row[index]!);
     if (values.some(value => typeof value !== "string" && (typeof value !== "number" || !Number.isSafeInteger(value)))) throw new Error("統合対象の行識別子が不正です。");
     const key = JSON.stringify(values);
@@ -52,15 +47,8 @@ export async function rebasePlan(baseBytes: Uint8Array, editedBytes: Uint8Array,
       if (table === "document_info") continue;
       const original = readRebaseRows(base, table), local = readRebaseRows(edited, table), latest = readRebaseRows(current, table);
       const externalRows = new Map([...latest].map(([key, row]) => [key, [...row]]));
-      const comparable = (row: SqlValue[] | undefined) => {
-        if (!row) return row;
-        if (table === "previous_amounts") return row.slice(1, -1);
-        if (table === "initiative_rows") return row.filter((_, index) => index !== 3 && index !== 4);
-        if (table === "aggregation_members") return row.slice(0, 4);
-        if (table === "master_order") return row.slice(1);
-        if (table === "initiatives") return row.slice(0, -1);
-        return row;
-      };
+      const layout = rebaseLayout(base, table);
+      const { comparable } = layout;
       // Previous cells are identified by their business coordinates, not a copy's auto-increment ID.
       const sameRow = (a: SqlValue[] | undefined, b: SqlValue[] | undefined) =>
         equal(comparable(a), comparable(b));
@@ -86,7 +74,7 @@ export async function rebasePlan(baseBytes: Uint8Array, editedBytes: Uint8Array,
         changed = true;
       }
       if (table === "initiative_rows" || table === "aggregation_members" || table === "master_order") {
-        if (!mergeRebaseOrder(table, original, local, externalRows, latest)) return null;
+        if (!mergeRebaseOrder(table, original, local, externalRows, latest, layout)) return null;
         changed ||= !equal([...externalRows], [...latest]);
       }
       if (changed) replacements.set(table, [...latest.values()]);

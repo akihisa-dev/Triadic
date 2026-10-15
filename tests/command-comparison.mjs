@@ -3,6 +3,11 @@ import assert from "node:assert/strict";
 export async function verifyCommandComparison(api) {
   const base = await api.createSamplePlan(2026);
   const contents = await api.readPlanContents(base);
+  const originalHistory = await api.readDataHistory(base);
+  const fresh = await api.createTriadicDatabase(2026);
+  const first = await api.processingTasks.prepareOrdinarySave(fresh, { type: 'department', change: { type: 'add', departmentName: '初回履歴確認', industryIds: [1] } }, 2026);
+  assert.equal(first.savedHistory.entries.length, 1, '初回変更前の状態を一度だけ記録する');
+  assert.equal((await api.readDataHistory(fresh)).entries.length, 0, '準備で元の計画を変更しない');
   const initiative = contents.initiatives[0];
   const draft = { ...initiative, fiscalYear: "2026" };
   const update = value => ({ type: "initiative.update", id: initiative.id, draft: value });
@@ -30,11 +35,19 @@ export async function verifyCommandComparison(api) {
     const changed = meaningful(contents) !== meaningful(await api.readPlanContents(legacy));
     const prepared = await api.processingTasks.prepareOrdinarySave(base, command, 2026);
     assert.equal(prepared.operation !== null, changed, `${command.type}: 従来の意味上の比較と一致`);
-    if (!changed) assert.equal(prepared.bytes, base, "同値は更新日時・改訂番号を含め元bytesそのものを返す");
+    if (!changed) {
+      assert.equal(prepared.bytes, base, "同値は更新日時・改訂番号を含め元bytesそのものを返す");
+      assert.equal("contents" in prepared, false, "無変更では全体の表示用データを読み直さない");
+      assert.equal("savedHistory" in prepared, false, "無変更では履歴の準備を追加しない");
+    }
     else {
       assert.equal(meaningful(await api.readPlanContents(prepared.bytes)), meaningful(await api.readPlanContents(legacy)));
       assert.deepEqual(await api.readSnapshotContents(prepared.operation.before), contents);
       assert.deepEqual(await api.readSnapshotContents(prepared.operation.after), await api.readPlanContents(prepared.bytes));
+      assert.deepEqual(prepared.contents, await api.readPlanContents(prepared.bytes), "ファイル確定前に表示内容を準備する");
+      assert.deepEqual(prepared.savedHistory, await api.readDataHistory(prepared.bytes), "同じ保存候補に履歴状態も含める");
+      assert.deepEqual(prepared.savedHistory.entries, originalHistory.entries, "記録済みの履歴を重複作成しない");
+      assert.ok(prepared.savedHistory.dirtySince);
     }
   }
   const invalid = update({ ...draft, rows: [{ ...draft.rows[0], amounts: { 4: "不正" } }] });

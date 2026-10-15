@@ -55,7 +55,11 @@ export async function verifyInitiativeFiscalYear(api) {
         ["通常保存の登録", async () => (await api.processingTasks.prepareOrdinarySave(bytes, { type: "initiative.register", draft: registered }, 2026)).bytes],
       ]) {
         const measured = await observe(action);
-        assert.deepEqual(measured.counts, { years: 1, previousReads: 0, previousRows: 0 }, `${count}件・${label}: 年度だけを1回取得`);
+        // Ordinary preparation now includes the full projection formerly read at the file boundary.
+        const projected = label.startsWith("通常保存");
+        assert.deepEqual(measured.counts, projected
+          ? { years: 2, previousReads: 1, previousRows: count }
+          : { years: 1, previousReads: 0, previousRows: 0 }, `${count}件・${label}: 編集用年度1回、保存候補の全体読込は必要時だけ1回`);
         const after = await api.readPlanContents(measured.result);
         assert.deepEqual(after.previousAmounts, contents.previousAmounts, `${label}: 前年全項目を保持`);
         assert.deepEqual(after.kindSelections, contents.kindSelections);
@@ -64,9 +68,11 @@ export async function verifyInitiativeFiscalYear(api) {
         if (label.includes("備考")) assert.equal(changed.note, note.note);
         if (label === "月額更新") assert.equal(changed.rows[0].amounts[4], "120.001");
       }
-      const noChange = await api.processingTasks.prepareOrdinarySave(bytes, { type: "initiative.update", id: saved.id, draft }, 2026);
+      const unchanged = await observe(() => api.processingTasks.prepareOrdinarySave(bytes, { type: "initiative.update", id: saved.id, draft }, 2026));
+      const noChange = unchanged.result;
       assert.equal(noChange.bytes, bytes);
       assert.equal(noChange.operation, null);
+      assert.deepEqual(unchanged.counts, { years: 1, previousReads: 0, previousRows: 0 }, "無変更なら保存候補の全体読込を行わない");
       await assert.rejects(api.registerInitiative(bytes, { ...registered, fiscalYear: "2027" }), /基準年度/);
       await assert.rejects(api.updateInitiative(bytes, saved.id, 2026, { ...draft, fiscalYear: "2027" }), /基準年度/);
       await assert.rejects(api.updateInitiative(bytes, 999999, 2026, draft), /見つかりません/);
@@ -76,7 +82,7 @@ export async function verifyInitiativeFiscalYear(api) {
       assert.equal(restored.counts.previousReads, 1, "全体読込では必要な前年金額を復元");
       assert.equal(restored.counts.previousRows, count);
       assert.deepEqual(restored.result, contents, "拒否後も元の計画全体を保持");
-      console.log(`年度確認: 前年${count}件、登録・備考・月額・通常保存は年度1回、前年取得0回/0行`);
+      console.log(`年度確認: 前年${count}件、単体編集と無変更は年度1回・前年取得0回、変更ありの保存候補は全体読込1回`);
     }
   } finally { sqlite.Database.prototype.exec = originalExec; }
   console.log("PASS: 年度限定取得、前年0・120・12000件、登録・更新・無変更、年度と不正入力拒否、全体読込の前年金額維持");

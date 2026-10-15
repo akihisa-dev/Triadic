@@ -51,4 +51,4 @@ export const restoreDataHistory: Tasks["restoreDataHistory"] = (...args) => proc
 export const deleteDataHistory: Tasks["deleteDataHistory"] = (...args) => processPlan("deleteDataHistory", ...args);
 
 export const prepareKindSelectionSave: Tasks["prepareKindSelectionSave"] = (...args) => processPlan("prepareKindSelectionSave", ...args);
-export const prepareOrdinarySave: Tasks["prepareOrdinarySave"] = (...args) => processPlan("prepareOrdinarySave", ...args);
+export const prepareOrdinarySave: Tasks["prepareOrdinarySave"] = (bytes, command, year) => processPlan("prepareOrdinarySave", bytes, command, year, typeof Worker === "undefined");

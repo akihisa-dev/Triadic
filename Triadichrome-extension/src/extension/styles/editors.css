@@ -1,13 +1,3 @@
-.account-master-list .kind-master-table,
-.account-master-list .period-master-table,
-.account-master-list .department-master-table { min-width: 300px; }
-.account-master-list .kind-master-table thead th:first-child,
-.account-master-list .period-master-table thead th:first-child,
-.account-master-list .department-master-table thead th:first-child { width: auto; }
-.account-master-list .kind-master-table thead th:last-child,
-.account-master-list .period-master-table thead th:last-child,
-.account-master-list .department-master-table thead th:last-child { width: 152px; }
-
 .kind-tabs { display: flex; gap: .35rem; margin: 1.25rem 0 .75rem; border-bottom: 1px solid var(--line); }
 .kind-tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: .4rem .4rem 0 0; background: transparent; padding: .6rem .9rem; color: var(--muted); transition: background-color 160ms ease, color 160ms ease; }
 .kind-tabs button[aria-selected="true"] { border-bottom-color: var(--accent); color: var(--accent); background: var(--soft); }
@@ -19,15 +9,6 @@
   .kind-tabs { flex-wrap: wrap; }
   .kind-tabs button { white-space: nowrap; flex-shrink: 0; }
   .initiative-amount-table th:first-child { position: static; }
-}
-
-.account-master-list { scroll-padding-top: 40px; }
-.account-master-list tbody button, .account-master-list tbody input { scroll-margin-top: 40px; }
-
-@media (max-width: 600px) {
-  .account-master-page { overflow: auto; }
-  .account-master-page > button { flex-shrink: 0; }
-  .account-master-page .account-master-list { flex: 1 0 240px; min-height: 240px; }
 }
 
 .initiative-header-fields { display: flex; flex-direction: column; gap: 12px; }

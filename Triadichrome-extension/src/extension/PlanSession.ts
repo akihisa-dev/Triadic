@@ -85,9 +85,7 @@ export class PlanSession {
       const prepared = await preparePlanCommand(target, command);
       if (!prepared.operation) return plan;
       entry = prepared.operation ?? undefined;
-      return prepared.kind === "prepared"
-        ? writePreparedPlanChange(target, target.handle!, prepared.prepared, true)
-        : writePlanChange(target, target.handle!, prepared.bytes, { allowRebase: true });
+      return writePreparedPlanChange(target, target.handle!, prepared.prepared, true);
     }, destination, isAutomatic(command), saved => {
       if (saved.rebasedOperation !== undefined) entry = saved.rebasedOperation ?? undefined;
       if (!entry) return;

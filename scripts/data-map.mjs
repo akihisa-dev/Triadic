@@ -77,6 +77,20 @@ async function sourceModule(file, read = readSource, resolve = resolveModule) {
   }
   return { text, source, imports, dependencies };
 }
+/** The renderer owns the route list. Extract it independently of dependency hashing. */
+function screenCases(renderer) {
+  const switches = [];
+  const visit = node => {
+    if (ts.isSwitchStatement(node) && ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === "page") switches.push(node);
+    ts.forEachChild(node, visit);
+  };
+  visit(renderer.source);
+  if (switches.length !== 1) throw new Error("画面の切り替え実装を一意に取得できません。");
+  const cases = switches[0].caseBlock.clauses.filter(ts.isCaseClause);
+  const names = cases.map(item => ts.isStringLiteral(item.expression) ? item.expression.text : null);
+  if (names.includes(null) || new Set(names).size !== names.length) throw new Error("画面の識別子が不正または重複しています。");
+  return cases;
+}
 export async function screenImplementations(read = readSource, resolve = resolveModule) {
   const cache = new Map();
   const moduleFor = file => {
@@ -86,13 +100,7 @@ export async function screenImplementations(read = readSource, resolve = resolve
   const home = await moduleFor(extension + "HomePage.tsx");
   const renderer = await moduleFor(extension + "WorkspacePage.tsx");
   const controller = await moduleFor(extension + "useHomeWorkspace.tsx");
-  const cases = [];
-  const visit = node => {
-    if (ts.isSwitchStatement(node) && node.expression.getText(renderer.source) === "displayed.page")
-      cases.push(...node.caseBlock.clauses.filter(ts.isCaseClause));
-    ts.forEachChild(node, visit);
-  };
-  visit(renderer.source);
+  const cases = screenCases(renderer);
   const result = {};
   for (const item of cases) {
     const page = ts.isStringLiteral(item.expression) ? item.expression.text : null;

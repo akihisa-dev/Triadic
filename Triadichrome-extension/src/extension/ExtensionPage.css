@@ -3,8 +3,7 @@
 @import "./styles/entry.css";
 @import "./styles/forms.css";
 @import "./styles/navigation.css";
-@import "./styles/masters.css";
 @import "./styles/tables.css";
 @import "./styles/editors.css";
 
-@import "./styles/master-design.css";
+@import "./styles/masters.css";

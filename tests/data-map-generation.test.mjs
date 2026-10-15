@@ -97,6 +97,23 @@ test("保存項目の追加・削除・参照先変更を説明用の表へ自�
 test("画面・計算・接続・対応説明の変更と画面の追加漏れを検出する", async () => {
   const read = file => readFile(path.join(projectRoot, file), "utf8");
   const implementations = await screenImplementations(read);
+  const renamedVariable = await screenImplementations(async file => {
+    const text = await read(file);
+    return file.endsWith('/WorkspacePage.tsx') ? text.replace('switch (displayed.page)', 'switch (retainedScreen.page)') : text;
+  });
+  assert.deepEqual(Object.keys(renamedVariable), Object.keys(implementations), '画面識別はローカル変数の名称に依存しない');
+  await assert.rejects(screenImplementations(async file => {
+    const text = await read(file);
+    return file.endsWith('/WorkspacePage.tsx') ? text.replace('switch (displayed.page)', 'switch (displayed.unknown)') : text;
+  }), /切り替え実装/, '描画分岐を取得できなければ確認を止める');
+  for (const [before, after, error] of [
+    ['switch (displayed.page)', 'switch (displayed.page) {} switch (displayed.page)', /切り替え実装/],
+    ['case "initiative-list":', 'case "cost-table":', /識別子/],
+    ['case "initiative-list":', 'case unknownPage:', /識別子/],
+  ]) await assert.rejects(screenImplementations(async file => {
+    const text = await read(file);
+    return file.endsWith('/WorkspacePage.tsx') ? text.replace(before, after) : text;
+  }), error, '曖昧・重複・非定数の描画分岐は確認を止める');
   const review = JSON.parse(await read("Triadichrome-extension/src/extension/screenDataReview.json"));
   await withNodeBundle("Triadichrome-extension/src/extension/screenDataModel.ts", async ({ screenData }) => {
     assert.deepEqual(staleScreens(review, implementations, screenData), []);

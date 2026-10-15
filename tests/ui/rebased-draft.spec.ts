@@ -48,6 +48,11 @@ for (const year of [2026, 2027]) for (const duringSave of [false, true]) test(`$
   await back.click();await app.getByRole('button',{name:'既存商品の販売拡大',exact:true}).click();
   await expect(april).toHaveValue('121');await expect(may).toHaveValue('777');await expect(june).toHaveValue('131');
   await page.screenshot({path:`/tmp/triadichrome-rebased-draft-${year}-${testInfo.project.name}-${duringSave}.png`});
-  await app.getByRole('button',{name:'操作を取り消す',exact:true}).click();await expect(may).toHaveValue('777');
-  await app.getByRole('button',{name:'操作をやり直す',exact:true}).click();await expect(june).toHaveValue('131');
+  await app.getByRole('button',{name:'操作を取り消す',exact:true}).click();
+  // May already has the external value before undo; wait for the operation itself.
+  await expect(app.getByText('操作を取り消しました。',{exact:true})).toBeVisible();
+  await expect(may).toHaveValue('777');
+  await app.getByRole('button',{name:'操作をやり直す',exact:true}).click();
+  await expect(app.getByText('操作をやり直しました。',{exact:true})).toBeVisible();
+  await expect(june).toHaveValue('131');
 });

@@ -1,12 +1,16 @@
 import type { PlanCommand } from "../domain/planCommands";
 import { applyPlanCommand } from "./planCommands";
 import { prepareCommandComparison } from "./commandComparison";
-import { createBusinessSnapshot, snapshotFromDatabase } from "./dataHistory";
-import { exportTriadicDatabase, openTriadicDatabase } from "./triadicDatabase";
+import { createBusinessSnapshot } from "./dataHistory";
+import { openTriadicDatabase } from "./triadicDatabase";
+import { finishPreparedSave } from "./prepareSave";
+import { readContents } from "./readPlan";
 import type { editDatabase } from "./transaction";
+type OrdinaryPreparation = { bytes: Uint8Array; operation: null }
+  | Awaited<ReturnType<typeof finishPreparedSave<ReturnType<typeof readContents>>>>;
 
 /** The existing validated change callbacks run once on our private connection. */
-export async function prepareOrdinarySave(bytes: Uint8Array, command: PlanCommand, fiscalYear: number) {
+export async function prepareOrdinarySave(bytes: Uint8Array, command: PlanCommand, fiscalYear: number, includeDetails = true): Promise<OrdinaryPreparation> {
   const database = await openTriadicDatabase(bytes);
   try {
     const comparison = prepareCommandComparison(database, command);
@@ -23,7 +27,6 @@ export async function prepareOrdinarySave(bytes: Uint8Array, command: PlanComman
     if (!changed) return { bytes, operation: null };
     // Before comes from untouched input; never snapshot the modified connection as the original.
     const before = await createBusinessSnapshot(bytes);
-    const after = await snapshotFromDatabase(database);
-    return { bytes: exportTriadicDatabase(database), operation: { before, after } };
+    return await finishPreparedSave(database, before, new Date().toISOString(), db => readContents(db, includeDetails));
   } finally { database.close(); }
 }

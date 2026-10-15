@@ -1,3 +1,4 @@
+import { sheet, finish, workbook } from "./workbookLayout";
 import ExcelJS from "exceljs";
 import { indexPreviousAmounts, previousAmountKey } from "../domain/previousAmounts";
 import { inspectPreviousWorkbook, previousWorkbookLimits } from "./previousWorkbookBoundary";
@@ -11,37 +12,6 @@ import type { PlanContents } from "../domain/plan";
 export { createReportWorkbook } from "./reportWorkbook";
 export type { ExportTable, ExportOptions } from "./reportWorkbook";
 export type PreviousPair = { industryId: number; departmentId: number };
-const amountFormat = '[>=0.5]#,##0;[<=-0.5]-#,##0;""';
-const font = { name: "Yu Gothic", size: 10, color: { argb: "FF202020" } };
-const fill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFF3F3F3" } };
-const border = { style: "thin" as const, color: { argb: "FFE0E0E0" } };
-function sheet(workbook: ExcelJS.Workbook, name: string, widths: number[], headers: number, frozen: number) {
-  const ws = workbook.addWorksheet(name, { views: [{ state: "frozen", xSplit: frozen, ySplit: headers + 2 }] });
-  widths.forEach((width, index) => { ws.getColumn(index + 1).width = width; });
-  ws.getCell(1, 1).value = name;
-  ws.getCell(1, 1).font = { ...font, size: 14, bold: true };
-  return ws;
-}
-function finish(ws: ExcelJS.Worksheet, headerEnd: number, shaded: Set<number> = new Set()) {
-  for (let r = 3; r <= ws.rowCount; r++) {
-    ws.getRow(r).height = 21;
-    for (let c = 1; c <= ws.columnCount; c++) {
-      const cell = ws.getCell(r, c);
-      cell.font = { ...font, bold: r <= headerEnd || shaded.has(r) };
-      cell.border = { top: border, bottom: border, left: border, right: border };
-      cell.alignment = { vertical: "middle", horizontal: r <= headerEnd ? "center" : typeof cell.value === "string" ? "left" : "right", wrapText: c === 1 || c === 2 };
-      if (r <= headerEnd || shaded.has(r)) cell.fill = fill;
-      if (r > headerEnd && !cell.numFmt) cell.numFmt = amountFormat;
-    }
-  }
-  ws.pageSetup = { orientation: "landscape", paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, printTitlesRow: `1:${headerEnd}` };
-}
-function workbook() {
-  const wb = new ExcelJS.Workbook();
-  wb.creator = "Triadichrome";
-  wb.calcProperties.fullCalcOnLoad = true;
-  return wb;
-}
 
 const metaName = "_triadichrome";
 const previousExportLimit = () => new Error("前年入力フォーマットが取り込み上限を超えるため、出力できません。業種・部署の組み合わせを減らし、別ファイルに分けて出力してください。");
