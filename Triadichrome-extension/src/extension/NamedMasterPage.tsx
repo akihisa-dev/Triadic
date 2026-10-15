@@ -41,6 +41,7 @@ export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange,
   const { notice, dismiss: dismissNotice, save } = useMasterOperation<NamedMasterChange>({
     onChange,
     onSuccess: change => { if (change.type === "add") { setCode(""); setName(""); setRelationIds([]); } setDeleting(null); },
+    onFailure: () => setDeleting(null),
     successMessage: change => change.type === "delete" ? `${subject}を削除しました。` : `${subject}を登録しました。`,
   });
   return <main className="master-page account-master-page master-data-page named-master-page" aria-labelledby={`${slug}-master-title`} aria-busy={isSaving}

@@ -186,7 +186,7 @@ Except registration/deletion, edits to existing initiatives, accounts, aggregati
 
 Closing/reloading app tabs/windows, including entry, or leaving for another page requests standard browser confirmation, whose wording is browser-controlled. It may not appear without prior interaction or on browser/OS forced termination. The [browser unload specification](https://html.spec.whatwg.org/multipage/nav-history-apis.html#prompt-to-unload-a-document) means not all exits can be prevented.
 
-Delete confirmation appears in a centered dialog independent of list size/scroll position and blocks background interaction. Cancel is initially focused; Esc also cancels. Cancellation returns focus to the original delete button and preserves list position.
+Delete confirmation appears in a centered dialog independent of list size/scroll position and blocks background interaction. Cancel is initially focused; Esc also cancels. Cancellation returns focus to the original delete button and preserves list position. If deletion of a common master is rejected or fails, the confirmation closes and an accessible notification explains the reason; the master and retained initiative input remain available for retry.
 
 ### Three-table display and budget selection
 
@@ -696,7 +696,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 入口を含むアプリ画面のタブ・ウィンドウ終了、再読み込み、別ページへの移動にはブラウザ標準の確認を求めます。確認の文言はブラウザが決めます。画面を一度も操作していない場合、ブラウザやOSの強制終了などでは確認が表示されない場合があります。[終了確認のブラウザ仕様](https://html.spec.whatwg.org/multipage/nav-history-apis.html#prompt-to-unload-a-document)に従うため、すべての終了を防ぐことはできません。
 
-削除確認は画面中央のダイアログに表示します。一覧の件数やスクロール位置に影響されず、確認中は背後の操作を止めます。最初はキャンセルにフォーカスし、Escでも取り消せます。キャンセル後は元の削除ボタンへ戻り、一覧の位置を保ちます。
+削除確認は画面中央のダイアログに表示します。一覧の件数やスクロール位置に影響されず、確認中は背後の操作を止めます。最初はキャンセルにフォーカスし、Escでも取り消せます。キャンセル後は元の削除ボタンへ戻り、一覧の位置を保ちます。共通マスタの削除拒否・失敗時も確認を閉じ、操作・読み上げができる通知で理由を示します。対象マスタと保持中の施策入力を残し、再試行できます。
 
 ### 三表の表示と種別の選択
 
