@@ -31,15 +31,15 @@ export async function verifyReferenceSample(api, bytes, plan) {
   const value = (row, kind, month) => yen(kind === 2 && Object.hasOwn(row.overrides?.[2] ?? {},month) ? row.overrides[2][month] : row.amounts[month] ?? "0");
   const monthly = (item,kind,month) => { const result=empty(); for(const row of item.rows) effect(result,row.accountId,value(row,kind,month)); return result; };
   const catalog=plan.initiatives.filter(item=>item.rows[0]?.id?.startsWith("portfolio:"));
-  assert.equal(catalog.length,126);
-  assert.equal(plan.initiatives.length,136);
-  assert.equal(new Set(catalog.map(item=>`${item.expansionId}/${item.industryId}/${item.departmentId}`)).size,126);
-  assert.equal(new Set(catalog.map(item=>item.note)).size,126);
+  assert.equal(catalog.length,144);
+  assert.equal(plan.initiatives.length,154);
+  assert.equal(new Set(catalog.map(item=>`${item.expansionId}/${item.industryId}/${item.departmentId}`)).size,144);
+  assert.equal(new Set(catalog.map(item=>item.note)).size,144);
   const amountSignatures=catalog.map(item=>JSON.stringify(item.rows.map(row=>[
     row.accountId,api.initiativeMonths.map(month=>row.amounts[month]),
     api.initiativeMonths.map(month=>Object.hasOwn(row.overrides?.[2]??{},month)?row.overrides[2][month]:null),
   ])));
-  assert.equal(new Set(amountSignatures).size,126,"名称・分類・備考を除いた金額パターンも126件すべて異なる");
+  assert.equal(new Set(amountSignatures).size,144,"名称・分類・備考を除いた金額パターンも144件すべて異なる");
   for(const item of catalog) {
     assert.ok(item.note.length>=80 && !item.name.includes("大規模確認"),item.name);
     assert.ok(item.rows.length >= 1 && item.rows.length <= 5);
@@ -114,13 +114,13 @@ export async function verifyReferenceSample(api, bytes, plan) {
   assert.equal(shape.startYearMonths[2],`${plan.fiscalYear}-08`);
   for(const item of catalog) {
     const expansionName=plan.expansions.find(expansion=>expansion.id===item.expansionId).expansionName;
-    if(expansionName==="料改") {
+    if(expansionName==="料金改定") {
       for(const row of item.rows) for(const kind of [1,2]) for(const month of [4,5,6,7,8,9]) assert.equal(value(row,kind,month),0,"料金改定前の全行は0");
       for(const row of item.rows) assert.equal(value(row,2,10),0,"確定料金改定は11月開始");
       assert.equal(item.startYearMonths[1],`${plan.fiscalYear}-10`);
       assert.equal(item.startYearMonths[2],`${plan.fiscalYear}-11`);
     }
-    if(expansionName==="撤退") {
+    if(expansionName==="荷主撤退") {
       for(const kind of [1,2]) for(const month of api.initiativeMonths) {
         assert.ok(value(sourceRow(item,"売上高"),kind,month)<=0);
         for(const name of ["本支店売上原価","給料手当","賃借料"]) assert.ok(value(sourceRow(item,name),kind,month)<=0);
@@ -134,19 +134,19 @@ export async function verifyReferenceSample(api, bytes, plan) {
         assert.ok(monthly(item,kind,12).profit>0,"赤字契約終了後は継続赤字を解消");
       }
     }
-    if(expansionName==="物量") {
+    if(expansionName==="物量増減") {
       const decemberDifference=name=>value(sourceRow(item,name),2,12)-value(sourceRow(item,name),1,12);
       assert.equal(decemberDifference("売上高"),12000);
       assert.equal(decemberDifference("本支店売上原価"),4200);
       assert.equal(decemberDifference("通信運搬費"),720);
       assert.equal(decemberDifference("臨時傭員費"),1200,"追加6件の数量を関連費用にも反映");
     }
-    if(expansionName==="拡販") {
+    if(expansionName==="売上拡販") {
       for(const row of item.rows) assert.equal(value(row,2,7),0,"新規契約延期の7月は全行0");
       assert.ok(value(sourceRow(item,"宣伝広告費"),2,8)>value(sourceRow(item,"宣伝広告費"),1,8),"初月販促を8月へ移す");
       assert.equal(value(sourceRow(item,"営業外収益"),2,3),5001,"助成の交付時期は維持");
     }
-    if(expansionName==="効率") {
+    if(expansionName==="効率化") {
       for(const name of ["下払作業賃","給料手当","通信運搬費"]) {
         assert.ok(value(sourceRow(item,name),1,6)<0);
         assert.equal(value(sourceRow(item,name),2,6),0,"定着前は費用削減しない");
@@ -187,7 +187,7 @@ export async function verifyReferenceSample(api, bytes, plan) {
   const snapshots=[];
   for(const entry of history.entries) {
     const snapshot=await api.readSnapshotContents(await api.readHistorySnapshot(bytes,entry.id));
-    assert.equal(snapshot.initiatives.length,136);
+    assert.equal(snapshot.initiatives.length,154);
     assertBusinessData(snapshot);
     const snapshotCatalog=snapshot.initiatives.filter(item=>item.rows[0]?.id?.startsWith("portfolio:"));
     assert.deepEqual(snapshotCatalog.map(item=>({name:item.name,note:item.note,rows:item.rows})),catalog.map(item=>({name:item.name,note:item.note,rows:item.rows})),"3時点とも改訂した実務データを保持");
@@ -216,8 +216,8 @@ export async function verifyReferenceSample(api, bytes, plan) {
   const reopened=new ExcelJS.Workbook();await reopened.xlsx.load(workbook);
   assert.ok(reopened.getWorksheet("総原価表")&&reopened.getWorksheet("展開表")&&reopened.getWorksheet("施策一覧")&&reopened.getWorksheet("計算元"));
   const calculation=reopened.getWorksheet("計算元");
-  assert.ok(calculation.rowCount>136,"実サンプルの明細を出力");
+  assert.ok(calculation.rowCount>154,"実サンプルの明細を出力");
   assert.deepEqual(bytes,before,"履歴読込・出力で実サンプルを変更しない");
-  console.log(`PASS: 新基準サンプル ${bytes.length} bytes、126実務施策、全分類・初期5区分、独立計算した三表/期間計、履歴3時点、Excel出力再読込`);
+  console.log(`PASS: 新基準サンプル ${bytes.length} bytes、144実務施策、全分類・初期5区分、独立計算した三表/期間計、履歴3時点、Excel出力再読込`);
   console.log("REFERENCE_EXPECTATIONS",JSON.stringify({aprilPrimary:expectations["1/4"],aprilConfirmed:expectations["2/4"],annualPrimarySales:api.initiativeMonths.reduce((sum,m)=>sum+expectations[`1/${m}`].sales,0)}));
 }

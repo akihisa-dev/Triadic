@@ -351,7 +351,7 @@ Calculation/processing explanations live in `mechanismModel.ts`, reviews in `mec
 
 ## Test .triadic file
 
-Generate `samples/全機能確認用.triadic` with `npm run samples:generate` and select it in the app's Open file to operate registered test data. Amounts are thousands of yen: 120 is 120,000 yen; 0.001 is 1 yen. The delivered sample contains 136 business initiatives and 509 account rows, including 126 practical initiatives covering all seven categories × nine industries × two departments. It uses East/West Japan sales departments and excludes test-only accounts, aggregations, departments, and initiatives from both current data and snapshots. Each specifies purpose, amount assumptions, seasonality, and start timing; it includes three snapshots and stays at or below 50,000,000 bytes. Sources are [tests/ui/sample-plan.ts](tests/ui/sample-plan.ts) and [Practical initiative definitions](tests/ui/sample-portfolio.ts).
+Generate `samples/全機能確認用.triadic` with `npm run samples:generate` and select it in the app's Open file to operate registered test data. Amounts are thousands of yen: 120 is 120,000 yen; 0.001 is 1 yen. The delivered sample contains 154 business initiatives and 545 account rows, including 144 practical initiatives covering all eight categories × nine industries × two departments. It uses East/West Japan sales departments and excludes test-only accounts, aggregations, departments, and initiatives from both current data and snapshots. Each specifies purpose, amount assumptions, seasonality, and start timing; it includes three snapshots and stays at or below 50,000,000 bytes. Sources are [tests/ui/sample-plan.ts](tests/ui/sample-plan.ts) and [Practical initiative definitions](tests/ui/sample-portfolio.ts).
 
 `npm run samples:generate` alone updates the file; `npm run build` and `npm run verify` also regenerate, and `npm test` checks source agreement. It uses one current fiscal year at generation. Identical year/content does not rewrite the file. Regeneration replaces this sample, so copy it elsewhere first to preserve edits. Generated samples stay local, outside Git/GitHub and extension distribution; sources/check instructions are tracked. All `.triadic` files, including samples, are excluded regardless of extension case or Git settings; pre-commit and verify reject tracked ones. Feature-addition updates follow [AGENTS.md](AGENTS.md#検証と完了条件).
 
@@ -359,7 +359,7 @@ Generate `samples/全機能確認用.triadic` with `npm run samples:generate` an
 
 For screen-impacting changes, run `npm run dev:ui` and open the [screen-test entry](http://127.0.0.1:4173/tests/ui/preview.html) in the Codex browser to check modified display/operations. Open file loads the all-feature test plan; New creates an in-memory plan with default accounts/aggregations and no initiatives. No real file selection/writing occurs. Top selectors switch to default new plans or old-format empty plans and reproduce cancellation, invalid files, save failures, and save conflicts from external updates. “Reset to entry” (入口に戻す) or reload resets test data.
 
-Regular screen data has 59 accounts, 16 aggregations, 14 initiatives, two fixed budget kinds, and previous-year actuals for nine industries × two departments. The delivered baseline has 57 default accounts, 15 aggregations, and two business departments. Unused departments for filtering/autoselection are created only in private tests. It includes initial-budget 12 months, final overrides/explicit 0/second-half adjustments, and all-kinds-zero rows eligible for changes/deletion. It also covers positive/negative amounts, yen precision, multiple rows of the same account, unassigned accounts, and empty optional aggregations. To test the same 136 initiatives as the real sample, choose “業務計画サンプル（136施策）” in Test data or specify `?data=large`. The additional 126 initiatives each have nonzero effects, so initial/final totals differ from the regular 14-initiative screen tests. See [Test-data coverage](samples/README.md) for operations/expected results. `?data=overflow-monthly`, `overflow-period`, `overflow-previous`, and `overflow-difference` test aggregation overflow with savable artificial data; `overflow-previous-input` tests classification-total overflow and return to one combination; `overflow-initiative` tests final-only within-initiative overflow and edit access; `overflow-normal` is a normal-amount control.
+Regular screen data has 59 accounts, 16 aggregations, 14 initiatives, two fixed budget kinds, and previous-year actuals for nine industries × two departments. The delivered baseline has 57 default accounts, 15 aggregations, and two business departments. Unused departments for filtering/autoselection are created only in private tests. It includes initial-budget 12 months, final overrides/explicit 0/second-half adjustments, and all-kinds-zero rows eligible for changes/deletion. It also covers positive/negative amounts, yen precision, multiple rows of the same account, unassigned accounts, and empty optional aggregations. To test the same 154 initiatives as the real sample, choose “業務計画サンプル（154施策）” in Test data or specify `?data=large`. The additional 144 initiatives each have nonzero effects, so initial/final totals differ from the regular 14-initiative screen tests. See [Test-data coverage](samples/README.md) for operations/expected results. `?data=overflow-monthly`, `overflow-period`, `overflow-previous`, and `overflow-difference` test aggregation overflow with savable artificial data; `overflow-previous-input` tests classification-total overflow and return to one combination; `overflow-initiative` tests final-only within-initiative overflow and edit access; `overflow-normal` is a normal-amount control.
 
 `?data=legacy` tests old-format rejection, `?data=empty` empty masters, and `?data=defaults` new defaults.
 
@@ -530,7 +530,7 @@ Excelで行っている予算作成を、施策を考える順序に沿って進
 |---|---|---|
 | 施策一覧 | 施策ごとの月別の売上・費用・利益の増減 | 個々の取り組みを見渡し、施策名から編集する |
 | 総原価表 | 科目・集計ごとの前年、予算、比較差、利益率 | 業種・部署を絞り、全体の収支を確認する |
-| 展開表 | コスト・料改・拡販などの分類ごとの売上・利益の変化 | どの取り組みが予算の変化を生んでいるか確認する |
+| 展開表 | コスト・料金改定・売上拡販などの分類ごとの売上・利益の変化 | どの取り組みが予算の変化を生んでいるか確認する |
 
 ```mermaid
 flowchart TD
@@ -622,6 +622,8 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 ホームの「画面とデータ」では、画面を選ぶと保存テーブルと表示項目の対応を確認できます。テーブルを開くと全保存項目と参照先を表示し、同じ画面で使う参照先へ移動できます。前年入力では集計の表示名・所属・加減算の保存元も示し、小計・合計・利益率と保存する前年実額を区別します。計算で作る三表や種別の固定定義も区別します。構造の閲覧だけを行い、実データの表示・編集やSQL実行は行いません。「関連図」で元の画面移動用の図へ戻れます。
 
 ホームの「計算の仕組み」「処理の流れ」では、対象を選び、元になる情報、処理順、条件・例外、結果、保存場所を確認できます。金額精度・引き継ぎ・三表の計算と、読込・自動保存・競合・履歴・取消・一時状態を扱います。実際の計画の値や処理ログは表示せず、閲覧で計画を変更しません。「説明に対応する実装」で根拠のファイル名も確認できます。
+
+新規ファイルの展開マスタは、1「コスト」、2「料金改定」、3「荷主撤退」、4「物量増減」、5「売上拡販」、6「拠点集約」、7「生産性向上」、8「効率化」の8件です。既存ファイルの登録内容は自動で置き換えません。
 
 ### 展開区分の管理と選択
 
@@ -854,7 +856,7 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 
 ## 確認用の.triadicファイル
 
-`npm run samples:generate`で生成した`samples/全機能確認用.triadic`をアプリの「ファイルを開く」から選ぶと、登録済みのテストデータを操作できます。金額は千円単位で、120は120,000円、0.001は1円を表します。業務上の10施策に、全7展開×9業種×2部署の126件の実務施策を加えた136施策・509科目行の基準サンプルです。部署名は東日本営業部・西日本営業部とし、確認専用の科目・集計・部署・施策は現在データと履歴の両方から除外します。各施策に目的・金額前提・季節変動・開始時期を記載し、3時点の履歴を含め50,000,000bytes以下で生成します。生成元は[tests/ui/sample-plan.ts](tests/ui/sample-plan.ts)と[実務施策の定義](tests/ui/sample-portfolio.ts)です。
+`npm run samples:generate`で生成した`samples/全機能確認用.triadic`をアプリの「ファイルを開く」から選ぶと、登録済みのテストデータを操作できます。金額は千円単位で、120は120,000円、0.001は1円を表します。業務上の10施策に、全8展開×9業種×2部署の144件の実務施策を加えた154施策・545科目行の基準サンプルです。部署名は東日本営業部・西日本営業部とし、確認専用の科目・集計・部署・施策は現在データと履歴の両方から除外します。各施策に目的・金額前提・季節変動・開始時期を記載し、3時点の履歴を含め50,000,000bytes以下で生成します。生成元は[tests/ui/sample-plan.ts](tests/ui/sample-plan.ts)と[実務施策の定義](tests/ui/sample-portfolio.ts)です。
 
 `npm run samples:generate`でファイルだけを更新できます。`npm run build`と`npm run verify`でも再生成し、`npm test`で生成元との一致を確認します。年度は生成時の当年度一つです。同じ年度・同じ内容ならファイルは書き換えません。再生成はこの確認用ファイルを置き換えるため、編集した内容を残す場合は先に別の場所へコピーして使ってください。生成した全機能確認用サンプルはローカルに保持し、Git管理やGitHubへのアップロードは行いません。生成元と確認手順はGit管理します。配布用拡張機能には含めません。確認用サンプルを含むすべての`.triadic`ファイルは拡張子の大文字・小文字とGit設定に依存せず除外し、コミット前と`npm run verify`でGit管理への混入を拒否します。機能追加時の更新ルールは[AGENTS.md](AGENTS.md#検証と完了条件)に従います。
 
@@ -862,7 +864,7 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 
 画面に影響する変更では`npm run dev:ui`で起動し、Codex内のブラウザで[画面テスト用の入口](http://127.0.0.1:4173/tests/ui/preview.html)を開いて、変更した表示・操作を確認します。「ファイルを開く」は全機能確認用のテスト計画を読み込み、「新規作成」はメモリ内にデフォルトの科目・集計を備えた施策未登録の計画を作ります。実ファイルの選択や書き込みは行いません。上部の選択欄でデフォルトの新規計画・旧形式の空の計画への切り替え、キャンセル・不正ファイル・保存失敗・ファイル更新による保存時の競合を再現でき、「入口に戻す」または再読み込みでテストデータを初期化します。
 
-通常の画面確認用データは59科目・16集計・14施策、固定2種別、業種9件×部署2件の前年実額です。配布する基準サンプルはデフォルト57科目・15集計と業務上の2部署だけを持ちます。部署による候補の絞り込みと自動選択は専用テストのメモリ上のデータで確認します。一次予算の12か月、確定予算の手修正・手修正0・下期調整、全種別0の変更・削除可能行を含みます。既存の正負・1円精度・同一科目の複数行・未所属科目・空の任意集計も試せます。実ファイルと同じ136施策を試すには「テストデータ」で「業務計画サンプル（136施策）」を選ぶか、`?data=large`を指定します。追加126施策は各々非0の効果を持ち、一次と確定の全体集計は14施策だけの通常画面テストと異なります。操作と期待結果は[確認用データの対応表](samples/README.md)を参照してください。`?data=overflow-monthly`・`overflow-period`・`overflow-previous`・`overflow-difference`は保存可能な人工データによる集計上限超過、`overflow-previous-input`は前年入力の分類合計超過から単一組み合わせへの復帰、`overflow-initiative`は確定予算だけの施策内合計超過と編集導線、`overflow-normal`は通常額の対照を確認します。
+通常の画面確認用データは59科目・16集計・14施策、固定2種別、業種9件×部署2件の前年実額です。配布する基準サンプルはデフォルト57科目・15集計と業務上の2部署だけを持ちます。部署による候補の絞り込みと自動選択は専用テストのメモリ上のデータで確認します。一次予算の12か月、確定予算の手修正・手修正0・下期調整、全種別0の変更・削除可能行を含みます。既存の正負・1円精度・同一科目の複数行・未所属科目・空の任意集計も試せます。実ファイルと同じ154施策を試すには「テストデータ」で「業務計画サンプル（154施策）」を選ぶか、`?data=large`を指定します。追加144施策は各々非0の効果を持ち、一次と確定の全体集計は14施策だけの通常画面テストと異なります。操作と期待結果は[確認用データの対応表](samples/README.md)を参照してください。`?data=overflow-monthly`・`overflow-period`・`overflow-previous`・`overflow-difference`は保存可能な人工データによる集計上限超過、`overflow-previous-input`は前年入力の分類合計超過から単一組み合わせへの復帰、`overflow-initiative`は確定予算だけの施策内合計超過と編集導線、`overflow-normal`は通常額の対照を確認します。
 
 `?data=legacy`は旧形式の拒否、`?data=empty`は空のマスタ、`?data=defaults`は新規デフォルトを確認します。
 

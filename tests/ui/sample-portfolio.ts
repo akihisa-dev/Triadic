@@ -2,7 +2,7 @@ import { initiativeMonths } from "../../Triadichrome-extension/src/core/domain/c
 import { yenToAmount } from "../../Triadichrome-extension/src/core/domain/amounts";
 import type { InitiativeRow } from "../../Triadichrome-extension/src/core/domain/plan";
 
-export const PORTFOLIO_COUNT = 7 * 9 * 2;
+export const PORTFOLIO_COUNT = 8 * 9 * 2;
 const operations = ["車両整備", "法人車両", "月極賃貸", "施設運営", "定期配送", "構内作業", "委託管理", "本社支援", "保有資産"];
 const assets = ["診断装置", "洗車設備", "入退場設備", "空調設備", "積替設備", "搬送装置", "管理端末", "業務端末", "監視装置"];
 const costCategories = ["下払いUP", "ベースアップ", "設備投資", "燃料費UP", "電気料金UP"];
@@ -95,7 +95,7 @@ export function portfolioScenario(e: number, i: number, d: number, accounts: Map
     add("宣伝広告費", j => j < 3 ? 0 : j === 3 ? 18000 + i * 500 : 2000, j => j < 4 ? 0 : j === 4 ? 18000 + i * 500 : 2000);
     add("営業外収益", j => j === 11 ? 5001 : 0);
     rationale = `7月に${5 + i + d}社で開始、3か月ごとに1社増、1社月額売上5,000円・原価1,750円。開始月の販促${18000 + i * 500}円、以後2,000円/月、給料${5000 + d * 1000}円/月、完了時3月に開拓助成5,001円。確定は契約開始が8月へ延期し7月全行を0、契約増加の四半期計画と初月販促も8月起点へ移す。助成の交付時期は変えない。`;
-  } else if (e === 5) {
+  } else if (e === 7) {
     program = "作業手順の改善";
     add("研修教育費", j => j === 0 ? 10000 + i * 1000 + d * 500 : 0, undefined, [4]);
     add("下払作業賃", j => j >= 2 ? -4000 - i * 300 - d * 200 : 0, j => j >= 3 ? -4000 - i * 300 - d * 200 : 0);
@@ -103,6 +103,13 @@ export function portfolioScenario(e: number, i: number, d: number, accounts: Map
     add("通信運搬費", j => j >= 2 ? -1251 : 0, j => j >= 3 ? -1251 : 0);
     add("営業外収益", j => j === 8 ? 12000 + i * 500 : 0, () => 0);
     rationale = `4月研修${10000 + i * 1000 + d * 500}円を投入し6月から外注作業${4000 + i * 300 + d * 200}円・給料${3000 + i * 100 + d * 200}円・通信1,251円/月を削減。一次は12月の改善助成${12000 + i * 500}円を見込む。確定は定着遅延で削減開始を7月へ移し6月を0、給料削減を${2800 + i * 100 + d * 200}円/月へ見直す。助成要件未達で12月助成も0。研修費は同額で確定する。`;
+  } else if (e === 6) {
+    program = "作業時間の短縮";
+    const training = 15000 + i * 1000 + d * 500;
+    const saving = 6000 + i * 400 + d * 300;
+    add("研修教育費", j => j === 3 ? training : 0, j => j === 4 ? training : 0);
+    add("給料手当", j => j >= 4 ? -saving : 0, j => j >= 5 ? -saving : 0);
+    rationale = `標準作業を見直して同じ人数で処理できる件数を増やす。7月に研修費${training}円を計上し、8月から残業手当を毎月${saving}円削減する。売上と契約数量は維持し、給料手当の減額だけを効果に含める。確定は研修を8月、削減開始を9月へ延期し、研修費と毎月の削減額は維持する。`;
   } else {
     program = "担当業務の移管";
     const sign = d === 0 ? -1 : 1;
@@ -112,7 +119,7 @@ export function portfolioScenario(e: number, i: number, d: number, accounts: Map
     add("本支店売上原価", j => sign * Math.round(income(j) * 0.35), j => j >= 3 ? sign * Math.round(income(j) * 0.35) : 0);
     add("給料手当", () => sign * (5000 + i * 100), j => j >= 3 ? sign * (5000 + i * 100) : 0);
     add("通信運搬費", () => sign * (1000 + i * 50), j => j >= 3 ? sign * (1000 + i * 50) : 0);
-    rationale = `相手施策「${counterparts}」と対になる同一業務の移管。東日本営業部から西日本営業部へ4月移管し、売上は4月${income(0)}円から毎月1,000円増、原価35%・給料${5000 + i * 100}円・通信${1000 + i * 50}円も同額で受け渡す。元は負、先は正。確定は引継ぎ完了が7月へ延期し4〜6月の全科目を両部署とも0。7月以降の受渡額と全体合計は維持する。`;
+    rationale = `相手施策「${counterparts}」と対になる拠点集約に伴う同一業務の移管。東日本営業部から西日本営業部へ4月移管し、売上は4月${income(0)}円から毎月1,000円増、原価35%・給料${5000 + i * 100}円・通信${1000 + i * 50}円も同額で受け渡す。元は負、先は正。確定は引継ぎ完了が7月へ延期し4〜6月の全科目を両部署とも0。7月以降の受渡額と全体合計は維持する。`;
   }
   return { name: `${operation}・${program}・${region}`, note: `${region}側拠点（${d === 0 ? "東日本営業部" : "西日本営業部"}）の${operation}。${categoryName ? `展開区分は${categoryName}。` : ""}${rationale}`, categoryName, rows };
 }

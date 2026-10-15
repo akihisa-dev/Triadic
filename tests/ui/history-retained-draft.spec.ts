@@ -18,7 +18,7 @@ for (const outcome of ['view', 'cancel', 'failure', 'restore']) test(`履歴の$
   const name = app.getByRole('textbox', { name: '施策名', exact: true });
   const note = app.getByRole('textbox', { name: '備考', exact: true });
   await name.fill('履歴から再開する施策'); await note.fill('登録前の備考');
-  for (const [label, value] of [['展開名','料改'], ['部署名','部署A'], ['業種名','直営自動車'], ['期間名','新規']] as const)
+  for (const [label, value] of [['展開名','料金改定'], ['部署名','部署A'], ['業種名','直営自動車'], ['期間名','新規']] as const)
     await selectClassification(app.getByRole('combobox', { name: label, exact: true }), value!);
   const account = app.getByRole('combobox', { name: '1行目の勘定科目', exact: true });
   await account.focus(); await account.selectOption('1');

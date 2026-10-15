@@ -30,7 +30,7 @@ for (const source of ['selection', 'master', 'retry']) test(`未登録施策を�
   await openInitiativeEntry(app);
   await app.getByRole('textbox', { name: '施策名', exact: true }).fill('保持する施策');
   await app.getByRole('textbox', { name: '備考', exact: true }).fill('部署Bへの入力');
-  await selectClassification(app.getByRole('combobox', { name: '展開名', exact: true }), '料改');
+  await selectClassification(app.getByRole('combobox', { name: '展開名', exact: true }), '料金改定');
   await selectClassification(app.getByRole('combobox', { name: '部署名', exact: true }), '部署B');
   await selectClassification(app.getByRole('combobox', { name: '業種名', exact: true }), '直営自動車');
   const account = app.getByRole('combobox', { name: '1行目の勘定科目', exact: true });
@@ -113,7 +113,7 @@ for (const replacement of ['account', 'industry']) test(`外部${replacement}変
   await app.getByRole('button', { name: 'サイドバーを開く', exact: true }).click();
   await openInitiativeEntry(app);
   await app.getByRole('textbox', { name: '施策名', exact: true }).fill('再選択する施策');
-  await selectClassification(app.getByRole('combobox', { name: '展開名', exact: true }), '料改');
+  await selectClassification(app.getByRole('combobox', { name: '展開名', exact: true }), '料金改定');
   await selectClassification(app.getByRole('combobox', { name: '部署名', exact: true }), '部署B');
   await selectClassification(app.getByRole('combobox', { name: '業種名', exact: true }), '不動産B');
   const account = app.getByRole('combobox', { name: '1行目の勘定科目', exact: true });

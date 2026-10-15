@@ -6,8 +6,8 @@ test("展開区分を展開で絞り、共通区分を保持し、未選択で�
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "マスタ", exact: true }).click();
   await app.getByRole("button", { name: /^展開マスタ/ }).click();
-  await app.getByRole("button", { name: "料改を編集", exact: true }).click();
-  await app.getByRole("group", { name: "料改の展開区分", exact: true }).getByRole("checkbox", { name: "設備投資", exact: true }).check();
+  await app.getByRole("button", { name: "料金改定を編集", exact: true }).click();
+  await app.getByRole("group", { name: "料金改定の展開区分", exact: true }).getByRole("checkbox", { name: "設備投資", exact: true }).check();
   await app.getByRole("button", { name: "完了", exact: true }).click();
   await openInitiativeEntry(app);
   const expansion = app.getByRole("combobox", { name: "展開名", exact: true });

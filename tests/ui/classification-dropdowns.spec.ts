@@ -15,7 +15,7 @@ test("分類をドロップダウンで選択し、登録・自動保存後も�
   for (const field of [expansion, department, period, industry]) await expect(field).toHaveValue("");
   await expect(industry).toBeDisabled();
   await expect(register).toBeDisabled();
-  await expansion.selectOption({ label: "料改" });
+  await expansion.selectOption({ label: "料金改定" });
   await department.selectOption({ label: "部署A" });
   await industry.selectOption({ label: "直営自動車" });
   await expect(register).toBeEnabled();
@@ -36,7 +36,7 @@ test("分類をドロップダウンで選択し、登録・自動保存後も�
   await app.getByRole("combobox", { name: "1行目の勘定科目" }).selectOption("1");
   await register.click();
   await app.getByRole("button", { name: "分類選択確認", exact: true }).click();
-  await expect(expansion.locator("option:checked")).toHaveText("料改");
+  await expect(expansion.locator("option:checked")).toHaveText("料金改定");
   await expect(department.locator("option:checked")).toHaveText("部署A");
   await expect(industry.locator("option:checked")).toHaveText("直営自動車");
   await expect(period).toHaveValue("");

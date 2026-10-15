@@ -20,7 +20,7 @@ for (const failFirst of [false, true]) test(`所属変更${failFirst ? "の保�
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("button", { name: "サイドバーを開く", exact: true }).click();
   await openInitiativeEntry(app);
-  await selectClassification(app.getByRole("combobox", { name: "展開名", exact: true }), "料改");
+  await selectClassification(app.getByRole("combobox", { name: "展開名", exact: true }), "料金改定");
   await selectClassification(app.getByRole("combobox", { name: "部署名", exact: true }), "部署A");
   await selectClassification(app.getByRole("combobox", { name: "期間名", exact: true }), "新規");
   await app.getByRole("textbox", { name: "施策名", exact: true }).fill("所属変更後の施策");

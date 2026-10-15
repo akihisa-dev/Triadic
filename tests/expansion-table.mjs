@@ -17,8 +17,8 @@ export async function verifyExpansionTable(api) {
   const contents = await readPlanContents(bytes);
   const projected = plan => ({ ...plan, initiatives: api.initiativesForKind(plan.initiatives, plan.accounts, 1) });
   const build = sort => buildExpansionTable(projected(contents), 2026, sort);
-  assert.equal(build("registered").groups.length, 7);
-  assert.deepEqual(build("registered").groups.map(item => item.expansion.expansionCode), ["1", "2", "3", "4", "5", "8", "9"]);
+  assert.equal(build("registered").groups.length, 8);
+  assert.deepEqual(build("registered").groups.map(item => item.expansion.expansionCode), ["1", "2", "3", "4", "5", "6", "7", "8"]);
   assert.deepEqual(build("registered").groups[0].initiatives.map(item => item.name), ["施策B", "施策A"]);
   assert.deepEqual(build("asc").groups[0].initiatives.map(item => item.name), ["施策A", "施策B"]);
   assert.deepEqual(build("desc").groups[0].initiatives.map(item => item.name), ["施策B", "施策A"]);

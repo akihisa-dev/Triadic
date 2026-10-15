@@ -17,7 +17,7 @@ test("展開名ごとの集計・並び順・編集からの移動と再読込�
   await expect(table.locator("thead tr").first().locator("th").nth(3)).toHaveText("施策名");
   await expect(table.getByRole("row").filter({ has: app.getByRole("button", { name: "設備更新と償却費の見直し", exact: true }) }).locator(".expansion-category")).toHaveText("設備投資");
   await expect(table.getByRole("row").filter({ has: app.getByRole("button", { name: "既存商品の販売拡大", exact: true }) }).locator(".expansion-category")).toHaveText("");
-  const salesGroup = table.locator("tbody").filter({ has: app.locator(".expansion-group").filter({ hasText: /^拡販$/ }) });
+  const salesGroup = table.locator("tbody").filter({ has: app.locator(".expansion-group").filter({ hasText: /^売上拡販$/ }) });
   await expect(salesGroup.locator(".expansion-period")).toHaveText(["期間差", "新規"]);
   await expect(salesGroup.locator(".expansion-period").nth(1)).toHaveAttribute("rowspan", "7");
   const registeredOrder = await table.getByRole("button").allTextContents();
@@ -25,15 +25,15 @@ test("展開名ごとの集計・並び順・編集からの移動と再読込�
   await expect(app.getByRole("button", { name: "クリア", exact: true })).toHaveCount(0);
   await table.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();
   await expect(app.getByRole("combobox", { name: "展開名", exact: true })).toHaveValue("5");
-  await selectClassification(app.getByRole("combobox", { name: "展開名", exact: true }), "効率");
+  await selectClassification(app.getByRole("combobox", { name: "展開名", exact: true }), "効率化");
   await expect(app.getByRole("button", { name: "← 展開表へ戻る", exact: true })).toBeEnabled();
   await app.getByRole("button", { name: "← 展開表へ戻る", exact: true }).click();
-  const movedGroup = table.locator("tbody").filter({ has: app.getByRole("rowheader", { name: "効率", exact: true }) });
+  const movedGroup = table.locator("tbody").filter({ has: app.getByRole("rowheader", { name: "効率化", exact: true }) });
   await expect(movedGroup.getByRole("button", { name: "既存商品の販売拡大", exact: true })).toBeVisible();
   await app.getByRole("complementary", { name: "メニュー" }).getByRole("button", { name: "マスタ", exact: true }).click();
   await app.getByRole("button", { name: /^展開マスタ/ }).click();
-  await expect(app.getByRole("button", { name: "効率を削除", exact: true })).toBeDisabled();
-  await expect(app.getByRole("button", { name: "撤退を削除", exact: true })).toBeEnabled();
+  await expect(app.getByRole("button", { name: "効率化を削除", exact: true })).toBeDisabled();
+  await expect(app.getByRole("button", { name: "荷主撤退を削除", exact: true })).toBeEnabled();
   await app.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
   await app.getByRole("alertdialog", { name: "ファイルを閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
@@ -71,7 +71,7 @@ test("新規施策の展開名を必須にして保存し、失敗した変更�
   await expect(expansion).toHaveValue("");
   await app.getByRole("textbox", { name: "施策名", exact: true }).fill("展開割り当て確認");
   await expect(app.getByRole("button", { name: "登録", exact: true })).toBeDisabled();
-  await selectClassification(expansion, "料改");
+  await selectClassification(expansion, "料金改定");
   await selectClassification(app.getByRole("combobox", { name: "部署名", exact: true }), "部署A");
   await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
   await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).focus();
@@ -80,7 +80,7 @@ test("新規施策の展開名を必須にして保存し、失敗した変更�
   await app.getByRole("button", { name: "登録", exact: true }).click();
   await app.getByRole("button", { name: "展開割り当て確認", exact: true }).click();
   await expect(expansion).toHaveValue("2");
-  await selectClassification(expansion, "効率");
+  await selectClassification(expansion, "効率化");
   await expect(app.getByRole("alert")).toBeVisible();
   await expect(expansion).toHaveValue("8");
   await expect(app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true })).toBeDisabled();

@@ -9,7 +9,7 @@ export async function verifyExpansionCategories(api) {
   let bytes = original;
   await assert.rejects(api.changeExpansionCategoryMaster(bytes, { type: "add", categoryName: "下払いUP" }), /同じ/);
   await assert.rejects(api.changeExpansionCategoryMaster(bytes, { type: "add", categoryName: " " }), /展開区分名/);
-  const assign = (source, id, categoryIds) => api.changeExpansionMaster(source, { type: "update", id, expansionCode: String(id), expansionName: id === 1 ? "コスト" : "料改", categoryIds });
+  const assign = (source, id, categoryIds) => api.changeExpansionMaster(source, { type: "update", id, expansionCode: String(id), expansionName: id === 1 ? "コスト" : "料金改定", categoryIds });
   bytes = await assign(bytes, 1, [1, 2]); bytes = await assign(bytes, 2, [2]);
   await assert.rejects(assign(bytes, 1, [999]), /展開区分/);
   await assert.rejects(api.changeExpansionCategoryMaster(bytes, { type: "delete", id: 1 }), /割り当て/);

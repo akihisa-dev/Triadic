@@ -54,7 +54,7 @@ export async function createSamplePlan(fiscalYear = currentFiscalYear(), large =
   if (kinds.length !== INITIAL_KINDS.length || kinds.some((item, index) => item.kindName !== INITIAL_KINDS[index]!.kindName)) throw new Error("種別マスタの初期データが一致しません。");
   if (kinds.length !== 2) throw new Error("予算の2種別を確認できません。");
   const expansions = (await readPlanContents(bytes)).expansions;
-  if (expansions.length !== INITIAL_EXPANSIONS.length || expansions.some((item, index) => item.expansionName !== INITIAL_EXPANSIONS[index]!.expansionName)) throw new Error("展開マスタの初期データが一致しません。");
+  if (expansions.length !== INITIAL_EXPANSIONS.length || expansions.some((item, index) => item.expansionCode !== INITIAL_EXPANSIONS[index]!.expansionCode || item.expansionName !== INITIAL_EXPANSIONS[index]!.expansionName)) throw new Error("展開マスタの初期データが一致しません。");
   const periodTypes = (await readPlanContents(bytes)).periodTypes;
   if (periodTypes.length !== INITIAL_PERIOD_TYPES.length || periodTypes.some((item, index) => item.periodName !== INITIAL_PERIOD_TYPES[index]!.periodName)) throw new Error("期間マスタの初期データが一致しません。");
   const departments = (await readPlanContents(bytes)).departments;
@@ -83,8 +83,8 @@ export async function createSamplePlan(fiscalYear = currentFiscalYear(), large =
     const codes: Record<string, string> = {
       "既存商品の販売拡大": "5", "保守サービスの新規契約": "5", "季節キャンペーン": "5",
       "通信運搬費と消耗品費の削減": "1", "サブスクリプション事業の拡大": "2",
-      "設備更新と償却費の見直し": "1", "助成金の受入れ": "9",
-      "ゼロと相殺の確認": "8", "未確定施策の入力準備": "8",
+      "設備更新と償却費の見直し": "1", "助成金の受入れ": "6",
+      "ゼロと相殺の確認": "8", "未確定施策の入力準備": "7",
     };
     const expansionId = expansions.find(item => item.expansionCode === (codes[name] ?? "5"))!.id;
     // Choose a meaningful period instead of cycling incompatible start-month rules.

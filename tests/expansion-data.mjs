@@ -5,14 +5,14 @@ export async function verifyExpansionData(api) {
   const bytes = await createTriadicDatabase();
   const initial = (await readPlanContents(bytes)).expansions;
   assert.deepEqual(initial.map(item => [item.expansionCode, item.expansionName]), [
-    ["1", "コスト"], ["2", "料改"], ["3", "撤退"], ["4", "物量"], ["5", "拡販"], ["8", "効率"], ["9", "移管"],
+    ["1", "コスト"], ["2", "料金改定"], ["3", "荷主撤退"], ["4", "物量増減"], ["5", "売上拡販"], ["6", "拠点集約"], ["7", "生産性向上"], ["8", "効率化"],
   ]);
   let changed = await changeExpansionMaster(bytes, { type: "add", expansionCode: "010", expansionName: "追加確認" });
   assert.equal((await readPlanContents(changed)).expansions.at(-1).expansionCode, "010");
   for (const code of ["", "１", "-1", "1.2", "a"]) await assert.rejects(changeExpansionMaster(bytes, { type: "add", expansionCode: code, expansionName: "無効" }), /半角数字/);
-  await assert.rejects(changeExpansionMaster(bytes, { type: "add", expansionCode: "6", expansionName: " " }), /展開名/);
+  await assert.rejects(changeExpansionMaster(bytes, { type: "add", expansionCode: "10", expansionName: " " }), /展開名/);
   await assert.rejects(changeExpansionMaster(bytes, { type: "add", expansionCode: "1", expansionName: "追加" }), /同じ展開コード/);
-  await assert.rejects(changeExpansionMaster(bytes, { type: "add", expansionCode: "6", expansionName: "コスト" }), /同じ展開名/);
+  await assert.rejects(changeExpansionMaster(bytes, { type: "add", expansionCode: "10", expansionName: "コスト" }), /同じ展開名/);
   changed = await changeExpansionMaster(changed, { type: "update", id: 1, expansionCode: "01", expansionName: "コスト改定" });
   assert.equal((await readPlanContents(changed)).expansions.find(item => item.id === 1).expansionName, "コスト改定");
   changed = await changeExpansionMaster(changed, { type: "delete", id: 2 });
@@ -39,10 +39,10 @@ export async function verifyExpansionData(api) {
   } };
   const plan = { ...await readPlanContents(bytes), bytes, handle, name: handle.name };
   const noPicker = () => { throw new Error("不要な保存先選択"); };
-  const add = { type: "add", expansionCode: "6", expansionName: "保存確認" };
+  const add = { type: "add", expansionCode: "10", expansionName: "保存確認" };
   const saved = await saveExpansionMaster(plan, add, noPicker);
   assert.deepEqual((await readPlanContents(stored)).expansions, saved.expansions);
-  await assert.rejects(saveExpansionMaster(plan, { ...add, expansionCode: "7" }, noPicker), /保存先のファイルが更新/);
+  await assert.rejects(saveExpansionMaster(plan, { ...add, expansionCode: "11" }, noPicker), /保存先のファイルが更新/);
   assert.equal(writes, 1);
   const before = stored.slice();
   const fail = { ...handle, async createWritable() { return { async write() { throw new Error("保存失敗"); }, async close() {}, async abort() {} }; } };

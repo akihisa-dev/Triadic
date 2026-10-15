@@ -12,7 +12,7 @@ test("施策一覧は売上・費用・利益と固定見出しを表示し、�
   await expect(product.getByRole("cell").nth(3)).toHaveText("100");
   await expect(product.getByRole("cell").nth(4)).toHaveText("11");
   await expect(product.getByRole("cell").nth(5)).toHaveText("89");
-  await expect(product.getByRole("cell").nth(0)).toHaveText("拡販");
+  await expect(product.getByRole("cell").nth(0)).toHaveText("売上拡販");
   await expect(product.getByRole("cell").nth(1)).toHaveText("新規");
   const periodDifference = region.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "期間差の開始年月確認", exact: true }) });
   await expect(periodDifference.getByRole("cell").nth(1)).toHaveText("期間差");
