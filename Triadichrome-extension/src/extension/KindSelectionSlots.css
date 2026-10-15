@@ -6,8 +6,8 @@
 .gliding-kind-slot[aria-disabled="true"] { opacity: .5; }
 .gliding-kind-indicator { position: absolute; top: 3px; bottom: 3px; border-radius: 5px; background: var(--soft); pointer-events: none; transition: left .4s cubic-bezier(.65,0,.35,1), width .4s cubic-bezier(.65,0,.35,1); }
 .gliding-kind-slot button { position: relative; padding: 7px 12px; border: 0; border-radius: 5px; background: transparent; color: var(--muted); font-size: 12px; line-height: 18px; white-space: nowrap; cursor: pointer; }
-.gliding-kind-slot button[aria-pressed="true"] { color: var(--ink); font-weight: 600; }
-.gliding-kind-slot button:hover:not(:disabled) { color: var(--ink); }
+.gliding-kind-slot button[aria-pressed="true"] { color: var(--accent); font-weight: 600; }
+.gliding-kind-slot button:hover:not(:disabled):not([aria-pressed="true"]) { color: var(--ink); }
 .gliding-kind-slot button:active:not(:disabled) { transform: none; }
 .gliding-kind-slot button:disabled { cursor: default; }
 @media (prefers-reduced-motion: reduce) { .gliding-kind-indicator { transition-duration: .01s; } }

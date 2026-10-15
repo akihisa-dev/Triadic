@@ -36,11 +36,11 @@ test("全画面で選択中のサイドバーアイコンが青くなり、文�
     await expect(navigation.locator('[aria-current="page"]')).toHaveCount(1);
     const leakedColor = await app.locator("main").evaluate(main => {
       const properties = ["color", "backgroundColor", "borderColor", "stroke"] as const;
-      return [...main.querySelectorAll("h1, table th, table td, .kind-tabs button, .home-relation-name, .home-relation-subnode")]
+      return [...main.querySelectorAll('h1, table th, table td, .kind-tabs button:not([aria-selected="true"]), .home-relation-name, .home-relation-subnode')]
         .filter(node => properties.some(property => getComputedStyle(node)[property].includes("rgb(0, 51, 255)")))
         .map(node => node.tagName);
     });
-    expect(leakedColor, "表・見出し・種別タブ・相関図の名称と説明に青を広げない").toEqual([]);
+    expect(leakedColor, "表・見出し・未選択の種別タブ・相関図の名称と説明に青を広げない").toEqual([]);
     for (const name of routes) {
       const item = navigation.getByRole("button", { name, exact: true });
       await expect(item.locator("svg")).toHaveCSS("color", name === current ? blue : ink);
@@ -90,12 +90,45 @@ test("施策の文字・金額・科目・分類に青い編集枠が付き、�
   await expect(account).toHaveCSS("outline-color", blue);
   const amount = app.locator(".initiative-amount-table input").first();
   await expectEditingColor(amount);
-  await expect(app.locator('.kind-tabs [aria-selected="true"]')).toHaveCSS("border-bottom-color", ink);
+  await expect(app.locator('.kind-tabs [aria-selected="true"]')).toHaveCSS("border-bottom-color", blue);
   await expect(app.locator('.kind-tabs [aria-selected="true"]')).toHaveCSS("background-color", soft);
   await expect(app.getByRole("button", { name: "登録", exact: true })).toHaveCSS("background-color", ink);
   await app.getByRole("heading", { name: "施策入力", exact: true }).click();
   await expect(amount).not.toHaveCSS("outline-color", blue);
   await expect(app.locator(".classification-field select").first()).not.toHaveCSS("outline-color", blue);
+});
+
+test("種別と比較対象は選択中の文字だけ青く、切り替えとホバーでも配色を保つ", async ({ app }) => {
+  await navigate(app, "施策入力");
+  const tabs = app.locator(".kind-tabs");
+  for (const label of ["確定予算", "一次予算"]) {
+    const target = tabs.getByRole("tab", { name: label, exact: true });
+    await target.click();
+    await expect(target).toHaveCSS("color", blue);
+    await expect(target).toHaveCSS("border-bottom-color", blue);
+    await expect(target).toHaveCSS("background-color", soft);
+    await expect(tabs.locator('[aria-selected="false"]')).not.toHaveCSS("color", blue);
+  }
+  for (const route of ["施策一覧", "総原価表", "展開表"]) {
+    await navigate(app, route);
+    for (const slot of await app.locator(".gliding-kind-slot").all()) {
+      for (const label of ["確定予算", "一次予算"]) {
+        const target = slot.getByRole("button", { name: label, exact: true });
+        if (!await target.count()) continue;
+        await target.click();
+        await target.hover();
+        await expect(target).toHaveAttribute("aria-pressed", "true");
+        await expect(target).toHaveCSS("color", blue);
+        for (const other of await slot.locator('[aria-pressed="false"]').all()) {
+          await expect(other).not.toHaveCSS("color", blue);
+        }
+        await expect(slot.locator(".gliding-kind-indicator")).toHaveCSS("background-color", soft);
+      }
+      await slot.focus();
+      await slot.press("Home");
+      await expect(slot.locator('[aria-pressed="true"]')).toHaveCSS("color", blue);
+    }
+  }
 });
 
 test("前年金額は編集位置だけ青く、範囲選択の背景と罫線はグレーを保つ", async ({ page, app }) => {
