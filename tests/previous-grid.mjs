@@ -26,6 +26,10 @@ export function verifyPreviousGrid(api) {
   const selection = { anchor: { row: 3, column: 1 }, end: { row: 0, column: 0 } };
   assert.throws(() => api.pastePreviousGrid(draft, ids, { row: 0, column: 0 }, "9", selection), /小計/);
   const validSelection = { anchor: { row: 0, column: 0 }, end: { row: 1, column: 1 } };
+  for (const text of ["9", "9\n", "9\r\n"]) {
+    assert.deepEqual(api.pastePreviousGrid(draft, ids, { row: 1, column: 1 }, text, validSelection), api.pastePreviousGrid(draft, ids, { row: 0, column: 0 }, "9", validSelection));
+    assert.throws(() => api.pastePreviousGrid(draft, ids, { row: 0, column: 0 }, text, selection), /小計|合計/);
+  }
   const singlePaste = api.pastePreviousGrid(draft, ids, { row: 0, column: 0 }, "9", validSelection);
   for (const row of singlePaste.rows.slice(0, 2)) { assert.equal(row.amounts[4], "9"); assert.equal(row.amounts[5], "9"); }
   assert.deepEqual(draft, before, "集計を含む単一値の貼り付け拒否でも入力元を保持");

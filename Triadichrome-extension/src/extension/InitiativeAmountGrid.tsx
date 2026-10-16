@@ -115,8 +115,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                         if (editing) return;
                         event.preventDefault();
                         const text = event.clipboardData.getData("text/plain");
-                        apply(() => selection && !/[\t\r\n]/.test(text) ? fillInitiativeGrid(draft, kind, selection, text)
-                          : pasteInitiativeGrid(draft, kind, bounds ? { row: bounds.top, column: bounds.left } : cell, text));
+                        apply(() => pasteInitiativeGrid(draft, kind, bounds ? { row: bounds.top, column: bounds.left } : cell, text, selection));
                       }}
                       onKeyDown={event => {
                         if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229 || isSaving) return;

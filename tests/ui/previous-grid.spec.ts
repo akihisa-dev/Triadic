@@ -80,6 +80,10 @@ test("前年セルの範囲入力・集計・無効な貼り付け・保存後�
   await april.press("Shift+ArrowRight");
   await cell("売上高", 5).press("Shift+ArrowDown");
   await expect(app.locator(".previous-input-cell.previous-cell-selected")).toHaveCount(4);
+  for (const [text, value] of [["7\n", "7"], ["9\r\n", "9"], ["8", "8"]]) {
+    await paste(text!);
+    for (const account of ["売上高", "グループ売上高"]) for (const month of [4, 5]) await expect(cell(account, month)).toHaveValue(value!);
+  }
   await cell("グループ売上高", 5).fill("3.125");
   await cell("グループ売上高", 5).press("ControlOrMeta+Enter");
   for (const account of ["売上高", "グループ売上高"]) for (const month of [4,5]) await expect(cell(account, month)).toHaveValue("3.125");
@@ -270,7 +274,7 @@ test("前年の単一値・複数値貼り付けは集計行を含む範囲を�
     const clipboardData = new DataTransfer(); clipboardData.setData("text/plain", value);
     node.dispatchEvent(new ClipboardEvent("paste", { bubbles: true, clipboardData }));
   }, text);
-  for (const text of ["9", "9\n9\n9\n9"]) {
+  for (const text of ["9", "9\n", "9\r\n", "9\n9\n9\n9"]) {
     await paste(text);
     await expect(app.getByRole("alert")).toContainText("小計・合計・利益率には貼り付けできません");
     expect([await first.inputValue(), await second.inputValue(), await third.inputValue()]).toEqual(original);

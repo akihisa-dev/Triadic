@@ -73,8 +73,9 @@ function applyRectangle(draft: InitiativeEntryDraft, kind: KindId, start: GridCe
   }) };
 }
 
-export function pasteInitiativeGrid(draft: InitiativeEntryDraft, kind: KindId, start: GridCell, text: string): InitiativeEntryDraft {
+export function pasteInitiativeGrid(draft: InitiativeEntryDraft, kind: KindId, start: GridCell, text: string, selection?: GridSelection | null): InitiativeEntryDraft {
   const values = clipboardGrid(text);
+  if (selection && values.length === 1 && values[0]!.length === 1) return fillInitiativeGrid(draft, kind, selection, values[0]![0]!);
   return applyRectangle(draft, kind, start, values);
 }
 

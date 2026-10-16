@@ -6,10 +6,10 @@ import { gridBounds, normalizeGridAmount, clipboardGrid, type GridCell, type Gri
 /** Validate the whole rectangle before returning a new draft; never partially apply a paste. */
 export function pastePreviousGrid(draft: PreviousInput, rowIds: (number | null)[], start: GridCell, text: string, selection?: GridSelection | null): PreviousInput {
   let lines = clipboardGrid(text);
-  if (selection && !/[\t\r\n]/.test(text)) {
+  if (selection && lines.length === 1 && lines[0]!.length === 1) {
     const bounds = gridBounds(selection);
     start = { row: bounds.top, column: bounds.left };
-    lines = Array.from({ length: bounds.bottom - bounds.top + 1 }, () => Array<string>(bounds.right - bounds.left + 1).fill(text));
+    lines = Array.from({ length: bounds.bottom - bounds.top + 1 }, () => Array<string>(bounds.right - bounds.left + 1).fill(lines[0]![0]!));
   }
   const width = lines[0]!.length;
   if (lines.some(line => line.length !== width)) throw new Error("貼り付ける範囲の列数を揃えてください。");

@@ -26,6 +26,10 @@ export function verifyInitiativeGrid(api) {
   const before = structuredClone(draft);
   for (const kind of [0, 3, 4, 5]) assert.throws(() => api.pasteInitiativeGrid(draft, kind, { row: 0, column: 0 }, "1"), /種別/);
   const selection = { anchor: { row: 1, column: 1 }, end: { row: 0, column: 0 } };
+  for (const kind of [1, 2]) for (const text of ["9", "9\n", "9\r\n"]) {
+    assert.deepEqual(api.pasteInitiativeGrid(draft, kind, { row: 1, column: 1 }, text, selection), api.fillInitiativeGrid(draft, kind, selection, "9"));
+    assert.throws(() => api.pasteInitiativeGrid(draft, kind, { row: 0, column: 0 }, text, { anchor: { row: 0, column: 0 }, end: { row: 2, column: 1 } }), /勘定科目/);
+  }
   const pasted = api.pasteInitiativeGrid(draft, 1, { row: 0, column: 0 }, "1,200.125\t-0.001\r\n\t0\r\n");
   assert.equal(pasted.rows[0].amounts[4], "1200.125");
   assert.equal(pasted.rows[0].amounts[5], "-0.001");

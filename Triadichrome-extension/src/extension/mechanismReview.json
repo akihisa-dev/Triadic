@@ -1,10 +1,10 @@
 {
   "amount": {
     "implementation": "bac57ec26bdc96afa35fe578dd1df7f8a5233088b2471a075ff7bb5383304a55",
-    "description": "298047135d8b0354da3c53d41aa4adaae8aef6689cc20faff3fe1def5cb4238e"
+    "description": "7f6ae5259415be09a32323fc544ef72d4df04a37e891d058a6c3da5e5b1d05ec"
   },
   "inheritance": {
-    "implementation": "f8d02437f4de00506f6db0c136d71a3befe5c3695bf962442b05df0b951b90ff",
+    "implementation": "d1408f2b2b0ce266ee076b4a3702f0c31f64575732a29d1e879d311b892f4e29",
     "description": "cd87e2ea3e4012e7a047e7bbcf0f9a3ef3259ac7edca1e3d4e97096390f1a264"
   },
   "effects": {
@@ -28,11 +28,11 @@
     "description": "f31501022868e958d912039f86befb636656bdec1b68ad891ebfc9abba20d62c"
   },
   "classification": {
-    "implementation": "c3ef3a81dc26cc8877a4441d6025cb315a1c975b2ffd8b1a100eb0bf36995547",
+    "implementation": "33f5ffa583bb45814d5b83e9bd9c8df2f8929136da288c14f57cf0299b3449d6",
     "description": "e3ef77f611df3253d1dbd6f81b402912aaf2492a824c73a55b069be546206438"
   },
   "open": {
-    "implementation": "8f2a18ff2446b51f8b753948ea356da26e7ce5bb81cc304d6a585f4002f6b401",
+    "implementation": "cc96d5b95e3088e67b73ff33946cc5739ef5b492c80aad36e61b47894c7ec58f",
     "description": "8d01fd68c18f9e4a3256e8dd401c5275fbc236bdfaf33c5bb55c01674f790a3e"
   },
   "save": {
@@ -52,11 +52,11 @@
     "description": "bec96fc1e99f71a0f9c372d32d7aafecba9df1b86b8783a999a5cd7f71acdba1"
   },
   "storage": {
-    "implementation": "1f17ea6d2658948efdc9fe3b5ac168013bfd730fbe8fbc9664a3d9e55130434e",
+    "implementation": "0fd29baae4fec99defdd8fe724b68b644e9fdd33c052d88e349066122484c392",
     "description": "c20ab4fb3a183879d6f739c1fbe56360549811568959b1dd040d0ae692855509"
   },
   "validation": {
-    "implementation": "d8fbbe239324ac24ee96f9470d400898155e4bbbb1e13a54556cdd8799ebc7d7",
+    "implementation": "ff2b33278f318edaaa777defe9de830f75c7ab5c4d3ba48a533b9f1fcb025c22",
     "description": "a164daa642398beb113ce4c89b7c330c68dd4c4f2b06d4393ebe9fdf6aba92fc"
   },
   "periods": {
@@ -76,15 +76,15 @@
     "description": "ad87b9c4430cc93097b6525c9004f5ad95210c346ce2ec61d6da239ca131c5fc"
   },
   "attribute-totals": {
-    "implementation": "17b099b74ad7379560ae8d000e7f5db2349da50591e794ce99adcd5f05b39182",
+    "implementation": "0f4f68da1bf5403d05d6a4c520aee6aacf394783ceec1574d16a246c5814bd10",
     "description": "3905bd9e163d8e964824ab9a7a34d2e51c48fbcd64dbe7de200dc2bc75195f9a"
   },
   "department-industries": {
-    "implementation": "c794b5fb0688a3b351018f1c8b047e67c62b729ed7f30170609776d567ed4a6d",
+    "implementation": "08455623998a7f67c68cc452e1a570cb81b322f6175a66bb83de0815f77ba981",
     "description": "d7bf89508107dee42b5ef476809121b0cb2e2aa5163f6c3b6a06f4ed2cff24cf"
   },
   "expansion-categories": {
-    "implementation": "00437be460c7adbb70874cdeea6f502e8236d31d97dd3e0e8f34fba6e229cc52",
+    "implementation": "ac0bc577ebe02db18c541782e0a6063b2165e1f8427d7fd37852c8dba7f8c251",
     "description": "ceb6e6617047d5f2dd2526d70e9604f5b9d48ddf02312d4c0c297f6df9e4bb12"
   }
 }

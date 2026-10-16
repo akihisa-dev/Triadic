@@ -48,7 +48,10 @@ test("複数行・月の貼り付け、範囲コピー・同値入力・消去�
   for (const row of [0, 1]) for (const month of [4, 5]) await expect(cell(row, month)).toHaveValue("3.125");
   await cell(1, 5).press("Delete");
   for (const row of [0, 1]) for (const month of [4, 5]) await expect(cell(row, month)).toHaveValue("0");
-  await paste(cell(1, 5), "8.001");
+  for (const [text, value] of [["7.001\n", "7.001"], ["9.001\r\n", "9.001"], ["8.001", "8.001"]]) {
+    await paste(cell(1, 5), text!);
+    for (const row of [0, 1]) for (const month of [4, 5]) await expect(cell(row, month)).toHaveValue(value!);
+  }
   for (const row of [0, 1]) for (const month of [4, 5]) await expect(cell(row, month)).toHaveValue("8.001");
   await app.getByRole("tab", { name: "確定予算", exact: true }).click();
   await expect(april).toHaveValue("8.001");
