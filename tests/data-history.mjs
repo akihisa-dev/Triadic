@@ -74,7 +74,28 @@ export async function verifyDataHistory(api) {
     assert.ok(snapshot.length < bytes.length, "過去の履歴全体を各記録に複製しない");
   }
   const olderId = history.entries[1].id;
-  const restored = await restoreDataHistory(bytes, olderId, t(20));
+  const SQL = await api.initializeSqlite();
+  const originalExec = SQL.Database.prototype.exec;
+  let transfers = 0;
+  SQL.Database.prototype.exec = function(sql, params) {
+    const result = originalExec.call(this, sql, params);
+    if (/SELECT id, recorded_at, snapshot FROM data_history/.test(sql)) {
+      transfers++;
+      assert.ok((result[0]?.values.length ?? 0) <= 1, "復元の中間配列は一度に1件まで");
+    }
+    return result;
+  };
+  let restored;
+  try { restored = await restoreDataHistory(bytes, olderId, t(20)); }
+  finally { SQL.Database.prototype.exec = originalExec; }
+  assert.equal(transfers, history.entries.length + 1, "主キーで全履歴を順に移し終端を確認");
+  const historyPayloads = async data => {
+    const db = await openTriadicDatabase(data);
+    try { return db.exec("SELECT id, recorded_at, snapshot FROM data_history ORDER BY id")[0]?.values ?? []; }
+    finally { db.close(); }
+  };
+  const originalPayloads = await historyPayloads(bytes);
+  assert.deepEqual((await historyPayloads(restored)).slice(0, originalPayloads.length), originalPayloads, "既存履歴の全BLOB・日時・識別子を維持");
   assert.deepEqual(await readPlanContents(restored), fiveMinutes, "金額・手修正・前年・マスタ・設定を全体復元");
   const restoredHistory = await readDataHistory(restored);
   assert.equal(restoredHistory.entries.length, 5);

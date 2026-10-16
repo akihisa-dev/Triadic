@@ -130,9 +130,14 @@ export async function restoreDataHistory(bytes: Uint8Array, id: number, now = ne
     current = await openTriadicDatabase(bytes);
     // Preserve all surviving history, independently of the business state being restored.
     initialize(restored, now);
-    const entries = current.exec("SELECT id, recorded_at, snapshot FROM data_history ORDER BY id")[0]?.values ?? [];
-    for (const [entryId, recordedAt, snapshot] of entries) {
+    // Read one BLOB at a time using the primary key, without retaining all history payloads in JS.
+    let lastId = 0;
+    for (;;) {
+      const entry = current.exec("SELECT id, recorded_at, snapshot FROM data_history WHERE id > ? ORDER BY id LIMIT 1", [lastId])[0]?.values[0];
+      if (!entry) break;
+      const [entryId, recordedAt, snapshot] = entry;
       restored.run("INSERT INTO data_history VALUES (?, ?, ?)", [Number(entryId), String(recordedAt), snapshot as Uint8Array]);
+      lastId = Number(entryId);
     }
     restored.run("UPDATE data_history_state SET next_id = ? WHERE id = 1", [state(current).nextId]);
     append(restored, await snapshotFromDatabase(current), now);
