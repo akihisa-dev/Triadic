@@ -29,3 +29,5 @@ export * from "../../Triadichrome-extension/src/core/spreadsheets/previousPatchP
 export * from "../../Triadichrome-extension/src/core/storage/rebasePlan";
 export { readRebaseRows } from "../../Triadichrome-extension/src/core/storage/rebasePlan";
 export { initializeSqlite } from "../../Triadichrome-extension/src/core/storage/sqliteRuntime";
+
+export { mergeRebaseOrder } from "../../Triadichrome-extension/src/core/storage/rebaseOrder";

@@ -12,11 +12,20 @@ export function mergeRebaseOrder(table: string, original: Rows, local: Rows, ext
   const parent = master ? 0 : layout.index(initiative ? "initiative_id" : "parent_id");
   const position = layout.index(initiative ? "sort_order" : "position");
   const ownerOf = (row: SqlValue[]) => master ? 0 : row[parent]!;
-  const parents = new Set([...original.values(), ...local.values()].map(ownerOf));
-  const sequence = (rows: Rows, owner: SqlValue) => [...rows].filter(([, row]) => ownerOf(row) === owner)
-    .sort((a, b) => Number(a[1][position]) - Number(b[1][position]) || a[0].localeCompare(b[0])).map(([key]) => key);
+  const indexOwners = (rows: Rows) => {
+    const grouped = new Map<SqlValue, [string, SqlValue[]][]>();
+    for (const entry of rows) {
+      const owner = ownerOf(entry[1]);
+      const entries = grouped.get(owner) ?? [];
+      entries.push(entry); grouped.set(owner, entries);
+    }
+    return new Map([...grouped].map(([owner, entries]) => [owner, entries
+      .sort((a, b) => Number(a[1][position]) - Number(b[1][position]) || a[0].localeCompare(b[0])).map(([key]) => key)]));
+  };
+  const base = indexOwners(original), edited = indexOwners(local), latest = indexOwners(external);
+  const parents = new Set([...base.keys(), ...edited.keys()]);
   for (const owner of parents) {
-    const baseOrder = sequence(original, owner), localOrder = sequence(local, owner), latestOrder = sequence(external, owner);
+    const baseOrder = base.get(owner) ?? [], localOrder = edited.get(owner) ?? [], latestOrder = latest.get(owner) ?? [];
     if (equal(baseOrder, localOrder) && baseOrder.every(key => original.get(key)![position] === local.get(key)![position])) continue;
     for (const [rows, order] of [[original, baseOrder], [local, localOrder], [external, latestOrder]] as const) {
       if (new Set(order.map(key => rows.get(key)![position])).size !== order.length) return false;

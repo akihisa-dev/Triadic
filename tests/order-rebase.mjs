@@ -1,5 +1,20 @@
 import assert from 'node:assert/strict';
 export async function verifyOrderRebase(api) {
+  for (const table of ["initiative_rows", "aggregation_members", "master_order"]) {
+    let reads = 0;
+    const owners = 1000;
+    // Count owner-column access, including the unchanged owners preceding the one addition.
+    const counted = () => new Map(Array.from({ length: owners }, (_, id) => [String(id), new Proxy([id, id, id], {
+      get(target, key) { if (key === "1") reads++; return target[key]; },
+    })]));
+    const original = counted(), local = counted(), external = counted();
+    local.set("incoming", [1001, 999, 1001]);
+    const combined = new Map([...external, ...local].map(([key, row]) => [key, [...row]]));
+    reads = 0;
+    assert.equal(api.mergeRebaseOrder(table, original, local, external, combined, { index: name => name === "initiative_id" || name === "parent_id" ? 1 : 2 }), true);
+    assert.ok(reads <= owners * 4 + 10, `${table}: 所有者ごとの全体再走査を行わない (${reads})`);
+    assert.equal(combined.get("incoming")[2], table === "master_order" ? 1000 : table === "initiative_rows" ? 1 : 1001);
+  }
   const initial=await api.createTriadicDatabase(2026),contents=await api.readPlanContents(initial);
   const accounts=contents.accounts.slice(0,5);
   const row=(id,index,value='0')=>({id,accountId:accounts[index].id,amounts:{4:value}});
