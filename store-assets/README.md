@@ -56,6 +56,8 @@ export TRIADICHROME_ART_CHROME='/Applications/Google Chrome.app/Contents/MacOS/G
 node scripts/capture-store-screenshots.mjs
 ```
 
+撮影は隔離したブラウザー内の専用保存領域で計画を作成し、書込可能な標準ファイルハンドルをファイル選択へ渡します。ドラッグ受付中の表示は合成ファイルで確認し、その後の読込は現行の「ファイルを開く」から行います。利用者の実ファイルは使いません。製品側のハンドル必須・許可・形式検査を通り、計画の読込、メニュー、終了、対応外の拡張子の案内まで検証します。画像を更新せず検証する場合は`TRIADICHROME_CAPTURE_OUTPUT=/tmp/triadichrome-capture-check`、開発サーバーを指定する場合は`TRIADICHROME_CAPTURE_URL=http://127.0.0.1:4173/`を設定します。
+
 ロゴ・販促画像のレイアウトは`branding/logo.png`と`store-assets/source/layouts.html`を編集し、次のコマンドでPNGと確認用一覧を再生成します。再生成時は既存の制作画像を上書きします。
 
 ```sh

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 const require=createRequire(process.env.TRIADICHROME_ART_MODULES
  ? path.join(path.resolve(process.env.TRIADICHROME_ART_MODULES),'package.json') : import.meta.url);
 const {chromium}=require('playwright');
-const out=path.resolve(import.meta.dirname,'../store-assets/source/screenshots');
+const out=path.resolve(process.env.TRIADICHROME_CAPTURE_OUTPUT ?? path.resolve(import.meta.dirname,'../store-assets/source/screenshots'));
 await fs.mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true,...(process.env.TRIADICHROME_ART_CHROME ? {executablePath:process.env.TRIADICHROME_ART_CHROME} : {})});
 try {
@@ -19,12 +19,20 @@ try {
  assert.equal(await page.getByRole('button',{name:'新規作成',exact:true}).evaluate(node=>node===document.activeElement),true);
  await page.screenshot({path:out+'/02-create.png',animations:'disabled'});
  const bytes=await page.evaluate(async()=>Array.from(await (await import('/Triadichrome-extension/src/core/storage/triadicDatabase.ts')).createTriadicDatabase()));
+ // Native, structured-clonable handles live only in this isolated browser context's private storage.
+ await page.evaluate(async data=>{
+  const directory=await navigator.storage.getDirectory();
+  const handle=await directory.getFileHandle('計画サンプル.triadic',{create:true});
+  const writer=await handle.createWritable();await writer.write(new Uint8Array(data));await writer.close();
+  Object.defineProperty(window,'showOpenFilePicker',{configurable:true,value:async()=>[handle]});
+ },bytes);
  await page.evaluate(()=>document.activeElement.blur());
  const transfer=await page.evaluateHandle(data=>{const dt=new DataTransfer();dt.items.add(new File([new Uint8Array(data)],'計画サンプル.triadic',{type:'application/vnd.triadichrome.triadic'}));return dt;},bytes);
  await page.locator('.entry-page').dispatchEvent('dragenter',{dataTransfer:transfer});
  await page.locator('.entry-page.is-drag-active').waitFor();
  await page.screenshot({path:out+'/03-drop.png',animations:'disabled'});
- await page.locator('.entry-page').dispatchEvent('drop',{dataTransfer:transfer});
+ await page.locator('.entry-page').dispatchEvent('dragleave',{dataTransfer:transfer});
+ await page.getByRole('button',{name:'ファイルを開く',exact:true}).click();
  await page.getByRole('button',{name:'サイドバーを開く',exact:true}).waitFor();
  await page.getByRole('button',{name:'サイドバーを開く',exact:true}).click();
  await page.getByRole('complementary',{name:'メニュー',exact:true}).waitFor();
@@ -33,11 +41,17 @@ try {
  await page.getByRole('button',{name:'ファイルを閉じる',exact:true}).click();
  await page.getByRole('alertdialog',{name:'ファイルを閉じる',exact:true}).getByRole('button',{name:'閉じる',exact:true}).click();
  await page.getByRole('button',{name:'新規作成',exact:true}).waitFor();
- await page.locator('input[type=file]').setInputFiles({name:'形式確認用.txt',mimeType:'text/plain',buffer:Buffer.from('Store screenshot fixture')});
+ await page.evaluate(async()=>{
+  const directory=await navigator.storage.getDirectory();
+  const handle=await directory.getFileHandle('形式確認用.txt',{create:true});
+  const writer=await handle.createWritable();await writer.write('Store screenshot fixture');await writer.close();
+  Object.defineProperty(window,'showOpenFilePicker',{configurable:true,value:async()=>[handle]});
+ });
+ await page.getByRole('button',{name:'ファイルを開く',exact:true}).click();
  await page.getByRole('alert').waitFor();
  assert.equal(await page.getByRole('alert').textContent(),'.triadicファイルを選択してください。');
  await page.evaluate(()=>document.activeElement.blur());
  await page.screenshot({path:out+'/05-validation.png',animations:'disabled'});
  assert.deepEqual(errors,[]);
- console.log('Captured five real UI states. Valid file drop, menu, close, file extension validation passed. No browser errors.');
+ console.log('Captured five real UI states. Drag highlight, valid file picker, menu, close, writable native handle and picker file extension validation passed. No browser errors.');
 } finally {await browser.close();}
