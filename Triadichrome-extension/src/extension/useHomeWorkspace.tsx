@@ -1,3 +1,4 @@
+import type { CostTableView } from "./CostTablePage";
 import { useWorkspaceNavigation } from "./workspace/useWorkspaceNavigation";
 import { useWorkspaceHistory } from "./workspace/useWorkspaceHistory";
 import { useMutation } from "./useMutation";
@@ -17,12 +18,13 @@ import type { HomePageProps } from "./workspace/types";
 
 export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onChangeMaster, onChangeAggregations, onChangeExpansions, onChangeExpansionCategories, onChangeIndustries, onChangeDepartments, onChangePeriodTypes, onRegisterInitiative, onUpdateInitiative, onPrepareSave, onCloseFile, dataHistory, historyError, historyBusy, onPreviewHistory, onRestoreHistory, onDeleteHistory, onRetryHistory, canUndo, canRedo, operationRevision, onTravelOperation }: HomePageProps) {
   const menuButton = useRef<HTMLButtonElement>(null);
+  const costTableView = useRef<CostTableView>({ industries: [], departments: [], top: 0, left: 0 });
   const relationView = useRef<RelationView | null>(null);
   const sidebar = useSidebar();
   const isSidebarOpen = sidebar.expanded;
   const collapseSidebar = sidebar.collapse;
   const screens = useScreenHistory<Screen>({ page: "home", selectedInitiative: null, detailOrigin: "initiative-list" },
-    (left, right) => left.page === right.page && left.selectedInitiative?.id === right.selectedInitiative?.id && left.detailOrigin === right.detailOrigin);
+    (left, right) => left.page === right.page && left.selectedInitiative?.id === right.selectedInitiative?.id && left.detailOrigin === right.detailOrigin && left.detailKind === right.detailKind);
   const screen = screens.current;
   const { selectedInitiative } = screen;
   const navigate = screens.navigate;
@@ -90,7 +92,7 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
   }, [isSidebarOpen, closeSidebar]);
 
   return {
-    restoreMutation, setEditPending, openInitiative, menuButton, relationView, sidebar,
+    restoreMutation, setEditPending, openInitiative, menuButton, relationView, costTableView, sidebar,
     isSidebarOpen, screen, initiativeDraft, setInitiativeDraft, preview, setPreview,
     restoreRequested, setRestoreRequested, restoreError, setRestoreError, contents, currentContents,
     notice, dismissNotice, isSaving, operationMutation, navigationBlocked, discardRequest,

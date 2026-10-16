@@ -8,7 +8,7 @@ import type { PlanContents } from '../Triadichrome-extension/src/core/domain/pla
 import type { KindId } from '../Triadichrome-extension/src/core/domain/kinds';
 export function renderReportTables(contents: PlanContents, selected: KindId[], kind: KindId, costContents = contents) {
   return {
-    総原価表: renderToStaticMarkup(createElement(CostTablePage, { contents: costContents, selected, selection: null })),
+    総原価表: renderToStaticMarkup(createElement(CostTablePage, { contents: costContents, selected, selection: null, view: { current: { industries: [], departments: [], top: 0, left: 0 } }, navigationBlocked: false, onOpenInitiative() {} })),
     展開表: renderToStaticMarkup(createElement(ExpansionTablePage, { contents, selected, selection: null, onOpenInitiative() {} })),
     施策一覧: renderToStaticMarkup(createElement(InitiativeListPage, { selection: null, selectedKind: kind,
       initiatives: contents.initiatives, accounts: contents.accounts, expansions: contents.expansions,

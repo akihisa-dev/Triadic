@@ -1,3 +1,4 @@
+import type { KindId } from "../../core/domain/kinds";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { createInitiativeDraft, hasInitiativeDraftInput } from "../../core/domain/initiativeRules";
 import type { Initiative, PlanContents } from "../../core/domain/plan";
@@ -19,12 +20,13 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
     screens.prune(entry => entry.page !== "initiative-detail" || initiatives.some(item => item.id === entry.selectedInitiative?.id),
       { page: "home", selectedInitiative: null, detailOrigin: "initiative-list" });
   }, [initiatives, screens.prune]);
-  const openInitiative = (initiative: Initiative) => {
+  const openInitiative = (initiative: Initiative, kind?: KindId) => {
     if (navigationState.current.blocked || navigationState.current.page !== page || saving.current) return;
     dismissNotice();
     navigate({
       page: "initiative-detail",
-      detailOrigin: page === "home" ? "home" : page === "expansion-table" ? "expansion-table" : "initiative-list",
+      detailKind: kind ?? 1,
+      detailOrigin: page === "cost-table" ? "cost-table" : page === "home" ? "home" : page === "expansion-table" ? "expansion-table" : "initiative-list",
       selectedInitiative: { id: initiative.id, fiscalYear: initiative.fiscalYear },
     });
   };

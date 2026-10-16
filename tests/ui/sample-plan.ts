@@ -1,3 +1,4 @@
+// 総原価表の内訳は既存の前年・同一科目複数行・手修正0・相殺・未設定集計を使い、tests/cost-breakdown.mjs と tests/ui/cost-breakdown.spec.ts で確認する。
 // 展開表の大量行のフォーカス・前後Tab・小計を跨ぐ移動・縦結合・高さは tests/ui/expansion-focus.spec.ts で確認する。
 // 履歴削除失敗後の許可要求・拒否・確認保持・取消後の再試行は tests/ui/history-permission.spec.ts で確認する。
 // 前年・施策の単一値範囲貼付は改行なし・末尾LF/CRLFを同じ1セルとして扱い、複数セル・禁止範囲の全体拒否とセル内編集を維持する。

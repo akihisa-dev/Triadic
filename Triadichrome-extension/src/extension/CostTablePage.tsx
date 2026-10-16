@@ -1,7 +1,11 @@
 import { TableCalculationBoundary } from "./TableCalculationBoundary";
 import { periodCellClass } from "./periodCellStyle";
-import type { ReactNode } from "react";
-import { Fragment, memo, useMemo, useState, useLayoutEffect } from "react";
+import type { ReactNode, RefObject } from "react";
+import { CostBreakdownDialog } from "./CostBreakdownDialog";
+import type { CostBreakdownTarget } from "../core/tables/costBreakdown";
+import type { Initiative } from "../core/domain/plan";
+import "./CostBreakdown.css";
+import { Fragment, memo, useMemo, useState, useLayoutEffect, useRef } from "react";
 import { buildPeriodCostComparison, tablePeriods } from "../core/tables/periodTables";
 import { filterPlan } from "../core/tables/planTables";
 import "./CostClassification.css";
@@ -11,7 +15,10 @@ import { type PlanContents } from "../core/domain/plan";
 
 import { formatTableYen, formatTableRate } from "./tableNumberFormat";
 
-type Props = { contents: PlanContents; selected: KindId[]; selection: ReactNode };
+export type CostTableView = { industries: number[]; departments: number[]; top: number; left: number };
+
+type Props = { contents: PlanContents; selected: KindId[]; selection: ReactNode;
+  view: RefObject<CostTableView>; onOpenInitiative: (initiative: Initiative, kind?: KindId) => void; navigationBlocked: boolean };
 
 function industryIdsForDepartments(contents: PlanContents, departmentIds: number[]) {
   return departmentIds.length
@@ -19,9 +26,10 @@ function industryIdsForDepartments(contents: PlanContents, departmentIds: number
     : contents.industries.map(item => item.id);
 }
 
-export function CostTablePage({ contents, selected, selection }: Props) {
-  const [industryIds, setIndustries] = useState<number[]>([]);
-  const [departmentIds, setDepartments] = useState<number[]>([]);
+export function CostTablePage({ contents, selected, selection, view, onOpenInitiative, navigationBlocked }: Props) {
+  const [industryIds, setIndustries] = useState<number[]>(view.current.industries);
+  const [departmentIds, setDepartments] = useState<number[]>(view.current.departments);
+  useLayoutEffect(() => { view.current.industries = industryIds; view.current.departments = departmentIds; }, [industryIds, departmentIds, view]);
   const available = contents;
   const departments = departmentIds.filter(id => available.departments.some(item => item.id === id));
   const allowedIndustries = industryIdsForDepartments(available, departments);
@@ -66,12 +74,17 @@ export function CostTablePage({ contents, selected, selection }: Props) {
       </div>
     </div>
     <TableCalculationBoundary resetKeys={[contents, selected, industryIds, departmentIds]}>
-      <CostTableContents contents={filtered} selected={selected} />
+      <CostTableContents contents={filtered} selected={selected} view={view} onOpenInitiative={onOpenInitiative} navigationBlocked={navigationBlocked} />
     </TableCalculationBoundary>
   </main>;
 }
 
-const CostTableContents = memo(function CostTableContents({ contents, selected }: Pick<Props, "contents" | "selected">) {
+const CostTableContents = memo(function CostTableContents({ contents, selected, view, onOpenInitiative, navigationBlocked }: Omit<Props, "selection">) {
+  const [detail, setDetail] = useState<{ target: CostBreakdownTarget; title: string } | null>(null);
+  const container = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (container.current) { container.current.scrollTop = view.current.top; container.current.scrollLeft = view.current.left; }
+  }, [view]);
   const comparisons = useMemo(() => new Map<string, ReturnType<typeof buildPeriodCostComparison>>(), [contents]);
   const key = [...selected].sort().join(",");
   let table = comparisons.get(key);
@@ -84,9 +97,22 @@ const CostTableContents = memo(function CostTableContents({ contents, selected }
   const salesIndex = rows.findIndex(row => row.kind === "group" && row.id === salesGroupId);
   const renderRow = (row: (typeof rows)[number]) => <tr key={`${row.kind}:${row.id}`} className={`cost-data-row${row.kind !== "account" ? ` cost-subtotal${row.required ? " cost-required" : ""}` : ""}${row.kind === "group" && row.id === salesGroupId ? " cost-sales-anchor" : ""}`}>
     <th scope="row" className="initiative-list-name">{row.name}{!row.configured && <span className="cost-unconfigured">未設定</span>}</th>
-    {tablePeriods.map(period => <Fragment key={period.id}>{row.values.map((values, index) => <td key={index} className={periodCellClass(period, index === 0, index === labels.length - 1)}>{row.kind === "ratio" ? formatTableRate(values[period.id], labels[index] === "前年差" || labels[index] === "一次予算差") : formatTableYen(values[period.id])}</td>)}</Fragment>)}
+    {tablePeriods.map(period => <Fragment key={period.id}>{row.values.map((values, index) => <td key={index} className={periodCellClass(period, index === 0, index === labels.length - 1)}>{row.kind === "ratio" ? formatTableRate(values[period.id], labels[index] === "前年差" || labels[index] === "一次予算差")
+      : row.configured && values[period.id] !== undefined ? <button type="button" className="cost-amount-button"
+        aria-label={`${row.name} ${period.label} ${labels[index]}の内訳`} aria-description={formatTableYen(values[period.id]) || "0"} disabled={navigationBlocked}
+        onFocus={event => {
+          const region = container.current;
+          if (!region) return;
+          const left = region.querySelector("th")!.getBoundingClientRect().right;
+          const right = region.getBoundingClientRect().right - 14;
+          const rect = event.currentTarget.getBoundingClientRect();
+          if (rect.left < left) region.scrollLeft -= left - rect.left + 6;
+          else if (rect.right > right) region.scrollLeft += rect.right - right + 6;
+        }}
+        onClick={() => setDetail({ target: { kind: row.kind as "account" | "group", id: row.id, period, column: index }, title: `${row.name} ${period.label} ${labels[index]}` })}>{formatTableYen(values[period.id])}</button>
+      : formatTableYen(values[period.id])}</td>)}</Fragment>)}
   </tr>;
-  return <div className="initiative-list-container cost-table-container" role="region" aria-label="総原価表の月別前年・種別別金額" tabIndex={0}>
+  return <><div ref={container} onScroll={event => { view.current.top = event.currentTarget.scrollTop; view.current.left = event.currentTarget.scrollLeft; }} className="initiative-list-container cost-table-container" role="region" aria-label="総原価表の月別前年・種別別金額" tabIndex={0}>
       <table className="initiative-list-table cost-table" aria-label="総原価表">
         <colgroup>
           <col className="cost-name-column" />
@@ -101,5 +127,8 @@ const CostTableContents = memo(function CostTableContents({ contents, selected }
         </thead>
         <tbody>{rows.slice(salesIndex + 1).map(renderRow)}</tbody>
       </table>
-    </div>;
+    </div>
+    {detail && <CostBreakdownDialog contents={contents} selected={selected} target={detail.target} title={detail.title}
+      navigationBlocked={navigationBlocked} onClose={() => setDetail(null)} onOpenInitiative={onOpenInitiative} />}
+    </>;
 });

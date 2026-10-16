@@ -1,3 +1,4 @@
+import type { KindId } from "../core/domain/kinds";
 import type { ExpansionCategory } from "../core/domain/expansionCategoryMaster";
 import { type Industry } from "../core/domain/industryMaster";
 import { type PeriodType } from "../core/domain/periodMaster";
@@ -19,12 +20,13 @@ type Props = AutoSaveProps & {
   periodTypes: PeriodType[];
   industries: Industry[];
   backLabel?: string;
+  initialKind?: KindId;
   onUpdate: (draft: InitiativeEntryDraft) => Promise<void>;
   onBack: () => void;
   onOpenMaster: () => void;
 };
 
-export function InitiativeDetailPage({ initiative, accounts, expansions, expansionCategories, departments, periodTypes, industries, backLabel = "施策一覧", onUpdate, onBack, onOpenMaster, onPendingChange, onPrepareSave }: Props) {
+export function InitiativeDetailPage({ initiative, accounts, expansions, expansionCategories, departments, periodTypes, industries, initialKind, backLabel = "施策一覧", onUpdate, onBack, onOpenMaster, onPendingChange, onPrepareSave }: Props) {
   const autoSave = useAutoSave(onUpdate, onPendingChange);
   const { controller, draft, revision } = autoSave;
   const source = useRef<Initiative | null>(null);
@@ -36,7 +38,7 @@ export function InitiativeDetailPage({ initiative, accounts, expansions, expansi
     }
   }, [controller, initiative, revision]);
   if (!draft) return null;
-  return <InitiativeEntryPage draft={draft} onDraftChange={value => controller.change(value)} accounts={accounts} expansions={expansions} expansionCategories={expansionCategories} departments={departments} periodTypes={periodTypes} industries={industries}
+  return <InitiativeEntryPage initialKind={initialKind ?? 1} draft={draft} onDraftChange={value => controller.change(value)} accounts={accounts} expansions={expansions} expansionCategories={expansionCategories} departments={departments} periodTypes={periodTypes} industries={industries}
     isSaving={false} onOpenMaster={onOpenMaster} onRegister={() => {}} editing={{
       savedRows: initiative.rows, saving: autoSave.saving, pending: autoSave.pending, onCompositionStart: () => controller.pause(), onCompositionEnd: () => controller.resume(),
       before: <button className="text-button master-back" type="button" disabled={autoSave.pending} onClick={onBack}>← {backLabel}へ戻る</button>,

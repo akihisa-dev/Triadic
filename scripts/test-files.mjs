@@ -1,3 +1,4 @@
+import { verifyCostBreakdown } from "../tests/cost-breakdown.mjs";
 import { verifyNewPlanFile } from "../tests/new-plan-file.mjs";
 import { verifyInitiativeDraftReferences } from "../tests/initiative-draft-references.mjs";
 import { verifyConcurrentInitiative } from "../tests/concurrent-initiative.mjs";
@@ -95,6 +96,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyCostMonthlyAddition(api);
   verifyAggregationOrder(api);
   await verifyCostComparison(api);
+  await verifyCostBreakdown(api);
   await verifyPeriodTables(api);
   await verifySpreadsheetIO(api);
   verifyHomeMotion(api);

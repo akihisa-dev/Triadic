@@ -41,3 +41,5 @@ export { visibleRows } from '../../Triadichrome-extension/src/core/tables/visibl
 export * from "../../Triadichrome-extension/src/core/domain/previousAmounts";
 export * from "../../Triadichrome-extension/src/core/tables/previousPeriods";
 export * from "../../Triadichrome-extension/src/core/domain/initiativeDraftReferences";
+
+export * from "../../Triadichrome-extension/src/core/tables/costBreakdown";

@@ -17,6 +17,7 @@ import { type InitiativeEntryDraft } from "../core/domain/plan";
 
 type InitiativeEntryPageProps = {
   draft: InitiativeEntryDraft;
+  initialKind?: KindId;
   onDraftChange: (draft: InitiativeEntryDraft) => void;
   accounts: Account[];
   expansions: Expansion[];
@@ -31,9 +32,9 @@ type InitiativeEntryPageProps = {
   editing?: { savedRows: InitiativeEntryDraft["rows"]; saving: boolean; pending: boolean; before: ReactNode; status: ReactNode; onCompositionStart: () => void; onCompositionEnd: () => void };
 };
 
-export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions, expansionCategories, departments, periodTypes, industries, onOpenMaster, isSaving, onRegister, onBack, editing }: InitiativeEntryPageProps) {
+export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions, expansionCategories, departments, periodTypes, industries, onOpenMaster, isSaving, onRegister, onBack, editing, initialKind = 1 }: InitiativeEntryPageProps) {
   const readOnly = useHistoryReadOnly();
-  const [kind, setKind] = useState<KindId>(1);
+  const [kind, setKind] = useState<KindId>(initialKind);
   const allowedCategories = expansions.find(item => item.id === draft.expansionId)?.categoryIds ?? [];
   const allowedIndustries = departments.find(item => item.id === draft.departmentId)?.industryIds ?? [];
   return (

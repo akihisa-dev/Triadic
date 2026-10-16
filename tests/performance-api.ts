@@ -20,7 +20,7 @@ export { createExpansionTableView } from "../Triadichrome-extension/src/core/tab
 
 import { CostTablePage } from '../Triadichrome-extension/src/extension/CostTablePage';
 export function renderCostTable(contents: PlanContents) {
-  return renderToStaticMarkup(createElement(CostTablePage, { contents, selected: [1], selection: null }));
+  return renderToStaticMarkup(createElement(CostTablePage, { contents, selected: [1], selection: null, view: { current: { industries: [], departments: [], top: 0, left: 0 } }, navigationBlocked: false, onOpenInitiative() {} }));
 }
 
 import { ExpansionTablePage } from "../Triadichrome-extension/src/extension/ExpansionTablePage";

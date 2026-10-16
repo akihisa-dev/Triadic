@@ -1,5 +1,5 @@
 import type { ExpansionCategoryChange } from "../../core/domain/expansionCategoryMaster";
-import { type PlanChange } from "../../core/domain/kinds";
+import { type KindId, type PlanChange } from "../../core/domain/kinds";
 import { type PeriodTypeChange } from "../../core/domain/periodMaster";
 import { type DepartmentChange } from "../../core/domain/departmentMaster";
 import { type IndustryChange } from "../../core/domain/industryMaster";
@@ -15,8 +15,9 @@ export type Page = "spreadsheet-io" | "data-history" | "previous-input" | "home"
 
 export type Screen = {
   page: Page;
+  detailKind?: KindId;
   selectedInitiative: Pick<Initiative, "id" | "fiscalYear"> | null;
-  detailOrigin: "home" | "initiative-list" | "expansion-table";
+  detailOrigin: "home" | "initiative-list" | "expansion-table" | "cost-table";
 };
 
 export type HomePageProps = {
