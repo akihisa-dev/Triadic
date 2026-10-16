@@ -140,7 +140,7 @@ Blank rows without selected accounts are not saved. An existing all-kinds/all-mo
 
 The period master manages only period names, initially “期間差” (carryover period) and “新規” (new). It rejects whitespace-only and duplicate names and supports registration, inline autosave editing, and confirmed deletion. Period selection is optional beside department in initiative input and autosaves after registration. Periods used by current input or registered initiatives cannot be deleted; renaming preserves references. Selecting a period does not change the fiscal year, monthly amounts, or calculations.
 
-The initiative list places breakdown category, period, initiative name, and start year/month to the left of numeric columns, fixing their headers and cells during horizontal scrolling. Category/period names reflect the current master names; unselected values are blank. Narrow screens shrink fixed columns and wrap long initiative names to leave room for amounts.
+The initiative list places breakdown category, period, initiative name, and start year/month to the left of numeric columns, fixing their headers and cells during horizontal scrolling. Category/period names reflect the current master names; unselected values are blank. Narrow screens shrink fixed columns to leave room for amounts. Long initiative names wrap at 200 or fewer initiatives; at 201 or more, both wide and narrow screens use 28px rows and single-line truncation. Open an initiative to read its full name in the detail view; its button retains the full accessible name regardless of notes.
 
 Start year/month is automatically derived from the period classification and monthly amounts, separately for initial/final budgets at load time. The list shows the selected kind's result. “New” uses the first nonzero month in the current fiscal year. “Carryover period” treats April through the last nonzero month as continuous and uses the following month in the previous fiscal year as the start. Intermediate zero months count as continuous. The check occurs before positive and negative account rows cancel, and respects final-budget overrides of 0. It is blank for all-zero months, no period, custom classifications, or a carryover period starting after April or continuing through March. Renaming preserves classification rules, and saving amounts/periods derives it from the new source data. The start date cannot be edited directly.
 
@@ -327,7 +327,7 @@ After cloning, run `npm run setup:hooks`. `pre-commit` checks staged whitespace/
 
 Normal cost-summary rows use 24px; initiative-list/breakdown rows use 28px with compact vertical padding. Long names wrap with enough height in normal display.
 
-Above 200 rows, initiative/breakdown tables render only rows near the viewport. Scrolling accesses all rows; totals, sorting, and Excel export still use all data. Large displays fix row heights and truncate long strings.
+Above 200 rows, initiative/breakdown tables render only rows near the viewport. Scrolling accesses all rows; totals, sorting, and Excel export still use all data. Large displays fix row heights and truncate long strings. Initiative names wrap at 200 or fewer initiatives; at 201 or more, both wide and narrow screens use 28px rows and single-line truncation. Open an initiative to read its full name in the detail view; its button also retains the full accessible name, with or without a note.
 
 Database validation, updates, history, and pre-save file comparison run on-device in a Web Worker separate from screen interaction. Permission acquisition, exclusive writing, and post-commit screen publication retain their order. Saving takes time according to data size. SQLite initialization and canonical schema preparation share concurrent requests and discard failed preparation. A later explicit file selection retries preparation; incomplete schema allowlists are never published. Invalid files retain successful initialization. Aggregation membership rows are grouped by parent once on load, preserving membership order and signs. Account-master destination checks share a group-ID index while group definitions remain unchanged. Self and descendant groups stay unavailable.
 
@@ -650,7 +650,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 期間マスタは「期間名」だけを管理し、新規ファイルでは「期間差」「新規」を初期表示します。空白だけの名称と重複を拒否し、登録・一覧内の編集（自動保存）・確認付き削除に対応します。施策入力の部署名の横で期間を任意に選択でき、登録後の変更も自動保存します。入力中または登録済み施策で使用中の期間は削除できず、名称変更でも対応を保持します。期間の選択では年度や月別金額・集計方法は変わりません。
 
-施策一覧は数値列より左側に展開名・期間名・施策名・開始年月をこの順で表示し、見出し・各行とも横スクロール中に固定します。展開名と期間名は所属先マスタの現在の名称を表示し、未選択は空欄にします。狭い画面では固定列を縮め、長い施策名を折り返して数値の表示領域を確保します。
+施策一覧は数値列より左側に展開名・期間名・施策名・開始年月をこの順で表示し、見出し・各行とも横スクロール中に固定します。展開名と期間名は所属先マスタの現在の名称を表示し、未選択は空欄にします。狭い画面では固定列を縮め、数値の表示領域を確保します。施策200件以下では通常幅・狭い幅とも長い施策名を折り返し、201件以上では28pxの固定行高で一行に省略します。名称の全文は施策名から開く詳細画面で確認でき、施策名ボタンの読み上げ名にも全文を保持します。備考がある場合も同じ方法で全文を確認できます。
 
 開始年月は期間の分類と月別金額から自動算出し、一次予算と確定予算で別々に読み込み時に導出します。施策一覧では選択中の種別の開始年月を表示します。新規は最初に非0の金額がある当年度の月、期間差は4月から最後に非0の金額がある月までを継続とみなし、その翌月を前年度の開始月とします。途中の0の月も継続として扱います。科目行の正負を相殺する前に判定し、確定予算の手修正0も反映します。全月0、期間未選択・独自分類、期間差が4月以外から始まる・3月まで続く場合は空欄です。改名しても分類の算出規則を維持し、金額・期間の保存後には新しい元データから求めます。開始年月は直接編集できません。
 
@@ -837,7 +837,7 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 
 総原価表の通常行は24px、施策一覧・展開表の通常行は28pxを基準に上下の余白を抑えています。通常表示の長い名称は折り返し、必要な高さを確保します。
 
-施策一覧・展開表は200行を超えると、画面周辺の行だけを描画します。スクロールで全件を確認でき、合計・並べ替え・Excel出力は全件を対象にします。大規模表示では行の高さを固定し、長い文字列は省略表示します。施策一覧でフォーカス中の施策名と前後の行は、表示範囲外でも必要な間だけ残します。遠くへスクロールしても操作位置を保ち、Tab／Shift＋Tabで隣の施策、Enterで元の施策へ進めます。フォーカスが離れると保持を解除します。
+施策一覧・展開表は200行を超えると、画面周辺の行だけを描画します。スクロールで全件を確認でき、合計・並べ替え・Excel出力は全件を対象にします。大規模表示では行の高さを固定し、長い文字列は省略表示します。施策一覧は200件以下なら名称を折り返し、201件以上なら通常幅・狭い幅とも28pxの一行省略です。省略された名称の全文は施策名から詳細画面を開いて確認できます。施策一覧でフォーカス中の施策名と前後の行は、表示範囲外でも必要な間だけ残します。遠くへスクロールしても操作位置を保ち、Tab／Shift＋Tabで隣の施策、Enterで元の施策へ進めます。フォーカスが離れると保持を解除します。
 
 データベースの検証・更新・履歴・保存前のファイル照合は、画面操作と別の処理（Web Worker）で端末内で実行します。ファイルの許可取得・排他的な書き込み・確定後の画面反映は従来の順序を維持します。保存の完了にはデータ量に応じた時間がかかります。SQLite本体と正規スキーマの準備は同時要求で共有し、準備の失敗は保持せず、次の明示的なファイル選択で再準備します。許可一覧は両形式の準備が完了してから公開し、不正ファイルを拒否した場合は成功済みの準備を維持します。集計の所属行は親の番号ごとに一度だけ分類して読み込み、所属順と加減算の符号を保持します。勘定科目マスタの所属先候補は集計の定義が同じ間、集計IDの索引を共有し、自分自身と子孫の集計を選べない規則を維持します。
 
