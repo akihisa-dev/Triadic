@@ -86,3 +86,14 @@ test("相殺後が上限内なら三表・施策入力・期間計を表示す�
   }
   expect(errors).toEqual([]);
 });
+
+test("施策内合計が超過しても科目別に相殺する総原価表を表示できる", async ({ page }) => {
+  await page.goto("/tests/ui/preview.html?data=overflow-initiative-cancellation");
+  await expect(page.getByRole("status")).toHaveText("操作できます");
+  const app = page.frameLocator("#app-preview");
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("button", { name: "サイドバーを開く", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "総原価表", exact: true }).click();
+  await expect(app.getByRole("table", { name: "総原価表", exact: true })).toBeVisible();
+  await expect(app.getByRole("alert")).toHaveCount(0);
+});

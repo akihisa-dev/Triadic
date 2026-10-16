@@ -2,7 +2,7 @@ import { accountEffectsYen } from "../domain/accountEffects";
 import { amountToYen } from "../domain/amounts";
 import { addYen, checkedYen } from "../domain/amounts";
 import { buildCostTable } from "./costTable";
-import { initiativesForKind } from "./initiatives";
+import { initiativesForKind, initiativeRowsForKind } from "./initiatives";
 import { initiativeMonths } from "../domain/calendar";
 import { type Initiative, type PlanContents } from "../domain/plan";
 import type { KindId } from "../domain/kinds";
@@ -32,7 +32,7 @@ export function previousByAccount(contents: PlanContents) {
 }
 export function buildKindCostTable(contents: PlanContents, selected: KindId[]) {
   const previous = previousByAccount(contents);
-  const kinds = selected.map(kind => buildCostTable(contents.accounts, contents.aggregations, initiativesForKind(contents.initiatives, contents.accounts, kind), contents.fiscalYear, previous));
+  const kinds = selected.map(kind => buildCostTable(contents.accounts, contents.aggregations, contents.initiatives.map(initiative => ({ ...initiative, rows: initiativeRowsForKind(initiative, kind) })), contents.fiscalYear, previous));
   const skeleton = kinds[0] ?? buildCostTable(contents.accounts, contents.aggregations, [], contents.fiscalYear, previous);
   return skeleton.map((row, index) => ({ ...row, values: [row.previous, ...kinds.map(rows => rows[index]!.budget)] }));
 }

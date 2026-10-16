@@ -64,6 +64,22 @@ export async function verifyCostCancellation(api) {
     assert.equal(api.buildCostTable(accounts, [...groups, ...nested], [], 2026, source).find(row => row.kind === "group" && row.id === salesGroup.id).budget[4], expected);
     assert.deepEqual(await api.readPlanContents(bytes), plan, "表示用計算で保存データを変えない");
   }
+  // Each initiative exceeds the list total limit, but opposite initiatives cancel per account.
+  for (const kind of [1, 2]) {
+    const bytes = await api.createCostInitiativeCancellationPlan(kind);
+    const plan = await api.readPlanContents(bytes);
+    const first = plan.initiatives[0];
+    const preserved = structuredClone(plan);
+    for (const selected of [[1], [2], [1, 2]]) {
+      const result = api.buildPeriodCostComparison(plan, selected);
+      for (const row of result.rows.filter(row => row.kind !== "ratio")) for (const values of row.values) assert.ok(Object.values(values).every(value => value === 0));
+    }
+    assert.deepEqual(api.buildPeriodCostComparison(api.filterPlan(plan, { industries: [first.industryId], departments: [first.departmentId] }), [kind]), api.buildPeriodCostComparison(plan, [kind]));
+    const workbook = await api.createReportWorkbook(plan, { tables: ["cost-table"], selections: { ...plan.kindSelections, "cost-table": [kind] }, costFilter: { industries: null, departments: null } });
+    assert.ok(workbook.worksheets.some(sheet => sheet.name === "総原価表"), "総原価表だけのExcel出力でも不要な施策合計を計算しない");
+    assert.deepEqual(plan, preserved, "計算と出力で元の行金額と手修正を変えない");
+    assert.throws(() => api.buildPeriodCostComparison({ ...plan, initiatives: [first] }, [kind]), /範囲/, "最終科目合計が超過する場合は拒否");
+  }
   for (const sign of [1, -1]) {
     const seed = await api.readPlanContents(await api.registerInitiative(original, { ...baseDraft, rows: [{ accountId: sales.id, amounts: { 4: "0" } }] }));
     const bad = { ...seed, initiatives: [{ ...seed.initiatives[0], rows: [maximum, 1].map(value => ({ accountId: sales.id, amounts: { 4: api.yenToAmount(sign * value) } })) }] };

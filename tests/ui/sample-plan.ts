@@ -269,3 +269,15 @@ export async function createRecreatedInitiativeFixture() {
   const external = await registerInitiative(initial, { ...draft, rows: [{ id: "recreated-row", accountId, amounts: { 4: "200" } }] });
   return { base, external };
 }
+
+/** Two independently overflowing initiatives whose account-level totals cancel. */
+export async function createCostInitiativeCancellationPlan(kind: KindId = 1) {
+  let bytes = await createTriadicDatabase(2026);
+  const accountId = (await readPlanContents(bytes)).accounts.find(account => account.accountType === "sales")!.id;
+  for (const sign of [1, -1]) bytes = await registerInitiative(bytes, {
+    ...createInitiativeDraft("2026"), name: `科目別相殺${sign}`, expansionId: 1, industryId: 1, departmentId: 1,
+    rows: [1, 2].map(() => ({ accountId, amounts: { 4: kind === 1 ? String(sign * 5000000000000) : "0" },
+      overrides: { 2: { 4: kind === 2 ? String(sign * 5000000000000) : "0" } } })),
+  });
+  return bytes;
+}
