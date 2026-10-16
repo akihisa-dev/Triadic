@@ -7,11 +7,12 @@ import "./DataHistoryPage.css";
 const dateFormat = new Intl.DateTimeFormat("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 3, hourCycle: "h23" });
 export const historyDate = (timestamp: string) => dateFormat.format(new Date(timestamp));
 
-export function DataHistoryPage({ entries, busy, error, onPreview, onDelete, onRetry }: {
+export function DataHistoryPage({ entries, busy, error, onPreview, onDelete, onRetry, onPrepareSave }: {
   entries: DataHistoryEntry[]; busy: boolean; error: string;
   onPreview: (entry: DataHistoryEntry) => Promise<void>;
   onDelete: (deletion: HistoryDeletion) => Promise<void>;
   onRetry: () => Promise<void>;
+  onPrepareSave: () => Promise<void>;
 }) {
   const [selected, setSelected] = useState<number[]>([]);
   const [cutoff, setCutoff] = useState("");
@@ -55,6 +56,11 @@ export function DataHistoryPage({ entries, busy, error, onPreview, onDelete, onR
       {!entries.length && <p className="page-description">履歴はまだありません。</p>}
     </div>
     <ConfirmationDialog open={deletion !== null} title="履歴を削除" message={`${deletion && "before" in deletion ? `${historyDate(deletion.before)}より前の` : "選択した"}${count}件の履歴を削除しますか？ 削除した履歴には戻れません。現在の計画データは変わりません。${deletionFailure ? ` ${deletionFailure}` : ""}`} confirmLabel="削除する" busy={locked}
-      onCancel={() => setDeletion(null)} onConfirm={() => { if (deletion) void perform(async () => { await onDelete(deletion); setDeletion(null); setSelected([]); }, setDeletionFailure); }} />
+      onCancel={() => { if (deletionFailure) setFailure(deletionFailure); setDeletion(null); }} onConfirm={() => {
+        if (deletion) {
+          const retry = Boolean(deletionFailure);
+          void perform(async () => { if (retry) await onPrepareSave(); await onDelete(deletion); setDeletion(null); setSelected([]); setFailure(""); }, setDeletionFailure);
+        }
+      }} />
   </main>;
 }

@@ -7,5 +7,6 @@ createRoot(document.getElementById("root")!).render(<DataHistoryPage
   busy={false} error=""
   onPreview={async () => { throw new Error("テスト用の閲覧失敗"); }}
   onDelete={async () => { throw new Error("テスト用の削除失敗"); }}
+  onPrepareSave={async () => {}}
   onRetry={async () => {}}
 />);
