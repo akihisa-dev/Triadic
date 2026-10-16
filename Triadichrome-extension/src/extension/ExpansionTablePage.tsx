@@ -2,7 +2,7 @@ import { useRowWindow, WindowRows } from "./VirtualTableRows";
 import { TableCalculationBoundary } from "./TableCalculationBoundary";
 import { periodCellClass } from "./periodCellStyle";
 import type { ReactNode } from "react";
-import { Fragment, memo, useMemo, useRef } from "react";
+import { Fragment, memo, useMemo, useRef, useState } from "react";
 import { expansionPeriodAmount, tablePeriods } from "../core/tables/periodTables";
 import { type Initiative, type PlanContents } from "../core/domain/plan";
 import { createExpansionTableView } from "../core/tables/expansionTableView";
@@ -43,6 +43,37 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
   const container = useRef<HTMLDivElement>(null);
   const window = useRowWindow(container, flat.length, 28, 200, 165);
   const virtual = flat.length > 200;
+  const [focusedId, setFocusedId] = useState<number | null>(null);
+  const focusedIndex = useMemo(() => focusedId === null ? -1 : flat.findIndex(row => row.item?.id === focusedId), [flat, focusedId]);
+  const rendered = useMemo(() => {
+    const indices = new Set(Array.from({ length: window.end - window.start }, (_, offset) => window.start + offset));
+    const focused = focusedIndex;
+    if (focused >= 0) {
+      indices.add(focused);
+      // Subtotals have no focusable control; retain the nearest initiative on either side.
+      for (const step of [-1, 1]) {
+        let index = focused + step;
+        while (index >= 0 && index < flat.length && !flat[index]!.item) index += step;
+        if (index >= 0 && index < flat.length) indices.add(index);
+      }
+    }
+    const ranges: { start: number; end: number }[] = [];
+    for (const index of [...indices].sort((a, b) => a - b)) {
+      const last = ranges.at(-1);
+      if (last?.end === index) last.end++;
+      else ranges.push({ start: index, end: index + 1 });
+    }
+    return ranges.flatMap(range => flat.slice(range.start, range.end).map((row, offset) => ({
+      item: { row, range }, index: range.start + offset,
+      key: row.item ? `initiative:${row.item.id}` : `subtotal:${row.group.expansion.id}`,
+    })));
+  }, [flat, window.start, window.end, focusedIndex]);
+  const focusHandlers = (id: number) => ({
+    onFocus: () => setFocusedId(id),
+    onBlur: (event: React.FocusEvent<HTMLButtonElement>) => {
+      if (!(event.relatedTarget instanceof Node && event.currentTarget.closest("tbody")?.contains(event.relatedTarget))) setFocusedId(null);
+    },
+  });
   const labels = [...selected.map(id => contents.kinds.find(kind => kind.id === id)!.kindName), ...(selected.length === 2 ? ["比較"] : [])];
   return <div ref={container} className="initiative-list-container" role="region" aria-label="展開表の月別種別・比較" tabIndex={0}>
       <table className={`initiative-list-table expansion-table${virtual ? " virtual-table" : ""}`} style={{ "--virtual-row-height": "28px" } as React.CSSProperties} aria-label="展開表" aria-rowcount={flat.length + 6}>
@@ -63,19 +94,19 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
         <tr className="expansion-total"><th colSpan={4} scope="row" className="expansion-summary">合計</th><AmountCells values={table.total} /></tr>
         <tr className="expansion-total"><th colSpan={4} scope="row" className="expansion-summary">展開計</th><AmountCells values={table.changes} /></tr>
       </thead>
-      {virtual ? <tbody><WindowRows items={flat.slice(window.start, window.end).map((item, offset) => ({ item, index: window.start + offset }))} count={flat.length} height={28} columns={4 + labels.length * tablePeriods.length * 2} render={(row, index) => {
-        const firstGroup = row.groupOffset === 0 || index === window.start;
-        const groupSpan = Math.min(row.groupCount - row.groupOffset, window.end - index);
-        const firstPeriod = row.periodOffset === 0 || index === window.start;
-        const firstCategory = row.categoryOffset === 0 || index === window.start;
-        const categorySpan = Math.min(row.categoryCount - row.categoryOffset, window.end - index);
-        const periodSpan = Math.min((row.period?.initiatives.length ?? 0) - row.periodOffset, window.end - index);
+      {virtual ? <tbody><WindowRows items={rendered} count={flat.length} height={28} columns={4 + labels.length * tablePeriods.length * 2} render={({ row, range }, index) => {
+        const firstGroup = row.groupOffset === 0 || index === range.start;
+        const groupSpan = Math.min(row.groupCount - row.groupOffset, range.end - index);
+        const firstPeriod = row.periodOffset === 0 || index === range.start;
+        const firstCategory = row.categoryOffset === 0 || index === range.start;
+        const categorySpan = Math.min(row.categoryCount - row.categoryOffset, range.end - index);
+        const periodSpan = Math.min((row.period?.initiatives.length ?? 0) - row.periodOffset, range.end - index);
         return <tr key={row.item?.id ?? `subtotal:${row.group.expansion.id}`} className={row.subtotal ? "expansion-subtotal" : undefined} aria-rowindex={index + 7}>
           {firstGroup && <th rowSpan={groupSpan} scope="rowgroup" className="expansion-group" title={row.group.expansion.expansionName}>{row.group.expansion.expansionName}</th>}
           {row.subtotal ? <><th colSpan={3} scope="row" className="expansion-subtotal-name">{row.group.expansion.expansionName}計</th><AmountCells values={row.group.values} /></>
             : <>{firstPeriod && <th rowSpan={periodSpan} className="expansion-period">{row.period!.name}</th>}
               {firstCategory && <td rowSpan={categorySpan} className="expansion-category" title={categoryName(row.item!)}>{categoryName(row.item!)}</td>}
-              <th scope="row" className="expansion-name"><button className="initiative-name-button" type="button" title={row.item!.note || row.item!.name} onClick={() => onOpenInitiative(row.item!)}>{row.item!.name}</button></th><AmountCells values={row.item!.values} /></>}
+              <th scope="row" className="expansion-name"><button className="initiative-name-button" type="button" {...focusHandlers(row.item!.id)} title={row.item!.note || row.item!.name} onClick={() => onOpenInitiative(row.item!)}>{row.item!.name}</button></th><AmountCells values={row.item!.values} /></>}
         </tr>;
       }} /></tbody> : groups.map(({ group, periods }) => { return <tbody key={group.expansion.id}>
         {periods.map((period, periodIndex) => period.categories.flatMap((category, categoryGroupIndex) => category.initiatives.map((item, categoryIndex) => {
