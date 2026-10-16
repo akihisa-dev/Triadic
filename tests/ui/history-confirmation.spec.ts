@@ -1,0 +1,40 @@
+import { test, expect } from "./fixtures";
+
+test("過去の閲覧・削除エラーが次の削除対象と注意書きを隠さない", async ({ page }) => {
+  await page.goto("/tests/ui/history-confirmation.html");
+  await page.locator(".history-date").first().click();
+  await expect(page.getByRole("alert")).toContainText("閲覧失敗");
+  const checks = page.getByRole("region", { name: "データの履歴" }).getByRole("checkbox");
+  await checks.nth(1).check();
+  await page.getByRole("button", { name: "選択した履歴を削除" }).click();
+  const dialog = page.getByRole("alertdialog");
+  const confirm = async (count: number) => {
+    await expect(dialog).toContainText(`${count}件の履歴を削除しますか`);
+    await expect(dialog).toContainText("削除した履歴には戻れません");
+    await expect(dialog).toContainText("現在の計画データは変わりません");
+    await expect(dialog).not.toContainText("閲覧失敗");
+  };
+  await confirm(1);
+  await dialog.getByRole("button", { name: "削除する", exact: true }).click();
+  await expect(dialog).toContainText("削除失敗");
+  await confirm(1);
+  await dialog.getByRole("button", { name: "キャンセル" }).click();
+  await expect(checks.nth(1)).toBeChecked();
+  await checks.nth(2).check();
+  await page.getByRole("button", { name: "選択した履歴を削除" }).click();
+  await confirm(2);
+  await expect(dialog).not.toContainText("削除失敗");
+  await dialog.getByRole("button", { name: "キャンセル" }).click();
+  await page.getByLabel("指定日時より前を削除", { exact: true }).fill("2099-01-01T00:00");
+  await page.getByRole("button", { name: "一括削除", exact: true }).click();
+  await confirm(3);
+  await expect(dialog).toContainText("2099/01/01");
+  await expect(dialog).toContainText("より前の");
+  await dialog.getByRole("button", { name: "削除する", exact: true }).click();
+  await expect(dialog).toContainText("削除失敗");
+  await confirm(3);
+  await dialog.getByRole("button", { name: "削除する", exact: true }).click();
+  await confirm(3);
+  await dialog.getByRole("button", { name: "キャンセル" }).click();
+  await expect(page.locator(".history-date")).toHaveCount(3);
+});

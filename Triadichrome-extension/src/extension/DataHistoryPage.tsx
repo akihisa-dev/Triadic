@@ -17,26 +17,31 @@ export function DataHistoryPage({ entries, busy, error, onPreview, onDelete, onR
   const [cutoff, setCutoff] = useState("");
   const [deletion, setDeletion] = useState<HistoryDeletion | null>(null);
   const [failure, setFailure] = useState("");
+  const [deletionFailure, setDeletionFailure] = useState("");
   const [working, setWorking] = useState(false);
   const locked = busy || working;
   const { ids, selectedIds } = useMemo(() => historySelection(entries, selected), [entries, selected]);
   const before = cutoff && Number.isFinite(new Date(cutoff).getTime()) ? new Date(cutoff).toISOString() : null;
   const older = before ? entries.filter(entry => entry.recordedAt < before).length : 0;
   const count = deletion ? "ids" in deletion ? deletion.ids.length : entries.filter(entry => entry.recordedAt < deletion.before).length : 0;
-  const perform = async (operation: () => Promise<void>) => {
+  const openDeletion = (target: HistoryDeletion) => {
+    setDeletionFailure("");
+    setDeletion(target);
+  };
+  const perform = async (operation: () => Promise<void>, reportFailure = setFailure) => {
     if (locked) return;
-    setWorking(true); setFailure("");
+    setWorking(true); reportFailure("");
     try { await operation(); }
-    catch (reason) { setFailure(reason instanceof Error ? reason.message : "履歴の操作に失敗しました。"); }
+    catch (reason) { reportFailure(reason instanceof Error ? reason.message : "履歴の操作に失敗しました。"); }
     finally { setWorking(false); }
   };
   return <main className="data-history-page" aria-labelledby="data-history-title">
     <h1 id="data-history-title">履歴</h1>
     <div className="data-history-actions">
-      <button className="secondary-button" type="button" disabled={locked || !ids.length} onClick={() => setDeletion({ ids })}>選択した履歴を削除</button>
+      <button className="secondary-button" type="button" disabled={locked || !ids.length} onClick={() => openDeletion({ ids })}>選択した履歴を削除</button>
       <label htmlFor="history-cutoff">指定日時より前を削除</label>
       <input id="history-cutoff" type="datetime-local" step="1" value={cutoff} disabled={locked} onChange={event => setCutoff(event.target.value)} />
-      <button className="secondary-button" type="button" disabled={locked || !older || !before} onClick={() => { if (before) setDeletion({ before }); }}>一括削除</button>
+      <button className="secondary-button" type="button" disabled={locked || !older || !before} onClick={() => { if (before) openDeletion({ before }); }}>一括削除</button>
     </div>
     {(failure || error) && <div className="data-history-error" role="alert"><p>{failure || error}</p><button className="text-button" type="button" disabled={locked} onClick={() => void perform(onRetry)}>保存を再試行</button></div>}
     <div className="data-history-list" role="region" aria-label="データの履歴" tabIndex={0}>
@@ -49,7 +54,7 @@ export function DataHistoryPage({ entries, busy, error, onPreview, onDelete, onR
       </tr>)}</tbody></table>
       {!entries.length && <p className="page-description">履歴はまだありません。</p>}
     </div>
-    <ConfirmationDialog open={deletion !== null} title="履歴を削除" message={failure || `${count}件の履歴を削除しますか？ 削除した履歴には戻れません。現在の計画データは変わりません。`} confirmLabel="削除する" busy={locked}
-      onCancel={() => setDeletion(null)} onConfirm={() => { if (deletion) void perform(async () => { await onDelete(deletion); setDeletion(null); setSelected([]); }); }} />
+    <ConfirmationDialog open={deletion !== null} title="履歴を削除" message={`${deletion && "before" in deletion ? `${historyDate(deletion.before)}より前の` : "選択した"}${count}件の履歴を削除しますか？ 削除した履歴には戻れません。現在の計画データは変わりません。${deletionFailure ? ` ${deletionFailure}` : ""}`} confirmLabel="削除する" busy={locked}
+      onCancel={() => setDeletion(null)} onConfirm={() => { if (deletion) void perform(async () => { await onDelete(deletion); setDeletion(null); setSelected([]); }, setDeletionFailure); }} />
   </main>;
 }
