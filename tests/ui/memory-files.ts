@@ -1,4 +1,4 @@
-export type FileScenario = "normal" | "cancel" | "invalid" | "save-failure" | "write-permission" | "permission-denied" | "file-conflict";
+export type FileScenario = "history-failure" | "normal" | "cancel" | "invalid" | "save-failure" | "write-permission" | "permission-denied" | "file-conflict";
 
 export type MemoryFileOptions = {
   bytes: number[] | Uint8Array;
@@ -18,6 +18,7 @@ export function installMemoryFiles(
   let contents: BlobPart = new Uint8Array(options.bytes);
   let writable = options.scenario !== "write-permission" && options.scenario !== "permission-denied";
   let reads = 0;
+  let writes = 0;
   const originalName = name;
   const getFile = () => new target.File([contents], name);
   const checkCancellation = () => {
@@ -43,6 +44,7 @@ export function installMemoryFiles(
       return options.scenario === "invalid" ? new target.File(["not a SQLite database"], name) : getFile();
     },
     createWritable: async () => {
+      if (options.scenario === "history-failure" && ++writes === 2) throw new Error("テスト用の履歴記録失敗です。");
       if (!writable) throw new target.DOMException("書き込みが許可されていません。", "NotAllowedError");
       let pending: BlobPart | undefined;
       return {

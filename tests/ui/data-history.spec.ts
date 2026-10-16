@@ -210,3 +210,49 @@ test("閲覧前に未記録分を保存し、終了時の記録失敗では閉�
   await menu.getByRole("button", { name: "履歴", exact: true }).click();
   await expect(app.locator(".history-date")).toHaveCount(5);
 });
+
+
+test("自動記録エラーは閉じる操作を出さず、通常通知を閉じても保持して再試行で解消", async ({ page, app }) => {
+  await page.goto("/tests/ui/preview.html?data=full");
+  await expect(page.getByRole("status")).toHaveText("操作できます");
+  await app.locator("body").evaluate(() => {
+    const target = window as unknown as Window & { showOpenFilePicker: () => Promise<FileSystemFileHandle[]> };
+    const pick = target.showOpenFilePicker;
+    target.showOpenFilePicker = async () => {
+      const handles = await pick();
+      const handle = handles[0]!;
+      const create = handle.createWritable.bind(handle);
+      let writes = 0;
+      handle.createWritable = async (...args) => {
+        if (++writes === 2) throw new Error("テスト用の自動記録失敗です。");
+        if (writes === 3) throw new Error("テスト用の通常保存失敗です。");
+        return create(...args);
+      };
+      return handles;
+    };
+  });
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await page.clock.install();
+  const menu = app.getByRole("navigation", { name: "メインナビゲーション" });
+  await menu.getByRole("button", { name: "総原価表", exact: true }).click();
+  const comparison = app.getByRole("spinbutton", { name: "比較対象2", exact: true });
+  await selectClassification(comparison, "確定予算");
+  await expect(comparison).toBeEnabled();
+  await page.clock.runFor(301_000);
+  const notice = app.locator(".status-notice");
+  await expect(notice).toContainText("自動記録失敗");
+  await expect(notice.getByRole("button", { name: "通知を閉じる", exact: true })).toHaveCount(0);
+  await comparison.press("Home");
+  await expect(notice).toContainText("通常保存失敗");
+  await notice.getByRole("button", { name: "通知を閉じる", exact: true }).click();
+  await expect(notice).toContainText("自動記録失敗");
+  await expect(notice.getByRole("button", { name: "通知を閉じる", exact: true })).toHaveCount(0);
+  await menu.getByRole("button", { name: "履歴", exact: true }).click();
+  await expect(app.locator(".history-date")).toHaveCount(3);
+  await app.getByRole("button", { name: "保存を再試行", exact: true }).click();
+  await expect(notice).not.toBeVisible();
+  await expect(app.locator(".history-date")).toHaveCount(4);
+  await menu.getByRole("button", { name: "施策一覧", exact: true }).click();
+  await app.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();
+  await expect(app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).first()).toHaveValue("120");
+});
