@@ -8,6 +8,7 @@ const files = [
   "package-lock.json",
   "Triadichrome-extension/manifest.template.json",
   "Triadichrome-extension/manifest.json",
+  "dist/extension/manifest.json",
 ];
 const args = process.argv.slice(2);
 if (args.length > 1 || (args.length === 1 && args[0] !== "--staged")) {

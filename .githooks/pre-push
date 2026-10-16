@@ -1,3 +1,5 @@
 #!/bin/sh
 set -eu
+push_updates=$(cat)
 npm run verify
+printf '%s\n' "$push_updates" | node scripts/check-build-outputs.mjs --push

@@ -321,7 +321,7 @@ SQLite is bundled and works in memory without external communication or extra pe
 
 Normal commits record changes without version numbers, increment classifications, or future update plans. Numbers belong only in dedicated version-update commits. Follow [AGENTS.md version rules](AGENTS.md#versioncommitrelease) to classify each historical change. For a combined update, inspect `git log --reverse <last-applied-commit>..HEAD` excluding already-applied commits, and pass classifications in order, for example `npm run version:next -- patch patch minor patch`. This computes a candidate without changing files; set it in package, lockfile, and Manifest template, build, and commit separately with the covered range recorded.
 
-After cloning, run `npm run setup:hooks`. `pre-commit` checks staged whitespace/version; `pre-push` runs `npm run verify` for build, regular tests, versions, etc. Screen tests do not run on push. Normal verification also stops without configured hooks. If setup detects other existing hooks, inspect their settings.
+After cloning, run `npm run setup:hooks`. `pre-commit` checks staged whitespace/version; `pre-push` runs `npm run verify` for build, regular tests, versions, etc. After regeneration, pre-push also compares both distributions with each outgoing commit and stops on missing generated files. It never stages or commits files automatically. Staged version checks include dist/extension/manifest.json. Screen tests do not run on push. Normal verification also stops without configured hooks. If setup detects other existing hooks, inspect their settings.
 
 ## Display and processing of large plans
 
@@ -831,7 +831,7 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 
 通常のcommitでは変更内容を記録し、バージョン番号・採番区分・将来の更新予定を付け加えません。番号はversion更新専用commitにだけ記載し、その際に[AGENTS.mdのversion運用](AGENTS.md#versioncommitrelease)に従って履歴から各変更の区分を判断します。まとめて更新するときは、前回反映済みのcommitを除外した履歴を`git log --reverse <前回反映済みcommit>..HEAD`で確認し、各commitの区分を順に`npm run version:next -- patch patch minor patch`のように渡して候補を計算します。番号の変更は行わないため、確認した候補をpackage・lockfile・Manifest templateに設定してbuildし、反映範囲を記録した専用commitにまとめます。
 
-新しくcloneした環境では`npm run setup:hooks`を実行します。`pre-commit`はstage済み差分の空白エラーとversionを、`pre-push`は`npm run verify`でbuild・通常テスト・versionなどを確認します。画面自動テストはpush時に起動しません。通常の検証もフック未設定なら停止します。設定時に既存の別フックが検出された場合は、その設定内容を確認してください。
+新しくcloneした環境では`npm run setup:hooks`を実行します。`pre-commit`はstage済み差分の空白エラーとversionを、`pre-push`は`npm run verify`でbuild・通常テスト・versionなどを確認します。再生成後の両配布物を送信するコミットと照合し、生成物のコミット漏れがあれば対象パスを表示して停止します。自動でstage・commitは行いません。stage済みのversion確認には`dist/extension/manifest.json`も含めます。画面自動テストはpush時に起動しません。通常の検証もフック未設定なら停止します。設定時に既存の別フックが検出された場合は、その設定内容を確認してください。
 
 総原価表は種別別の科目行を直接集計します。施策単位の売上・費用・利益の合計だけが上限を超えても、総原価表で使う最終科目額・集計額・期間計が範囲内なら表示・単独Excel出力できます。
 

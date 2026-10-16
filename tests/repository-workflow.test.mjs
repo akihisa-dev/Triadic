@@ -13,6 +13,7 @@ const versionFiles = [
   "package-lock.json",
   "Triadichrome-extension/manifest.template.json",
   "Triadichrome-extension/manifest.json",
+  "dist/extension/manifest.json",
 ];
 
 test("三表照合の入口はWindows・POSIXで直接実行だけを検証し、不一致を失敗にする", async t => {
@@ -62,7 +63,7 @@ async function repository(t) {
     await writeFile(path.join(root, file), JSON.stringify(file === "package-lock.json" ? { version, packages: { "": { version } } } : { version }) + "\n");
   };
   await mkdir(path.join(root, "scripts"));
-  for (const name of ["paths.mjs", "check-samples.mjs", "check-version.mjs", "check-hooks.mjs", "setup-hooks.mjs", "version-next.mjs", "check-release.mjs"]) {
+  for (const name of ["paths.mjs", "check-samples.mjs", "check-build-outputs.mjs", "check-version.mjs", "check-hooks.mjs", "setup-hooks.mjs", "version-next.mjs", "check-release.mjs"]) {
     await cp(path.join(projectRoot, "scripts", name), path.join(root, "scripts", name));
   }
   await cp(path.join(projectRoot, ".githooks"), path.join(root, ".githooks"), { recursive: true });
@@ -343,4 +344,35 @@ test("配布物の復元も失敗した場合は旧版の退避先を残す", as
   await assert.rejects(replaceBuildOutputs([{ target, bytes: Buffer.from("new zip") }], { io }), /退避先/);
   const backup = (await fs.readdir(root)).find(name => name.startsWith(".triadichrome-replace-"));
   assert.equal(await readFile(path.join(root, backup, "previous"), "utf8"), "old zip");
+});
+
+
+test("再生成した両配布物と送信コミットの一致を確認し、漏れを表示する", async t => {
+  const repo = await repository(t);
+  const outputs = ["Triadichrome-extension/assets/app.js", "dist/extension/assets/app.js"];
+  for (const file of outputs) { await mkdir(path.dirname(path.join(repo.root, file)), { recursive: true }); await writeFile(path.join(repo.root, file), "old"); }
+  await writeFile(path.join(repo.root, "source.ts"), "old");
+  repo.git("add", "--", ...outputs, "source.ts"); repo.git("commit", "--quiet", "-m", "Build fixture");
+  succeeds(repo.script("check-build-outputs.mjs"));
+  // A source-only commit followed by successful regeneration leaves the commit's outputs stale.
+  await writeFile(path.join(repo.root, "source.ts"), "new");
+  repo.git("add", "--", "source.ts"); repo.git("commit", "--quiet", "-m", "Source only");
+  const sourceOnly = repo.git("rev-parse", "HEAD");
+  for (const file of outputs) await writeFile(path.join(repo.root, file), "new");
+  fails(repo.script("check-build-outputs.mjs"), /assets\/app.js/);
+  repo.git("add", "--", outputs[0]); repo.git("commit", "--quiet", "-m", "One distribution only");
+  fails(repo.script("check-build-outputs.mjs"), /dist\/extension\/assets\/app.js/);
+  repo.git("add", "--", outputs[1]); repo.git("commit", "--quiet", "-m", "Both outputs");
+  succeeds(repo.script("check-build-outputs.mjs"));
+  const head = repo.git("rev-parse", "HEAD");
+  const index = repo.git("write-tree");
+  const oldPush = repo.run(process.execPath, ["scripts/check-build-outputs.mjs", "--push"], { input: `refs/heads/main ${sourceOnly} refs/heads/main ${"0".repeat(40)}\n` });
+  fails(oldPush, /一致しません/);
+  const goodPush = repo.run(process.execPath, ["scripts/check-build-outputs.mjs", "--push"], { input: `refs/heads/main ${head} refs/heads/main ${"0".repeat(40)}\n` });
+  succeeds(goodPush);
+  const extra = "dist/extension/assets/missing.js"; await writeFile(path.join(repo.root, extra), "new");
+  fails(repo.script("check-build-outputs.mjs"), /missing.js/);
+  assert.equal(repo.git("write-tree"), index, "既存のstageを変更しない");
+  assert.equal(repo.git("rev-parse", "HEAD"), head, "勝手にコミットしない");
+  assert.equal(await readFile(path.join(repo.root, extra), "utf8"), "new");
 });
