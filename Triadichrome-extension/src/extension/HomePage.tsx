@@ -29,7 +29,7 @@ export function HomePage(props: HomePageProps) {
       <WorkspaceHeader workspace={workspace} />
       <div className="home-layout">
         <WorkspaceSidebar workspace={workspace} />
-        <div className="home-content" inert={operationMutation.busy}>
+        <div className="home-content" inert={operationMutation.busy || workspace.saveAsMutation.busy}>
           <FadeSwap key={preview ? `past:${preview.entry.id}` : "current"} value={screen} className="page-switch">
             {displayed => <WorkspacePage displayed={displayed} workspace={workspace} />}
           </FadeSwap>

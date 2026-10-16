@@ -119,6 +119,9 @@ export function WorkspaceSidebar({ workspace }: { workspace: HomeWorkspace }) {
             </button>
           </nav>
           <footer className="sidebar-footer">
+            <button className="sidebar-item" type="button" aria-label="別名で保存" disabled={workspace.operationBlocked} onClick={() => { void workspace.saveAs(); }}>
+              <SidebarIcon name="save-as" /><span className="sidebar-label">別名で保存</span>
+            </button>
             <button className="sidebar-item" type="button" aria-label="ファイルを閉じる" disabled={navigationBlocked} onClick={onCloseFile}>
               <SidebarIcon name="close-file" />
               <span className="sidebar-label">ファイルを閉じる</span>

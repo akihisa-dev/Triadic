@@ -27,7 +27,7 @@ export function installMemoryFiles(
     }
   };
   const createHandle = (fileName: string) => {
-    const separate = options.scenario === "file-conflict" && fileName !== originalName;
+    const separate = (options.scenario === "file-conflict" && fileName !== originalName) || fileName.endsWith(" のコピー.triadic");
     let separateContents: BlobPart = new Uint8Array();
     return ({
     isSameEntry: async (other: { name: string }) => other.name === fileName,

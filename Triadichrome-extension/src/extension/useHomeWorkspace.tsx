@@ -16,7 +16,7 @@ import { useWorkspaceOperations } from "./workspace/useWorkspaceOperations";
 export type { Page, Screen, HomePageProps } from "./workspace/types";
 import type { HomePageProps } from "./workspace/types";
 
-export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onChangeMaster, onChangeAggregations, onChangeExpansions, onChangeExpansionCategories, onChangeIndustries, onChangeDepartments, onChangePeriodTypes, onRegisterInitiative, onUpdateInitiative, onPrepareSave, onCloseFile, dataHistory, historyError, historyBusy, onPreviewHistory, onRestoreHistory, onDeleteHistory, onRetryHistory, canUndo, canRedo, operationRevision, onTravelOperation }: HomePageProps) {
+export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onChangeMaster, onChangeAggregations, onChangeExpansions, onChangeExpansionCategories, onChangeIndustries, onChangeDepartments, onChangePeriodTypes, onRegisterInitiative, onUpdateInitiative, onPrepareSave, onCloseFile, onSaveAs, dataHistory, historyError, historyBusy, onPreviewHistory, onRestoreHistory, onDeleteHistory, onRetryHistory, canUndo, canRedo, operationRevision, onTravelOperation }: HomePageProps) {
   const menuButton = useRef<HTMLButtonElement>(null);
   const costTableView = useRef<CostTableView>({ industries: [], departments: [], top: 0, left: 0 });
   const relationView = useRef<RelationView | null>(null);
@@ -43,10 +43,21 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
   const { busy: isSaving, running: saving } = mutation;
   const [editPending, setEditPending] = useState(false);
   const operationMutation = useMutation(assertWritable);
-  const navigationBlocked = isSaving || restoreMutation.busy || operationMutation.busy || editPending || historyBusy;
+  const saveAsMutation = useMutation(assertWritable);
+  const navigationBlocked = saveAsMutation.busy || isSaving || restoreMutation.busy || operationMutation.busy || editPending || historyBusy;
   const { discardRequest, setDiscardRequest, openInitiative, requestNavigation, setPage, startInitiative } = useWorkspaceNavigation(
     screens, contents, preview !== null, navigationBlocked, saving, { initiativeDraft, setInitiativeDraft }, dismissNotice);
   const operationBlocked = navigationBlocked || preview !== null || restoreRequested || discardRequest !== null || hasInitiativeDraftInput(initiativeDraft);
+  const saveAs = async () => {
+    if (operationBlocked || saveAsMutation.running.current) return;
+    dismissNotice();
+    try {
+      await saveAsMutation.run(onSaveAs);
+      setNotice({ message: "別名で保存しました。", error: false });
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === "AbortError")) setNotice({ message: error instanceof Error ? error.message : "別名で保存できませんでした。元のファイルと入力は保持しています。", error: true });
+    }
+  };
   const travelOperation = useWorkspaceOperations(operationBlocked, saving, operationMutation, canUndo, canRedo, onPrepareSave, onTravelOperation, dismissNotice, setNotice);
   const changePlan = (change: PlanChange) => mutation.run(async () => { await onChangePlan(change); });
   const kindSelection = (screen: KindScreen) => <KindSelectionSlots screen={screen} selected={contents.kindSelections[screen]} disabled={navigationBlocked}
@@ -92,7 +103,7 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
   }, [isSidebarOpen, closeSidebar]);
 
   return {
-    restoreMutation, setEditPending, openInitiative, menuButton, relationView, costTableView, sidebar,
+    restoreMutation, saveAsMutation, saveAs, setEditPending, openInitiative, menuButton, relationView, costTableView, sidebar,
     isSidebarOpen, screen, initiativeDraft, setInitiativeDraft, preview, setPreview,
     restoreRequested, setRestoreRequested, restoreError, setRestoreError, contents, currentContents,
     notice, dismissNotice, isSaving, operationMutation, navigationBlocked, discardRequest,

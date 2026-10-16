@@ -1,3 +1,4 @@
+import { verifySaveAs } from "../tests/save-as.mjs";
 import { verifyCostBreakdown } from "../tests/cost-breakdown.mjs";
 import { verifyNewPlanFile } from "../tests/new-plan-file.mjs";
 import { verifyInitiativeDraftReferences } from "../tests/initiative-draft-references.mjs";
@@ -76,6 +77,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyInitiativeOverflowRead(api);
   await verifyHistoryDependencies(api);
   await verifyFileRecovery(api);
+  await verifySaveAs(api);
   await verifyPreviousRebase(api);
   await verifyOrderRebase(api);
   await verifyRowAccountRebase(api);

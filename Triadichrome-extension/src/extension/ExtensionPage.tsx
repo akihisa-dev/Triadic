@@ -65,6 +65,7 @@ export function ExtensionPage() {
       dataHistory={dataHistory} historyError={historyError} historyBusy={isBusy || snapshot.busy} onPreviewHistory={previewHistory} onRestoreHistory={restoreHistory} onDeleteHistory={deleteHistory}
       canUndo={snapshot.canUndo} canRedo={snapshot.canRedo} operationRevision={snapshot.operationRevision} onTravelOperation={direction => session.travelOperation(direction, chooseDestination)}
       onRetryHistory={async () => { await prepareSave(); await session.checkpoint(true, chooseDestination); }}
+      onSaveAs={() => session.saveAs(() => choosePlanDestination(`${suggestedName.current.replace(/\.triadic$/i, "")} のコピー.triadic`))}
       onCloseFile={() => { if (!busy.current) { setCloseError(""); setCloseRequested(true); } }} />
     : <EntryPage entry={entry} />}</FadeSwap>
     <ConfirmationDialog open={closeRequested} title="ファイルを閉じる" message={closeError || `「${displayName}」を閉じますか？ 登録前の入力は失われます。`} confirmLabel={closeError ? "保存を再試行して閉じる" : "閉じる"} busy={isBusy || snapshot.busy}

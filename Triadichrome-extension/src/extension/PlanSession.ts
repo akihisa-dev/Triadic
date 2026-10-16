@@ -5,6 +5,7 @@ import { writePlanChange, writePreparedPlanChange, planContents, type OpenPlan }
 import { isAutomatic, validatePlanCommand, type PlanCommand } from "../core/domain/planCommands";
 export const OPERATION_HISTORY_LIMIT = 100;
 import { preparePlanCommand, type SavedOperation } from "./preparePlanCommand";
+import { writePlanCopy } from "./savePlanAs";
 export type SessionSnapshot = { contents: PlanContents | null; name: string; history: DataHistoryStatus; busy: boolean; historyError: string; canUndo: boolean; canRedo: boolean; operationRevision: number };
 type Destination = () => Promise<FileSystemFileHandle>;
 /** Owns the saved document. Drafts and navigation never enter this store. */
@@ -69,6 +70,31 @@ export class PlanSession {
     return this.serialize(async () => { this.plan = { ...this.current(), ...await prepared }; });
   }
   getHandle(): FileSystemFileHandle | undefined { return this.plan?.handle; }
+  saveAs(destination: Destination): Promise<PlanContents> {
+    if (this.pending) return Promise.reject(new Error("ファイルの処理が終わるまでお待ちください。"));
+    const source = this.current();
+    // Start the picker while user activation is available and reserve the session immediately.
+    const selected = destination().then(async handle => {
+      if (!handle.name.toLowerCase().endsWith(".triadic")) throw new Error("拡張子は.triadicにしてください。");
+      const expected = new Uint8Array(await (await handle.getFile()).arrayBuffer());
+      if (source.handle && (!handle.isSameEntry || await handle.isSameEntry(source.handle))) {
+        throw new Error("元のファイルとは別の保存先を選択してください。元のファイルと入力は保持しています。");
+      }
+      const permission = handle as FileSystemFileHandle & { requestPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState> };
+      if (permission.requestPermission && await permission.requestPermission({ mode: "readwrite" }) !== "granted") throw new Error("ファイルへの保存を許可してください。");
+      return { handle, expected };
+    });
+    void selected.catch(() => {});
+    return this.serialize(async () => {
+      const { handle, expected } = await selected;
+      const current = this.current();
+      // Record outstanding saved changes in the copy, without writing to the source.
+      const bytes = await recordDataHistory(current.bytes, new Date().toISOString(), true);
+      const { contents, savedHistory } = await readSavedPlan(bytes);
+      await writePlanCopy(handle, expected, bytes);
+      return this.acceptSaved({ ...contents, savedHistory, bytes, handle, name: handle.name });
+    });
+  }
   async dispatch(command: PlanCommand, destination: Destination): Promise<PlanContents> {
     const current = this.current();
     validatePlanCommand(current, command);

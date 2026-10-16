@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-type SidebarIconName = "io" | "history" | "home" | "previous" | "entry" | "list" | "cost" | "expansion" | "master" | "file" | "close-file";
+type SidebarIconName = "io" | "history" | "home" | "previous" | "entry" | "list" | "cost" | "expansion" | "master" | "file" | "close-file" | "save-as";
 
 // Each silhouette expresses the destination, even when the labels are collapsed.
 const shapes: Record<SidebarIconName, ReactNode> = {
@@ -14,6 +14,7 @@ const shapes: Record<SidebarIconName, ReactNode> = {
   expansion: <><rect x="3" y="3" width="7" height="5" rx="1" /><path d="M6.5 8v10H14M6.5 12H14" /><rect x="14" y="9.5" width="7" height="5" rx="1" /><rect x="14" y="15.5" width="7" height="5" rx="1" /></>,
   master: <><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" /></>,
   file: <><path d="M3 8V5a1 1 0 0 1 1-1h5l2 3h9a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8Z" /><path d="M3 10h18" /></>,
+  "save-as": <><path d="M8 3h9l4 4v10H8zM4 7H3v14h13v-1M16 3v5h5" /></>,
   "close-file": <><path d="M9 4H4v16h5M10 12h11m-4-4 4 4-4 4" /></>,
 };
 

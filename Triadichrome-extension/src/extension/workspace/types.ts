@@ -35,6 +35,7 @@ export type HomePageProps = {
   onUpdateInitiative: (id: number, year: number | null, draft: InitiativeEntryDraft) => Promise<PlanContents>;
   onPrepareSave: () => Promise<void>;
   onCloseFile: () => void;
+  onSaveAs: () => Promise<PlanContents>;
   dataHistory: DataHistoryStatus;
   historyError: string;
   historyBusy: boolean;
