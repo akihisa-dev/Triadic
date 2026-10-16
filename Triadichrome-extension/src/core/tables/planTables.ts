@@ -37,17 +37,18 @@ export function buildKindCostTable(contents: PlanContents, selected: KindId[]) {
   return skeleton.map((row, index) => ({ ...row, values: [row.previous, ...kinds.map(rows => rows[index]!.budget)] }));
 }
 export function previousTotals(contents: PlanContents): ExpansionTotals {
-  const amounts = previousByAccount(contents);
-  return Object.fromEntries(initiativeMonths.map(month => {
-    let sales = 0n, profit = 0n;
-    for (const account of contents.accounts) {
-      const amount = amounts.get(account.id)?.[month] ?? 0;
-      const effects = accountEffectsYen(amount, account.accountType);
-      sales += BigInt(effects.sales); profit += BigInt(effects.profit);
-    }
-    return [month, { sales: checkedYen(sales), profit: checkedYen(profit) }];
-  }));
+  const accounts = new Map(contents.accounts.map(account => [account.id, account]));
+  const exact = new Map(initiativeMonths.map(month => [month, { sales: 0n, profit: 0n }]));
+  for (const record of contents.previousAmounts) {
+    const effects = accountEffectsYen(amountToYen(record.amount), accounts.get(record.accountId)!.accountType);
+    const totals = exact.get(record.month as typeof initiativeMonths[number])!;
+    totals.sales += BigInt(effects.sales); totals.profit += BigInt(effects.profit);
+  }
+  return Object.fromEntries([...exact].map(([month, totals]) => [month, {
+    sales: checkedYen(totals.sales), profit: checkedYen(totals.profit),
+  }]));
 }
+
 export function combineTotals(left: Initiative["months"], right: Initiative["months"], sign = 1): ExpansionTotals {
   return Object.fromEntries(initiativeMonths.map(month => [month, {
     sales: left[month]?.sales === null || right[month]?.sales === null ? null : addYen(left[month]?.sales ?? 0, (right[month]?.sales ?? 0) * sign),

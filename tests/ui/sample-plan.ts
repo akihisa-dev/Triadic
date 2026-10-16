@@ -281,3 +281,12 @@ export async function createCostInitiativeCancellationPlan(kind: KindId = 1) {
   });
   return bytes;
 }
+
+/** Non-visible previous account subtotals overflow, but expansion sales/profit cancel. */
+export async function createPreviousExpansionCancellationPlan() {
+  let bytes = await createTriadicDatabase(2026);
+  const accounts = (await readPlanContents(bytes)).accounts.filter(account => account.accountType === "sales").slice(0, 2);
+  for (const departmentId of [1, 2]) bytes = await savePreviousAmounts(bytes, { industryId: 1, departmentId,
+    rows: accounts.map((account, index) => ({ accountId: account.id, amounts: { 4: index === 0 ? "5000000000000" : "-5000000000000" } })) });
+  return bytes;
+}

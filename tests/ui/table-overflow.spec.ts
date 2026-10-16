@@ -97,3 +97,15 @@ test("施策内合計が超過しても科目別に相殺する総原価表を�
   await expect(app.getByRole("table", { name: "総原価表", exact: true })).toBeVisible();
   await expect(app.getByRole("alert")).toHaveCount(0);
 });
+
+
+test("非表示の前年科目小計が超過しても展開表の売上と利益の相殺結果を表示", async ({ page }) => {
+  await page.goto("/tests/ui/preview.html?data=overflow-previous-cancellation");
+  await expect(page.getByRole("status")).toHaveText("操作できます");
+  const app = page.frameLocator("#app-preview");
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("button", { name: "サイドバーを開く", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "展開表", exact: true }).click();
+  await expect(app.getByRole("table", { name: "展開表", exact: true })).toBeVisible();
+  await expect(app.getByRole("alert")).toHaveCount(0);
+});

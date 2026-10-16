@@ -80,6 +80,29 @@ export async function verifyCostCancellation(api) {
     assert.deepEqual(plan, preserved, "計算と出力で元の行金額と手修正を変えない");
     assert.throws(() => api.buildPeriodCostComparison({ ...plan, initiatives: [first] }, [kind]), /範囲/, "最終科目合計が超過する場合は拒否");
   }
+  const storedPrior = await api.createPreviousExpansionCancellationPlan();
+  await api.validateTriadicDatabase(storedPrior);
+  const storedPriorPlan = await api.readPlanContents(storedPrior);
+  assert.equal(storedPriorPlan.previousAmounts.length, 4);
+  assert.equal(api.buildKindExpansionTable(storedPriorPlan, [1, 2], "registered").previous[0][4].sales, 0);
+  // Expansion has no account subtotal: apply each source record's sign before the final limit check.
+  for (const attribute of ["sales", "cost", "expense", "profit"]) {
+    const accounts = [1, 2].map(id => ({ ...sales, id, accountType: attribute }));
+    const previousAmounts = [1, 1, -1, -1].map((sign, index) => ({ accountId: index < 2 ? 1 : 2,
+      industryId: 1, departmentId: index + 1, month: 4, amount: String(sign * 5000000000000) }));
+    const plan = { ...defaults, accounts, initiatives: [], previousAmounts };
+    const before = structuredClone(plan);
+    assert.throws(() => api.previousByAccount(plan), /範囲/, "実際に表示する科目小計の超過検査は維持");
+    for (const selected of [[1], [2], [1, 2]]) {
+      const table = api.buildKindExpansionTable(plan, selected, "registered");
+      for (const rows of [table.previous, table.total, table.changes]) for (const months of rows) {
+        assert.equal(months[4].sales, 0); assert.equal(months[4].profit, 0);
+        for (const period of api.tablePeriods) for (const metric of ["sales", "profit"]) assert.equal(api.expansionPeriodAmount(months, period, metric), 0);
+      }
+    }
+    assert.deepEqual(plan, before, "分類別の元金額を保持");
+    assert.throws(() => api.previousTotals({ ...plan, previousAmounts: previousAmounts.slice(0, 2) }), /範囲/, "最終売上・利益の超過は拒否");
+  }
   for (const sign of [1, -1]) {
     const seed = await api.readPlanContents(await api.registerInitiative(original, { ...baseDraft, rows: [{ accountId: sales.id, amounts: { 4: "0" } }] }));
     const bad = { ...seed, initiatives: [{ ...seed.initiatives[0], rows: [maximum, 1].map(value => ({ accountId: sales.id, amounts: { 4: api.yenToAmount(sign * value) } })) }] };
