@@ -19,7 +19,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
   isSaving: boolean; onDraftChange: (draft: InitiativeEntryDraft) => void;
 }) {
   const readOnly = useHistoryReadOnly();
-  const { selection, setSelection, editing, setEditing, table, dragging, original, bounds, focus } = useGridInteraction();
+  const { selection, setSelection, editing, setEditing, table, dragging, original, bounds, focus, extendSelection } = useGridInteraction();
   const [error, setError] = useState("");
   const [activeAccount, setActiveAccount] = useState<string | null>(null);
   const originalInherited = useRef(false);
@@ -79,7 +79,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                   };
                   const selected = bounds && index >= bounds.top && index <= bounds.bottom && column >= bounds.left && column <= bounds.right;
                   return <td key={month} className={selected ? "initiative-cell-selected" : undefined}
-                    onPointerEnter={() => { if (dragging.current) setSelection(current => current ? { ...current, end: cell } : null); }}
+                    onPointerEnter={event => extendSelection(cell, event.buttons)}
                     onPointerDown={event => {
                       if (isSaving || event.button !== 0 || (event.target as HTMLElement).closest("button")
                         || (editing && selection?.end.row === index && selection.end.column === column && !event.shiftKey)) return;

@@ -15,7 +15,7 @@ import { StatusNotice } from "./StatusNotice";
 export function PreviousAmountGrid({ contents, draft, onChange }: {
   contents: PlanContents; draft: PreviousInput | undefined; onChange: (draft: PreviousInput) => void;
 }) {
-  const { selection, setSelection, editing, setEditing, table, dragging, original, bounds, focus } = useGridInteraction();
+  const { selection, setSelection, editing, setEditing, table, dragging, original, bounds, focus, extendSelection } = useGridInteraction();
   const [error, setError] = useState("");
   const [cellErrors, setCellErrors] = useState<Record<string, { accountId: number; month: number; message: string }>>({});
   const clearCellError = (accountId: number, month: number) => setCellErrors(current => {
@@ -59,7 +59,7 @@ export function PreviousAmountGrid({ contents, draft, onChange }: {
             const selected = bounds && rowIndex >= bounds.top && rowIndex <= bounds.bottom && column >= bounds.left && column <= bounds.right;
             const value = inputsByAccount.get(row.id)?.amounts[month] ?? "0";
             return <td key={month} className={`${row.kind === "account" && draft ? "previous-input-cell" : ""}${selected ? " previous-cell-selected" : ""}`}
-              onPointerEnter={() => { if (dragging.current) setSelection(current => current ? { ...current, end: cell } : null); }}>
+              onPointerEnter={event => extendSelection(cell, event.buttons)}>
               {row.kind !== "account" || !draft ? (calculationFailed ? "" : row.kind === "ratio" ? formatRate(row.previous[month]) : formatYen(row.previous[month])) :
                 <input type="text" inputMode="decimal" data-row={rowIndex} data-column={column}
                   aria-label={`${row.name} ${month}月の前年金額`} aria-invalid={value !== undefined && value !== "" && !isValidAmount(value)} value={value}
