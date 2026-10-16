@@ -31,3 +31,5 @@ export { processingTasks } from '../../Triadichrome-extension/src/extension/plan
 export { scheduleHistoryCheckpoint } from "../../Triadichrome-extension/src/extension/usePlanSession";
 export * from "../../Triadichrome-extension/src/extension/fileConflict";
 export { preparePlanCommand } from "../../Triadichrome-extension/src/extension/preparePlanCommand";
+
+export { createNewPlanFile } from "../../Triadichrome-extension/src/extension/newPlanFile";

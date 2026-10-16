@@ -1,4 +1,4 @@
-export type FileScenario = "history-failure" | "normal" | "cancel" | "invalid" | "save-failure" | "write-permission" | "permission-denied" | "file-conflict";
+export type FileScenario = "create-conflict" | "history-failure" | "normal" | "cancel" | "invalid" | "save-failure" | "write-permission" | "permission-denied" | "file-conflict";
 
 export type MemoryFileOptions = {
   bytes: number[] | Uint8Array;
@@ -40,6 +40,7 @@ export function installMemoryFiles(
     },
     getFile: async () => {
       if (separate) return new target.File([separateContents], fileName);
+      if (options.scenario === "create-conflict" && ++reads === 2) contents = new Uint8Array([4, 5, 6]);
       if (options.scenario === "file-conflict" && ++reads > 1 && options.externalBytes) contents = new Uint8Array(options.externalBytes);
       return options.scenario === "invalid" ? new target.File(["not a SQLite database"], name) : getFile();
     },

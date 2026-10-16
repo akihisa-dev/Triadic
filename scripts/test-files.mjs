@@ -1,3 +1,4 @@
+import { verifyNewPlanFile } from "../tests/new-plan-file.mjs";
 import { verifyInitiativeDraftReferences } from "../tests/initiative-draft-references.mjs";
 import { verifyConcurrentInitiative } from "../tests/concurrent-initiative.mjs";
 import { verifyInitiativeIdentity } from "../tests/initiative-identity.mjs";
@@ -110,6 +111,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyDetails(api);
   await verifyInitiativeData({ ...api, createTriadicDatabase: () => api.createCurrentEmptyTestPlan(2026) }, root);
   await verifyFileBoundaries(api);
+  await verifyNewPlanFile(api);
   await verifyDepartmentData(api);
   await verifyPeriodData(api);
   await verifyIndustryData(api);

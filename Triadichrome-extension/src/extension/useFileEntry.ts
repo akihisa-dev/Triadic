@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, type DragEvent } from "react";
-import { createTriadicDatabase } from "./planProcessing";
+import { createNewPlanFile } from "./newPlanFile";
 import { TRIADIC_FILE_EXTENSION } from "../core/storage/triadicSchema";
 import { currentFiscalYear } from "../core/domain/calendar";
-import { writeTriadicFile } from "./triadicFile";
 import { loadRecentFile, readRecentFile, rememberRecentFile } from "./recentFile";
 import { fileTypes, type PickerWindow } from "./filePicker";
 import type { PlanSession } from "./PlanSession";
@@ -94,8 +93,7 @@ export function useFileEntry(session: PlanSession, savedName: string, clearClose
     if (!picker) throw new Error("この環境ではファイルを新規作成できません。");
     const handle = await picker.call(window, { suggestedName: `Untitled${TRIADIC_FILE_EXTENSION}`, types: fileTypes });
     if (!handle.name.toLowerCase().endsWith(TRIADIC_FILE_EXTENSION)) throw new Error("拡張子は.triadicにしてください。");
-    const bytes = await createTriadicDatabase(Number(newFiscalYear));
-    await writeTriadicFile(handle, bytes);
+    await createNewPlanFile(handle, Number(newFiscalYear));
     await open(await readRecentFile(handle), handle);
   });
   const drag = (event: DragEvent<HTMLElement>) => {
