@@ -20,7 +20,7 @@ test("総原価表の月境界が見出しから金額行まで途切れず、�
           const cells = [...row.querySelectorAll(".period-month")];
           return cells.length === 12 * columns && cells.every((cell, index) => {
             const css = getComputedStyle(cell);
-            return (index + 1) % columns === 0 ? css.borderRight === expected : css.borderRightWidth === "0px";
+            return (index + 1) % columns === 0 && !cell.nextElementSibling?.classList.contains("period-start") ? css.borderRight === expected : css.borderRightWidth === "0px";
           });
         }),
       };

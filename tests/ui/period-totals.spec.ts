@@ -21,7 +21,7 @@ test("総原価表と展開表の期間計を比較対象の切替後も確認�
         return { kind, header: style(node.querySelector(`thead th.period-${kind}`)!),
           amount: style(node.querySelector(`td.period-${kind}`)!),
           uniform: new Set(cells.map(cell => style(cell).background)).size === 1,
-          boundaries: [...node.querySelectorAll(`.period-${kind}.period-start`)].every(cell => style(cell).border === "2px") };
+          boundaries: [...node.querySelectorAll(`.period-${kind}.period-start`)].every(cell => style(cell).border === "1px" && getComputedStyle(cell.previousElementSibling!).borderRightWidth === "0px") };
       });
     });
     expect(bands.every(band => band.uniform && band.boundaries)).toBe(true);

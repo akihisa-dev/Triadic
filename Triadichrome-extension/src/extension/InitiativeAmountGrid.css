@@ -5,4 +5,4 @@
 .initiative-amount-table tfoot th,
 .initiative-amount-table tfoot td { background: var(--soft); font-weight: 600; padding: 8px 12px; }
 .initiative-amount-table tfoot td { text-align: right; font-variant-numeric: tabular-nums; }
-.initiative-amount-table tfoot tr:first-child > * { border-top: 1px solid var(--control-line); }
+.initiative-amount-table tbody tr:last-child > * { border-bottom-color: var(--table-divider); }
