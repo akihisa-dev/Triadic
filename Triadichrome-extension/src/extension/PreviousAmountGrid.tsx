@@ -82,7 +82,7 @@ export function PreviousAmountGrid({ contents, draft, onChange }: {
                     event.preventDefault();
                     const start = bounds ? { row: bounds.top, column: bounds.left } : cell;
                     const text = event.clipboardData.getData("text/plain");
-                    apply(() => selection && !/[\t\r\n]/.test(text) ? fillPreviousGrid(draft, rowIds, selection, text) : pastePreviousGrid(draft, rowIds, start, text));
+                    apply(() => pastePreviousGrid(draft, rowIds, start, text, selection));
                   }}
                   onKeyDown={event => {
                     if (event.nativeEvent.isComposing) return;

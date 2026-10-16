@@ -4,8 +4,13 @@ import type { PreviousInput } from "../domain/kinds";
 import { gridBounds, normalizeGridAmount, clipboardGrid, type GridCell, type GridSelection } from "./grid";
 
 /** Validate the whole rectangle before returning a new draft; never partially apply a paste. */
-export function pastePreviousGrid(draft: PreviousInput, rowIds: (number | null)[], start: GridCell, text: string): PreviousInput {
-  const lines = clipboardGrid(text);
+export function pastePreviousGrid(draft: PreviousInput, rowIds: (number | null)[], start: GridCell, text: string, selection?: GridSelection | null): PreviousInput {
+  let lines = clipboardGrid(text);
+  if (selection && !/[\t\r\n]/.test(text)) {
+    const bounds = gridBounds(selection);
+    start = { row: bounds.top, column: bounds.left };
+    lines = Array.from({ length: bounds.bottom - bounds.top + 1 }, () => Array<string>(bounds.right - bounds.left + 1).fill(text));
+  }
   const width = lines[0]!.length;
   if (lines.some(line => line.length !== width)) throw new Error("貼り付ける範囲の列数を揃えてください。");
   if (start.row < 0 || start.column < 0 || start.row + lines.length > rowIds.length || start.column + width > initiativeMonths.length) throw new Error("貼り付ける範囲が表の外にはみ出します。");

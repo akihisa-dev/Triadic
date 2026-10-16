@@ -24,6 +24,11 @@ export function verifyPreviousGrid(api) {
   assert.throws(() => api.pastePreviousGrid(draft, ids, { row: 3, column: 0 }, "1\n2"), /外/);
   assert.deepEqual(draft, before, "失敗と成功のいずれも入力元を変更しない");
   const selection = { anchor: { row: 3, column: 1 }, end: { row: 0, column: 0 } };
+  assert.throws(() => api.pastePreviousGrid(draft, ids, { row: 0, column: 0 }, "9", selection), /小計/);
+  const validSelection = { anchor: { row: 0, column: 0 }, end: { row: 1, column: 1 } };
+  const singlePaste = api.pastePreviousGrid(draft, ids, { row: 0, column: 0 }, "9", validSelection);
+  for (const row of singlePaste.rows.slice(0, 2)) { assert.equal(row.amounts[4], "9"); assert.equal(row.amounts[5], "9"); }
+  assert.deepEqual(draft, before, "集計を含む単一値の貼り付け拒否でも入力元を保持");
   const filled = api.fillPreviousGrid(draft, ids, selection, "-1.125");
   for (const row of filled.rows) { assert.equal(row.amounts[4], "-1.125"); assert.equal(row.amounts[5], "-1.125"); assert.equal(row.amounts[3], "9"); }
   assert.throws(() => api.fillPreviousGrid(draft, ids, selection, "NaN"));

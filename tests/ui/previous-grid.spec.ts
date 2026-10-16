@@ -253,3 +253,38 @@ test("前年の訂正後も実際の保存失敗と合計超過を通知し、�
   await app.getByRole("button", { name: "入力を取り消す", exact: true }).click();
   await expect(app.getByRole("alert")).toHaveCount(0);
 });
+
+test("前年の単一値・複数値貼り付けは集計行を含む範囲を全体拒否する", async ({ page, app }) => {
+  await page.goto("/tests/ui/preview.html?data=full");
+  await expect(page.getByRole("status")).toHaveText("操作できます");
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "前年入力", exact: true }).click();
+  await selectClassification(app.getByRole("combobox", { name: "部署名", exact: true }), "部署A");
+  await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
+  const first = app.getByRole("textbox", { name: "売上高 4月の前年金額", exact: true });
+  const second = app.getByRole("textbox", { name: "グループ売上高 4月の前年金額", exact: true });
+  const third = app.getByRole("textbox", { name: "本支店売上高 4月の前年金額", exact: true });
+  const original = [await first.inputValue(), await second.inputValue(), await third.inputValue()];
+  await first.focus(); await first.press("Escape"); await first.press("Shift+ArrowDown"); await second.press("Shift+ArrowDown");
+  const paste = async (text: string) => third.evaluate((node, value) => {
+    const clipboardData = new DataTransfer(); clipboardData.setData("text/plain", value);
+    node.dispatchEvent(new ClipboardEvent("paste", { bubbles: true, clipboardData }));
+  }, text);
+  for (const text of ["9", "9\n9\n9\n9"]) {
+    await paste(text);
+    await expect(app.getByRole("alert")).toContainText("小計・合計・利益率には貼り付けできません");
+    expect([await first.inputValue(), await second.inputValue(), await third.inputValue()]).toEqual(original);
+    await expect(app.getByRole("button", { name: "操作を取り消す", exact: true })).toBeDisabled();
+  }
+  await app.getByRole("button", { name: "通知を閉じる", exact: true }).click();
+  await third.press("ControlOrMeta+Enter");
+  for (const target of [first, second, third]) await expect(target).toHaveValue(original[2]!);
+  await third.press("Delete");
+  for (const target of [first, second, third]) await expect(target).toHaveValue("0");
+  await first.focus(); await first.press("Escape"); await first.press("Shift+ArrowDown");
+  await second.evaluate(node => {
+    const clipboardData = new DataTransfer(); clipboardData.setData("text/plain", "7");
+    node.dispatchEvent(new ClipboardEvent("paste", { bubbles: true, clipboardData }));
+  });
+  await expect(first).toHaveValue("7"); await expect(second).toHaveValue("7"); await expect(third).toHaveValue("0");
+});
