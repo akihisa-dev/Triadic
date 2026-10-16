@@ -111,6 +111,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                         ).join("\n"));
                       }}
                       onPaste={event => {
+                        if (!event.clipboardData.types.includes("text/plain")) { event.preventDefault(); return; }
                         if (editing) return;
                         event.preventDefault();
                         const text = event.clipboardData.getData("text/plain");
