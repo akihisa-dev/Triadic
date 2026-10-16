@@ -33,10 +33,11 @@ export function validateInitiative(draft: InitiativeEntryDraft, accounts: Accoun
   if (!/^\d{1,4}$/.test(draft.fiscalYear) || !Number.isInteger(year) || year < 1 || year > 9998) throw new Error("年度は1〜9998の整数で入力してください。");
   if (initiatives.some(item => item.name === draft.name.trim())) throw new Error("同じ施策名が登録されています。別の名前を入力してください。");
   if (!allowEmptyRows && !draft.rows.some(row => row.accountId !== null)) throw new Error("勘定科目を一つ以上選択してください。");
+  const accountsById = new Map(accounts.map(account => [account.id, account]));
   draft.rows.forEach((row, index) => {
     const hasAmount = [row.amounts, ...Object.values(row.overrides ?? {})].some(values => Object.values(values).some(value => value !== ""));
     if (row.accountId === null && !hasAmount) return;
-    const account = accounts.find(item => item.id === row.accountId);
+    const account = accountsById.get(row.accountId!);
     if (!account) throw new Error(`${index + 1}行目の勘定科目を選択してください。`);
     if (!account.accountType) throw new Error(`「${account.accountName}」の科目属性をマスタで設定してください。`);
     const values = [row.amounts, ...Object.values(row.overrides ?? {})];

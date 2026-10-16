@@ -25,6 +25,14 @@ export async function verifyInitiativeData(api, root) {
       { accountId: null, amounts: {} },
     ],
   };
+  // The shared registration/update validator indexes the master once, regardless of row count.
+  let reads = 0;
+  const manyAccounts = Array.from({ length: 1000 }, (_, index) => ({
+    get id() { reads++; return index + 1; }, accountName: `科目${index}`, accountType: "sales",
+  }));
+  const manyRows = Array.from({ length: 500 }, () => ({ accountId: 1000, amounts: { 4: "1" } }));
+  api.validateInitiative({ ...draft, rows: manyRows }, manyAccounts, [], initial.expansions, initial.departments, initial.periodTypes, initial.industries);
+  assert.equal(reads, 1000, "科目マスタを一度だけ索引化し、入力行ごとに再走査しない");
   const result = await registerInitiative(bytes, draft);
   const contents = await readPlanContents(result);
   const record = api.initiativesForKind(contents.initiatives, contents.accounts, 1)[0];
