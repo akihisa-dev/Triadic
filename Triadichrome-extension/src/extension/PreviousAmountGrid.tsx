@@ -87,7 +87,7 @@ export function PreviousAmountGrid({ contents, draft, onChange }: {
                     apply(() => pastePreviousGrid(draft, rowIds, start, text, selection));
                   }}
                   onKeyDown={event => {
-                    if (event.nativeEvent.isComposing) return;
+                    if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
                     if (event.key === "Escape") { event.preventDefault(); if (editing) { changeCell(row.id, month, original.current); if (isValidAmount(original.current || "0")) clearCellError(row.id, month); } setEditing(false); setSelection({ anchor: cell, end: cell }); return; }
                     if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && selection) { event.preventDefault(); apply(() => fillPreviousGrid(draft, rowIds, selection, value)); return; }
                     if ((event.key === "Delete" || event.key === "Backspace") && !editing && selection) { event.preventDefault(); apply(() => fillPreviousGrid(draft, rowIds, selection, "0")); return; }

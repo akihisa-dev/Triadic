@@ -119,7 +119,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                           : pasteInitiativeGrid(draft, kind, bounds ? { row: bounds.top, column: bounds.left } : cell, text));
                       }}
                       onKeyDown={event => {
-                        if (event.nativeEvent.isComposing || isSaving) return;
+                        if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229 || isSaving) return;
                         if (!editing && event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) event.currentTarget.select();
                         if (event.key === "Escape") {
                           event.preventDefault(); if (editing || invalidInput) onDraftChange(cancelInitiativeCell(draft, kind, cell, { original: original.current, inherited: originalInherited.current }));
