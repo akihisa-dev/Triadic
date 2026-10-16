@@ -79,6 +79,7 @@ export function PreviousAmountGrid({ contents, draft, onChange }: {
                     ).join("\t")).join("\n"));
                   }}
                   onPaste={event => {
+                    if (editing) return;
                     event.preventDefault();
                     const start = bounds ? { row: bounds.top, column: bounds.left } : cell;
                     const text = event.clipboardData.getData("text/plain");

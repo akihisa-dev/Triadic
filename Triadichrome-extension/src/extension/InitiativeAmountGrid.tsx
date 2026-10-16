@@ -111,6 +111,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                         ).join("\n"));
                       }}
                       onPaste={event => {
+                        if (editing) return;
                         event.preventDefault();
                         const text = event.clipboardData.getData("text/plain");
                         apply(() => selection && !/[\t\r\n]/.test(text) ? fillInitiativeGrid(draft, kind, selection, text)
