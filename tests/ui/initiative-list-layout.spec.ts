@@ -4,9 +4,12 @@ test("施策一覧は売上・費用・利益と固定見出しを表示し、�
   await page.goto("/tests/ui/preview.html");
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
-  await app.getByRole("main", { name: "ホーム", exact: true }).getByRole("button", { name: "施策一覧", exact: true }).locator(".home-relation-name").click();
+  await app.getByRole("button", { name: "サイドバーを開く", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "施策一覧", exact: true }).click();
+  await app.getByRole("button", { name: "サイドバーを閉じる", exact: true }).last().click();
   await settleMotion(app.locator("body"));
   const region = app.getByRole("region", { name: "施策一覧の月別売上・費用・利益", exact: true });
+  await expect(region).toBeVisible();
   expect(await region.locator("thead tr").first().getByRole("columnheader").allTextContents()).toEqual(["展開名", "期間名", "施策名", "開始年月", ...[4,5,6,7,8,9,10,11,12,1,2,3].map(month => `${month}月`)]);
   const product = region.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "既存商品の販売拡大", exact: true }) });
   await expect(product.getByRole("cell").nth(3)).toHaveText("100");

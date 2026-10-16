@@ -32,6 +32,7 @@ type InitiativeListPageProps = {
 export function InitiativeListPage({ selection, selectedKind, initiatives, accounts, expansions, periodTypes, fiscalYear, onAddInitiative, onOpenInitiative, navigationBlocked }: InitiativeListPageProps) {
   const readOnly = useHistoryReadOnly();
   const [sort, setSort] = useState<InitiativeSort | null>(null);
+  const [focusedId, setFocusedId] = useState<number | null>(null);
   const container = useRef<HTMLDivElement>(null);
   const expansionNames = useMemo(() => new Map(expansions.map(item => [item.id, item.expansionName])), [expansions]);
   const periodNames = useMemo(() => new Map(periodTypes.map(item => [item.id, item.periodName])), [periodTypes]);
@@ -42,6 +43,15 @@ export function InitiativeListPage({ selection, selectedKind, initiatives, accou
     [source, sort, selectedKind, expansionNames, periodNames]);
   const window = useRowWindow(container, displayed.length, 28, 200, 56);
   const virtual = displayed.length > 200;
+  const focusedIndex = useMemo(() => focusedId === null ? -1 : displayed.findIndex(item => item.id === focusedId), [displayed, focusedId]);
+  const rendered = useMemo(() => {
+    const indices = new Set(Array.from({ length: window.end - window.start }, (_, offset) => window.start + offset));
+    // Keep the focused control and its Tab neighbours alive outside the viewport.
+    if (focusedIndex >= 0) for (const index of [focusedIndex - 1, focusedIndex, focusedIndex + 1]) {
+      if (index >= 0 && index < displayed.length) indices.add(index);
+    }
+    return [...indices].sort((a, b) => a - b).map(index => ({ item: displayed[index]!, index, key: displayed[index]!.id }));
+  }, [displayed, window.start, window.end, focusedIndex]);
   const sortHeader = (column: InitiativeSort["column"], label: string, className: string) => {
     const active = sort?.column === column;
     return <th rowSpan={2} scope="col" className={`initiative-list-fixed ${className}`} aria-sort={active ? sort.direction : undefined}>
@@ -78,11 +88,15 @@ export function InitiativeListPage({ selection, selectedKind, initiatives, accou
             {amountItems.map((metric, index) => <th key={metric.id} scope="col" className={index === amountItems.length - 1 ? "initiative-month-end" : undefined}>{metric.name}</th>)}
           </Fragment>)}</tr>
         </thead>
-        <tbody><WindowRows items={displayed.slice(window.start, window.end).map((item, offset) => ({ item, index: window.start + offset }))} count={displayed.length} height={28} columns={40} render={(item, index) => <tr key={item.id} aria-rowindex={index + 3}>
+        <tbody><WindowRows items={rendered} count={displayed.length} height={28} columns={40} render={(item, index) => <tr key={item.id} aria-rowindex={index + 3}>
           <td className="initiative-list-fixed initiative-list-expansion">{item.expansionId == null ? "" : expansionNames.get(item.expansionId) ?? ""}</td>
           <td className="initiative-list-fixed initiative-list-period">{item.periodTypeId == null ? "" : periodNames.get(item.periodTypeId) ?? ""}</td>
           <th scope="row" className="initiative-list-fixed initiative-list-name" title={item.note || item.name}>
-            <button className="initiative-name-button" type="button" disabled={navigationBlocked} onClick={() => onOpenInitiative(item)}>{item.name}</button>
+            <button className="initiative-name-button" type="button" disabled={navigationBlocked} onFocus={() => setFocusedId(item.id)}
+              onBlur={event => {
+                // Native Tab blurs before focusing its destination. Do not unmount that neighbour between the events.
+                if (!(event.relatedTarget instanceof Node && event.currentTarget.closest("tbody")?.contains(event.relatedTarget))) setFocusedId(null);
+              }} onClick={() => onOpenInitiative(item)}>{item.name}</button>
           </th>
           <td className="initiative-list-fixed initiative-list-start">{item.startYearMonths[selectedKind]}</td>
           {errors.has(item.id) ? <td colSpan={36} role="alert" style={{ textAlign: "left" }}>{errors.get(item.id)} 施策を開いて金額を修正してください。</td> : initiativeMonths.map(month => <Fragment key={month}>

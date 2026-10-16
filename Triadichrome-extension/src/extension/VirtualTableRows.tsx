@@ -1,4 +1,4 @@
-import { Fragment, useLayoutEffect, useState, type ReactNode, type RefObject } from "react";
+import { Fragment, useLayoutEffect, useState, type Key, type ReactNode, type RefObject } from "react";
 import { visibleRows } from "../core/tables/visibleRows";
 import "./VirtualTableRows.css";
 export function useRowWindow(container: RefObject<HTMLDivElement | null>, count: number, rowHeight: number, threshold = 200, offset = 0) {
@@ -26,13 +26,13 @@ export function RowSpacer({ height, columns }: { height: number; columns: number
   return height > 0 ? <tr aria-hidden="true" className="virtual-row-spacer"><td colSpan={columns} style={{ height }} /></tr> : null;
 }
 export function WindowRows<T>({ items, count, height, columns, render }: {
-  items: { item: T; index: number }[]; count: number; height: number; columns: number;
+  items: { item: T; index: number; key?: Key }[]; count: number; height: number; columns: number;
   render: (item: T, index: number) => ReactNode;
 }) {
   let previous = 0;
-  return <>{items.map(({ item, index }) => {
+  return <>{items.map(({ item, index, key }) => {
     const gap = (index - previous) * height;
     previous = index + 1;
-    return <Fragment key={index}><RowSpacer height={gap} columns={columns} />{render(item, index)}</Fragment>;
+    return <Fragment key={key ?? index}><RowSpacer height={gap} columns={columns} />{render(item, index)}</Fragment>;
   })}<RowSpacer height={(count - previous) * height} columns={columns} /></>;
 }
