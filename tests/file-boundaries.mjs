@@ -2,6 +2,29 @@ import assert from "node:assert/strict";
 
 export async function verifyFileBoundaries(api) {
   const bytes = await api.createCurrentEmptyTestPlan(2026);
+  const validFile = new File([bytes], "確認.TRIADIC");
+  assert.deepEqual(await api.readTriadicFile(validFile), bytes);
+  let fullReads = 0;
+  const huge = {
+    name: "不正.triadic", size: Number.MAX_SAFE_INTEGER,
+    slice(start, end) {
+      assert.equal(start, 0); assert.equal(end, 16);
+      return new Blob([new Uint8Array(16)]);
+    },
+    async arrayBuffer() { fullReads++; throw new Error("全量読み込みは禁止"); },
+  };
+  await assert.rejects(api.readTriadicFile(huge), /読み込めません/);
+  assert.equal(fullReads, 0, "不正な大容量ファイルは全量を読まない");
+  await assert.rejects(api.readTriadicFile({ ...huge, size: 99 }), /読み込めません/);
+  assert.equal(fullReads, 0);
+  const signatureOnly = new Uint8Array(4096);
+  signatureOnly.set(bytes.subarray(0, 16));
+  const malformed = await api.readTriadicFile(new File([signatureOnly], "破損.triadic"));
+  await assert.rejects(api.validateTriadicDatabase(malformed), undefined, "先頭が正しくても完全検証を省略しない");
+  assert.deepEqual(await api.readTriadicFile({ ...huge,
+    slice: (start, end) => validFile.slice(start, end),
+    arrayBuffer: () => validFile.arrayBuffer(),
+  }), bytes, "正常な先頭には一律の容量上限を設けない");
   await assert.rejects(api.validateTriadicDatabase(new Uint8Array([1, 2, 3])));
   for (const format of [...Array.from({ length: api.TRIADIC_FORMAT_VERSION }, (_, index) => index), api.TRIADIC_FORMAT_VERSION + 1]) {
     const old = await api.openTriadicDatabase(bytes);

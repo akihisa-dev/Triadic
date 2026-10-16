@@ -33,3 +33,4 @@ export * from "../../Triadichrome-extension/src/extension/fileConflict";
 export { preparePlanCommand } from "../../Triadichrome-extension/src/extension/preparePlanCommand";
 
 export { createNewPlanFile } from "../../Triadichrome-extension/src/extension/newPlanFile";
+export { readTriadicFile } from "../../Triadichrome-extension/src/extension/readTriadicFile";

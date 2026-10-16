@@ -365,7 +365,6 @@ test("選択・新規作成のキャンセル後も入口を操作できる", as
 });
 
 test("壊れたファイルを拒否し、正常なファイルで再開できる", async ({ page, app }, testInfo) => {
-  testInfo.annotations.push({ type: "expected-console", description: "sqlite3_step() rc= 26 SQLITE_NOTADB SQL = PRAGMA user_version" });
   await page.getByLabel("ファイル操作", { exact: true }).selectOption("invalid");
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
