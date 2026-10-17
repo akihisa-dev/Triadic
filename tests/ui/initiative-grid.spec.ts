@@ -237,7 +237,8 @@ test("上部全体と月見出しを新規・登録済みの両方で固定す�
       const lastBox = (await last.boundingBox())!;
       const gridBox = (await grid.boundingBox())!;
       expect(lastBox.y).toBeGreaterThan(gridBox.y + 25);
-      expect(lastBox.y + lastBox.height).toBeLessThanOrEqual(gridBox.y + gridBox.height);
+      // スクロール位置の整数丸めによる1px未満の差を許容する。
+      expect(lastBox.y + lastBox.height).toBeLessThanOrEqual(gridBox.y + gridBox.height + 1);
       if (saved) await expect(app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true })).toBeEnabled();
     }
   }

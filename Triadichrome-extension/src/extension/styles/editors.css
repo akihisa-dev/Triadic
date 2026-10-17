@@ -1,8 +1,10 @@
 .kind-tabs { display: flex; gap: .35rem; margin: 1.25rem 0 .75rem; border-bottom: 1px solid var(--line); }
 .kind-tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: .4rem .4rem 0 0; background: transparent; padding: .6rem .9rem; color: var(--muted); transition: background-color 160ms ease, color 160ms ease; }
 .kind-tabs button[aria-selected="true"] { border-bottom-color: var(--accent); color: var(--accent); background: var(--soft); }
-.initiative-detail-actions { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem; margin-bottom: .75rem; }
-.initiative-detail-actions .master-back { margin-bottom: 0; }
+.initiative-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.initiative-title-row h1 { flex: 1; }
+.initiative-title-row .master-back { margin-bottom: 0; }
+.initiative-title-row > button { flex-shrink: 0; }
 @media (prefers-reduced-motion: reduce) { .kind-tabs button { transition-duration: 1ms; } }
 @media (max-width: 600px) {
   .home-header { flex-wrap: wrap; }
@@ -12,7 +14,8 @@
   .initiative-amount-table th:first-child { position: static; }
 }
 
-.initiative-header-fields { display: flex; flex-direction: column; gap: 12px; }
+.initiative-header-fields { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.initiative-header-fields .initiative-field { margin-top: 0; gap: 4px; }
 .initiative-text-fields { width: 100%; min-width: 0; }
 .initiative-text-fields .initiative-name-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
 .initiative-text-fields .initiative-field { flex: 0 1 20rem; width: min(100%, 20rem); min-width: 0; }
@@ -20,7 +23,6 @@
 /* 新規施策入力の上部だけを詰め、分類選択欄の高さを揃える。 */
 .initiative-entry-compact { padding-top: clamp(16px, 2vw, 20px); }
 .initiative-entry-compact h1 { font-size: 22px; }
-.initiative-entry-compact .initiative-field { gap: 4px; margin-top: 12px; }
 .initiative-entry-compact .initiative-field input { min-height: 36px; padding-block: 5px; }
 .initiative-entry-compact .initiative-name-row > button { min-height: 36px; padding: 5px 12px; }
 .classification-field { min-width: 0; display: grid; gap: 4px; }
@@ -39,9 +41,9 @@ input:focus, textarea:focus { caret-color: var(--accent); }
 /* 施策情報と種別タブを残し、金額表だけを残りの高さでスクロールする。 */
 .home-content:has(.initiative-entry-page) { overflow: hidden; }
 .page-switch:has(> .initiative-entry-page) { height: 100%; min-height: 0; grid-template-rows: minmax(0, 1fr); }
-.initiative-entry-page { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: auto; }
+.initiative-entry-page { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: auto; padding-top: clamp(16px, 2vw, 20px); }
 .initiative-entry-page > * { flex-shrink: 0; }
-.initiative-entry-page > .master-back { align-self: flex-start; }
-.initiative-entry-page > .initiative-amount-table-container { flex: 1 0 112px; min-height: 112px; display: flex; flex-direction: column; overflow: hidden; }
+.initiative-entry-page > .kind-tabs { margin: 8px 0 0; }
+.initiative-entry-page > .initiative-amount-table-container { flex: 1 0 112px; min-height: 112px; display: flex; flex-direction: column; overflow: hidden; margin-top: 0; }
 .initiative-entry-page .initiative-grid-scroll { flex: 1; min-height: 0; overflow: auto; scroll-padding-top: 40px; }
 .initiative-entry-page .initiative-amount-table thead { position: sticky; top: 0; z-index: 2; }

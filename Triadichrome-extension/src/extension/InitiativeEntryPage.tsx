@@ -28,7 +28,7 @@ type InitiativeEntryPageProps = {
   isSaving: boolean;
   onRegister: () => void;
   onBack?: () => void;
-  editing?: { savedRows: InitiativeEntryDraft["rows"]; saving: boolean; pending: boolean; before: ReactNode; status: ReactNode; onCompositionStart: () => void; onCompositionEnd: () => void };
+  editing?: { savedRows: InitiativeEntryDraft["rows"]; saving: boolean; pending: boolean; before: ReactNode; actions: ReactNode; status: ReactNode; onCompositionStart: () => void; onCompositionEnd: () => void };
 };
 
 export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions, expansionCategories, departments, periodTypes, industries, onOpenMaster, isSaving, onRegister, onBack, editing, initialKind = 1 }: InitiativeEntryPageProps) {
@@ -38,9 +38,12 @@ export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions
   const allowedIndustries = departments.find(item => item.id === draft.departmentId)?.industryIds ?? [];
   return (
     <main className={editing ? "initiative-entry-page" : "initiative-entry-page initiative-entry-compact"} aria-labelledby="initiative-entry-title" aria-busy={isSaving} onCompositionStart={editing?.onCompositionStart} onCompositionEnd={editing?.onCompositionEnd}>
+      <div className="initiative-title-row">
       {editing?.before}
       {!editing && onBack && <button className="text-button master-back" type="button" disabled={isSaving} onClick={onBack}>← 施策一覧へ戻る</button>}
       <h1 id="initiative-entry-title">施策入力</h1>
+      {editing?.actions}
+      </div>
       {editing?.status}
       <div className="initiative-header-fields">
       <div className="initiative-text-fields">

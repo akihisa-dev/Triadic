@@ -146,6 +146,8 @@ Start year/month is automatically derived from the period classification and mon
 
 Amount areas do not permanently display unit, precision, or comparison-formula notes. See this document and Home's calculation explanation. Initiative input/detail cells display numbers only. Storage format, units, and precision are unchanged.
 
+Initiative input and details place Back, the heading, and Duplicate on one row, wrapping on narrow screens. Compact vertical gaps provide more room for monthly rows while preserving field widths and font sizes. Selection totals retain their space so selecting cells does not shift the table.
+
 Monthly initiative input uses shaded month headers and light row/column borders. Account selection and deletion share each row, with compact amount padding. Initiative input and detail show account names without codes in both the field and its choices. All account dropdowns and deletion buttons align within the column, which retains enough width for complete names on narrow screens; monthly amounts scroll horizontally within the table. Three monthly total rows—revenue, expenses, profit—always appear at the bottom in the order and composition defined by the amount-item master. Rows without accounts or attributes are excluded, and no rows still displays 0. Effective amounts for the selected budget are added/subtracted in yen according to the composition signs and rounded to whole thousands only for display. Totals follow input, account changes, row addition/deletion, kind changes, and applying the initial budget; totals themselves are not saved. Invalid amounts or out-of-range totals leave affected totals blank and report why. Input the browser cannot interpret numerically leaves totals blank.
 
 ### Entering previous-year actuals
@@ -671,6 +673,8 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 
 各画面の金額欄では単位・精度・比較式の常設注記を表示しません。金額の単位と精度は本書とホームの「計算の仕組み」で確認できます。施策入力・詳細の金額セルは数値だけを表示します。保存形式・単位・精度は変更しません。
+
+施策入力・詳細では、戻る操作・見出し・複製操作を一行にまとめ、狭い画面では折り返します。入力欄の幅と文字サイズを保ち、上部の各段と金額表までの余白を抑えています。選択範囲の合計表示の高さを確保し、セル選択で表の位置が動かないようにします。
 
 施策入力・詳細では、戻る操作・複製操作・見出し・施策名・備考・分類欄・予算種別タブと、金額表の勘定科目・月の列見出しを表示したまま、金額行を縦にスクロールする。表は画面の残りの高さを使い、横スクロールは表内だけで行う。上部全体と金額行が画面の高さに収まらない場合は、金額表の操作領域を確保し、画面内の縦スクロールで全入力欄へ到達できるようにする。
 
