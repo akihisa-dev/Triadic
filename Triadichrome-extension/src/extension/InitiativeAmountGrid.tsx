@@ -1,7 +1,8 @@
+import { budgetAmountHint, hasUnclassifiedAmount } from "../core/domain/budgetHints";
 import { AccountRowSelect } from "./AccountRowSelect";
 import { useGridInteraction } from "./useGridInteraction";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { canChangeAccountRow, resolvedAmount, type KindId } from "../core/domain/kinds";
 import { formatYen, isValidAmount } from "../core/domain/amounts";
 import { initiativeMonths as months } from "../core/domain/calendar";
@@ -19,6 +20,8 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
   isSaving: boolean; onDraftChange: (draft: InitiativeEntryDraft) => void;
 }) {
   const readOnly = useHistoryReadOnly();
+  const hintId = useId();
+  const [dismissedHint, setDismissedHint] = useState<string | null>(null);
   const { selection, setSelection, editing, setEditing, table, dragging, original, bounds, focus, extendSelection } = useGridInteraction();
   const [error, setError] = useState("");
   const [activeAccount, setActiveAccount] = useState<string | null>(null);
@@ -26,6 +29,10 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
   const accountsById = useMemo(() => new Map(accounts.map(account => [account.id, account])), [accounts]);
   const savedById = useMemo(() => new Map(savedRows?.map(row => [row.id, row])), [savedRows]);
   const { rows, invalidNumbers } = draft;
+  const hints = useMemo(() => rows.map(row => ({
+    unclassified: hasUnclassifiedAmount(row, kind, accountsById.get(row.accountId!)),
+    amounts: months.map(month => budgetAmountHint(row, kind, month)),
+  })), [rows, kind, accountsById]);
   const totals = useMemo(() => initiativeAmountTotals({ rows, invalidNumbers: Boolean(invalidNumbers) }, kind, accounts), [rows, invalidNumbers, kind, accounts]);
   useEffect(() => { setSelection(null); setEditing(false); }, [draft.rows.length]);
   const valueAt = (cell: GridCell, source = draft) => {
@@ -57,6 +64,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
             {draft.rows.map((row, index) => {
               const rowKey = row.id ?? `draft:${index}`;
               const accountName = accountsById.get(row.accountId!)?.accountName ?? `${index + 1}行目`;
+              const unclassified = hints[index]!.unclassified;
               return <tr key={row.id ?? index}>
                 <th scope="row">
                   <div className="initiative-account-cell">
@@ -68,18 +76,23 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                       ? { ...current, accountId } : current) })} />
                   <button type="button" className="text-button" aria-label={`${index + 1}行目を削除`} disabled={readOnly || isSaving || rowOperationsDisabled || !canChangeAccountRow(row, savedById.get(row.id))} onClick={() => onDraftChange({ ...draft, rows: draft.rows.filter((_, position) => position !== index) })}>削除</button>
                   </div>
+                  {unclassified && <span className="budget-attribute-hint" title="科目属性がなく、売上・費用・利益に含まれていません。勘定科目マスタで設定できます。">属性未設定</span>}
                 </th>
                 {months.map((month, column) => {
                   const cell = { row: index, column };
                   const value = valueAt(cell);
+                  const hint = hints[index]!.amounts[column];
+                  const cellHintId = `${hintId}-${index}-${month}`;
                   const invalidInput = row.invalidAmounts?.[kind]?.[month];
                   const captureOriginal = () => {
                     original.current = invalidInput?.original ?? value;
                     originalInherited.current = invalidInput?.inherited ?? (kind === 2 && row.overrides?.[2]?.[month] === undefined);
                   };
                   const selected = bounds && index >= bounds.top && index <= bounds.bottom && column >= bounds.left && column <= bounds.right;
-                  return <td key={month} className={selected ? "initiative-cell-selected" : undefined}
-                    onPointerEnter={event => extendSelection(cell, event.buttons)}
+                  return <td key={month} className={[selected ? "initiative-cell-selected" : "", hint ? "budget-manual-cell" : ""].filter(Boolean).join(" ")}
+                    onFocusCapture={() => setDismissedHint(null)}
+                    onKeyDownCapture={event => { if (event.key === "Escape") setDismissedHint(cellHintId); }}
+                    onPointerEnter={event => { setDismissedHint(null); extendSelection(cell, event.buttons); }}
                     onPointerDown={event => {
                       if (isSaving || event.button !== 0 || (event.target as HTMLElement).closest("button")
                         || (editing && selection?.end.row === index && selection.end.column === column && !event.shiftKey)) return;
@@ -89,6 +102,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                       ref={input => { if (input) input.setCustomValidity(invalidInput ? "金額に有効な数値を入力してください。"
                         : input.value === "" || isValidAmount(input.value) ? "" : "金額は千円単位・小数点以下3桁までで入力してください。"); }}
                       aria-label={`${accountName} ${month}月の金額`}
+                      aria-describedby={hint ? cellHintId : undefined}
                       aria-invalid={Boolean(invalidInput) || value !== "" && !isValidAmount(value)}
                       disabled={readOnly || isSaving || !canEditInitiativeCell(draft, kind, cell)} value={value}
                       onFocus={event => {
@@ -160,7 +174,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                         else { setEditing(false); if (event.key === "Tab") event.currentTarget.blur(); }
                       }}
                     />
-
+                    {hint && <span id={cellHintId} role="tooltip" className={`budget-cell-hint${column < 6 ? " budget-hint-start" : ""}${dismissedHint === cellHintId ? " budget-hint-dismissed" : ""}`}>{hint}</span>}
                   </td>
                 })}
               </tr>;

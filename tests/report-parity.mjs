@@ -10,7 +10,14 @@ import { evaluator } from './report-workbook.mjs';
 function textOf(markup) {
   let text = '';
   const parser = new SaxesParser();
-  parser.on('text', value => { text += value; });
+  let hintDepth = 0;
+  parser.on('opentag', node => {
+    // This app-only annotation is not part of the initiative name exported to Excel.
+    // Match the actual element, never strip a suffix from the user's name.
+    if (hintDepth || String(node.attributes.class ?? '').split(/\s+/).includes('initiative-attribute-hint')) hintDepth++;
+  });
+  parser.on('closetag', () => { if (hintDepth) hintDepth--; });
+  parser.on('text', value => { if (!hintDepth) text += value; });
   parser.write(`<root>${markup}</root>`).close();
   return text.replace(/[\r\n]/g, '');
 }
@@ -62,6 +69,8 @@ export function workbookCells(ws, evaluate) {
   return cells;
 }
 export async function verifyReportParity(api) {
+  assert.equal(markupCells('<table><tr><td><button>名称 · 属性未設定<span class="initiative-attribute-hint"> · 属性未設定</span></button></td></tr></table>')[0].text,
+    '名称 · 属性未設定', '画面の補助表示だけを除外し、同じ文字を含む本来の施策名は保持する');
   const sample = await api.readPlanContents(await api.createSamplePlan(2026));
   // Merged subcategory cells cover all member initiatives, including windowed rows and current master names.
   const categorized = sample.initiatives.find(item => item.expansionCategoryId != null);

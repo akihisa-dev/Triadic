@@ -1,3 +1,4 @@
+import { hasUnclassifiedAmount } from "../core/domain/budgetHints";
 import { useRowWindow, WindowRows } from "./VirtualTableRows";
 import { TableCalculationBoundary } from "./TableCalculationBoundary";
 import { createInitiativeListView, type InitiativeListView } from "../core/tables/initiativeListView";
@@ -35,6 +36,8 @@ export function InitiativeListPage({ selection, selectedKind, initiatives, accou
   const [focusedId, setFocusedId] = useState<number | null>(null);
   const container = useRef<HTMLDivElement>(null);
   const expansionNames = useMemo(() => new Map(expansions.map(item => [item.id, item.expansionName])), [expansions]);
+  const accountsById = useMemo(() => new Map(accounts.map(item => [item.id, item])), [accounts]);
+  const unclassifiedIds = useMemo(() => new Set(initiatives.filter(item => item.rows.some(row => hasUnclassifiedAmount(row, selectedKind, accountsById.get(row.accountId!)))).map(item => item.id)), [initiatives, selectedKind, accountsById]);
   const periodNames = useMemo(() => new Map(periodTypes.map(item => [item.id, item.periodName])), [periodTypes]);
   const viewForKind = useMemo(() => createInitiativeListView(initiatives, accounts, fiscalYear), [initiatives, accounts, fiscalYear]);
   const view = viewForKind(selectedKind);
@@ -96,7 +99,7 @@ export function InitiativeListPage({ selection, selectedKind, initiatives, accou
               onBlur={event => {
                 // Native Tab blurs before focusing its destination. Do not unmount that neighbour between the events.
                 if (!(event.relatedTarget instanceof Node && event.currentTarget.closest("tbody")?.contains(event.relatedTarget))) setFocusedId(null);
-              }} onClick={() => onOpenInitiative(item)}>{item.name}</button>
+              }} onClick={() => onOpenInitiative(item)}>{item.name}{unclassifiedIds.has(item.id) && <span className="initiative-attribute-hint"> · 属性未設定</span>}</button>
           </th>
           <td className="initiative-list-fixed initiative-list-start">{item.startYearMonths[selectedKind]}</td>
           {errors.has(item.id) ? <td colSpan={36} role="alert" style={{ textAlign: "left" }}>{errors.get(item.id)} 施策を開いて金額を修正してください。</td> : initiativeMonths.map(month => <Fragment key={month}>

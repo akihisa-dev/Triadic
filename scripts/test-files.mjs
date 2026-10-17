@@ -1,3 +1,4 @@
+import { verifyBudgetHints } from "../tests/budget-hints.mjs";
 import { verifyInitiativeMonthShift } from "../tests/initiative-month-shift.mjs";
 import { verifyHistoryIncomeImpact } from "../tests/history-income-impact.mjs";
 import { verifyAnnualAllocation } from "../tests/annual-allocation.mjs";
@@ -114,6 +115,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   verifyHomeMotion(api);
   verifyPreviousGrid(api);
   verifyInitiativeGrid(api);
+  verifyBudgetHints(api);
   verifyHomeMasterCoverage(api);
   await verifySingleYearPlan(api);
   await verifyKindAmountStorage(api);

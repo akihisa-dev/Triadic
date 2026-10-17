@@ -119,7 +119,10 @@ test("画面・計算・接続・対応説明の変更と画面の追加漏れ�
     assert.deepEqual(staleScreens(review, implementations, screenData), []);
     const changed = await screenImplementations(async file => {
       const text = await read(file);
-      return file.endsWith("/InitiativeListPage.tsx") ? text.replace("item.name}</button>", "item.note}</button>") : text;
+      if (!file.endsWith("/InitiativeListPage.tsx")) return text;
+      const mutated = text.replace(">{item.name}", ">{item.note}");
+      assert.notEqual(mutated, text, "表示元の変更をテスト用に適用できていること");
+      return mutated;
     });
     assert.ok(staleScreens(review, changed, screenData).includes("initiative-list"), "画面の表示元変更を検出する");
     const calculation = await screenImplementations(async file => {

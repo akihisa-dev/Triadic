@@ -78,3 +78,5 @@
 /* Keep compact rows in both full and windowed table rendering. */
 :is(.initiative-overview-page, .expansion-table-page) .initiative-list-table { font-size: 14px; line-height: 20px; }
 :is(.initiative-overview-page, .expansion-table-page) .initiative-list-table tr:not(.virtual-row-spacer) > :is(th, td) { height: 28px; padding-block: 3px; }
+
+.initiative-attribute-hint { font-size: 11px; font-weight: 400; }

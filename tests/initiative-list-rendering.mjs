@@ -19,6 +19,12 @@ export async function verifyInitiativeListRendering(api) {
   bytes = await api.registerInitiative(bytes, { ...draft, name: '通常確認', rows: [{ accountId, amounts: { 4: '1' }, overrides: { 2: { 4: '2' } } }] });
   const contents = await api.readPlanContents(bytes);
   const before = structuredClone(contents);
+  const unclassified = { ...contents, accounts: contents.accounts.map(account => account.id === accountId ? { ...account, accountType: null } : account) };
+  assert.match(api.renderInitiativeList(unclassified, 2), /initiative-attribute-hint/, '未集計の金額を持つ施策へ表示する');
+  assert.doesNotMatch(api.renderInitiativeList(contents, 2), /initiative-attribute-hint/, '属性修正後に解除する');
+  const zeroPlan = { ...unclassified, initiatives: unclassified.initiatives.map(item => ({ ...item, rows: item.rows.map(row => ({ ...row, amounts: {}, overrides: {} })) })) };
+  assert.doesNotMatch(api.renderInitiativeList(zeroPlan, 2), /initiative-attribute-hint/, '0だけの施策には表示しない');
+
   const viewForKind = api.createInitiativeListView(contents.initiatives, accounts, '2026');
   const primaryView = viewForKind(1);
   const confirmedView = viewForKind(2);
