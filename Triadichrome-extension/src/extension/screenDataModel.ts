@@ -59,7 +59,7 @@ const largeDisplay = "行数が多い表は画面周辺の行だけを描画し�
 const expansionCategories = use("expansion_categories", "展開区分名", "id", "name");
 const expansionCategoryAssignments = use("expansion_category_assignments", "展開ごとの選択候補", "expansion_id", "category_id");
 const expansionCategoryRule = "展開区分は任意です。選択した展開に割り当てられた区分だけを候補にし、展開未選択・割当なしでは選べません。展開の変更で有効な選択を保持し、使えない区分は未選択へ戻します。区分は自動選択せず、金額と計算規則を変更しません。展開と区分の割当は複数設定でき、施策で使用中の割当解除・区分削除を拒否します。";
-const budgetHintRule = "施策の入力・一覧では、選択種別に非0金額があり科目属性が未設定の行・施策だけに「属性未設定」を表示する。確定予算の明示手修正セルには点線の下線を付け、ホバーまたは入力フォーカス時だけ一次額・確定額・差額を1円精度で示す。同額手修正は「同額で手修正」とし、引き継ぎと区別する。Escで詳細を隠す。入力・種別・科目属性・取消・過去閲覧のデータに追従し、不正入力には比較表示を出さない。全月0・負数・大きな増減だけを警告せず、閾値による異常判定を行わない。点検ボタン・専用画面・一括通知・確認済み操作は設けず、計算・保存・登録条件を変えない。判定と表示は画面内だけに保持し、保存形式・権限・外部送信は変更しない。";
+const budgetHintRule = "施策の入力・一覧では、選択種別に非0金額があり科目属性が未設定の行・施策だけに「属性未設定」を表示する。確定予算の明示手修正セルは点線の下線で区別する。一次額・確定額・差額や同額手修正の吹き出しは表示しない。入力・種別・科目属性・取消・過去閲覧のデータに追従し、不正入力には手修正の補助表示を出さない。全月0・負数・大きな増減だけを警告せず、閾値による異常判定を行わない。点検ボタン・専用画面・一括通知・確認済み操作は設けず、計算・保存・登録条件を変えない。判定と表示は画面内だけに保持し、保存形式・権限・外部送信は変更しない。";
 const initiativeTables = [documentInfo, initiative, rows, amounts, accounts, ...classifications];
 export const screenData: ScreenData[] = [
   { page: "spreadsheet-io", name: "入出力", tables: [documentInfo, departmentIndustries, initiative, rows, amounts, accounts, previous, groups, members, presentation, expansionCategories, ...classifications],

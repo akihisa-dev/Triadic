@@ -1,8 +1,8 @@
-import { budgetAmountHint, hasUnclassifiedAmount } from "../core/domain/budgetHints";
+import { isManualBudgetAmount, hasUnclassifiedAmount } from "../core/domain/budgetHints";
 import { AccountRowSelect } from "./AccountRowSelect";
 import { useGridInteraction } from "./useGridInteraction";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { canChangeAccountRow, resolvedAmount, type KindId } from "../core/domain/kinds";
 import { formatYen, isValidAmount } from "../core/domain/amounts";
 import { initiativeMonths as months } from "../core/domain/calendar";
@@ -22,8 +22,6 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
   isSaving: boolean; onDraftChange: (draft: InitiativeEntryDraft) => void;
 }) {
   const readOnly = useHistoryReadOnly();
-  const hintId = useId();
-  const [dismissedHint, setDismissedHint] = useState<string | null>(null);
   const { selection, setSelection, editing, setEditing, table, dragging, original, bounds, focus, extendSelection } = useGridInteraction();
   const [error, setError] = useState("");
   const [activeAccount, setActiveAccount] = useState<string | null>(null);
@@ -33,7 +31,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
   const { rows, invalidNumbers } = draft;
   const hints = useMemo(() => rows.map(row => ({
     unclassified: hasUnclassifiedAmount(row, kind, accountsById.get(row.accountId!)),
-    amounts: months.map(month => budgetAmountHint(row, kind, month)),
+    manual: months.map(month => isManualBudgetAmount(row, kind, month)),
   })), [rows, kind, accountsById]);
   const totals = useMemo(() => initiativeAmountTotals({ rows, invalidNumbers: Boolean(invalidNumbers) }, kind, accounts), [rows, invalidNumbers, kind, accounts]);
   const selectedTotal = useMemo(() => initiativeSelectionTotal(draft, kind, selection), [draft, kind, selection]);
@@ -85,18 +83,15 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                 {months.map((month, column) => {
                   const cell = { row: index, column };
                   const value = valueAt(cell);
-                  const hint = hints[index]!.amounts[column];
-                  const cellHintId = `${hintId}-${index}-${month}`;
+                  const manual = hints[index]!.manual[column];
                   const invalidInput = row.invalidAmounts?.[kind]?.[month];
                   const captureOriginal = () => {
                     original.current = invalidInput?.original ?? value;
                     originalInherited.current = invalidInput?.inherited ?? (kind === 2 && row.overrides?.[2]?.[month] === undefined);
                   };
                   const selected = bounds && index >= bounds.top && index <= bounds.bottom && column >= bounds.left && column <= bounds.right;
-                  return <td key={month} className={[selected ? "initiative-cell-selected" : "", hint ? "budget-manual-cell" : ""].filter(Boolean).join(" ")}
-                    onFocusCapture={() => setDismissedHint(null)}
-                    onKeyDownCapture={event => { if (event.key === "Escape") setDismissedHint(cellHintId); }}
-                    onPointerEnter={event => { setDismissedHint(null); extendSelection(cell, event.buttons); }}
+                  return <td key={month} className={[selected ? "initiative-cell-selected" : "", manual ? "budget-manual-cell" : ""].filter(Boolean).join(" ")}
+                    onPointerEnter={event => extendSelection(cell, event.buttons)}
                     onPointerDown={event => {
                       if (isSaving || event.button !== 0 || (event.target as HTMLElement).closest("button")
                         || (editing && selection?.end.row === index && selection.end.column === column && !event.shiftKey)) return;
@@ -106,7 +101,6 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                       ref={input => { if (input) input.setCustomValidity(invalidInput ? "金額に有効な数値を入力してください。"
                         : input.value === "" || isValidAmount(input.value) ? "" : "金額は千円単位・小数点以下3桁までで入力してください。"); }}
                       aria-label={`${accountName} ${month}月の金額`}
-                      aria-describedby={hint ? cellHintId : undefined}
                       aria-invalid={Boolean(invalidInput) || value !== "" && !isValidAmount(value)}
                       disabled={readOnly || isSaving || !canEditInitiativeCell(draft, kind, cell)} value={value}
                       onFocus={event => {
@@ -178,7 +172,6 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                         else { setEditing(false); if (event.key === "Tab") event.currentTarget.blur(); }
                       }}
                     />
-                    {hint && <span id={cellHintId} role="tooltip" className={`budget-cell-hint${column < 6 ? " budget-hint-start" : ""}${dismissedHint === cellHintId ? " budget-hint-dismissed" : ""}`}>{hint}</span>}
                   </td>
                 })}
               </tr>;

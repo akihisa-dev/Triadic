@@ -10,9 +10,3 @@
 .budget-attribute-hint { display: block; font-size: 11px; font-weight: 400; color: var(--muted); }
 .initiative-amount-table td.budget-manual-cell { position: relative; }
 .budget-manual-cell::after { content: ""; position: absolute; right: 12px; bottom: 5px; width: 12px; border-bottom: 1px dotted var(--muted); pointer-events: none; }
-.budget-cell-hint { pointer-events: none; visibility: hidden; position: absolute; z-index: 5; top: 100%; right: 0; width: max-content; max-width: 300px; padding: 5px 8px; border: 1px solid var(--control-line); background: var(--surface, #fff); color: var(--ink); font-size: 12px; font-weight: 400; white-space: normal; box-shadow: 0 2px 6px #0002; }
-.budget-manual-cell:is(:hover, :focus-within) .budget-cell-hint:not(.budget-hint-dismissed) { visibility: visible; }
-
-.budget-cell-hint.budget-hint-start { left: 0; right: auto; }
-
-.initiative-amount-table:has(input:focus) .budget-manual-cell:not(:focus-within) .budget-cell-hint { visibility: hidden; }
