@@ -47,6 +47,6 @@ export function InitiativeDetailPage({ initiative, accounts, expansions, expansi
       savedRows: initiative.rows, saving: autoSave.saving, pending: autoSave.pending, onCompositionStart: () => controller.pause(), onCompositionEnd: () => controller.resume(),
       before: <div className="initiative-detail-actions"><button className="text-button master-back" type="button" disabled={autoSave.pending} onClick={onBack}>← {backLabel}へ戻る</button>
         {onDuplicate && <button className="secondary-button" type="button" disabled={readOnly || duplicationBlocked || autoSave.pending || autoSave.saving} onClick={onDuplicate}>複製して新規作成</button>}</div>,
-      status: <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave} />,
+      status: onLocateInputError => <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave} onLocateInputError={onLocateInputError} />,
     }} />;
 }

@@ -1,4 +1,5 @@
 export * from "../../Triadichrome-extension/src/core/domain/budgetHints";
+export * from "../../Triadichrome-extension/src/core/domain/inputErrorLocation";
 export * from "../../Triadichrome-extension/src/core/tables/initiativeMonthShift";
 export * from "../../Triadichrome-extension/src/core/tables/historyIncomeImpact";
 export * from "../../Triadichrome-extension/src/core/tables/annualAllocation";

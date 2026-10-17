@@ -28,6 +28,7 @@ async function reopen(app: FrameLocator) {
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "施策一覧", exact: true }).click();
   await app.getByRole("button", { name: "不正入力の保存確認", exact: true }).click();
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
 }
 
 test.beforeEach(async ({ page, app }) => {
@@ -55,6 +56,7 @@ test.beforeEach(async ({ page, app }) => {
   await cell(app, 4).fill("20"); await cell(app, 5).fill("6");
   await app.getByRole("button", { name: "登録", exact: true }).click();
   await app.getByRole("button", { name: "不正入力の保存確認", exact: true }).click();
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
 });
 
 for (const kind of ["一次予算", "確定予算"] as const) for (const text of ["-", "1e"]) for (const operation of ["入力", "貼付", "範囲消去"] as const) {
