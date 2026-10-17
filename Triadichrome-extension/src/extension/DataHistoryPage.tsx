@@ -1,4 +1,4 @@
-import type { HistoryDifference } from "../core/domain/historyDifference";
+import type { HistoryComparison } from "../core/domain/historyDifference";
 import { HistoryDifferenceDialog } from "./HistoryDifferenceDialog";
 import { useMemo, useState, useRef } from "react";
 import type { DataHistoryEntry, HistoryDeletion } from "../core/domain/dataHistory";
@@ -11,13 +11,13 @@ export const historyDate = (timestamp: string) => dateFormat.format(new Date(tim
 
 export function DataHistoryPage({ entries, busy, error, onPreview, onCompare, onDelete, onRetry, onPrepareSave }: {
   entries: DataHistoryEntry[]; busy: boolean; error: string;
-  onCompare: (id: number) => Promise<HistoryDifference[]>;
+  onCompare: (id: number) => Promise<HistoryComparison>;
   onPreview: (entry: DataHistoryEntry) => Promise<void>;
   onDelete: (deletion: HistoryDeletion) => Promise<void>;
   onRetry: () => Promise<void>;
   onPrepareSave: () => Promise<void>;
 }) {
-  const [comparison, setComparison] = useState<{ entry: DataHistoryEntry; differences: HistoryDifference[] } | null>(null);
+  const [comparison, setComparison] = useState<{ entry: DataHistoryEntry; result: HistoryComparison } | null>(null);
   const [comparisonFailure, setComparisonFailure] = useState<{ entry: DataHistoryEntry; message: string } | null>(null);
   const comparing = useRef(false);
   const comparisonTrigger = useRef<HTMLButtonElement | null>(null);
@@ -46,7 +46,7 @@ export function DataHistoryPage({ entries, busy, error, onPreview, onCompare, on
   const compare = async (entry: DataHistoryEntry) => {
     if (locked || comparing.current) return;
     comparing.current = true; setWorking(true); setComparisonFailure(null);
-    try { setComparison({ entry, differences: await onCompare(entry.id) }); }
+    try { setComparison({ entry, result: await onCompare(entry.id) }); }
     catch (reason) { setComparisonFailure({ entry, message: reason instanceof Error ? reason.message : "差分を読み込めませんでした。" }); }
     finally { comparing.current = false; setWorking(false); }
   };
@@ -71,7 +71,7 @@ export function DataHistoryPage({ entries, busy, error, onPreview, onCompare, on
       </tr>)}</tbody></table>
       {!entries.length && <p className="page-description">履歴はまだありません。</p>}
     </div>
-    {comparison && <HistoryDifferenceDialog returnFocus={comparisonTrigger.current} date={historyDate(comparison.entry.recordedAt)} differences={comparison.differences} onClose={() => setComparison(null)} />}
+    {comparison && <HistoryDifferenceDialog returnFocus={comparisonTrigger.current} date={historyDate(comparison.entry.recordedAt)} differences={comparison.result.differences} impact={comparison.result.impact} onClose={() => setComparison(null)} />}
     <ConfirmationDialog open={deletion !== null} title="履歴を削除" message={`${deletion && "before" in deletion ? `${historyDate(deletion.before)}より前の` : "選択した"}${count}件の履歴を削除しますか？ 削除した履歴には戻れません。現在の計画データは変わりません。${deletionFailure ? ` ${deletionFailure}` : ""}`} confirmLabel="削除する" busy={locked}
       onCancel={() => { if (deletionFailure) setFailure(deletionFailure); setDeletion(null); }} onConfirm={() => {
         if (deletion) {

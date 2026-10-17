@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 
 export async function verifyHistoryDifference(api) {
+  const compare = async (bytes, id) => (await api.compareSavedHistory(bytes, id)).differences;
   const initial = await api.createTriadicDatabase(2026);
   const plan = await api.readPlanContents(initial);
   const account = plan.accounts.find(item => item.accountType === "sales");
@@ -21,7 +22,7 @@ export async function verifyHistoryDifference(api) {
     db.run("UPDATE initiative_amounts SET revision=revision+1"); db.run("UPDATE document_info SET updated_at='2026-05-01T00:00:00.000Z'");
   });
   let current = await history(noBusinessChange);
-  assert.deepEqual(await api.compareSavedHistory(current.bytes, current.id), [], "更新日時と改訂番号だけでは差分にしない");
+  assert.deepEqual(await compare(current.bytes, current.id), [], "更新日時と改訂番号だけでは差分にしない");
   const after = await change(base, db => {
     db.run("UPDATE initiatives SET name='変更後',note='<img src=x> & sales',department_id=2");
     db.run("UPDATE departments SET name='sales' WHERE id=2");
@@ -37,7 +38,7 @@ export async function verifyHistoryDifference(api) {
   });
   current = await history(after);
   const original = current.bytes.slice();
-  const differences = await api.compareSavedHistory(current.bytes, current.id);
+  const differences = await compare(current.bytes, current.id);
   const has = (section, field, before, after) => assert.ok(differences.some(item => item.section === section && item.field === field && item.before === before && item.after === after), JSON.stringify({ section, field, before, after }));
   has("施策", "名称", "比較する施策", "変更後");
   has("施策", "備考", "元の備考", "<img src=x> & sales");
@@ -54,11 +55,11 @@ export async function verifyHistoryDifference(api) {
   assert.deepEqual(current.bytes, original, "比較はファイルの元bytesを書き換えない");
   const recreated = await change(base, db => db.run("UPDATE initiatives SET identity=?", ["f".repeat(32)]));
   const replacement = await history(recreated);
-  const replacements = await api.compareSavedHistory(replacement.bytes, replacement.id);
+  const replacements = await compare(replacement.bytes, replacement.id);
   assert.deepEqual(replacements.filter(item => item.section === "施策").map(item => item.change), ["削除", "追加"], "同じ番号・名称の再作成を改名と混同しない");
   const removed = await change(base, db => { db.run("DELETE FROM initiative_amounts"); db.run("DELETE FROM initiative_rows"); db.run("DELETE FROM initiatives"); });
   const deletion = await history(removed);
-  assert.ok((await api.compareSavedHistory(deletion.bytes, deletion.id)).some(item => item.section === "施策" && item.change === "削除"));
+  assert.ok((await compare(deletion.bytes, deletion.id)).some(item => item.section === "施策" && item.change === "削除"));
   await assert.rejects(api.compareSavedHistory(current.bytes, 999999), /見つかりません/);
   await assert.rejects(api.compareSavedHistory(current.bytes, 0), /識別子/);
   await assert.rejects(api.compareSavedHistory(new Uint8Array([1, 2, 3]), 1));
@@ -67,7 +68,7 @@ export async function verifyHistoryDifference(api) {
   await session.open({ name: handle.name, handle, bytes: current.bytes });
   let savedNotifications = 0; session.subscribeFileSave(async () => { savedNotifications++; });
   const before = session.getSnapshot();
-  assert.deepEqual(await session.compareHistory(current.id), differences);
+  assert.deepEqual((await session.compareHistory(current.id)).differences, differences);
   await assert.rejects(session.compareHistory(999999), /見つかりません/);
   assert.equal(session.getSnapshot().contents, before.contents);
   assert.equal(session.getSnapshot().history, before.history);

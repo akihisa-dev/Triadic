@@ -1,3 +1,4 @@
+export * from "../../Triadichrome-extension/src/core/tables/historyIncomeImpact";
 export * from "../../Triadichrome-extension/src/core/tables/annualAllocation";
 export * from "../../Triadichrome-extension/src/core/domain/initiativeSearch";
 export * from "../../Triadichrome-extension/src/core/domain/expansionCategoryMaster";

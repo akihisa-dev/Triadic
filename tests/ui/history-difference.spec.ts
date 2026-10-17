@@ -12,6 +12,7 @@ test("履歴から現在の変更箇所を確認し、履歴や画面を変更�
   await compare.click();
   const dialog = app.getByRole("dialog");
   await expect(dialog.getByRole("heading", { name: "履歴と現在の差分" })).toBeVisible();
+  await dialog.getByRole("button", { name: "変更項目", exact: true }).click();
   await expect(dialog.getByRole("table")).toContainText("履歴確認用の過去の状態");
   await expect(dialog.getByRole("table")).toContainText("一次予算・4月");
   await expect(dialog.getByRole("cell", { name: "100", exact: true })).toBeVisible();
@@ -38,6 +39,7 @@ standalone("大量差分を50件ずつ表示し、検索・絞り込み・特殊
   page.on("pageerror", error => errors.push(error.message));
   await page.goto("/tests/ui/history-difference.html");
   const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "変更項目", exact: true }).click();
   await expect(dialog.getByLabel("差分件数")).toHaveText("125件 / 全125件");
   await expect(dialog.locator("tbody tr")).toHaveCount(50);
   await dialog.getByRole("button", { name: "次へ", exact: true }).click();

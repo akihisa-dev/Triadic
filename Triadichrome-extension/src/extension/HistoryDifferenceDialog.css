@@ -13,3 +13,8 @@
 .history-difference-scroll thead { position: sticky; top: 0; background: var(--soft); }
 .history-difference-scroll tbody th { font-weight: 400; min-width: 160px; }
 .history-difference-pages { display: flex; align-items: center; justify-content: flex-end; gap: 12px; font-size: 13px; }
+.history-comparison-modes { display: flex; flex-wrap: wrap; gap: 8px; }
+.history-comparison-modes button[aria-pressed="true"] { color: var(--surface); background: var(--ink); }
+.history-income-scroll table { min-width: 560px; }
+.history-income-scroll tbody th { min-width: 60px; }
+.history-income-scroll td:nth-child(n+3) { text-align: right; font-variant-numeric: tabular-nums; }

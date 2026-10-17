@@ -1,3 +1,4 @@
+import { verifyHistoryIncomeImpact } from "../tests/history-income-impact.mjs";
 import { verifyAnnualAllocation } from "../tests/annual-allocation.mjs";
 import { verifyInitiativeSearch } from "../tests/initiative-search.mjs";
 import { verifyDuplicateInitiative } from "../tests/duplicate-initiative.mjs";
@@ -136,6 +137,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyNamedMasterRebase(api);
   await verifyDataHistory(api);
   await verifyHistoryDifference(api);
+  await verifyHistoryIncomeImpact(api);
   await verifyBusinessSnapshot(api);
   await verifyCommandComparison(api);
   await verifyInitiativeFiscalYear(api);

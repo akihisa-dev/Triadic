@@ -1,4 +1,6 @@
-import type { HistoryDifference } from "../domain/historyDifference";
+import type { HistoryDifference, HistoryComparison } from "../domain/historyDifference";
+import { compareHistoryIncome } from "../tables/historyIncomeImpact";
+import { readContents } from "./readPlan";
 import { yenToAmount } from "../domain/amounts";
 import { initiativeMonths } from "../domain/calendar";
 import { BUSINESS_TABLES } from "./triadicSchema";
@@ -94,7 +96,7 @@ function items(db: Database): Map<string, Item> {
   return result;
 }
 
-export async function compareSavedHistory(bytes: Uint8Array, id: number): Promise<HistoryDifference[]> {
+export async function compareSavedHistory(bytes: Uint8Array, id: number): Promise<HistoryComparison> {
   if (!Number.isSafeInteger(id) || id < 1) throw new Error("履歴の識別子が正しくありません。");
   const current = await openTriadicDatabase(bytes);
   try {
@@ -124,7 +126,7 @@ export async function compareSavedHistory(bytes: Uint8Array, id: number): Promis
             change, field, before: left?.text ?? "—", after: (right?.text ?? "—") + (left?.text === right?.text ? "（別の項目）" : "") });
         }
       }
-      return differences;
+      return { differences, impact: compareHistoryIncome(readContents(past, false), readContents(current, false)) };
     } finally { past.close(); }
   } finally { current.close(); }
 }
