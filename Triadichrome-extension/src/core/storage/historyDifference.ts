@@ -104,6 +104,8 @@ export async function compareSavedHistory(bytes: Uint8Array, id: number): Promis
     if (!(snapshot instanceof Uint8Array)) throw new Error("比較する履歴が見つかりません。");
     const past = await openBusinessSnapshot(snapshot);
     try {
+      const fiscalYear = (db: Database) => db.exec("SELECT fiscal_year FROM document_info WHERE id = 1")[0]?.values[0]?.[0];
+      if (fiscalYear(past) !== fiscalYear(current)) throw new Error("履歴の基準年度が一致しません。");
       const before = items(past), after = items(current), differences: HistoryDifference[] = [];
       for (const key of new Set([...before.keys(), ...after.keys()])) {
         const old = before.get(key), next = after.get(key), item = next ?? old!;

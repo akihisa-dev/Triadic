@@ -63,6 +63,27 @@ export async function verifyHistoryDifference(api) {
   await assert.rejects(api.compareSavedHistory(current.bytes, 999999), /見つかりません/);
   await assert.rejects(api.compareSavedHistory(current.bytes, 0), /識別子/);
   await assert.rejects(api.compareSavedHistory(new Uint8Array([1, 2, 3]), 1));
+  const otherYear = await api.createBusinessSnapshot(await api.createTriadicDatabase(2025));
+  const mismatched = await change(current.bytes, db => db.run("UPDATE data_history SET snapshot=? WHERE id=?", [otherYear, current.id]));
+  await api.validateTriadicDatabase(mismatched); // Per-snapshot business validation remains deferred until selection.
+  const mismatchedCopy = mismatched.slice();
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await assert.rejects(api.compareSavedHistory(mismatched, current.id), /履歴の基準年度が一致しません/);
+    await assert.rejects(api.readHistorySnapshot(mismatched, current.id), /履歴の基準年度が一致しません/);
+  }
+  const mismatchSession = new api.PlanSession();
+  const noFile = async () => { throw new Error("比較時は実ファイル・許可・保存先を求めない"); };
+  await mismatchSession.open({bytes:mismatched, name:"異年度.triadic", handle:{name:"異年度.triadic",getFile:noFile,createWritable:noFile,queryPermission:noFile}});
+  const mismatchBefore = mismatchSession.getSnapshot();
+  for (let attempt=0;attempt<2;attempt++) {
+    await assert.rejects(mismatchSession.compareHistory(current.id), /履歴の基準年度が一致しません/);
+    assert.equal(mismatchSession.getSnapshot().contents,mismatchBefore.contents);
+    assert.equal(mismatchSession.getSnapshot().history,mismatchBefore.history);
+    assert.equal(mismatchSession.getSnapshot().operationRevision,mismatchBefore.operationRevision);
+    assert.equal(mismatchSession.getSnapshot().canUndo,mismatchBefore.canUndo);
+    assert.equal(mismatchSession.getSnapshot().busy,false);
+  }
+  assert.deepEqual(mismatched,mismatchedCopy,"異年度比較の拒否と再試行で保存内容を変えない");
   const session = new api.PlanSession();
   const handle = { name: "比較.triadic", getFile: async () => { throw new Error("実ファイルを読まない"); }, createWritable: async () => { throw new Error("比較で書かない"); } };
   await session.open({ name: handle.name, handle, bytes: current.bytes });
