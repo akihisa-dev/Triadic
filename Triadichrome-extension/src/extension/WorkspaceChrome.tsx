@@ -35,10 +35,6 @@ export function WorkspaceHeader({ workspace }: { workspace: HomeWorkspace }) {
           </span>
           <output className="home-fiscal-year" aria-label="基準年度">{contents.fiscalYear}年度</output>
         </div>
-        <select className={`workspace-mode${workspace.trial.active ? " is-trial" : ""}`} aria-label="作業モード" title={workspace.trial.active ? "試算中・ファイルには保存されません" : undefined}
-          value={workspace.trial.active ? "trial" : "budget"} disabled={operationBlocked} onChange={workspace.switchMode}>
-          <option value="budget">予算</option><option value="trial">試算</option>
-        </select>
         <nav className="screen-history" aria-label="画面の移動履歴">
           {([-1, 1] as const).map(direction => {
             const label = direction === -1 ? "前の画面に戻る" : "次の画面に進む";
@@ -96,7 +92,7 @@ export function WorkspaceSidebar({ workspace }: { workspace: HomeWorkspace }) {
             </button>
           </header>
           <nav className="sidebar-navigation" aria-label="メインナビゲーション">
-            <button className="sidebar-item" type="button" aria-label="Home" disabled={workspace.trial.active || navigationBlocked} aria-current={page === "home" ? "page" : undefined} onClick={() => setPage("home")}>
+            <button className="sidebar-item" type="button" aria-label="Home" disabled={navigationBlocked} aria-current={page === "home" ? "page" : undefined} onClick={() => setPage("home")}>
               <SidebarIcon name="home" />
               <span className="sidebar-label">Home</span>
             </button>
@@ -112,23 +108,23 @@ export function WorkspaceSidebar({ workspace }: { workspace: HomeWorkspace }) {
               <SidebarIcon name="expansion" />
               <span className="sidebar-label">展開表</span>
             </button>
-            <button className="sidebar-item" type="button" aria-label="前年入力" disabled={workspace.trial.active || navigationBlocked} aria-current={page === "previous-input" ? "page" : undefined} onClick={() => setPage("previous-input")}>
+            <button className="sidebar-item" type="button" aria-label="前年入力" disabled={navigationBlocked} aria-current={page === "previous-input" ? "page" : undefined} onClick={() => setPage("previous-input")}>
               <SidebarIcon name="previous" /><span className="sidebar-label">前年入力</span>
             </button>
-            <button className="sidebar-item" type="button" aria-label="入出力" disabled={workspace.trial.active || navigationBlocked} aria-current={page === "spreadsheet-io" ? "page" : undefined} onClick={() => setPage("spreadsheet-io")}><SidebarIcon name="io" /><span className="sidebar-label">入出力</span></button>
-            <button className="sidebar-item" type="button" aria-label="マスタ" disabled={workspace.trial.active || navigationBlocked} aria-current={page === "master" || page === "account-master" || page === "expansion-master" || page === "expansion-category-master" || page === "industry-master" || page === "department-master" || page === "period-master" || page === "kind-master" || page === "account-type-master" || page === "amount-item-master" ? "page" : undefined} onClick={() => setPage("master")}>
+            <button className="sidebar-item" type="button" aria-label="入出力" disabled={navigationBlocked} aria-current={page === "spreadsheet-io" ? "page" : undefined} onClick={() => setPage("spreadsheet-io")}><SidebarIcon name="io" /><span className="sidebar-label">入出力</span></button>
+            <button className="sidebar-item" type="button" aria-label="マスタ" disabled={navigationBlocked} aria-current={page === "master" || page === "account-master" || page === "expansion-master" || page === "expansion-category-master" || page === "industry-master" || page === "department-master" || page === "period-master" || page === "kind-master" || page === "account-type-master" || page === "amount-item-master" ? "page" : undefined} onClick={() => setPage("master")}>
               <SidebarIcon name="master" />
               <span className="sidebar-label">マスタ</span>
             </button>
-            <button className="sidebar-item" type="button" aria-label="履歴" disabled={workspace.trial.active || navigationBlocked || preview !== null} aria-current={page === "data-history" ? "page" : undefined} onClick={() => setPage("data-history")}>
+            <button className="sidebar-item" type="button" aria-label="履歴" disabled={navigationBlocked || preview !== null} aria-current={page === "data-history" ? "page" : undefined} onClick={() => setPage("data-history")}>
               <SidebarIcon name="history" /><span className="sidebar-label">履歴</span>
             </button>
           </nav>
           <footer className="sidebar-footer">
-            <button className="sidebar-item" type="button" aria-label="別名で保存" disabled={workspace.trial.active || workspace.operationBlocked} onClick={() => { void workspace.saveAs(); }}>
+            <button className="sidebar-item" type="button" aria-label="別名で保存" disabled={workspace.operationBlocked} onClick={() => { void workspace.saveAs(); }}>
               <SidebarIcon name="save-as" /><span className="sidebar-label">別名で保存</span>
             </button>
-            <button className="sidebar-item" type="button" aria-label="ファイルを閉じる" disabled={workspace.trial.active || navigationBlocked} onClick={onCloseFile}>
+            <button className="sidebar-item" type="button" aria-label="ファイルを閉じる" disabled={navigationBlocked} onClick={onCloseFile}>
               <SidebarIcon name="close-file" />
               <span className="sidebar-label">ファイルを閉じる</span>
             </button>

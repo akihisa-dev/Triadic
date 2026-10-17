@@ -4,7 +4,7 @@ import { type Industry } from "../core/domain/industryMaster";
 import { type PeriodType } from "../core/domain/periodMaster";
 import { type Department } from "../core/domain/departmentMaster";
 import { type Expansion } from "../core/domain/expansionMaster";
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { type Account } from "../core/domain/accountMaster";
 import { type Initiative, type InitiativeEntryDraft } from "../core/domain/plan";
 import { InitiativeEntryPage } from "./InitiativeEntryPage";
@@ -13,7 +13,6 @@ import { useHistoryReadOnly } from "./HistoryReadOnly";
 import { useAutoSave, type AutoSaveProps } from "./useAutoSave";
 
 type Props = AutoSaveProps & {
-  trialAdoption?: ReactNode;
   initiative: Initiative;
   accounts: Account[];
   expansions: Expansion[];
@@ -26,11 +25,11 @@ type Props = AutoSaveProps & {
   onUpdate: (draft: InitiativeEntryDraft) => Promise<void>;
   onBack: () => void;
   onOpenMaster: () => void;
-  onDuplicate?: (() => void) | undefined;
+  onDuplicate?: () => void;
   duplicationBlocked?: boolean;
 };
 
-export function InitiativeDetailPage({ trialAdoption, initiative, accounts, expansions, expansionCategories, departments, periodTypes, industries, initialKind, backLabel = "施策一覧", onUpdate, onBack, onOpenMaster, onPendingChange, onPrepareSave, onDuplicate, duplicationBlocked = false }: Props) {
+export function InitiativeDetailPage({ initiative, accounts, expansions, expansionCategories, departments, periodTypes, industries, initialKind, backLabel = "施策一覧", onUpdate, onBack, onOpenMaster, onPendingChange, onPrepareSave, onDuplicate, duplicationBlocked = false }: Props) {
   const readOnly = useHistoryReadOnly();
   const autoSave = useAutoSave(onUpdate, onPendingChange);
   const { controller, draft, revision } = autoSave;
@@ -46,8 +45,8 @@ export function InitiativeDetailPage({ trialAdoption, initiative, accounts, expa
   return <InitiativeEntryPage initialKind={initialKind ?? 1} draft={draft} onDraftChange={value => controller.change(value)} accounts={accounts} expansions={expansions} expansionCategories={expansionCategories} departments={departments} periodTypes={periodTypes} industries={industries}
     isSaving={false} onOpenMaster={onOpenMaster} onRegister={() => {}} editing={{
       savedRows: initiative.rows, saving: autoSave.saving, pending: autoSave.pending, onCompositionStart: () => controller.pause(), onCompositionEnd: () => controller.resume(),
-      before: <div className="initiative-detail-actions"><button className="text-button master-back" type="button" disabled={autoSave.pending} onClick={onBack}>← {backLabel}へ戻る</button>{trialAdoption}
+      before: <div className="initiative-detail-actions"><button className="text-button master-back" type="button" disabled={autoSave.pending} onClick={onBack}>← {backLabel}へ戻る</button>
         {onDuplicate && <button className="secondary-button" type="button" disabled={readOnly || duplicationBlocked || autoSave.pending || autoSave.saving} onClick={onDuplicate}>複製して新規作成</button>}</div>,
-      status: <AutoSaveStatus temporary={Boolean(trialAdoption)} state={autoSave} controller={controller} onPrepareSave={onPrepareSave} />,
+      status: <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave} />,
     }} />;
 }

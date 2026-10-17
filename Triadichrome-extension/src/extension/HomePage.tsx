@@ -30,14 +30,12 @@ export function HomePage(props: HomePageProps) {
       <div className="home-layout">
         <WorkspaceSidebar workspace={workspace} />
         <div className="home-content" inert={operationMutation.busy || workspace.saveAsMutation.busy}>
-          <FadeSwap key={preview ? `past:${preview.entry.id}` : workspace.trial.active ? "trial" : "current"} value={screen} className="page-switch">
+          <FadeSwap key={preview ? `past:${preview.entry.id}` : "current"} value={screen} className="page-switch">
             {displayed => <WorkspacePage displayed={displayed} workspace={workspace} />}
           </FadeSwap>
         </div>
       </div>
       <StatusNotice message={notice.message || historyError} error={notice.message ? notice.error : Boolean(historyError)} {...(notice.message ? { onDismiss: dismissNotice } : {})} />
-      <ConfirmationDialog open={workspace.trialExitRequested} title="試算を終了しますか？" message="試算の変更は破棄されます。元の予算に変更はありません。" confirmLabel="予算に戻る" busy={navigationBlocked}
-        onCancel={() => workspace.setTrialExitRequested(false)} onConfirm={workspace.exitTrial} />
       <ConfirmationDialog open={discardRequest !== null} title="入力内容を破棄しますか？" message={discardRequest?.duplicate ? "保持中の登録前の入力を破棄して、選んだ施策の複製に置き換えます。" : "登録前の入力を破棄して施策一覧へ戻ります。"}
         confirmLabel={discardRequest?.duplicate ? "破棄して複製する" : "破棄して一覧へ戻る"} busy={navigationBlocked}
         onCancel={() => setDiscardRequest(null)} onConfirm={() => {

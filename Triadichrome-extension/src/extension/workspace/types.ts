@@ -22,7 +22,6 @@ export type Screen = {
 };
 
 export type HomePageProps = {
-  onTrialActiveChange?: (active: boolean) => void;
   onChangePlan: (change: PlanChange) => Promise<PlanContents>;
   fileName: string;
   initialContents: PlanContents;

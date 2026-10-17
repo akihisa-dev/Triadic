@@ -11,12 +11,3 @@
 @media (max-width: 600px) {
   .home-header:has(.operation-history) { flex-wrap: wrap; }
 }
-
-.workspace-mode { font: inherit; font-size: 12px; border: 1px solid var(--border-color, #b9b9b9); border-radius: 5px; padding: 5px 8px; background: var(--surface-color, #fff); color: inherit; }
-.workspace-mode.is-trial { border-color: #333; color: #fff; background: #333; }
-.trial-adoption { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; }
-.trial-initiative-name { display: flex; align-items: center; gap: 6px; }
-.trial-initiative-name .initiative-name-button { min-width: 0; }
-.trial-adoption-checkbox { flex-shrink: 0; margin: 0; }
-.trial-excluded td, .trial-excluded th { color: #666; }
-.trial-excluded .initiative-name-button { text-decoration: line-through; }

@@ -1,4 +1,3 @@
-import { trialBudgetScenario } from "./trial-scenario";
 // 自動の確認表示は既存の手修正・0固定・全月0・相殺データを使う。tests/budget-hints.mjs と tests/ui/budget-hints.html で1円差・同額固定・属性未設定・解除・不正入力・表示だけでは変更しないことを確認する。
 // 実施月の移動は既存サンプルの複数行と確定手修正を使い、tests/initiative-month-shift.mjs と tests/ui/initiative-month-shift.spec.ts で両種別・年度外拒否・引き継ぎ・保存と取消を確認する。「季節キャンペーン」は2か月延期でき、3月に金額がある施策は延期を拒否する。
 // 履歴の収支比較は既存サンプルの過去4月100→現在120と確定130を使い、tests/history-income-impact.mjs と tests/ui/history-income-impact.spec.ts で前年・各属性・1円・年間/月別・手修正・セル別上限を確認する。
@@ -115,8 +114,8 @@ export async function createSamplePlan(fiscalYear = currentFiscalYear(), large =
     { ...row("店内売上原価", { 7: "30", 8: "30", 9: "40", 10: "40", 11: "50", 12: "50", 1: "60", 2: "60", 3: "70" }), overrides: { 2: { 7: "0" } } },
     { ...row("給料手当", { 7: "20", 8: "20", 9: "20", 10: "20", 11: "20", 12: "20", 1: "20", 2: "20", 3: "20" }), overrides: { 2: { 7: "0" } } },
   ]);
-  await add(trialBudgetScenario.initiativeName, "夏季と年末の販促。5・6月および11月の広告を先行投入し、6・7・12月の受注を増やす。翌1月は増収0を計画する。", [
-    row(trialBudgetScenario.accountName, { [trialBudgetScenario.month]: trialBudgetScenario.originalAmount, 7: "75", 12: "180", 1: "0" }),
+  await add("季節キャンペーン", "夏季と年末の販促。5・6月および11月の広告を先行投入し、6・7・12月の受注を増やす。翌1月は増収0を計画する。", [
+    row("売上高", { 6: "50", 7: "75", 12: "180", 1: "0" }),
     row("本支店売上原価", { 6: "20", 7: "30", 12: "72", 1: "0" }),
     row("宣伝広告費", { 5: "15", 6: "25", 11: "40" }),
   ]);

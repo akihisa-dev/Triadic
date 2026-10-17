@@ -1,4 +1,3 @@
-import { useTrialBudget } from "./workspace/useTrialBudget";
 import type { CostTableView } from "./CostTablePage";
 import { useWorkspaceNavigation } from "./workspace/useWorkspaceNavigation";
 import { useWorkspaceHistory } from "./workspace/useWorkspaceHistory";
@@ -17,9 +16,7 @@ import { useWorkspaceOperations } from "./workspace/useWorkspaceOperations";
 export type { Page, Screen, HomePageProps } from "./workspace/types";
 import type { HomePageProps } from "./workspace/types";
 
-export function useHomeWorkspace(original: HomePageProps) {
-  const trial = useTrialBudget(original);
-  const { onChangePlan, fileName, initialContents, onChangeMaster, onChangeAggregations, onChangeExpansions, onChangeExpansionCategories, onChangeIndustries, onChangeDepartments, onChangePeriodTypes, onRegisterInitiative, onUpdateInitiative, onPrepareSave, onCloseFile, onSaveAs, dataHistory, historyError, historyBusy, onCompareHistory, onPreviewHistory, onRestoreHistory, onDeleteHistory, onRetryHistory, canUndo, canRedo, operationRevision, onTravelOperation } = trial.props;
+export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onChangeMaster, onChangeAggregations, onChangeExpansions, onChangeExpansionCategories, onChangeIndustries, onChangeDepartments, onChangePeriodTypes, onRegisterInitiative, onUpdateInitiative, onPrepareSave, onCloseFile, onSaveAs, dataHistory, historyError, historyBusy, onCompareHistory, onPreviewHistory, onRestoreHistory, onDeleteHistory, onRetryHistory, canUndo, canRedo, operationRevision, onTravelOperation }: HomePageProps) {
   const menuButton = useRef<HTMLButtonElement>(null);
   const costTableView = useRef<CostTableView>({ industries: [], departments: [], top: 0, left: 0 });
   const relationView = useRef<RelationView | null>(null);
@@ -31,25 +28,6 @@ export function useHomeWorkspace(original: HomePageProps) {
   const screen = screens.current;
   const { selectedInitiative } = screen;
   const navigate = screens.navigate;
-  const originalScreens = useRef<ReturnType<typeof screens.snapshot> | null>(null);
-  const [trialExitRequested, setTrialExitRequested] = useState(false);
-  const allowedInTrial = (page: string) => ["initiative-list", "initiative-detail", "cost-table", "expansion-table"].includes(page);
-  const switchMode = () => {
-    if (operationBlocked || saving.current) return;
-    if (trial.active) { setTrialExitRequested(true); return; }
-    originalScreens.current = screens.snapshot();
-    trial.start();
-    screens.reset(allowedInTrial(screen.page) ? { ...screen, detailOrigin: screen.detailOrigin === "home" ? "initiative-list" : screen.detailOrigin } : { page: "initiative-list", selectedInitiative: null, detailOrigin: "initiative-list" });
-    dismissNotice();
-  };
-  const exitTrial = () => {
-    if (navigationBlocked || saving.current) return;
-    trial.end();
-    setTrialExitRequested(false);
-    if (originalScreens.current) screens.restore(originalScreens.current);
-    originalScreens.current = null;
-    dismissNotice();
-  };
   const currentContents = initialContents;
   const [notice, setNotice] = useState({ message: "", error: false });
   const dismissNotice = useCallback(() => setNotice({ message: "", error: false }), []);
@@ -67,12 +45,8 @@ export function useHomeWorkspace(original: HomePageProps) {
   const operationMutation = useMutation(assertWritable);
   const saveAsMutation = useMutation(assertWritable);
   const navigationBlocked = saveAsMutation.busy || isSaving || restoreMutation.busy || operationMutation.busy || editPending || historyBusy;
-  const { discardRequest, setDiscardRequest, openInitiative, requestNavigation: navigateRequest, setPage: navigatePage, startInitiative, duplicateInitiative } = useWorkspaceNavigation(
+  const { discardRequest, setDiscardRequest, openInitiative, requestNavigation, setPage, startInitiative, duplicateInitiative } = useWorkspaceNavigation(
     screens, contents, preview !== null, navigationBlocked, saving, { initiativeDraft, setInitiativeDraft }, dismissNotice);
-  const requestNavigation: typeof navigateRequest = (next, perform) => {
-    if (!trial.active || allowedInTrial(next.page)) navigateRequest(next, perform);
-  };
-  const setPage: typeof navigatePage = page => { if (!trial.active || allowedInTrial(page)) navigatePage(page); };
   const operationBlocked = navigationBlocked || preview !== null || restoreRequested || discardRequest !== null || hasInitiativeDraftInput(initiativeDraft);
   const saveAs = async () => {
     if (operationBlocked || saveAsMutation.running.current) return;
@@ -129,7 +103,6 @@ export function useHomeWorkspace(original: HomePageProps) {
   }, [isSidebarOpen, closeSidebar]);
 
   return {
-    trial, reportContents: trial.active ? trial.reports : contents, switchMode, exitTrial, trialExitRequested, setTrialExitRequested,
     restoreMutation, saveAsMutation, saveAs, setEditPending, openInitiative, menuButton, relationView, costTableView, sidebar,
     isSidebarOpen, screen, initiativeDraft, setInitiativeDraft, preview, setPreview,
     restoreRequested, setRestoreRequested, restoreError, setRestoreError, contents, currentContents,
