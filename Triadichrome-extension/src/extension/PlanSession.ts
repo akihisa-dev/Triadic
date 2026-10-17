@@ -6,6 +6,7 @@ import { isAutomatic, validatePlanCommand, type PlanCommand } from "../core/doma
 export const OPERATION_HISTORY_LIMIT = 100;
 import { preparePlanCommand, type SavedOperation } from "./preparePlanCommand";
 import { writePlanCopy } from "./savePlanAs";
+import { processPlan } from "./planProcessing";
 export type SessionSnapshot = { contents: PlanContents | null; name: string; history: DataHistoryStatus; busy: boolean; historyError: string; canUndo: boolean; canRedo: boolean; operationRevision: number };
 type Destination = () => Promise<FileSystemFileHandle>;
 /** Owns the saved document. Drafts and navigation never enter this store. */
@@ -164,6 +165,9 @@ export class PlanSession {
       const current = await this.recordCurrent();
       return readSnapshotContents(await readHistorySnapshot(current.bytes, id));
     });
+  }
+  compareHistory(id: number) {
+    return this.serialize(() => processPlan("compareSavedHistory", this.current().bytes, id));
   }
   private async recordCurrent(): Promise<OpenPlan> {
     const current = this.current();

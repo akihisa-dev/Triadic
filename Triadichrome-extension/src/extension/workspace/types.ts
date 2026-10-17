@@ -1,3 +1,4 @@
+import type { HistoryDifference } from "../../core/domain/historyDifference";
 import type { ExpansionCategoryChange } from "../../core/domain/expansionCategoryMaster";
 import { type KindId, type PlanChange } from "../../core/domain/kinds";
 import { type PeriodTypeChange } from "../../core/domain/periodMaster";
@@ -39,6 +40,7 @@ export type HomePageProps = {
   dataHistory: DataHistoryStatus;
   historyError: string;
   historyBusy: boolean;
+  onCompareHistory: (id: number) => Promise<HistoryDifference[]>;
   onPreviewHistory: (id: number) => Promise<PlanContents>;
   onRestoreHistory: (id: number) => Promise<PlanContents>;
   onDeleteHistory: (deletion: HistoryDeletion) => Promise<void>;

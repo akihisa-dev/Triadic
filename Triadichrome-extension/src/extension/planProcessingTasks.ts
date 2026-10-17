@@ -1,4 +1,5 @@
 import { rebasePlan } from "../core/storage/rebasePlan";
+import { compareSavedHistory } from "../core/storage/historyDifference";
 import * as history from "../core/storage/dataHistory";
 import { applyOperationSnapshot } from "../core/storage/operationSnapshot";
 import { readPlanContents, readSnapshotContents } from "../core/storage/readPlan";
@@ -9,6 +10,7 @@ import { prepareAggregationSave } from "../core/storage/prepareAggregationSave";
 import { prepareKindSelectionSave } from "../core/storage/prepareKindSelectionSave";
 import { prepareOrdinarySave } from "../core/storage/prepareOrdinarySave";
 export const processingTasks = {
+  compareSavedHistory,
   rebasePlan,
   prepareKindSelectionSave,
   prepareAggregationSave,

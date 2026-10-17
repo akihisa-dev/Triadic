@@ -1,0 +1,72 @@
+import { test, expect, settleMotion } from "./fixtures";
+import { test as standalone } from "@playwright/test";
+
+test("履歴から現在の変更箇所を確認し、履歴や画面を変更せず閉じられる", async ({ page, app }, testInfo) => {
+  await page.goto("/tests/ui/preview.html");
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("button", { name: "サイドバーを開く", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "履歴", exact: true }).click();
+  const dates = app.locator(".history-date");
+  await expect(dates).toHaveCount(3);
+  const compare = app.getByRole("button", { name: /と現在の差分$/ }).last();
+  await compare.click();
+  const dialog = app.getByRole("dialog");
+  await expect(dialog.getByRole("heading", { name: "履歴と現在の差分" })).toBeVisible();
+  await expect(dialog.getByRole("table")).toContainText("履歴確認用の過去の状態");
+  await expect(dialog.getByRole("table")).toContainText("一次予算・4月");
+  await expect(dialog.getByRole("cell", { name: "100", exact: true })).toBeVisible();
+  await expect(dialog.getByRole("cell", { name: "120", exact: true })).toBeVisible();
+  await expect(dialog.getByLabel("差分件数")).toHaveText("2件 / 全2件");
+  await settleMotion(app.locator("body"));
+  await page.screenshot({ path: `/tmp/triadichrome-history-difference-${testInfo.project.name}.png` });
+  await dialog.getByRole("combobox", { name: "対象", exact: true }).selectOption("施策の月別金額");
+  await expect(dialog.getByLabel("差分件数")).toHaveText("1件 / 全2件");
+  await dialog.getByRole("button", { name: "閉じる", exact: true }).press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(compare).toBeFocused();
+  await expect(dates).toHaveCount(3);
+  await expect(app.getByLabel("過去のデータを閲覧中")).toHaveCount(0);
+  await app.getByRole("button", { name: /と現在の差分$/ }).first().click();
+  await expect(dialog).toContainText("差分はありません。");
+  await dialog.getByRole("button", { name: "閉じる", exact: true }).click();
+  await dates.last().click();
+  await expect(app.getByLabel("過去のデータを閲覧中")).toBeVisible();
+});
+
+standalone("大量差分を50件ずつ表示し、検索・絞り込み・特殊文字を安全に扱う", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto("/tests/ui/history-difference.html");
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByLabel("差分件数")).toHaveText("125件 / 全125件");
+  await expect(dialog.locator("tbody tr")).toHaveCount(50);
+  await dialog.getByRole("button", { name: "次へ", exact: true }).click();
+  await expect(dialog.getByRole("rowheader", { name: "確認施策51", exact: true })).toBeVisible();
+  await dialog.getByRole("button", { name: "次へ", exact: true }).click();
+  await expect(dialog.locator("tbody tr")).toHaveCount(25);
+  await dialog.getByRole("combobox", { name: "対象", exact: true }).selectOption("施策");
+  await expect(dialog.getByRole("rowheader", { name: "確認施策101", exact: true })).toBeVisible();
+  await expect(dialog.getByRole("navigation", { name: "差分のページ" })).toHaveCount(0);
+  await dialog.getByRole("searchbox", { name: "検索", exact: true }).fill("<img");
+  await expect(dialog.getByLabel("差分件数")).toHaveText("1件 / 全125件");
+  await expect(dialog.getByRole("table")).toContainText("<img src=x onerror=alert(1)> & 日本語");
+  await expect(dialog.locator("img")).toHaveCount(0);
+  await dialog.getByRole("searchbox", { name: "検索", exact: true }).fill("該当なし");
+  await expect(dialog).toContainText("条件に一致する差分はありません。");
+  expect(errors).toEqual([]);
+});
+
+standalone("比較失敗は保存を求めず再比較でき、履歴の選択を保持する", async ({ page }) => {
+  await page.goto("/tests/ui/history-confirmation.html");
+  const checks = page.getByRole("checkbox", { name: /の履歴を選択$/ });
+  await checks.first().check();
+  const button = page.getByRole("button", { name: /と現在の差分$/ }).first();
+  await button.click();
+  await expect(page.getByRole("alert")).toContainText("比較読込失敗");
+  await expect(page.getByRole("button", { name: "保存を再試行", exact: true })).toHaveCount(0);
+  await expect(checks.first()).toBeChecked();
+  await page.getByRole("button", { name: "比較を再試行", exact: true }).click();
+  await expect(page.getByRole("dialog")).toContainText("差分はありません。");
+  await page.getByRole("dialog").getByRole("button", { name: "閉じる", exact: true }).click();
+  await expect(checks.first()).toBeChecked();
+});

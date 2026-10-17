@@ -1,3 +1,4 @@
+import { verifyHistoryDifference } from "../tests/history-difference.mjs";
 import { verifySaveAs } from "../tests/save-as.mjs";
 import { verifyCostBreakdown } from "../tests/cost-breakdown.mjs";
 import { verifyNewPlanFile } from "../tests/new-plan-file.mjs";
@@ -128,6 +129,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyAutoSaveRebase(api);
   await verifyNamedMasterRebase(api);
   await verifyDataHistory(api);
+  await verifyHistoryDifference(api);
   await verifyBusinessSnapshot(api);
   await verifyCommandComparison(api);
   await verifyInitiativeFiscalYear(api);

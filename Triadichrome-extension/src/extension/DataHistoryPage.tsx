@@ -1,4 +1,6 @@
-import { useMemo, useState } from "react";
+import type { HistoryDifference } from "../core/domain/historyDifference";
+import { HistoryDifferenceDialog } from "./HistoryDifferenceDialog";
+import { useMemo, useState, useRef } from "react";
 import type { DataHistoryEntry, HistoryDeletion } from "../core/domain/dataHistory";
 import { historySelection } from "../core/domain/historySelection";
 import { ConfirmationDialog } from "./ConfirmationDialog";
@@ -7,13 +9,18 @@ import "./DataHistoryPage.css";
 const dateFormat = new Intl.DateTimeFormat("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 3, hourCycle: "h23" });
 export const historyDate = (timestamp: string) => dateFormat.format(new Date(timestamp));
 
-export function DataHistoryPage({ entries, busy, error, onPreview, onDelete, onRetry, onPrepareSave }: {
+export function DataHistoryPage({ entries, busy, error, onPreview, onCompare, onDelete, onRetry, onPrepareSave }: {
   entries: DataHistoryEntry[]; busy: boolean; error: string;
+  onCompare: (id: number) => Promise<HistoryDifference[]>;
   onPreview: (entry: DataHistoryEntry) => Promise<void>;
   onDelete: (deletion: HistoryDeletion) => Promise<void>;
   onRetry: () => Promise<void>;
   onPrepareSave: () => Promise<void>;
 }) {
+  const [comparison, setComparison] = useState<{ entry: DataHistoryEntry; differences: HistoryDifference[] } | null>(null);
+  const [comparisonFailure, setComparisonFailure] = useState<{ entry: DataHistoryEntry; message: string } | null>(null);
+  const comparing = useRef(false);
+  const comparisonTrigger = useRef<HTMLButtonElement | null>(null);
   const [selected, setSelected] = useState<number[]>([]);
   const [cutoff, setCutoff] = useState("");
   const [deletion, setDeletion] = useState<HistoryDeletion | null>(null);
@@ -36,7 +43,14 @@ export function DataHistoryPage({ entries, busy, error, onPreview, onDelete, onR
     catch (reason) { reportFailure(reason instanceof Error ? reason.message : "履歴の操作に失敗しました。"); }
     finally { setWorking(false); }
   };
-  return <main className="data-history-page" aria-labelledby="data-history-title">
+  const compare = async (entry: DataHistoryEntry) => {
+    if (locked || comparing.current) return;
+    comparing.current = true; setWorking(true); setComparisonFailure(null);
+    try { setComparison({ entry, differences: await onCompare(entry.id) }); }
+    catch (reason) { setComparisonFailure({ entry, message: reason instanceof Error ? reason.message : "差分を読み込めませんでした。" }); }
+    finally { comparing.current = false; setWorking(false); }
+  };
+  return <main className="data-history-page" aria-labelledby="data-history-title" aria-busy={working}>
     <h1 id="data-history-title">履歴</h1>
     <div className="data-history-actions">
       <button className="secondary-button" type="button" disabled={locked || !ids.length} onClick={() => openDeletion({ ids })}>選択した履歴を削除</button>
@@ -45,16 +59,19 @@ export function DataHistoryPage({ entries, busy, error, onPreview, onDelete, onR
       <button className="secondary-button" type="button" disabled={locked || !older || !before} onClick={() => { if (before) openDeletion({ before }); }}>一括削除</button>
     </div>
     {(failure || error) && <div className="data-history-error" role="alert"><p>{failure || error}</p><button className="text-button" type="button" disabled={locked} onClick={() => void perform(onRetry)}>保存を再試行</button></div>}
+    {comparisonFailure && <div className="data-history-error" role="alert"><p>{comparisonFailure.message}</p><button type="button" className="text-button" disabled={locked} onClick={() => void compare(comparisonFailure.entry)}>比較を再試行</button></div>}
     <div className="data-history-list" role="region" aria-label="データの履歴" tabIndex={0}>
       <table><thead><tr>
         <th scope="col"><input type="checkbox" aria-label="すべての履歴を選択" disabled={locked || !entries.length} checked={entries.length > 0 && ids.length === entries.length} onChange={event => setSelected(event.target.checked ? entries.map(entry => entry.id) : [])} /></th>
-        <th scope="col">記録日時</th>
+        <th scope="col">記録日時</th><th scope="col">現在との比較</th>
       </tr></thead><tbody>{entries.map(entry => <tr key={entry.id}>
         <td><input type="checkbox" aria-label={`${historyDate(entry.recordedAt)}の履歴を選択`} disabled={locked} checked={selectedIds.has(entry.id)} onChange={event => setSelected(current => event.target.checked ? [...current, entry.id] : current.filter(id => id !== entry.id))} /></td>
         <td><button className="text-button history-date" type="button" disabled={locked} onClick={() => void perform(() => onPreview(entry))}><time dateTime={entry.recordedAt}>{historyDate(entry.recordedAt)}</time></button></td>
+        <td><button type="button" className="text-button" aria-label={`${historyDate(entry.recordedAt)}と現在の差分`} disabled={locked} onClick={event => { comparisonTrigger.current = event.currentTarget; void compare(entry); }}>差分を見る</button></td>
       </tr>)}</tbody></table>
       {!entries.length && <p className="page-description">履歴はまだありません。</p>}
     </div>
+    {comparison && <HistoryDifferenceDialog returnFocus={comparisonTrigger.current} date={historyDate(comparison.entry.recordedAt)} differences={comparison.differences} onClose={() => setComparison(null)} />}
     <ConfirmationDialog open={deletion !== null} title="履歴を削除" message={`${deletion && "before" in deletion ? `${historyDate(deletion.before)}より前の` : "選択した"}${count}件の履歴を削除しますか？ 削除した履歴には戻れません。現在の計画データは変わりません。${deletionFailure ? ` ${deletionFailure}` : ""}`} confirmLabel="削除する" busy={locked}
       onCancel={() => { if (deletionFailure) setFailure(deletionFailure); setDeletion(null); }} onConfirm={() => {
         if (deletion) {

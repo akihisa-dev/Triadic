@@ -16,7 +16,7 @@ import { useWorkspaceOperations } from "./workspace/useWorkspaceOperations";
 export type { Page, Screen, HomePageProps } from "./workspace/types";
 import type { HomePageProps } from "./workspace/types";
 
-export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onChangeMaster, onChangeAggregations, onChangeExpansions, onChangeExpansionCategories, onChangeIndustries, onChangeDepartments, onChangePeriodTypes, onRegisterInitiative, onUpdateInitiative, onPrepareSave, onCloseFile, onSaveAs, dataHistory, historyError, historyBusy, onPreviewHistory, onRestoreHistory, onDeleteHistory, onRetryHistory, canUndo, canRedo, operationRevision, onTravelOperation }: HomePageProps) {
+export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onChangeMaster, onChangeAggregations, onChangeExpansions, onChangeExpansionCategories, onChangeIndustries, onChangeDepartments, onChangePeriodTypes, onRegisterInitiative, onUpdateInitiative, onPrepareSave, onCloseFile, onSaveAs, dataHistory, historyError, historyBusy, onCompareHistory, onPreviewHistory, onRestoreHistory, onDeleteHistory, onRetryHistory, canUndo, canRedo, operationRevision, onTravelOperation }: HomePageProps) {
   const menuButton = useRef<HTMLButtonElement>(null);
   const costTableView = useRef<CostTableView>({ industries: [], departments: [], top: 0, left: 0 });
   const relationView = useRef<RelationView | null>(null);
@@ -111,7 +111,7 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
     usedAccountIds, changePlan, kindSelection, changeMaster, changePeriodTypes, changeDepartments,
     changeIndustries, changeExpansions, changeExpansionCategories, changeAggregations, update, register,
     resetScreens, previewEntry, returnToCurrent, restorePreview, closeSidebar, screens, fileName,
-    dataHistory, historyError, historyBusy, onDeleteHistory, onRetryHistory, onPrepareSave,
+    dataHistory, historyError, historyBusy, onCompareHistory, onDeleteHistory, onRetryHistory, onPrepareSave,
     onCloseFile, canUndo, canRedo, operationRevision
   };
 }

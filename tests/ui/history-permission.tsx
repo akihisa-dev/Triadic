@@ -30,7 +30,7 @@ function Preview() {
     <button onClick={() => { writable = false; allowRequest = false; setPermission("許可失効・要求は拒否"); }}>書込許可を失効</button>
     <button onClick={() => { allowRequest = true; setPermission("次の許可要求を承認"); }}>次の許可を承認</button>
     <output aria-label="許可状態">{permission}</output><output aria-label="許可要求回数">{requests}</output>
-    <DataHistoryPage entries={snapshot.history.entries} busy={snapshot.busy} error={snapshot.historyError}
+    <DataHistoryPage onCompare={async () => []} entries={snapshot.history.entries} busy={snapshot.busy} error={snapshot.historyError}
       onPreview={async () => {}} onDelete={deletion => session.deleteHistory(deletion, destination)}
       onPrepareSave={() => session.prepareSave(destination)}
       onRetry={async () => { await session.prepareSave(destination); await session.checkpoint(true, destination); }} />

@@ -256,6 +256,8 @@ Chrome file selection, creation, and drops yielding file references are supporte
 
 ## Data history
 
+Use “View differences” beside a timestamp to compare that checkpoint with the currently saved plan. The read-only comparison includes initiatives, classifications, monthly amounts, previous-year actuals, masters, memberships, aggregation signs, ordering, and saved display settings. Search, category filters, and 50-item pages help inspect additions, deletions, and changes. Monetary differences retain one-yen precision, and final-budget inheritance is distinguished from explicit overrides, including zero and same-value overrides. The comparison does not save checkpoints or modify the file, undo history, selection, permissions, or storage format. Unsaved input and unseen external file updates are excluded. Failed comparisons can be retried.
+
 “History” below Masters in the sidebar lets you select a recorded time and view past state. Screens become read-only; “Return to present” (現在に戻る) restores the current plan and its pre-preview screen navigation history, allowing retained unregistered input to be resumed with Back. Past viewing has separate navigation history; canceling or failing restoration preserves current drafts, while successful restoration clears drafts and resets navigation. Confirming “Restore this point” (この時点に戻す) restores initiatives, all-kind amounts, previous-year actuals, masters, aggregations, and saved settings together. The pre-restore state and a new snapshot remain, allowing another selection to reverse restoration.
 
 History stays in the same `.triadic`. It records five minutes after the first successful save of an unrecorded change; further saves do not extend the deadline. Normal closure and entering past viewing also record unrecorded changes. Unregistered or failed-save input is excluded. New format-25 files include history-management state and record the state before the first change on first saving. Viewing alone never rewrites files.
@@ -772,6 +774,8 @@ Chromeのファイル選択、新規作成、ファイル参照を取得でき�
 ファイルを開く共通処理（選択・続きから・ドロップ）では、100バイト未満を拒否し、先頭16バイトのSQLite署名を確認してから全量を読み込みます。明らかに別形式の大容量ファイルは全量を読みません。容量の上限や切り捨ては追加せず、その後も保存形式・構造・参照関係・金額・履歴の完全検証を行います。拒否時は元のファイルと直近ファイルの記憶を変更しません。
 
 ## データの履歴
+
+各日時の「差分を見る」から、履歴と現在の保存済みデータの追加・削除・変更を確認できます。施策の名称・備考・分類・科目行・月額、前年、マスタ・所属・集計符号・並び順・表示設定が対象です。過去と現在の値を並べ、対象の絞り込み・検索と50件ごとの表示で確認します。金額差分は編集値と同じ千円単位・小数点以下3桁まで表示し、確定予算の引き継ぎ・手修正0・同額手修正も区別します。前年の未入力と0、更新日時・改訂番号だけの違いは差分にしません。施策・部署・業種の作成識別子が変わった場合は削除・追加として扱います。比較は専用Workerで行い、ファイルや履歴を保存せず、操作取消・画面・削除用の選択を保持します。外部更新や未保存の入力は含めません。失敗時は「比較を再試行」で再比較でき、保存形式・権限・外部送信に変更はありません。
 
 サイドバーの「マスタ」の下にある「履歴」から、記録日時を選んで過去の状態を閲覧できます。各画面は閲覧専用になり、ヘッダーの「現在に戻る」で現在の計画へ戻ります。「この時点に戻す」を確認すると、施策・全種別の金額・前年・マスタ・集計・保存済み設定をまとめて復元します。復元前の状態と新しい履歴も残るので、選び直して復元を取り消せます。
 

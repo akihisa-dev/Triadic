@@ -31,3 +31,5 @@ export { readRebaseRows } from "../../Triadichrome-extension/src/core/storage/re
 export { initializeSqlite } from "../../Triadichrome-extension/src/core/storage/sqliteRuntime";
 
 export { mergeRebaseOrder } from "../../Triadichrome-extension/src/core/storage/rebaseOrder";
+
+export * from "../../Triadichrome-extension/src/core/storage/historyDifference";
