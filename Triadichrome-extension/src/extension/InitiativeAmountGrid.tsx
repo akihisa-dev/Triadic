@@ -2,9 +2,7 @@ import { budgetAmountHint, hasUnclassifiedAmount } from "../core/domain/budgetHi
 import { AccountRowSelect } from "./AccountRowSelect";
 import { useGridInteraction } from "./useGridInteraction";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
-import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { InitiativeErrorLocation } from "../core/domain/inputErrorLocation";
-import { revealInputError } from "./focusInputError";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { canChangeAccountRow, resolvedAmount, type KindId } from "../core/domain/kinds";
 import { formatYen, isValidAmount } from "../core/domain/amounts";
 import { initiativeMonths as months } from "../core/domain/calendar";
@@ -17,13 +15,11 @@ import { initiativeSelectionTotal } from "../core/tables/selectionTotal";
 import { GridSelectionTotal } from "./GridSelectionTotal";
 import "./InitiativeAmountGrid.css";
 
-export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRows, rowOperationsDisabled = false, onDraftChange, errorFocus, onLocateInputError }: {
+export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRows, rowOperationsDisabled = false, onDraftChange }: {
   draft: InitiativeEntryDraft; kind: KindId; accounts: Account[];
   savedRows?: InitiativeEntryDraft["rows"] | undefined;
   rowOperationsDisabled?: boolean;
   isSaving: boolean; onDraftChange: (draft: InitiativeEntryDraft) => void;
-  errorFocus?: (InitiativeErrorLocation & { sequence: number }) | null;
-  onLocateInputError?: (() => void) | undefined;
 }) {
   const readOnly = useHistoryReadOnly();
   const hintId = useId();
@@ -41,15 +37,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
   })), [rows, kind, accountsById]);
   const totals = useMemo(() => initiativeAmountTotals({ rows, invalidNumbers: Boolean(invalidNumbers) }, kind, accounts), [rows, invalidNumbers, kind, accounts]);
   const selectedTotal = useMemo(() => initiativeSelectionTotal(draft, kind, selection), [draft, kind, selection]);
-  useLayoutEffect(() => { setSelection(null); setEditing(false); }, [draft.rows.length]);
-  useLayoutEffect(() => {
-    if (!errorFocus || errorFocus.kind !== kind || readOnly || isSaving) return;
-    const row = errorFocus.rowId === undefined ? errorFocus.rowIndex : draft.rows.findIndex(item => item.id === errorFocus.rowId);
-    const column = months.indexOf(errorFocus.month as typeof months[number]);
-    if (row < 0 || column < 0) return;
-    setEditing(false); setSelection({ anchor: { row, column }, end: { row, column } });
-    return revealInputError(table.current?.querySelector<HTMLInputElement>(`input[data-row="${row}"][data-column="${column}"]`));
-  }, [errorFocus]);
+  useEffect(() => { setSelection(null); setEditing(false); }, [draft.rows.length]);
   const valueAt = (cell: GridCell, source = draft) => {
     const row = source.rows[cell.row]!;
     const month = months[cell.column]!;
@@ -67,8 +55,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
     onDraftChange(changeInitiativeCell(draft, kind, cell, value, badInput ? { original: original.current, inherited: originalInherited.current } : undefined));
   };
   return <>
-    <StatusNotice message={error || totals.error} error {...(error ? { onDismiss: () => setError("") } : {})}
-      actions={onLocateInputError ? <button className="text-button" type="button" onClick={onLocateInputError}>入力エラーの場所へ移動</button> : undefined} />
+    <StatusNotice message={error || totals.error} error {...(error ? { onDismiss: () => setError("") } : {})} />
     <GridSelectionTotal total={selectedTotal} />
         <table ref={table} className="initiative-amount-table" aria-label="月別計画金額">
           <thead>

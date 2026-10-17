@@ -1,9 +1,7 @@
 import { useAdaptiveTableHeader } from "./useAdaptiveTableHeader";
 import { normalizeGridAmount } from "../core/tables/grid";
 import { useGridInteraction } from "./useGridInteraction";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { previousInputError } from "../core/domain/inputErrorLocation";
-import { revealInputError } from "./focusInputError";
+import { useMemo, useState } from "react";
 import { previousByAccount } from "../core/tables/planTables";
 import { buildCostTable } from "../core/tables/costTable";
 import { formatYen, formatRate, isValidAmount, amountToYen, yenToAmount } from "../core/domain/amounts";
@@ -17,10 +15,8 @@ import { StatusNotice } from "./StatusNotice";
 import { previousSelectionTotal } from "../core/tables/selectionTotal";
 import { GridSelectionTotal } from "./GridSelectionTotal";
 
-export function PreviousAmountGrid({ contents, draft, onChange, errorFocusRequest = 0, errorNavigationDisabled = false }: {
+export function PreviousAmountGrid({ contents, draft, onChange }: {
   contents: PlanContents; draft: PreviousInput | undefined; onChange: (draft: PreviousInput) => void;
-  errorFocusRequest?: number;
-  errorNavigationDisabled?: boolean;
 }) {
   const { rows, calculationFailed } = useMemo(() => {
     const invalid = draft?.rows.some(row => Object.values(row.amounts).some(value => value !== undefined && value !== "" && !isValidAmount(value))) ?? false;
@@ -35,14 +31,12 @@ export function PreviousAmountGrid({ contents, draft, onChange, errorFocusReques
   // A coordinate selection belongs to this exact displayed row structure.
   // Remount interaction state before painting reordered/inserted/deleted rows.
   const structure = rows.map(row => `${row.kind}:${row.id}`).join("|");
-  return <PreviousAmountGridBody key={structure} contents={contents} draft={draft} onChange={onChange} rows={rows} calculationFailed={calculationFailed} errorFocusRequest={errorFocusRequest} errorNavigationDisabled={errorNavigationDisabled} />;
+  return <PreviousAmountGridBody key={structure} contents={contents} draft={draft} onChange={onChange} rows={rows} calculationFailed={calculationFailed} />;
 }
 
-function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFailed, errorFocusRequest, errorNavigationDisabled }: {
+function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFailed }: {
   contents: PlanContents; draft: PreviousInput | undefined; onChange: (draft: PreviousInput) => void;
   rows: ReturnType<typeof buildCostTable>; calculationFailed: boolean;
-  errorFocusRequest: number;
-  errorNavigationDisabled: boolean;
 }) {
   const { selection, setSelection, editing, setEditing, table, dragging, original, bounds, focus, extendSelection } = useGridInteraction();
   const freezeHeader = useAdaptiveTableHeader(table);
@@ -67,24 +61,6 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
   const salesIndex = rows.findIndex(row => row.kind === "group" && row.id === salesGroupId);
   const rowIds = useMemo(() => rows.map(row => row.kind === "account" ? row.id : null), [rows]);
   const selectedTotal = useMemo(() => previousSelectionTotal(draft, rowIds, selection), [draft, rowIds, selection]);
-  const location = useMemo(() => previousInputError(draft, rowIds), [draft, rowIds]);
-  const revealCleanup = useRef<(() => void) | undefined>(undefined);
-  useLayoutEffect(() => () => revealCleanup.current?.(), []);
-  const locateInputError = () => {
-    if (errorNavigationDisabled) return;
-    const current = previousInputError(draft, rowIds);
-    if (!current) return;
-    const row = rowIds.indexOf(current.accountId), column = initiativeMonths.indexOf(current.month as typeof initiativeMonths[number]);
-    setEditing(false); setSelection({ anchor: { row, column }, end: { row, column } });
-    revealCleanup.current?.();
-    revealCleanup.current = revealInputError(table.current?.querySelector<HTMLInputElement>(`input[data-row="${row}"][data-column="${column}"]`));
-  };
-  const previousRequest = useRef(errorFocusRequest);
-  useLayoutEffect(() => {
-    if (previousRequest.current === errorFocusRequest) return;
-    previousRequest.current = errorFocusRequest;
-    locateInputError();
-  }, [errorFocusRequest]);
   const apply = (operation: () => PreviousInput) => {
     try { onChange(operation()); setError(""); setEditing(false); }
     catch (failure) { setError(failure instanceof Error ? failure.message : "入力できませんでした。"); }
@@ -154,8 +130,7 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
           </td>)}
         </tr>;
   return <>
-    <StatusNotice message={error || cellError || (calculationFailed || periodAmounts.failed ? "金額の合計が正確に計算できる範囲を超えています。分類を絞るか金額を修正してください。" : "")} error onDismiss={() => { setError(""); setCellErrors({}); }}
-      actions={location && !errorNavigationDisabled ? <button className="text-button" type="button" onClick={locateInputError}>入力エラーの場所へ移動</button> : undefined} />
+    <StatusNotice message={error || cellError || (calculationFailed || periodAmounts.failed ? "金額の合計が正確に計算できる範囲を超えています。分類を絞るか金額を修正してください。" : "")} error onDismiss={() => { setError(""); setCellErrors({}); }} />
     <GridSelectionTotal total={selectedTotal} accountsOnly />
     <div className="previous-grid-container" role="region" aria-label="前年の月別金額" tabIndex={0}>
       <table ref={table} className={`initiative-list-table cost-table previous-grid${freezeHeader ? "" : " cost-header-scroll"}`} aria-label="前年入力の月別金額">

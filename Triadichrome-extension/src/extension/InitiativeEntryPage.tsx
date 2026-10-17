@@ -7,9 +7,7 @@ import { AnnualAllocation } from "./AnnualAllocation";
 import { ClassificationSelect } from "./ClassificationSelect";
 import { INITIAL_KINDS } from "../core/domain/kinds";
 import { type KindId } from "../core/domain/kinds";
-import { useMemo, useState } from "react";
-import { initiativeInputError, type InitiativeErrorLocation } from "../core/domain/inputErrorLocation";
-import { StatusNotice } from "./StatusNotice";
+import { useState } from "react";
 import { type Industry } from "../core/domain/industryMaster";
 import { type PeriodType } from "../core/domain/periodMaster";
 import { type Department } from "../core/domain/departmentMaster";
@@ -33,21 +31,12 @@ type InitiativeEntryPageProps = {
   isSaving: boolean;
   onRegister: () => void;
   onBack?: () => void;
-  notice?: { message: string; error: boolean; onDismiss: () => void };
-  editing?: { savedRows: InitiativeEntryDraft["rows"]; saving: boolean; pending: boolean; before: ReactNode; status: (onLocateInputError: (() => void) | undefined) => ReactNode; onCompositionStart: () => void; onCompositionEnd: () => void };
+  editing?: { savedRows: InitiativeEntryDraft["rows"]; saving: boolean; pending: boolean; before: ReactNode; status: ReactNode; onCompositionStart: () => void; onCompositionEnd: () => void };
 };
 
-export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions, expansionCategories, departments, periodTypes, industries, onOpenMaster, isSaving, onRegister, onBack, editing, notice, initialKind = 1 }: InitiativeEntryPageProps) {
+export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions, expansionCategories, departments, periodTypes, industries, onOpenMaster, isSaving, onRegister, onBack, editing, initialKind = 1 }: InitiativeEntryPageProps) {
   const readOnly = useHistoryReadOnly();
   const [kind, setKind] = useState<KindId>(initialKind);
-  const [errorFocus, setErrorFocus] = useState<(InitiativeErrorLocation & { sequence: number }) | null>(null);
-  const location = useMemo(() => initiativeInputError(draft), [draft.rows]);
-  const locateInputError = !readOnly && !isSaving && !editing?.saving && location ? () => {
-    const current = initiativeInputError(draft);
-    if (!current) return;
-    setKind(current.kind);
-    setErrorFocus(previous => ({ ...current, sequence: (previous?.sequence ?? 0) + 1 }));
-  } : undefined;
   const allowedCategories = expansions.find(item => item.id === draft.expansionId)?.categoryIds ?? [];
   const allowedIndustries = departments.find(item => item.id === draft.departmentId)?.industryIds ?? [];
   return (
@@ -55,9 +44,7 @@ export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions
       {editing?.before}
       {!editing && onBack && <button className="text-button master-back" type="button" disabled={isSaving} onClick={onBack}>← 施策一覧へ戻る</button>}
       <h1 id="initiative-entry-title">施策入力</h1>
-      {editing?.status(locateInputError)}
-      {notice && <StatusNotice message={notice.message} error={notice.error} onDismiss={notice.onDismiss}
-        actions={notice.error && locateInputError ? <button className="text-button" type="button" onClick={locateInputError}>入力エラーの場所へ移動</button> : undefined} />}
+      {editing?.status}
       <div className="initiative-header-fields">
       <div className="initiative-text-fields">
       <div className="initiative-name-row">
@@ -121,7 +108,7 @@ export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions
         <p>勘定科目がありません。</p>
         <button className="secondary-button" type="button" disabled={isSaving || editing?.pending} onClick={onOpenMaster}>勘定科目マスタを開く</button>
       </div>}
-      <div className="kind-tabs" role="tablist" aria-label="入力する種別">{INITIAL_KINDS.map(item => <button key={item.id} id={`kind-tab-${item.id}`} type="button" role="tab" aria-selected={kind === item.id} aria-controls="kind-amount-panel" onClick={() => { setErrorFocus(null); setKind(item.id); }}>{item.kindName}</button>)}</div>
+      <div className="kind-tabs" role="tablist" aria-label="入力する種別">{INITIAL_KINDS.map(item => <button key={item.id} id={`kind-tab-${item.id}`} type="button" role="tab" aria-selected={kind === item.id} aria-controls="kind-amount-panel" onClick={() => setKind(item.id)}>{item.kindName}</button>)}</div>
       {kind === 2 && <div className="initiative-budget-actions">
         <button className="secondary-button" type="button" disabled={readOnly || isSaving || !draft.rows.some(row => Object.keys(row.overrides?.[2] ?? {}).length > 0)}
           onClick={() => onDraftChange(reflectPrimaryBudget(draft))}>一次予算を反映する</button>
@@ -129,7 +116,6 @@ export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions
       <div className="initiative-allocation-action"><AnnualAllocation draft={draft} kind={kind} accounts={accounts} disabled={readOnly || isSaving || Boolean(editing?.pending) || Boolean(editing?.saving)} onChange={onDraftChange} /><InitiativeMonthShift draft={draft} accounts={accounts} disabled={readOnly || isSaving || Boolean(editing?.pending) || Boolean(editing?.saving)} onChange={onDraftChange} /></div>
       <div className="initiative-amount-table-container" id="kind-amount-panel" role="tabpanel" aria-labelledby={`kind-tab-${kind}`} aria-label="月別計画金額の入力表" tabIndex={0}>
         <InitiativeAmountGrid key={kind} draft={draft} kind={kind}
-          errorFocus={errorFocus} onLocateInputError={locateInputError}
           accounts={accounts} savedRows={editing?.savedRows} rowOperationsDisabled={editing?.saving ?? false} isSaving={readOnly || isSaving} onDraftChange={onDraftChange} />
       </div>
       <div className="initiative-row-actions">

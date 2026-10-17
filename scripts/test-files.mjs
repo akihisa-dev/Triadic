@@ -1,5 +1,4 @@
 import { verifySelectionTotal } from "../tests/selection-total.mjs";
-import { verifyInputErrorLocation } from "../tests/input-error-location.mjs";
 import { verifyExpansionExpenseOverflow } from "../tests/expansion-expense-overflow.mjs";
 import { verifyOperationHistoryTransfer } from "../tests/operation-history.mjs";
 import { verifyBudgetHints } from "../tests/budget-hints.mjs";
@@ -130,7 +129,6 @@ await withNodeBundle("tests/core-api.ts", async production => {
   verifyPreviousGrid(api);
   verifyInitiativeGrid(api);
   verifySelectionTotal(api);
-  verifyInputErrorLocation(api);
   verifyBudgetHints(api);
   verifyHomeMasterCoverage(api);
   await verifySingleYearPlan(api);

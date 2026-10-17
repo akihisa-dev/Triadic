@@ -8,14 +8,12 @@ import "./PreviousInputPage.css";
 import type { PreviousInput } from "../core/domain/kinds";
 import { useAutoSave, type AutoSaveProps } from "./useAutoSave";
 import { AutoSaveStatus } from "./AutoSaveStatus";
-import { previousInputError } from "../core/domain/inputErrorLocation";
 
 type Props = AutoSaveProps & { contents: PlanContents; onSave: (input: PreviousInput) => Promise<void> };
 export function PreviousInputPage({ contents, onSave, onPendingChange, onPrepareSave }: Props) {
   const readOnly = useHistoryReadOnly();
   const [industryIds, setIndustries] = useState<number[]>([]);
   const [departmentIds, setDepartments] = useState<number[]>([]);
-  const [errorFocusRequest, setErrorFocusRequest] = useState(0);
   const industryId = industryIds.length === 1 ? industryIds[0]! : null;
   const departmentId = departmentIds.length === 1 ? departmentIds[0]! : null;
   const validPair = industryId !== null && departmentId !== null && contents.departments.some(item => item.id === departmentId && item.industryIds.includes(industryId));
@@ -67,9 +65,8 @@ export function PreviousInputPage({ contents, onSave, onPendingChange, onPrepare
           </select>
         </div>
       </div>
-      <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave}
-        onLocateInputError={!readOnly && !autoSave.saving && validPair && previousInputError(draft ?? undefined) ? () => setErrorFocusRequest(value => value + 1) : undefined} />
+      <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave} />
     </div>
-    <PreviousAmountGrid key={`${industryIds.join(",")}:${departmentIds.join(",")}`} contents={filtered} draft={!readOnly && validPair ? draft ?? undefined : undefined} onChange={value => controller.change(value)} errorFocusRequest={errorFocusRequest} errorNavigationDisabled={readOnly || autoSave.saving} />
+    <PreviousAmountGrid key={`${industryIds.join(",")}:${departmentIds.join(",")}`} contents={filtered} draft={!readOnly && validPair ? draft ?? undefined : undefined} onChange={value => controller.change(value)} />
   </main>;
 }
