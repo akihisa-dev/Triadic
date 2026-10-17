@@ -1,3 +1,4 @@
+import { verifyInitiativeSearch } from "../tests/initiative-search.mjs";
 import { verifyDuplicateInitiative } from "../tests/duplicate-initiative.mjs";
 import { verifyHistoryDifference } from "../tests/history-difference.mjs";
 import { verifySaveAs } from "../tests/save-as.mjs";
@@ -75,6 +76,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   const api = { ...production, createTriadicDatabase: (year = 2026) => production.createTriadicDatabase(year) };
   await verifyInitiativeDraftReferences(api);
   await verifyDuplicateInitiative(api);
+  verifyInitiativeSearch(api);
   await verifyConcurrentInitiative(api);
   await verifyInitiativeIdentity(api);
   await verifyInitiativeOverflowRead(api);

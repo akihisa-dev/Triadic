@@ -1,6 +1,7 @@
 import { version as appVersion } from "../../../package.json";
 import appIcon from "../../../branding/logo-512.png?no-inline";
 import { SidebarIcon } from "./SidebarIcon";
+import { InitiativeSearch } from "./InitiativeSearch";
 import { historyDate } from "./DataHistoryPage";
 import type { HomeWorkspace } from "./useHomeWorkspace";
 
@@ -62,6 +63,7 @@ export function WorkspaceHeader({ workspace }: { workspace: HomeWorkspace }) {
             </button>;
           })}
         </nav>
+        <InitiativeSearch initiatives={contents.initiatives} disabled={navigationBlocked || workspace.discardRequest !== null || workspace.restoreRequested} onOpen={workspace.openInitiative} />
         <strong className="home-file-name" title={fileName}>{fileName}</strong>
         {preview ? <div className="history-preview-controls" aria-label="過去のデータを閲覧中">
           <span className="history-preview-label">{historyDate(preview.entry.recordedAt)} · 閲覧専用</span>
