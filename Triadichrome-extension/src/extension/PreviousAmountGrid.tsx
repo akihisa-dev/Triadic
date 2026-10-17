@@ -1,3 +1,4 @@
+import { useAdaptiveTableHeader } from "./useAdaptiveTableHeader";
 import { normalizeGridAmount } from "../core/tables/grid";
 import { useGridInteraction } from "./useGridInteraction";
 import { useMemo, useState } from "react";
@@ -36,6 +37,7 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
   rows: ReturnType<typeof buildCostTable>; calculationFailed: boolean;
 }) {
   const { selection, setSelection, editing, setEditing, table, dragging, original, bounds, focus, extendSelection } = useGridInteraction();
+  const freezeHeader = useAdaptiveTableHeader(table);
   const [error, setError] = useState("");
   const [cellErrors, setCellErrors] = useState<Record<string, { accountId: number; month: number; message: string }>>({});
   const clearCellError = (accountId: number, month: number) => setCellErrors(current => {
@@ -127,9 +129,9 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
   return <>
     <StatusNotice message={error || cellError || (calculationFailed || periodAmounts.failed ? "金額の合計が正確に計算できる範囲を超えています。分類を絞るか金額を修正してください。" : "")} error onDismiss={() => { setError(""); setCellErrors({}); }} />
     <div className="previous-grid-container" role="region" aria-label="前年の月別金額" tabIndex={0}>
-      <table ref={table} className="initiative-list-table cost-table previous-grid" aria-label="前年入力の月別金額">
+      <table ref={table} className={`initiative-list-table cost-table previous-grid${freezeHeader ? "" : " cost-header-scroll"}`} aria-label="前年入力の月別金額">
         <thead>
-          <tr><th scope="col" className="initiative-list-name">科目・集計</th>{initiativeMonths.map(month => <th scope="col" key={month}>{month}月</th>)}{previousPeriods.map(period => <th scope="col" key={period.id} className={periodCellClass(period, true)}>{period.label}</th>)}</tr>
+          <tr data-column-header><th scope="col" className="initiative-list-name">科目・集計</th>{initiativeMonths.map(month => <th scope="col" key={month}>{month}月</th>)}{previousPeriods.map(period => <th scope="col" key={period.id} className={periodCellClass(period, true)}>{period.label}</th>)}</tr>
           {rows.slice(0, salesIndex + 1).map(renderRow)}
         </thead>
         <tbody>{rows.slice(salesIndex + 1).map((row, index) => renderRow(row, salesIndex + 1 + index))}</tbody>

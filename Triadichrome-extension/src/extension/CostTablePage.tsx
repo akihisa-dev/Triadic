@@ -1,3 +1,4 @@
+import { useAdaptiveTableHeader } from "./useAdaptiveTableHeader";
 import { TableCalculationBoundary } from "./TableCalculationBoundary";
 import { periodCellClass } from "./periodCellStyle";
 import type { ReactNode, RefObject } from "react";
@@ -82,6 +83,8 @@ export function CostTablePage({ contents, selected, selection, view, onOpenIniti
 const CostTableContents = memo(function CostTableContents({ contents, selected, view, onOpenInitiative, navigationBlocked }: Omit<Props, "selection">) {
   const [detail, setDetail] = useState<{ target: CostBreakdownTarget; title: string } | null>(null);
   const container = useRef<HTMLDivElement>(null);
+  const tableElement = useRef<HTMLTableElement>(null);
+  const freezeHeader = useAdaptiveTableHeader(tableElement);
   useLayoutEffect(() => {
     if (container.current) { container.current.scrollTop = view.current.top; container.current.scrollLeft = view.current.left; }
   }, [view]);
@@ -113,16 +116,16 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
       : formatTableYen(values[period.id])}</td>)}</Fragment>)}
   </tr>;
   return <><div ref={container} onScroll={event => { view.current.top = event.currentTarget.scrollTop; view.current.left = event.currentTarget.scrollLeft; }} className="initiative-list-container cost-table-container" role="region" aria-label="総原価表の月別前年・種別別金額" tabIndex={0}>
-      <table className="initiative-list-table cost-table" aria-label="総原価表">
+      <table ref={tableElement} className={`initiative-list-table cost-table${freezeHeader ? "" : " cost-header-scroll"}`} aria-label="総原価表">
         <colgroup>
           <col className="cost-name-column" />
           {tablePeriods.flatMap(period => labels.map((_, index) => <col key={`${period.id}:${index}`} className="cost-amount-column" />))}
         </colgroup>
         <thead>
-          <tr><th rowSpan={2} scope="col" className="initiative-list-name">科目・集計</th>
+          <tr data-column-header><th rowSpan={2} scope="col" className="initiative-list-name">科目・集計</th>
             {tablePeriods.map(period => <th key={period.id} colSpan={labels.length} scope="colgroup" className={periodCellClass(period, true)}>{period.label}</th>)}
           </tr>
-          <tr>{tablePeriods.map(period => <Fragment key={period.id}>{labels.map((_, index) => <th key={index} scope="col" className={periodCellClass(period, index === 0, index === labels.length - 1)}>{labels[index]}</th>)}</Fragment>)}</tr>
+          <tr data-column-header>{tablePeriods.map(period => <Fragment key={period.id}>{labels.map((_, index) => <th key={index} scope="col" className={periodCellClass(period, index === 0, index === labels.length - 1)}>{labels[index]}</th>)}</Fragment>)}</tr>
           {rows.slice(0, salesIndex + 1).map(renderRow)}
         </thead>
         <tbody>{rows.slice(salesIndex + 1).map(renderRow)}</tbody>

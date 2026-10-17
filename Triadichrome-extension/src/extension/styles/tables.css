@@ -80,3 +80,7 @@
 :is(.initiative-overview-page, .expansion-table-page) .initiative-list-table tr:not(.virtual-row-spacer) > :is(th, td) { height: 28px; padding-block: 3px; }
 
 .initiative-attribute-hint { font-size: 11px; font-weight: 400; }
+
+/* When the full frozen section leaves no room for a data row, freeze only column headers. */
+.cost-table.cost-header-scroll thead { position: static; }
+.cost-table.cost-header-scroll thead tr[data-column-header] { position: sticky; top: var(--column-header-top, 0px); z-index: 5; }

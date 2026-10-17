@@ -1,3 +1,4 @@
+// 固定領域が表より高い並び順は tests/ui/tall-sales-plan.ts・specで全行閲覧・前年の選択編集保存・高さ変更・フォーカスを確認する。
 // 取消・やり直しの履歴転記は tests/operation-history.mjs で3/10/40件の取得1行・1BLOB上限、全履歴・状態と失敗再試行を確認する。
 // 異年度の履歴比較は tests/history-difference.mjs と tests/ui/history-year.html・specで選択時の拒否・再試行・参照専用・選択保持を確認する。
 // 前年Excelの分類名に含むタブ・LF・CR・禁則・アポストロフィ・長名は tests/previous-workbook-export.mjs で実XLSX往復・単一セル更新・元データ保持を確認する。
