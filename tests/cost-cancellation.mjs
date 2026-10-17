@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-export async function verifyCostCancellation(api) {
+export async function verifyCostCancellation(api, { excel = false } = {}) {
   const original = await api.createTriadicDatabase(2026);
   const defaults = await api.readPlanContents(original);
   const sales = defaults.accounts.find(account => account.accountType === "sales");
@@ -75,8 +75,10 @@ export async function verifyCostCancellation(api) {
       for (const row of result.rows.filter(row => row.kind !== "ratio")) for (const values of row.values) assert.ok(Object.values(values).every(value => value === 0));
     }
     assert.deepEqual(api.buildPeriodCostComparison(api.filterPlan(plan, { industries: [first.industryId], departments: [first.departmentId] }), [kind]), api.buildPeriodCostComparison(plan, [kind]));
-    const workbook = await api.createReportWorkbook(plan, { tables: ["cost-table"], selections: { ...plan.kindSelections, "cost-table": [kind] }, costFilter: { industries: null, departments: null } });
-    assert.ok(workbook.worksheets.some(sheet => sheet.name === "総原価表"), "総原価表だけのExcel出力でも不要な施策合計を計算しない");
+    if (excel) {
+      const workbook = await api.createReportWorkbook(plan, { tables: ["cost-table"], selections: { ...plan.kindSelections, "cost-table": [kind] }, costFilter: { industries: null, departments: null } });
+      assert.ok(workbook.worksheets.some(sheet => sheet.name === "総原価表"), "総原価表だけのExcel出力でも不要な施策合計を計算しない");
+    }
     assert.deepEqual(plan, preserved, "計算と出力で元の行金額と手修正を変えない");
     assert.throws(() => api.buildPeriodCostComparison({ ...plan, initiatives: [first] }, [kind]), /範囲/, "最終科目合計が超過する場合は拒否");
   }

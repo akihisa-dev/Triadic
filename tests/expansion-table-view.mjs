@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-export async function verifyExpansionTableView(api) {
+export async function verifyExpansionTableView(api, { excel = false } = {}) {
   const contents = await api.readPlanContents(await api.createSamplePlan(2026));
   const ordered={...contents,previousAmounts:[],expansions:contents.expansions.slice(0,1),
     periodTypes:[5,-1,0].map(id=>({id,periodName:`期間${id}`,startMonthRule:'new'})),
@@ -9,10 +9,12 @@ export async function verifyExpansionTableView(api) {
   for(const selected of [[1],[2],[1,2],[2,1]]) {
     const view=api.createExpansionTableView(ordered)(selected);
     assert.deepEqual(view.flat.filter(row=>!row.subtotal).map(row=>row.item.name),['C','F','B','E','A','D'],'期間・区分のマスタ順と区分内の登録順、未選択の末尾');
-    const wb=api.createReportWorkbook(ordered,{tables:['expansion-table'],selections:{'cost-table':[1],'initiative-list':[2],'expansion-table':selected},costFilter:{industries:null,departments:null}});
-    const sheet=wb.getWorksheet('展開表');
-    assert.deepEqual([9,10,11,12,13,14].map(r=>sheet.getCell(r,4).value),['C','F','B','E','A','D']);
-    assert.ok(sheet.model.merges.includes('B10:B12'));assert.ok(sheet.model.merges.includes('C11:C12'));
+    if (excel) {
+      const wb=api.createReportWorkbook(ordered,{tables:['expansion-table'],selections:{'cost-table':[1],'initiative-list':[2],'expansion-table':selected},costFilter:{industries:null,departments:null}});
+      const sheet=wb.getWorksheet('展開表');
+      assert.deepEqual([9,10,11,12,13,14].map(r=>sheet.getCell(r,4).value),['C','F','B','E','A','D']);
+      assert.ok(sheet.model.merges.includes('B10:B12'));assert.ok(sheet.model.merges.includes('C11:C12'));
+    }
     const renamed={...ordered,periodTypes:[...ordered.periodTypes].reverse().map(p=>({...p,periodName:p.periodName+'改名'})),expansionCategories:[...ordered.expansionCategories].reverse()};
     const fresh=api.createExpansionTableView(renamed)(selected);
     assert.deepEqual(fresh.flat.filter(row=>!row.subtotal).map(row=>row.item.name),['A','B','E','F','C','D']);
@@ -33,7 +35,7 @@ export async function verifyExpansionTableView(api) {
     const view=api.createExpansionTableView(populated);
     for(const selected of [[1],[2],[1,2],[2,1]]) assert.equal(view(selected).flat.length,count*2);
     assert.ok(periodReads<=count*2);assert.ok(categoryReads<=count*2,'非空の各期間でも区分索引を共有');
-    if(count!==100) continue; // The workbook path uses 100 groups; avoid adding a million-cell test artifact.
+    if(!excel || count!==100) continue; // Workbook checks run only in the explicit Excel suite.
     periodReads=0;categoryReads=0;
     const wb=api.createReportWorkbook(populated,{tables:['expansion-table'],selections:{'cost-table':[1],'initiative-list':[2],'expansion-table':[1,2]},costFilter:{industries:null,departments:null}});
     assert.ok(periodReads<=count*4,`Excelの期間索引を共有: ${periodReads}`);assert.ok(categoryReads<=count*4,`Excelの区分索引を共有: ${categoryReads}`);

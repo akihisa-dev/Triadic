@@ -78,8 +78,18 @@ import { verifyInitiativeSort } from "../tests/initiative-sort.mjs";
 import { verifyStartMonths } from "../tests/start-months.mjs";
 import { withNodeBundle } from "./node-bundle.mjs";
 import { projectRoot as root } from "./paths.mjs";
+import { scopedTestApi, testScope } from "./test-scope.mjs";
+const excel = testScope(process.argv.slice(2));
 await withNodeBundle("tests/core-api.ts", async production => {
-  const api = { ...production, createTriadicDatabase: (year = 2026) => production.createTriadicDatabase(year) };
+  const api = scopedTestApi({ ...production, createTriadicDatabase: (year = 2026) => production.createTriadicDatabase(year) }, excel);
+  if (excel) {
+    await verifySpreadsheetIO(api);
+    await verifyCostCancellation(api, { excel });
+    await verifyExpansionExpenseOverflow(api, { excel });
+    await verifyDepartmentData(api, { excel });
+    await verifySamplePlan(api, { excel });
+    return;
+  }
   await verifyInitiativeDraftReferences(api);
   await verifyDuplicateInitiative(api);
   verifyInitiativeSearch(api);
@@ -114,7 +124,6 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyCostBreakdown(api);
   await verifyPeriodTables(api);
   await verifyExpansionExpenseOverflow(api);
-  await verifySpreadsheetIO(api);
   verifyHomeMotion(api);
   verifyPreviousGrid(api);
   verifyInitiativeGrid(api);
@@ -157,7 +166,12 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyPerformanceData(api, root);
 });
 
-await withNodeBundle("tests/performance-api.ts", async api => {
+await withNodeBundle("tests/performance-api.ts", async production => {
+  const api = scopedTestApi(production, excel);
+  if (excel) {
+    await verifyExpansionTableView(api, { excel });
+    return;
+  }
   await verifyCostClassification(api);
   await verifyInitiativeListRendering(api);
   await verifyExpansionTableView(api);

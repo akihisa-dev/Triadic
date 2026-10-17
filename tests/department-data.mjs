@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-export async function verifyDepartmentData(api) {
+export async function verifyDepartmentData(api, { excel = false } = {}) {
   const { createTriadicDatabase, readPlanContents, changeDepartmentMaster, saveDepartmentMaster, openTriadicDatabase, registerInitiative, updateInitiative, validateTriadicDatabase } = api;
   const bytes = await createTriadicDatabase();
   const initial = await readPlanContents(bytes);
@@ -63,19 +63,25 @@ export async function verifyDepartmentData(api) {
   const withPrevious = await api.savePreviousAmounts(linked, previousInput);
   await assert.rejects(changeDepartmentMaster(withPrevious, { type: "update", id: 2, departmentName: "部署B", industryIds: [1] }), /使用中/);
   const exportContents = await readPlanContents(linked);
-  const workbook = api.createPreviousWorkbook(exportContents, [{ industryId: 1, departmentId: 1 }]);
-  workbook.worksheets[0].getCell("C4").value = 1;
-  const excelBytes = await api.serializeWorkbook(workbook);
-  const patches = await api.parsePreviousWorkbook(excelBytes, exportContents);
+  let excelBytes;
+  let patches = [{ industryId: 1, departmentId: 1, accountId: exportContents.accounts[0].id, month: 4,
+    industryIdentity: exportContents.industries.find(item => item.id === 1).identity,
+    departmentIdentity: exportContents.departments.find(item => item.id === 1).identity, before: "0", after: "1" }];
+  if (excel) {
+    const workbook = api.createPreviousWorkbook(exportContents, [{ industryId: 1, departmentId: 1 }]);
+    workbook.worksheets[0].getCell("C4").value = 1;
+    excelBytes = await api.serializeWorkbook(workbook);
+    patches = await api.parsePreviousWorkbook(excelBytes, exportContents);
+  }
   const snapshot = await api.createBusinessSnapshot(linked);
   const relinked = await changeDepartmentMaster(linked, { type: "update", id: 1, departmentName: "部署A改名", industryIds: [2, 3] });
   assert.deepEqual((await readPlanContents(relinked)).departments[0].industryIds, [2, 3]);
-  await assert.rejects(api.parsePreviousWorkbook(excelBytes, await readPlanContents(relinked)), /業種設定/);
+  if (excel) await assert.rejects(api.parsePreviousWorkbook(excelBytes, await readPlanContents(relinked)), /業種設定/);
   await assert.rejects(api.changePlanSettings(relinked, { type: "previous-import", patches }), /部署に設定/);
   assert.deepEqual((await readPlanContents(relinked)).initiatives, (await readPlanContents(linked)).initiatives);
   assert.deepEqual((await readPlanContents(await api.applyOperationSnapshot(relinked, snapshot))).departments, (await readPlanContents(linked)).departments);
   const invalidPair = { industryId: 1, departmentId: 2 };
   const linkedContents = await readPlanContents(linked);
-  assert.throws(() => api.createPreviousWorkbook(linkedContents, [invalidPair]), /部署に設定/);
+  if (excel) assert.throws(() => api.createPreviousWorkbook(linkedContents, [invalidPair]), /部署に設定/);
   console.log("PASS: department CRUD, defaults, initiative assignment, failed/cancelled/conflicting saves");
 }

@@ -2,7 +2,7 @@ import { verifyReferenceSample } from "./reference-sample.mjs";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-export async function verifySamplePlan(api) {
+export async function verifySamplePlan(api, { excel = false } = {}) {
   const { createSamplePlan, validateTriadicDatabase, readPlanContents, buildCostTable, initiativeMonths, changeAccountMaster, changeAggregationMaster, openTriadicDatabase } = api;
   const bytes = await createSamplePlan(2026);
   await validateTriadicDatabase(bytes);
@@ -127,6 +127,6 @@ export async function verifySamplePlan(api) {
   const modified = await api.changeDepartmentMaster(departmentBytes, { type: "update", id: multiple.id, departmentName: multiple.departmentName, industryIds: [2] });
   assert.deepEqual((await readPlanContents(modified)).departments.find(item => item.id === multiple.id).industryIds, [2]);
   assert.deepEqual((await readPlanContents(departmentBytes)).departments.find(item => item.id === multiple.id).industryIds, [1, 2], "変更検証で原本を更新しない");
-  await verifyReferenceSample(api, largeBytes, large);
+  await verifyReferenceSample(api, largeBytes, large, { excel });
   console.log("PASS: sample plan years, monthly edge cases, configured totals and editable/deletable master data");
 }

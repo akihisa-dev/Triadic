@@ -3,7 +3,7 @@ import ExcelJS from "exceljs";
 
 // Independent arithmetic: do not call production amount/effect/total helpers to build the oracle.
 const yen = text => { const [whole, fraction = ""] = String(text).replace(/^-/, "").split("."); return (String(text).startsWith("-") ? -1 : 1) * (Number(whole) * 1000 + Number(fraction.padEnd(3, "0"))); };
-export async function verifyReferenceSample(api, bytes, plan) {
+export async function verifyReferenceSample(api, bytes, plan, { excel = false } = {}) {
   assert.ok(bytes.length <= 50_000_000, `履歴込み実ファイルのサイズ: ${bytes.length}`);
   const before = bytes.slice();
   const assertBusinessData = data => {
@@ -212,12 +212,14 @@ export async function verifyReferenceSample(api, bytes, plan) {
   reloaded=(await api.readPlanContents(edited)).initiatives.find(item=>item.id===adjustments.id);
   assert.ok(!Object.hasOwn(reloaded.rows[0].overrides[2],10));
   assert.equal(api.initiativesForKind([reloaded],plan.accounts,2)[0].rows[0].amounts[10],"120","解除後は一次へ追従");
-  const workbook=await api.serializeWorkbook(api.createReportWorkbook(plan,{tables:["cost-table","expansion-table","initiative-list"],selections:{"cost-table":[1,2],"expansion-table":[1,2],"initiative-list":[1]},costFilter:{industries:null,departments:null}}));
-  const reopened=new ExcelJS.Workbook();await reopened.xlsx.load(workbook);
-  assert.ok(reopened.getWorksheet("総原価表")&&reopened.getWorksheet("展開表")&&reopened.getWorksheet("施策一覧")&&reopened.getWorksheet("計算元"));
-  const calculation=reopened.getWorksheet("計算元");
-  assert.ok(calculation.rowCount>154,"実サンプルの明細を出力");
+  if (excel) {
+    const workbook=await api.serializeWorkbook(api.createReportWorkbook(plan,{tables:["cost-table","expansion-table","initiative-list"],selections:{"cost-table":[1,2],"expansion-table":[1,2],"initiative-list":[1]},costFilter:{industries:null,departments:null}}));
+    const reopened=new ExcelJS.Workbook();await reopened.xlsx.load(workbook);
+    assert.ok(reopened.getWorksheet("総原価表")&&reopened.getWorksheet("展開表")&&reopened.getWorksheet("施策一覧")&&reopened.getWorksheet("計算元"));
+    const calculation=reopened.getWorksheet("計算元");
+    assert.ok(calculation.rowCount>154,"実サンプルの明細を出力");
+  }
   assert.deepEqual(bytes,before,"履歴読込・出力で実サンプルを変更しない");
-  console.log(`PASS: 新基準サンプル ${bytes.length} bytes、144実務施策、全分類・初期5区分、独立計算した三表/期間計、履歴3時点、Excel出力再読込`);
+  console.log(`PASS: 新基準サンプル ${bytes.length} bytes、144実務施策、全分類・初期5区分、独立計算した三表/期間計、履歴3時点${excel ? '、Excel出力再読込' : ''}`);
   console.log("REFERENCE_EXPECTATIONS",JSON.stringify({aprilPrimary:expectations["1/4"],aprilConfirmed:expectations["2/4"],annualPrimarySales:api.initiativeMonths.reduce((sum,m)=>sum+expectations[`1/${m}`].sales,0)}));
 }

@@ -308,12 +308,14 @@ SQLite is bundled and works in memory without external communication or extra pe
 
 ## Verification and Git hooks
 
-[AGENTS.md](AGENTS.md) defines scope, safety, dependency, commit/version, and Issue rules. Normally run `npm run verify`. Regular tests compare all masters in the master entry and Home graph, detecting omissions, duplicates, and extras. No dedicated browser installation is needed. See the browser section below for screen-impacting changes.
+[AGENTS.md](AGENTS.md) defines scope, safety, dependency, commit/version, and Issue rules. Normally run `npm run verify`. Excel export/import tests run only for changes affecting Excel output, its calculations/layout, or import, using `npm run test:excel`. They are excluded from `npm test`, `verify`, and push hooks. Ordinary Playwright runs also exclude Excel download/import tests; use `npm run test:ui:excel` only for related changes. Regular tests compare all masters in the master entry and Home graph, detecting omissions, duplicates, and extras. No dedicated browser installation is needed. See the browser section below for screen-impacting changes.
 
 | Command | Purpose |
 |---|---|
 | `npm run setup:hooks` | Enable repository Git hooks |
 | `npm run verify` | Check hooks, build including typechecks, regular tests, and matching versions |
+| `npm run test:excel` | Excel export/import and screen-to-workbook parity tests; run only for related changes |
+| `npm run test:ui:excel` | Excel download/import screen tests; run only for related changes |
 | `npm run verify:full` | Optional additional verification: add Playwright screen tests to verify |
 | `npm run verify:release` | Add uncommitted-change and same-name local-tag checks to verify |
 | `npm run version:next -- patch` | Show next version candidate; accept multiple classifications such as `patch patch minor patch` in oldest-commit order; change no files |
@@ -837,12 +839,14 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 
 ## 検証とGitフック
 
-作業範囲、安全性、依存管理、コミット・バージョン・Issue対応の判断基準は[AGENTS.md](AGENTS.md)にまとめています。通常は`npm run verify`を実行します。通常テストではマスタ入口とホームの相関図に表示される全マスタを照合し、追加漏れ・重複・余分な項目を検出します。専用ブラウザの導入は不要です。画面に影響する変更の確認は次節を参照してください。
+作業範囲、安全性、依存管理、コミット・バージョン・Issue対応の判断基準は[AGENTS.md](AGENTS.md)にまとめています。通常は`npm run verify`を実行します。Excel出力・取り込みや出力内容の計算・書式に関わる変更がある場合だけ`npm run test:excel`を実行します。Excelファイルの生成・再読込・画面との照合は通常テスト・`verify`・push時の検証に含めません。通常の画面自動テストからもExcelダウンロード・取込を除外し、関連変更時だけ`npm run test:ui:excel`で実行します。通常テストではマスタ入口とホームの相関図に表示される全マスタを照合し、追加漏れ・重複・余分な項目を検出します。専用ブラウザの導入は不要です。画面に影響する変更の確認は次節を参照してください。
 
 | コマンド | 処理内容 |
 |---|---|
 | `npm run setup:hooks` | このリポジトリのGitフックを有効化 |
 | `npm run verify` | フック設定、型検査を含むbuild、通常テスト、version一致を確認 |
+| `npm run test:excel` | Excel出力・取込・画面との照合。関連する変更がある場合だけ実行 |
+| `npm run test:ui:excel` | Excelダウンロード・取込の画面自動テスト。関連する変更がある場合だけ実行 |
 | `npm run verify:full` | 任意の追加検証。`verify`にPlaywrightの画面自動テストを追加 |
 | `npm run verify:release` | `verify`に未コミット変更と同名のローカルtagの確認を追加 |
 | `npm run version:next -- patch` | 次のversion候補を表示。`patch patch minor patch`など区分を古いcommit順に複数指定可能。ファイルは変更しない |
