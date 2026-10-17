@@ -1,3 +1,4 @@
+// 施策複製は既存サンプルの同科目複数行・分類・確定手修正0を使い、tests/duplicate-initiative.mjs と tests/ui/duplicate-initiative.spec.ts で独立性・登録・取消・入力保護を確認する。
 // 履歴と現在の差分は既存の3時点の備考・4月月額を使い、tests/history-difference.mjs と tests/ui/history-difference.spec.ts で参照専用・1円・手修正・作成識別子・大量表示・失敗を確認する。
 // 通常の別名保存は既存サンプルの計画・履歴を使い、tests/save-as.mjs と tests/ui/save-as.spec.ts で保存先切替・取消・失敗時の保護を確認する。
 // 総原価表の内訳は既存の前年・同一科目複数行・手修正0・相殺・未設定集計を使い、tests/cost-breakdown.mjs と tests/ui/cost-breakdown.spec.ts で確認する。

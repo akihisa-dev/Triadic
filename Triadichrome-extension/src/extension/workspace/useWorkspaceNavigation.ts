@@ -1,6 +1,6 @@
 import type { KindId } from "../../core/domain/kinds";
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { createInitiativeDraft, hasInitiativeDraftInput } from "../../core/domain/initiativeRules";
+import { createInitiativeDraft, duplicateInitiativeDraft, hasInitiativeDraftInput } from "../../core/domain/initiativeRules";
 import type { Initiative, PlanContents } from "../../core/domain/plan";
 import type { useRetainedInitiativeDraft } from "./useRetainedInitiativeDraft";
 import type { useScreenHistory } from "../useScreenHistory";
@@ -14,7 +14,7 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
   const { initiativeDraft, setInitiativeDraft } = draft;
   const navigationState = useRef({ blocked: navigationBlocked, page });
   navigationState.current = { blocked: navigationBlocked, page };
-  const [discardRequest, setDiscardRequest] = useState<{ perform: () => void } | null>(null);
+  const [discardRequest, setDiscardRequest] = useState<{ perform: () => void; duplicate?: boolean } | null>(null);
   const { initiatives } = contents;
   useEffect(() => {
     screens.prune(entry => entry.page !== "initiative-detail" || initiatives.some(item => item.id === entry.selectedInitiative?.id),
@@ -45,5 +45,15 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
     dismissNotice();
     setPage("initiative-entry");
   };
-  return { discardRequest, setDiscardRequest, openInitiative, requestNavigation, setPage, startInitiative };
+  const duplicateInitiative = (source: Initiative) => {
+    if (preview || navigationState.current.blocked || navigationState.current.page !== page || saving.current || discardRequest) return;
+    const perform = () => {
+      setInitiativeDraft(duplicateInitiativeDraft(source, initiatives));
+      dismissNotice();
+      navigate({ page: "initiative-entry", selectedInitiative: null, detailOrigin: "initiative-list" });
+    };
+    if (hasInitiativeDraftInput(initiativeDraft)) setDiscardRequest({ perform, duplicate: true });
+    else perform();
+  };
+  return { discardRequest, setDiscardRequest, openInitiative, requestNavigation, setPage, startInitiative, duplicateInitiative };
 }

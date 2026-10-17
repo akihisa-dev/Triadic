@@ -45,7 +45,7 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
   const operationMutation = useMutation(assertWritable);
   const saveAsMutation = useMutation(assertWritable);
   const navigationBlocked = saveAsMutation.busy || isSaving || restoreMutation.busy || operationMutation.busy || editPending || historyBusy;
-  const { discardRequest, setDiscardRequest, openInitiative, requestNavigation, setPage, startInitiative } = useWorkspaceNavigation(
+  const { discardRequest, setDiscardRequest, openInitiative, requestNavigation, setPage, startInitiative, duplicateInitiative } = useWorkspaceNavigation(
     screens, contents, preview !== null, navigationBlocked, saving, { initiativeDraft, setInitiativeDraft }, dismissNotice);
   const operationBlocked = navigationBlocked || preview !== null || restoreRequested || discardRequest !== null || hasInitiativeDraftInput(initiativeDraft);
   const saveAs = async () => {
@@ -107,7 +107,7 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
     isSidebarOpen, screen, initiativeDraft, setInitiativeDraft, preview, setPreview,
     restoreRequested, setRestoreRequested, restoreError, setRestoreError, contents, currentContents,
     notice, dismissNotice, isSaving, operationMutation, navigationBlocked, discardRequest,
-    setDiscardRequest, operationBlocked, travelOperation, requestNavigation, setPage, startInitiative,
+    setDiscardRequest, operationBlocked, travelOperation, requestNavigation, setPage, startInitiative, duplicateInitiative,
     usedAccountIds, changePlan, kindSelection, changeMaster, changePeriodTypes, changeDepartments,
     changeIndustries, changeExpansions, changeExpansionCategories, changeAggregations, update, register,
     resetScreens, previewEntry, returnToCurrent, restorePreview, closeSidebar, screens, fileName,

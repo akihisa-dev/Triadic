@@ -36,8 +36,8 @@ export function HomePage(props: HomePageProps) {
         </div>
       </div>
       <StatusNotice message={notice.message || historyError} error={notice.message ? notice.error : Boolean(historyError)} {...(notice.message ? { onDismiss: dismissNotice } : {})} />
-      <ConfirmationDialog open={discardRequest !== null} title="入力内容を破棄しますか？" message="登録前の入力を破棄して施策一覧へ戻ります。"
-        confirmLabel="破棄して一覧へ戻る" busy={navigationBlocked}
+      <ConfirmationDialog open={discardRequest !== null} title="入力内容を破棄しますか？" message={discardRequest?.duplicate ? "保持中の登録前の入力を破棄して、選んだ施策の複製に置き換えます。" : "登録前の入力を破棄して施策一覧へ戻ります。"}
+        confirmLabel={discardRequest?.duplicate ? "破棄して複製する" : "破棄して一覧へ戻る"} busy={navigationBlocked}
         onCancel={() => setDiscardRequest(null)} onConfirm={() => {
           if (!discardRequest || navigationBlocked) return;
           setInitiativeDraft(createInitiativeDraft(String(currentContents.fiscalYear)));

@@ -2,6 +2,8 @@
 .kind-tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: .4rem .4rem 0 0; background: transparent; padding: .6rem .9rem; color: var(--muted); transition: background-color 160ms ease, color 160ms ease; }
 .kind-tabs button[aria-selected="true"] { border-bottom-color: var(--accent); color: var(--accent); background: var(--soft); }
 .initiative-budget-actions { margin-bottom: .75rem; }
+.initiative-detail-actions { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem; margin-bottom: .75rem; }
+.initiative-detail-actions .master-back { margin-bottom: 0; }
 @media (prefers-reduced-motion: reduce) { .kind-tabs button { transition-duration: 1ms; } }
 @media (max-width: 600px) {
   .home-header { flex-wrap: wrap; }

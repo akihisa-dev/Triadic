@@ -31,6 +31,8 @@ test("入口を一覧へ統一し、空欄なら確認なしで戻り、登録�
   await expect(home.getByRole("button", { name: "施策入力", exact: true })).toHaveCount(0);
   await settleMotion(app.locator("body"));
   await home.getByRole("button", { name: "施策一覧", exact: true }).press("Enter");
+  await expect(home.getByRole("button", { name: "施策一覧", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await home.getByRole("button", { name: "施策一覧", exact: true }).press("Enter");
   const kind = app.getByRole("spinbutton", { name: "種別", exact: true });
   await expect(kind).toHaveAttribute("aria-valuetext", "確定予算");
   await app.getByRole("button", { name: "施策を追加", exact: true }).click();

@@ -11,6 +11,19 @@ export function createInitiativeDraft(fiscalYear = String(currentFiscalYear())):
   return { name: "", note: "", expansionId: null, expansionCategoryId: null, departmentId: null, periodTypeId: null, industryId: null, fiscalYear, rows: [{ id: crypto.randomUUID(), accountId: null, amounts: {} }] };
 }
 
+/** Copy saved inputs into an independent registration draft, without ownership/revision data. */
+export function duplicateInitiativeDraft(source: Initiative, initiatives: Pick<Initiative, "name">[]): InitiativeEntryDraft {
+  const names = new Set(initiatives.map(item => item.name));
+  let name = `${source.name}（コピー）`, suffix = 2;
+  while (names.has(name)) name = `${source.name}（コピー${suffix++}）`;
+  const draft = createInitiativeDraft(String(source.fiscalYear));
+  return { ...draft, name, note: source.note, expansionId: source.expansionId,
+    expansionCategoryId: source.expansionCategoryId ?? null, departmentId: source.departmentId ?? null,
+    periodTypeId: source.periodTypeId ?? null, industryId: source.industryId ?? null,
+    rows: source.rows.length ? source.rows.map(row => ({ id: crypto.randomUUID(), accountId: row.accountId,
+      amounts: { ...row.amounts }, ...(row.overrides?.[2] ? { overrides: { 2: { ...row.overrides[2] } } } : {}) })) : draft.rows };
+}
+
 /** Registration drafts are disposable only after the user confirms entered content. */
 export function hasInitiativeDraftInput(draft: InitiativeEntryDraft): boolean {
   return draft.name !== "" || draft.note !== "" || draft.expansionId !== null
