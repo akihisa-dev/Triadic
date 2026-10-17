@@ -1,0 +1,52 @@
+import { test, expect } from "@playwright/test";
+
+test("施策の選択合計は矩形・入力・取消・種別に追従する", async ({ page }) => {
+  await page.goto("/tests/ui/budget-hints.html");
+  const total = page.locator(".grid-selection-total");
+  const april = page.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true });
+  const may = page.getByRole("spinbutton", { name: "売上高 5月の金額", exact: true });
+  await expect(total).toHaveText("");
+  const before = await page.locator(".initiative-amount-table input").evaluateAll(inputs => inputs.map(input => (input as HTMLInputElement).value));
+  await april.click();
+  await expect(total).toHaveText("選択範囲の合計0");
+  await april.press("Shift+ArrowRight");
+  await expect(total).toHaveText("選択範囲の合計0.002");
+  await may.press("Shift+ArrowDown");
+  await expect(total).toHaveText("選択範囲の合計0.001");
+  expect(await page.locator(".initiative-amount-table input").evaluateAll(inputs => inputs.map(input => (input as HTMLInputElement).value))).toEqual(before);
+  await may.fill("1.0001");
+  await expect(total).toContainText("不正な金額");
+  await may.press("Escape");
+  await expect(total).toHaveText("選択範囲の合計0.002");
+  await page.getByRole("button", { name: "一次予算へ", exact: true }).click();
+  await april.click();
+  await april.press("Shift+ArrowRight");
+  await expect(total).toHaveText("選択範囲の合計100.001");
+  await may.press("Delete");
+  await expect(total).toHaveText("選択範囲の合計0");
+  await expect(april).toHaveValue("0");
+  await expect(may).toHaveValue("0");
+});
+
+test("前年は科目のみを合計し、不正入力の訂正に追従する", async ({ page }) => {
+  await page.goto("/tests/ui/previous-selection.html");
+  const total = page.locator(".grid-selection-total");
+  const april = page.locator('input[data-row="0"][data-column="0"]');
+  const may = page.locator('input[data-row="0"][data-column="1"]');
+  await april.click();
+  await april.press("Shift+ArrowDown");
+  await expect(total).toHaveText("選択範囲の合計（科目のみ）300");
+  await april.fill("-0.001");
+  await expect(total).toContainText("199.999");
+  await april.fill("-");
+  await expect(total).toContainText("不正な金額");
+  await april.press("Escape");
+  await expect(total).toHaveText("選択範囲の合計（科目のみ）100");
+  await april.fill("9007199254740.991");
+  await may.fill("0.001");
+  await april.click();
+  await april.press("Shift+ArrowRight");
+  await expect(total).toContainText("上限");
+  await may.fill("-0.001");
+  await expect(total).toHaveText("選択範囲の合計（科目のみ）9007199254740.99");
+});

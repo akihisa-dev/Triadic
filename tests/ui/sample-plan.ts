@@ -1,3 +1,4 @@
+// 選択範囲合計は既存の正負・1円精度・確定手修正0を利用し、tests/selection-total.mjs と tests/ui/selection-total.spec.ts で矩形・集計除外・不正入力・上限・非破壊を確認する。保存内容は追加しない。
 // 展開表の期間・区分は tests/expansion-table-view.mjs で100/500/1000件の参照回数、逆順登録・改名・マスタ順変更・負ID/0/未選択・縦結合とExcel行順を照合する。
 // 表から詳細への種別引継ぎは tests/ui/open-initiative-kind.spec.ts で通常/大量行、一次100・確定120、両種別の比較対象1、戻る進むと検索の一次固定を確認する。
 // 固定領域が表より高い並び順は tests/ui/tall-sales-plan.ts・specで全行閲覧・前年の選択編集保存・高さ変更・フォーカスを確認する。

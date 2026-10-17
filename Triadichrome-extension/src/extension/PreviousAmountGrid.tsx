@@ -12,6 +12,8 @@ import { fillPreviousGrid, pastePreviousGrid } from "../core/tables/previousGrid
 import { previousPeriods, previousPeriodAmount } from "../core/tables/previousPeriods";
 import { periodCellClass } from "./periodCellStyle";
 import { StatusNotice } from "./StatusNotice";
+import { previousSelectionTotal } from "../core/tables/selectionTotal";
+import { GridSelectionTotal } from "./GridSelectionTotal";
 
 export function PreviousAmountGrid({ contents, draft, onChange }: {
   contents: PlanContents; draft: PreviousInput | undefined; onChange: (draft: PreviousInput) => void;
@@ -57,7 +59,8 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
     return { values, failed };
   }, [rows, salesGroupId, contents.aggregations]);
   const salesIndex = rows.findIndex(row => row.kind === "group" && row.id === salesGroupId);
-  const rowIds = rows.map(row => row.kind === "account" ? row.id : null);
+  const rowIds = useMemo(() => rows.map(row => row.kind === "account" ? row.id : null), [rows]);
+  const selectedTotal = useMemo(() => previousSelectionTotal(draft, rowIds, selection), [draft, rowIds, selection]);
   const apply = (operation: () => PreviousInput) => {
     try { onChange(operation()); setError(""); setEditing(false); }
     catch (failure) { setError(failure instanceof Error ? failure.message : "入力できませんでした。"); }
@@ -128,6 +131,7 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
         </tr>;
   return <>
     <StatusNotice message={error || cellError || (calculationFailed || periodAmounts.failed ? "金額の合計が正確に計算できる範囲を超えています。分類を絞るか金額を修正してください。" : "")} error onDismiss={() => { setError(""); setCellErrors({}); }} />
+    <GridSelectionTotal total={selectedTotal} accountsOnly />
     <div className="previous-grid-container" role="region" aria-label="前年の月別金額" tabIndex={0}>
       <table ref={table} className={`initiative-list-table cost-table previous-grid${freezeHeader ? "" : " cost-header-scroll"}`} aria-label="前年入力の月別金額">
         <thead>

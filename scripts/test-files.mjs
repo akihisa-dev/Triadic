@@ -1,3 +1,4 @@
+import { verifySelectionTotal } from "../tests/selection-total.mjs";
 import { verifyExpansionExpenseOverflow } from "../tests/expansion-expense-overflow.mjs";
 import { verifyOperationHistoryTransfer } from "../tests/operation-history.mjs";
 import { verifyBudgetHints } from "../tests/budget-hints.mjs";
@@ -127,6 +128,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   verifyHomeMotion(api);
   verifyPreviousGrid(api);
   verifyInitiativeGrid(api);
+  verifySelectionTotal(api);
   verifyBudgetHints(api);
   verifyHomeMasterCoverage(api);
   await verifySingleYearPlan(api);

@@ -34,6 +34,7 @@ export * from "../../Triadichrome-extension/src/core/tables/initiatives";
 export * from "../../Triadichrome-extension/src/core/tables/planTables";
 export * from "../../Triadichrome-extension/src/core/tables/previousGrid";
 export * from "../../Triadichrome-extension/src/core/tables/grid";
+export * from "../../Triadichrome-extension/src/core/tables/selectionTotal";
 export * from "../../Triadichrome-extension/src/core/tables/tableView";
 export * from "../../Triadichrome-extension/src/core/domain/planCommands";
 export * from "../../Triadichrome-extension/src/core/graph/homeMotion";

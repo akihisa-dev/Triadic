@@ -11,6 +11,8 @@ import { type Account } from "../core/domain/accountMaster";
 import { canEditInitiativeCell, cancelInitiativeCell, changeInitiativeCell, fillInitiativeGrid, pasteInitiativeGrid, initiativeAmountTotals } from "../core/tables/initiativeGrid";
 import { normalizeGridAmount, type GridCell } from "../core/tables/grid";
 import { StatusNotice } from "./StatusNotice";
+import { initiativeSelectionTotal } from "../core/tables/selectionTotal";
+import { GridSelectionTotal } from "./GridSelectionTotal";
 import "./InitiativeAmountGrid.css";
 
 export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRows, rowOperationsDisabled = false, onDraftChange }: {
@@ -34,6 +36,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
     amounts: months.map(month => budgetAmountHint(row, kind, month)),
   })), [rows, kind, accountsById]);
   const totals = useMemo(() => initiativeAmountTotals({ rows, invalidNumbers: Boolean(invalidNumbers) }, kind, accounts), [rows, invalidNumbers, kind, accounts]);
+  const selectedTotal = useMemo(() => initiativeSelectionTotal(draft, kind, selection), [draft, kind, selection]);
   useEffect(() => { setSelection(null); setEditing(false); }, [draft.rows.length]);
   const valueAt = (cell: GridCell, source = draft) => {
     const row = source.rows[cell.row]!;
@@ -53,6 +56,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
   };
   return <>
     <StatusNotice message={error || totals.error} error {...(error ? { onDismiss: () => setError("") } : {})} />
+    <GridSelectionTotal total={selectedTotal} />
         <table ref={table} className="initiative-amount-table" aria-label="月別計画金額">
           <thead>
             <tr>
