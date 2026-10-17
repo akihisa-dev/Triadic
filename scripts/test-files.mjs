@@ -1,3 +1,4 @@
+import { verifyExpansionExpenseOverflow } from "../tests/expansion-expense-overflow.mjs";
 import { verifyOperationHistoryTransfer } from "../tests/operation-history.mjs";
 import { verifyBudgetHints } from "../tests/budget-hints.mjs";
 import { verifyInitiativeMonthShift } from "../tests/initiative-month-shift.mjs";
@@ -112,6 +113,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyCostComparison(api);
   await verifyCostBreakdown(api);
   await verifyPeriodTables(api);
+  await verifyExpansionExpenseOverflow(api);
   await verifySpreadsheetIO(api);
   verifyHomeMotion(api);
   verifyPreviousGrid(api);

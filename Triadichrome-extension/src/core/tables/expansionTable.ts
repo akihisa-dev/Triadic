@@ -1,12 +1,15 @@
 import { sumYen } from "../domain/amounts";
 import { initiativeMonths } from "../domain/calendar";
-import { type Initiative, type PlanContents } from "../domain/plan";
+import type { InitiativeForMetrics } from "./initiatives";
+import { type PlanContents } from "../domain/plan";
 
+export type ExpansionInitiative = InitiativeForMetrics<"sales" | "profit">;
+export type ExpansionMonths = ExpansionInitiative["months"];
 export type ExpansionSort = "registered" | "asc" | "desc";
 export type ExpansionTotals = Record<number, { sales: number | null; profit: number | null }>;
 const nameOrder = new Intl.Collator("ja", { numeric: true });
 
-export function totalInitiatives(initiatives: Initiative[]): ExpansionTotals {
+export function totalInitiatives(initiatives: { months: ExpansionMonths }[]): ExpansionTotals {
   return Object.fromEntries(initiativeMonths.map(month => {
     const values = initiatives.map(item => item.months[month]);
     const sum = (key: "sales" | "profit") => values.some(value => value?.[key] === null) ? null
@@ -15,9 +18,9 @@ export function totalInitiatives(initiatives: Initiative[]): ExpansionTotals {
   }));
 }
 
-export function buildExpansionTable(contents: PlanContents, fiscalYear: number, sort: ExpansionSort) {
+export function buildExpansionTable<T extends ExpansionInitiative>(contents: Omit<PlanContents, "initiatives"> & { initiatives: T[] }, fiscalYear: number, sort: ExpansionSort) {
   const visible = contents.initiatives.filter(item => item.fiscalYear === fiscalYear);
-  const members = new Map<number, Initiative[]>();
+  const members = new Map<number, T[]>();
   for (const item of visible) {
     if (item.expansionId === null) continue;
     const group = members.get(item.expansionId) ?? [];

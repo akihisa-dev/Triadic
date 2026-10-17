@@ -1,14 +1,15 @@
-import { createPreviousExpansionCancellationPlan, createCostInitiativeCancellationPlan, createCostCancellationPlan, createInitiativeOverflowPlan } from "./sample-plan";
+import { createExpenseOverflowPlan, createPreviousExpansionCancellationPlan, createCostInitiativeCancellationPlan, createCostCancellationPlan, createInitiativeOverflowPlan } from "./sample-plan";
 import { createTriadicDatabase } from "../../Triadichrome-extension/src/core/storage/triadicDatabase";
 import { readPlanContents } from "../../Triadichrome-extension/src/core/storage/readPlan";
 import { registerInitiative } from "../../Triadichrome-extension/src/core/storage/initiatives";
 import { saveKindSelection, savePreviousAmounts } from "../../Triadichrome-extension/src/core/storage/settings";
 import { createInitiativeDraft } from "../../Triadichrome-extension/src/core/domain/initiativeRules";
 
-export type OverflowScenario = "previous-cancellation" | "initiative-cancellation" | "monthly" | "period" | "previous" | "difference" | "normal" | "initiative" | "initiative-primary" | "previous-input" | "cancellation";
+export type OverflowScenario = "expense-only" | "previous-cancellation" | "initiative-cancellation" | "monthly" | "period" | "previous" | "difference" | "normal" | "initiative" | "initiative-primary" | "previous-input" | "cancellation";
 
 /** Real, accepted SQLite data; only file I/O is replaced by memory-files. */
 export async function createOverflowPlan(scenario: OverflowScenario) {
+  if (scenario === "expense-only") return createExpenseOverflowPlan();
   if (scenario === "initiative" || scenario === "initiative-primary") return createInitiativeOverflowPlan(scenario === "initiative" ? 2 : 1);
   if (scenario === "initiative-cancellation") return createCostInitiativeCancellationPlan();
   if (scenario === "previous-cancellation") return createPreviousExpansionCancellationPlan();

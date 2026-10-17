@@ -307,3 +307,15 @@ export async function createPreviousExpansionCancellationPlan() {
     rows: accounts.map((account, index) => ({ accountId: account.id, amounts: { 4: index === 0 ? "5000000000000" : "-5000000000000" } })) });
   return bytes;
 }
+
+/** Expense alone overflows; all displayed expansion sales/profit amounts cancel to zero. */
+export async function createExpenseOverflowPlan() {
+  const bytes = await createTriadicDatabase(2026);
+  const accounts = (await readPlanContents(bytes)).accounts;
+  const expense = accounts.find(account => account.accountType === "expense")!.id;
+  const profit = accounts.find(account => account.accountType === "profit")!.id;
+  return registerInitiative(bytes, {
+    ...createInitiativeDraft("2026"), name: "費用だけ上限超過", expansionId: 1, departmentId: 1, industryId: 1,
+    rows: [expense, expense, profit, profit].map((accountId, index) => ({ id: `expense-overflow-${index}`, accountId, amounts: {4:"5000000000000"} })),
+  });
+}

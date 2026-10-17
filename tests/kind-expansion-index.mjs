@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 export function verifyKindExpansionIndex(api, contents) {
  const original = (plan, selected, sort) => {
-  const projections=selected.map(kind=>api.initiativesForKind(plan.initiatives,plan.accounts,kind));
+  const projections=selected.map(kind=>api.initiativesForKind(plan.initiatives,plan.accounts,kind).map(item=>({...item,months:Object.fromEntries(Object.entries(item.months).map(([month,{sales,profit}])=>[month,{sales,profit}]))})));
   const table=api.buildExpansionTable({...plan,initiatives:projections[0]},plan.fiscalYear,sort), prior=api.previousTotals(plan);
   const compare=values=>selected.length===2?[...values,api.combineTotals(values[selected.indexOf(2)],values[selected.indexOf(1)],-1)]:values;
   const totals=projections.map(api.totalInitiatives);

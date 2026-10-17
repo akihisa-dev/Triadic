@@ -4,9 +4,9 @@ import { addYen, checkedYen } from "../domain/amounts";
 import { buildCostTable } from "./costTable";
 import { initiativesForKind, initiativeRowsForKind } from "./initiatives";
 import { initiativeMonths } from "../domain/calendar";
-import { type Initiative, type PlanContents } from "../domain/plan";
+import { type PlanContents } from "../domain/plan";
 import type { KindId } from "../domain/kinds";
-import { buildExpansionTable, totalInitiatives, type ExpansionSort, type ExpansionTotals } from "./expansionTable";
+import { buildExpansionTable, totalInitiatives, type ExpansionSort, type ExpansionTotals, type ExpansionMonths } from "./expansionTable";
 
 export type ClassificationFilter = { industries: number[] | null; departments: number[] | null };
 export const allClassifications = (): ClassificationFilter => ({ industries: null, departments: null });
@@ -49,17 +49,17 @@ export function previousTotals(contents: PlanContents): ExpansionTotals {
   }]));
 }
 
-export function combineTotals(left: Initiative["months"], right: Initiative["months"], sign = 1): ExpansionTotals {
+export function combineTotals(left: ExpansionMonths, right: ExpansionMonths, sign = 1): ExpansionTotals {
   return Object.fromEntries(initiativeMonths.map(month => [month, {
     sales: left[month]?.sales === null || right[month]?.sales === null ? null : addYen(left[month]?.sales ?? 0, (right[month]?.sales ?? 0) * sign),
     profit: left[month]?.profit === null || right[month]?.profit === null ? null : addYen(left[month]?.profit ?? 0, (right[month]?.profit ?? 0) * sign),
   }]));
 }
 export function buildKindExpansionTable(contents: PlanContents, selected: KindId[], sort: ExpansionSort) {
-  const projections = selected.map(kind => initiativesForKind(contents.initiatives, contents.accounts, kind));
+  const projections = selected.map(kind => initiativesForKind(contents.initiatives, contents.accounts, kind, ["sales", "profit"]));
   const indexes = projections.map(items => {
-    const byId = new Map<number, Initiative>();
-    const byExpansion = new Map<number | null, Initiative[]>();
+    const byId = new Map<number, (typeof items)[number]>();
+    const byExpansion = new Map<number | null, (typeof items)[number][]>();
     for (const item of items) {
       if (!byId.has(item.id)) byId.set(item.id, item);
       const members = byExpansion.get(item.expansionId) ?? [];
@@ -69,7 +69,7 @@ export function buildKindExpansionTable(contents: PlanContents, selected: KindId
   });
   const table = buildExpansionTable({ ...contents, initiatives: projections[0]! }, contents.fiscalYear, sort);
   const prior = previousTotals(contents);
-  const compare = (values: Initiative["months"][]) => selected.length === 2
+  const compare = (values: ExpansionMonths[]) => selected.length === 2
     ? [...values, combineTotals(values[selected.indexOf(2)]!, values[selected.indexOf(1)]!, -1)] : values;
   const totals = projections.map(totalInitiatives);
   return {

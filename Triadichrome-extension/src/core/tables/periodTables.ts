@@ -1,7 +1,8 @@
 import { addYen, sumYen } from "../domain/amounts";
 import { initiativeMonths, type InitiativeMonth } from "../domain/calendar";
 import type { KindId } from "../domain/kinds";
-import type { Initiative, PlanContents } from "../domain/plan";
+import type { ExpansionMonths } from "./expansionTable";
+import type { PlanContents } from "../domain/plan";
 import { buildCostComparison } from "./costComparison";
 
 export type TablePeriod = { id: string; label: string; months: readonly InitiativeMonth[] };
@@ -49,7 +50,7 @@ export function buildPeriodCostComparison(contents: PlanContents, selected: Kind
   }) };
 }
 
-export function expansionPeriodAmount(months: Initiative["months"], period: TablePeriod, metric: "sales" | "profit"): number | null {
+export function expansionPeriodAmount(months: ExpansionMonths, period: TablePeriod, metric: "sales" | "profit"): number | null {
   if (period.months.some(month => months[month]?.[metric] === null)) return null;
   return sumYen(period.months.map(month => months[month]?.[metric] ?? 0));
 }
