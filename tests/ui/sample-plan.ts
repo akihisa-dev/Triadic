@@ -1,3 +1,4 @@
+// 施策入力の上部全体と月見出しの固定は tests/ui/initiative-grid.spec.ts で新規・登録済み、縦横スクロールと末尾入力を確認する。
 // 選択範囲合計は既存の正負・1円精度・確定手修正0を利用し、tests/selection-total.mjs と tests/ui/selection-total.spec.ts で矩形・集計除外・不正入力・上限・非破壊を確認する。保存内容は追加しない。
 // 展開表の期間・区分は tests/expansion-table-view.mjs で100/500/1000件の参照回数、逆順登録・改名・マスタ順変更・負ID/0/未選択・縦結合とExcel行順を照合する。
 // 表から詳細への種別引継ぎは tests/ui/open-initiative-kind.spec.ts で通常/大量行、一次100・確定120、両種別の比較対象1、戻る進むと検索の一次固定を確認する。

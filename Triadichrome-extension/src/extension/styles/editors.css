@@ -35,3 +35,13 @@
 /* 編集位置だけにアクセントを使い、操作ボタンと図のフォーカスは分ける。 */
 input:focus, textarea:focus { caret-color: var(--accent); }
 .year-slot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* 施策情報と種別タブを残し、金額表だけを残りの高さでスクロールする。 */
+.home-content:has(.initiative-entry-page) { overflow: hidden; }
+.page-switch:has(> .initiative-entry-page) { height: 100%; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+.initiative-entry-page { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: auto; }
+.initiative-entry-page > * { flex-shrink: 0; }
+.initiative-entry-page > .master-back { align-self: flex-start; }
+.initiative-entry-page > .initiative-amount-table-container { flex: 1 0 112px; min-height: 112px; display: flex; flex-direction: column; overflow: hidden; }
+.initiative-entry-page .initiative-grid-scroll { flex: 1; min-height: 0; overflow: auto; scroll-padding-top: 40px; }
+.initiative-entry-page .initiative-amount-table thead { position: sticky; top: 0; z-index: 2; }

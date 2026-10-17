@@ -186,3 +186,60 @@ test("金額項目の3合計は入力と種別に追従する", async ({ app }) 
   await app.getByRole("button", { name: "3行目を削除", exact: true }).click();
   await expect(footer.getByRole("row")).toHaveCount(3);
 });
+
+
+test("上部全体と月見出しを新規・登録済みの両方で固定する", async ({ page, app }, testInfo) => {
+  if (testInfo.project.name === "narrow") await page.setViewportSize({ width: 375, height: 1100 });
+  for (let row = 3; row <= 14; row++) {
+    await app.getByRole("button", { name: "＋ 勘定科目を追加", exact: true }).click();
+    const account = app.getByRole("combobox", { name: `${row}行目の勘定科目`, exact: true });
+    await account.focus(); await account.selectOption("1");
+  }
+  await app.getByRole("textbox", { name: "施策名", exact: true }).fill("ヘッダー固定確認");
+  for (const [name, value] of [["展開名", "コスト"], ["部署名", "部署A"], ["業種名", "直営自動車"]] as const) {
+    await selectClassification(app.getByRole("combobox", { name, exact: true }), value);
+  }
+  const grid = app.locator(".initiative-grid-scroll");
+  const positions = () => app.locator(".initiative-entry-page").evaluate(node => {
+    const elements = [...node.children].filter(child => !child.classList.contains("initiative-amount-table-container") && !child.classList.contains("initiative-row-actions"));
+    elements.push(node.querySelector("thead")!);
+    return elements.map(element => ({ top: element.getBoundingClientRect().top, height: element.getBoundingClientRect().height }));
+  });
+  for (const saved of [false, true]) {
+    if (saved) {
+      await app.getByRole("button", { name: "登録", exact: true }).click();
+      await app.getByRole("button", { name: "ヘッダー固定確認", exact: true }).click();
+      await expect(app.getByRole("button", { name: "複製して新規作成", exact: true })).toBeVisible();
+    }
+    for (const kind of ["一次予算", "確定予算"]) {
+      await app.getByRole("tab", { name: kind, exact: true }).click();
+      await grid.evaluate(node => { node.scrollTop = 0; node.scrollLeft = 0; });
+      await settleMotion(app.locator("body"));
+      const before = await positions();
+      for (const box of before) {
+        expect(box.top).toBeGreaterThanOrEqual(0);
+        expect(box.top + box.height).toBeLessThan(page.viewportSize()!.height);
+      }
+      const first = app.locator('.initiative-amount-table input[data-row="0"][data-column="0"]');
+      const firstTop = (await first.boundingBox())!.y;
+      await grid.evaluate(node => { node.scrollTop = 250; node.scrollLeft = 180; });
+      await expect.poll(() => grid.evaluate(node => node.scrollTop)).toBeGreaterThan(100);
+      const after = await positions();
+      expect(after.length).toBe(before.length);
+      for (let i = 0; i < before.length; i++) {
+        expect(Math.abs(after[i]!.top - before[i]!.top)).toBeLessThan(2);
+        expect(Math.abs(after[i]!.height - before[i]!.height)).toBeLessThan(2);
+      }
+      expect((await first.boundingBox())!.y).toBeLessThan(firstTop - 100);
+      const last = app.locator('.initiative-amount-table input[data-row="13"][data-column="11"]');
+      await last.focus(); await last.fill("1.125");
+      await expect(last).toHaveValue("1.125");
+      const lastBox = (await last.boundingBox())!;
+      const gridBox = (await grid.boundingBox())!;
+      expect(lastBox.y).toBeGreaterThan(gridBox.y + 25);
+      expect(lastBox.y + lastBox.height).toBeLessThanOrEqual(gridBox.y + gridBox.height);
+      if (saved) await expect(app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true })).toBeEnabled();
+    }
+  }
+  await page.screenshot({ path: testInfo.outputPath("initiative-fixed-header.png") });
+});

@@ -437,7 +437,7 @@ test("確認用画面と配布用ビルドの表示・操作が一致する", as
         // different amounts. Compare the same explicit viewing position.
         for (const target of [app, production]) {
           await target.locator(".home-content").evaluate(node => node.scrollTo(0, 0));
-          await target.locator(".initiative-amount-table-container").evaluate(node => node.scrollTo(0, 0));
+          await target.locator(".initiative-grid-scroll").evaluate(node => node.scrollTo(0, 0));
         }
       }
       await expect(app.locator("img")).toHaveCount(1);

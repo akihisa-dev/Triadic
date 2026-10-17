@@ -54,6 +54,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
   return <>
     <StatusNotice message={error || totals.error} error {...(error ? { onDismiss: () => setError("") } : {})} />
     <GridSelectionTotal total={selectedTotal} />
+    <div className="initiative-grid-scroll">
         <table ref={table} className="initiative-amount-table" aria-label="月別計画金額">
           <thead>
             <tr>
@@ -180,5 +181,6 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
             {months.map(month => <td key={month}>{formatYen(row.amounts[month])}</td>)}
           </tr>)}</tfoot>}
         </table>
+    </div>
   </>;
 }
