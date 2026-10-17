@@ -1,3 +1,4 @@
+import { verifyAnnualAllocation } from "../tests/annual-allocation.mjs";
 import { verifyInitiativeSearch } from "../tests/initiative-search.mjs";
 import { verifyDuplicateInitiative } from "../tests/duplicate-initiative.mjs";
 import { verifyHistoryDifference } from "../tests/history-difference.mjs";
@@ -77,6 +78,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyInitiativeDraftReferences(api);
   await verifyDuplicateInitiative(api);
   verifyInitiativeSearch(api);
+  await verifyAnnualAllocation(api);
   await verifyConcurrentInitiative(api);
   await verifyInitiativeIdentity(api);
   await verifyInitiativeOverflowRead(api);

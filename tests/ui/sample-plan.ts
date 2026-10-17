@@ -1,3 +1,4 @@
+// 年間配分は既存サンプルの複数行・一次/確定を使い、tests/annual-allocation.mjs と tests/ui/annual-allocation.spec.ts で端数・正負・比率・0・一括保存・入力保護を確認する。
 // 施策検索は既存サンプルの施策名・備考・過去履歴を使い、tests/initiative-search.mjs と tests/ui/initiative-search.spec.ts で一致規則・移動・入力保護・50件表示・空の計画を確認する。
 // 施策複製は既存サンプルの同科目複数行・分類・確定手修正0を使い、tests/duplicate-initiative.mjs と tests/ui/duplicate-initiative.spec.ts で独立性・登録・取消・入力保護を確認する。
 // 履歴と現在の差分は既存の3時点の備考・4月月額を使い、tests/history-difference.mjs と tests/ui/history-difference.spec.ts で参照専用・1円・手修正・作成識別子・大量表示・失敗を確認する。
