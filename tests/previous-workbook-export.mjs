@@ -4,6 +4,27 @@ import JSZip from "jszip";
 
 export async function verifyPreviousWorkbookExport(api) {
   const plan = await api.readPlanContents(await api.createPreviousExportPlan());
+  for (const name of ["科目_x0041_", "科目_x005F_", "通常の日本語", "A_x0041__x005F_あ_x3042_", "_x00af_"]) {
+    const named = { ...plan,
+      accounts: plan.accounts.map((a, i) => i === 0 ? { ...a, accountName: name, displayName: name } : a),
+      industries: plan.industries.map(i => ({ ...i, industryName: name })),
+      departments: plan.departments.map(d => ({ ...d, departmentName: name })),
+      initiatives: plan.initiatives.map(i => ({ ...i, name })) };
+    const pair = [{ industryId: named.industries[0].id, departmentId: named.departments[0].id }];
+    const original = api.createPreviousWorkbook(named, pair);
+    const namedBytes = await api.createPreviousWorkbookBytes(named, pair);
+    assert.deepEqual(await api.parsePreviousWorkbook(namedBytes, named), [], `名称を保持して再取込: ${name}`);
+    const loaded = new ExcelJS.Workbook(); await loaded.xlsx.load(namedBytes);
+    assert.deepEqual(loaded.worksheets.map(ws => ws.name), original.worksheets.map(ws => ws.name), "シート参照を保持");
+    assert.equal(loaded.worksheets[0].getCell("B4").value, name);
+    await assert.rejects(api.parsePreviousWorkbook(namedBytes, { ...named, accounts: named.accounts.map((a, i) => i === 0 ? { ...a, accountName: "変更後" } : a) }), /マスタが変更/);
+    const report = api.createReportWorkbook(named, { tables: ["cost-table", "expansion-table", "initiative-list"],
+      selections: { "cost-table": [2, 1], "expansion-table": [2, 1], "initiative-list": [2] }, costFilter: { industries: null, departments: null } });
+    const reopened = new ExcelJS.Workbook(); await reopened.xlsx.load(await api.serializeWorkbook(report));
+    report.eachSheet(ws => ws.eachRow(row => row.eachCell(cell => {
+      if (typeof cell.value === "string" || cell.formula) assert.deepEqual(reopened.getWorksheet(ws.name).getCell(cell.address).value, cell.value, `三表の文字列・数式: ${ws.name}!${cell.address}`);
+    })));
+  }
   const pairs = plan.industries.flatMap(i => plan.departments.map(d => ({ industryId: i.id, departmentId: d.id })));
   assert.equal(plan.accounts.length, 330); assert.equal(pairs.length, 18);
   const before = structuredClone(plan);

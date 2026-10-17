@@ -1,5 +1,6 @@
 import { sheet, finish, workbook } from "./workbookLayout";
 import ExcelJS from "exceljs";
+import JSZip from "jszip";
 import { indexPreviousAmounts, previousAmountKey } from "../domain/previousAmounts";
 import { inspectPreviousWorkbook, previousWorkbookLimits } from "./previousWorkbookBoundary";
 import { excelAmount } from "./excelAmounts";
@@ -124,7 +125,17 @@ export function readPreviousWorkbook(wb: ExcelJS.Workbook, contents: PlanContent
 }
 
 export async function serializeWorkbook(wb: ExcelJS.Workbook): Promise<Uint8Array> {
-  return new Uint8Array(await wb.xlsx.writeBuffer());
+  const bytes = new Uint8Array(await wb.xlsx.writeBuffer());
+  // ExcelJS writes literal OOXML escape sequences unchanged but decodes them on load.
+  // Protect only shared-string text, leaving worksheet names and formula references intact.
+  const zip = await JSZip.loadAsync(bytes);
+  const shared = zip.file("xl/sharedStrings.xml");
+  if (!shared) return bytes;
+  const xml = await shared.async("string");
+  const protectedXml = xml.replace(/_x[0-9a-fA-F]{4}_/g, value => `_x005F_${value.slice(1)}`);
+  if (xml === protectedXml) return bytes;
+  zip.file("xl/sharedStrings.xml", protectedXml);
+  return zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });
 }
 export async function createPreviousWorkbookBytes(contents: PlanContents, pairs: PreviousPair[]): Promise<Uint8Array> {
   const bytes = await serializeWorkbook(createPreviousWorkbook(contents, pairs));
