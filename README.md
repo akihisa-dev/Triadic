@@ -94,7 +94,7 @@ See [Product policy and requirements](REQUIREMENTS.md) for goals and design deci
 
 ### Editing initiatives, navigation, and undo
 
-Select an initiative's name in the list to open its full-screen input directly. Edit its name, notes, classifications, and monthly amounts by budget kind with autosave, then use “Back to initiative list” (施策一覧へ戻る). There is no right-side input panel. Returning to the list and navigating are blocked while saving is pending or has failed, preserving input.
+Select an initiative's name in the list to open its full-screen input directly. Edit its name, notes, classifications, and monthly amounts by budget kind with autosave, then use “Back to initiative list” (施策一覧へ戻る). There is no right-side input panel. Opening a name from the initiative list keeps its displayed budget kind; the breakdown table opens comparison target 1, including when two kinds are displayed. Search continues to open the initial budget. Returning to the list and navigating are blocked while saving is pending or has failed, preserving input.
 
 Once a file is open, the fiscal year appears beside the logo and app name in the shared header. Fiscal-year display is centralized there. The left/right arrows beside it navigate backward and forward through screens visited during this file session. They are disabled without a destination or while saving or editing awaits confirmation. Visiting a different screen after going back replaces forward history. Details of initiatives that no longer exist, such as after undoing registration, are removed from history, so back/forward visits valid destinations. Navigation history is not saved in the file.
 
@@ -1091,3 +1091,5 @@ Excel出力では、名称などに含まれる `_x0041_`・`_x005F_` のよう�
 展開表の施策別集計は表示に使う売上・利益だけを上限検査します。非表示の費用だけの超過で表示とExcel出力を拒否せず、売上・利益や期間計の超過は従来どおり拒否します。費用を表示する施策一覧の上限検査は維持します。確認用画面の「費用のみ上限超過・展開表は0」で確認できます。
 
 総原価表・前年入力は、売上集計までの固定領域と後続1行が表の高さに収まらない場合、列見出しだけを固定し、全科目行をスクロールします。高さが十分なら従来の固定へ戻り、画面サイズ・行高の変更にも追従します。保存順・金額・固定列は維持し、フォーカスしたセルが見出しに隠れないよう表内を調整します。確認用画面の「売上集計を後方へ移動」で確認できます。
+
+施策一覧から詳細を開くと表示中の種別、展開表からは比較対象1を開きます。展開表が2種別表示でも同じ規則です。通常・大量行表示を揃え、画面の戻る・進むでも種別を保持します。施策検索は一次予算から開きます。

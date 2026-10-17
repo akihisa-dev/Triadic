@@ -26,7 +26,7 @@ type InitiativeListPageProps = {
   periodTypes: PeriodType[];
   fiscalYear: string;
   onAddInitiative: () => void;
-  onOpenInitiative: (initiative: Initiative) => void;
+  onOpenInitiative: (initiative: Initiative, kind: KindId) => void;
   navigationBlocked: boolean;
 };
 
@@ -99,7 +99,7 @@ export function InitiativeListPage({ selection, selectedKind, initiatives, accou
               onBlur={event => {
                 // Native Tab blurs before focusing its destination. Do not unmount that neighbour between the events.
                 if (!(event.relatedTarget instanceof Node && event.currentTarget.closest("tbody")?.contains(event.relatedTarget))) setFocusedId(null);
-              }} onClick={() => onOpenInitiative(item)}>{item.name}{unclassifiedIds.has(item.id) && <span className="initiative-attribute-hint"> · 属性未設定</span>}</button>
+              }} onClick={() => onOpenInitiative(item, selectedKind)}>{item.name}{unclassifiedIds.has(item.id) && <span className="initiative-attribute-hint"> · 属性未設定</span>}</button>
           </th>
           <td className="initiative-list-fixed initiative-list-start">{item.startYearMonths[selectedKind]}</td>
           {errors.has(item.id) ? <td colSpan={36} role="alert" style={{ textAlign: "left" }}>{errors.get(item.id)} 施策を開いて金額を修正してください。</td> : initiativeMonths.map(month => <Fragment key={month}>

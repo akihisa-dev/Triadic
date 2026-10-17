@@ -1,3 +1,4 @@
+// 表から詳細への種別引継ぎは tests/ui/open-initiative-kind.spec.ts で通常/大量行、一次100・確定120、両種別の比較対象1、戻る進むと検索の一次固定を確認する。
 // 固定領域が表より高い並び順は tests/ui/tall-sales-plan.ts・specで全行閲覧・前年の選択編集保存・高さ変更・フォーカスを確認する。
 // 取消・やり直しの履歴転記は tests/operation-history.mjs で3/10/40件の取得1行・1BLOB上限、全履歴・状態と失敗再試行を確認する。
 // 異年度の履歴比較は tests/history-difference.mjs と tests/ui/history-year.html・specで選択時の拒否・再試行・参照専用・選択保持を確認する。

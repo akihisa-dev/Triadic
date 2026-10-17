@@ -1,6 +1,6 @@
 {
   "amount": {
-    "implementation": "ec90cf6a866057a67dcbc60d0d4dc953e08aaaabaa15de2dfff524ab50847e3d",
+    "implementation": "19ed39282d44c333b92d9b37266a0df0513b62fcb04df4afee7de1bd07c9b56d",
     "description": "7f6ae5259415be09a32323fc544ef72d4df04a37e891d058a6c3da5e5b1d05ec"
   },
   "inheritance": {
@@ -20,8 +20,8 @@
     "description": "87db0a12ae13a5472e90cfe6741d0b77174acfc0d1719572c3e1d5feddf26236"
   },
   "expansion": {
-    "implementation": "2d055bcbd0d17bd2afcfabfc369938cbf83cd5a97ef3c9a5e88c7bcab237e97e",
-    "description": "03f11b54976cc20d91646d5d22bdc310844f6aeae09f17c49197e4cf05751c2e"
+    "implementation": "6186d7daab6ea7bb92e8e28382819889616000d833c1d5afeba717462976798b",
+    "description": "341e0fedce002905fa107f3178e2ad0a97a560cb8e3bd4afa1f2d3b67e1d6b2d"
   },
   "start": {
     "implementation": "5bec1a4379124d2e2586205bef27a73fa3362734b5d819020a3c63e9ccb74413",
@@ -32,7 +32,7 @@
     "description": "e3ef77f611df3253d1dbd6f81b402912aaf2492a824c73a55b069be546206438"
   },
   "open": {
-    "implementation": "7e2255c423eca977d8841e394ad273684bf5d41a1571a58bd82cf8c4d4263001",
+    "implementation": "0a218a43dfa7a56a09934f4bcf55a10c1a11d18b3331d541fff0654ec6a93832",
     "description": "8d01fd68c18f9e4a3256e8dd401c5275fbc236bdfaf33c5bb55c01674f790a3e"
   },
   "save": {
@@ -52,7 +52,7 @@
     "description": "7d66f2b9e7aeb1d0c8e42346db5d905defeedcc337c042b7d2dad6fdbeb24997"
   },
   "storage": {
-    "implementation": "ce17042455a927709131fdd923cb692c9af84848101ff54f416207ba48ee6732",
+    "implementation": "a54f587b1833c612f9421dddece80727a9d78126fae1b754e9ed08943ab64cb4",
     "description": "c20ab4fb3a183879d6f739c1fbe56360549811568959b1dd040d0ae692855509"
   },
   "validation": {
@@ -68,11 +68,11 @@
     "description": "f97ae766f827770d7445b3ad68138809073532a7cee1c15985103ca72215f177"
   },
   "initiative-sort": {
-    "implementation": "ddd8de04e0830cb3e66d75c8c2a7c8c10060ce1630ae16b42e9dc2ea2c35627b",
-    "description": "2a657dfa961688b0fbaa33aa6879725cf17ed97095204784685e45f74aa3cee9"
+    "implementation": "363dd3b8f518503a2cb207152356cacd7ffe984ac5572813518d3c0a135222b9",
+    "description": "d99a44d4e1c3c6c40de00c1cdd52d95e83a00a94281673a8b4a2ad978019dddd"
   },
   "initiative-total": {
-    "implementation": "ddd8de04e0830cb3e66d75c8c2a7c8c10060ce1630ae16b42e9dc2ea2c35627b",
+    "implementation": "363dd3b8f518503a2cb207152356cacd7ffe984ac5572813518d3c0a135222b9",
     "description": "ad87b9c4430cc93097b6525c9004f5ad95210c346ce2ec61d6da239ca131c5fc"
   },
   "attribute-totals": {
@@ -80,11 +80,11 @@
     "description": "3905bd9e163d8e964824ab9a7a34d2e51c48fbcd64dbe7de200dc2bc75195f9a"
   },
   "department-industries": {
-    "implementation": "48f350398184312234cf7e1257198216aa06da9c762a0187b3137dc4a08376a2",
+    "implementation": "0f18ef1a898e263797a197c81bc2d997644141f7fe5cef9f136893e22c29ffd1",
     "description": "d7bf89508107dee42b5ef476809121b0cb2e2aa5163f6c3b6a06f4ed2cff24cf"
   },
   "expansion-categories": {
-    "implementation": "da4156a78433a9ce49295fa23282c14c48513944f5fccba6cd8af0f34ef6f91d",
+    "implementation": "06ddd25776606d927f3d0015393b9e9b5fa26e55ef4f31a08e0c5bcf3ae618f8",
     "description": "ceb6e6617047d5f2dd2526d70e9604f5b9d48ddf02312d4c0c297f6df9e4bb12"
   },
   "cost-breakdown": {
@@ -100,7 +100,7 @@
     "description": "7d25ee848ea3f0b60b0af9920d4d8929cc77aef713e42a6088bead96adc1d011"
   },
   "duplicate-initiative": {
-    "implementation": "409019f1b6de0e063b046d9cb46cf66f7a3a89453872a224c7dcbf9bbc53f704",
+    "implementation": "89bbd1e1e40dd981ae9badf077d7fcc44f1bf7e4c63689fc89e35f2a3de0f364",
     "description": "10525cc703a2eaff73ff4a6c469f163cad65e1e9c390f6eb5cf60a3c285ec1f4"
   },
   "initiative-search": {
@@ -120,7 +120,7 @@
     "description": "2f6dee379f07d678521222f388000fd4196c7da51de2c4503654e93f875a983e"
   },
   "budget-hints": {
-    "implementation": "07b3842c12c589003cbf2e6e4657394d66e596fb77e96436387afb9bbc04738a",
+    "implementation": "abd4a784c4265521a118695341b7d8e918a2b61f550584ba711584f0d9b527c7",
     "description": "2265d8ccc40d967f1367520e3efcce58bdc0919c7545f1a1c5c49d85fad96be4"
   }
 }

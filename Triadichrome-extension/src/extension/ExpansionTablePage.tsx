@@ -12,7 +12,7 @@ import { formatTableYen } from "./tableNumberFormat";
 
 type Props = {
   contents: PlanContents; selected: KindId[]; selection: ReactNode;
-  onOpenInitiative: (initiative: Initiative) => void;
+  onOpenInitiative: (initiative: Initiative, kind: KindId) => void;
 };
 const AmountCells = memo(function AmountCells({ values }: { values: ExpansionMonths[] }) {
   return tablePeriods.map(period => <Fragment key={period.id}>{values.map((months, index) => <Fragment key={index}>
@@ -108,7 +108,7 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
           {row.subtotal ? <><th colSpan={3} scope="row" className="expansion-subtotal-name">{row.group.expansion.expansionName}計</th><AmountCells values={row.group.values} /></>
             : <>{firstPeriod && <th rowSpan={periodSpan} className="expansion-period">{row.period!.name}</th>}
               {firstCategory && <td rowSpan={categorySpan} className="expansion-category" title={categoryName(row.item!)}>{categoryName(row.item!)}</td>}
-              <th scope="row" className="expansion-name"><button className="initiative-name-button" type="button" {...focusHandlers(row.item!.id)} title={row.item!.note || row.item!.name} onClick={() => onOpenInitiative(sourceInitiatives.get(row.item!.id)!)}>{row.item!.name}</button></th><AmountCells values={row.item!.values} /></>}
+              <th scope="row" className="expansion-name"><button className="initiative-name-button" type="button" {...focusHandlers(row.item!.id)} title={row.item!.note || row.item!.name} onClick={() => onOpenInitiative(sourceInitiatives.get(row.item!.id)!, selected[0]!)}>{row.item!.name}</button></th><AmountCells values={row.item!.values} /></>}
         </tr>;
       }} /></tbody> : groups.map(({ group, periods }) => { return <tbody key={group.expansion.id}>
         {periods.map((period, periodIndex) => period.categories.flatMap((category, categoryGroupIndex) => category.initiatives.map((item, categoryIndex) => {
@@ -117,7 +117,7 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
           {periodIndex === 0 && firstPeriod && <th rowSpan={group.initiatives.length + 1} scope="rowgroup" className="expansion-group">{group.expansion.expansionName}</th>}
           {firstPeriod && <th rowSpan={period.initiatives.length} className="expansion-period">{period.name}</th>}
           {categoryIndex === 0 && <td rowSpan={category.initiatives.length} className="expansion-category" title={categoryName(item)}>{categoryName(item)}</td>}
-          <th scope="row" className="expansion-name"><button className="initiative-name-button" type="button" title={item.note || item.name} onClick={() => onOpenInitiative(sourceInitiatives.get(item.id)!)}>{item.name}</button></th>
+          <th scope="row" className="expansion-name"><button className="initiative-name-button" type="button" title={item.note || item.name} onClick={() => onOpenInitiative(sourceInitiatives.get(item.id)!, selected[0]!)}>{item.name}</button></th>
           <AmountCells values={item.values} />
         </tr>; }))) }
         <tr className="expansion-subtotal">{group.initiatives.length === 0 && <th scope="rowgroup" className="expansion-group">{group.expansion.expansionName}</th>}
