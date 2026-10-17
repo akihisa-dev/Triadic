@@ -1,4 +1,4 @@
-import { isManualBudgetAmount, hasUnclassifiedAmount } from "../core/domain/budgetHints";
+import { hasUnclassifiedAmount } from "../core/domain/budgetHints";
 import { AccountRowSelect } from "./AccountRowSelect";
 import { useGridInteraction } from "./useGridInteraction";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
@@ -31,7 +31,6 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
   const { rows, invalidNumbers } = draft;
   const hints = useMemo(() => rows.map(row => ({
     unclassified: hasUnclassifiedAmount(row, kind, accountsById.get(row.accountId!)),
-    manual: months.map(month => isManualBudgetAmount(row, kind, month)),
   })), [rows, kind, accountsById]);
   const totals = useMemo(() => initiativeAmountTotals({ rows, invalidNumbers: Boolean(invalidNumbers) }, kind, accounts), [rows, invalidNumbers, kind, accounts]);
   const selectedTotal = useMemo(() => initiativeSelectionTotal(draft, kind, selection), [draft, kind, selection]);
@@ -83,14 +82,13 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                 {months.map((month, column) => {
                   const cell = { row: index, column };
                   const value = valueAt(cell);
-                  const manual = hints[index]!.manual[column];
                   const invalidInput = row.invalidAmounts?.[kind]?.[month];
                   const captureOriginal = () => {
                     original.current = invalidInput?.original ?? value;
                     originalInherited.current = invalidInput?.inherited ?? (kind === 2 && row.overrides?.[2]?.[month] === undefined);
                   };
                   const selected = bounds && index >= bounds.top && index <= bounds.bottom && column >= bounds.left && column <= bounds.right;
-                  return <td key={month} className={[selected ? "initiative-cell-selected" : "", manual ? "budget-manual-cell" : ""].filter(Boolean).join(" ")}
+                  return <td key={month} className={selected ? "initiative-cell-selected" : ""}
                     onPointerEnter={event => extendSelection(cell, event.buttons)}
                     onPointerDown={event => {
                       if (isSaving || event.button !== 0 || (event.target as HTMLElement).closest("button")

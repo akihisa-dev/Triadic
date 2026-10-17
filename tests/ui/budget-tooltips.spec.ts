@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("確定予算のセルにフォーカス・ホバーしても比較の吹き出しを表示しない", async ({ page }) => {
+test("確定予算のセルにフォーカス・ホバーしても点線や比較の吹き出しを表示しない", async ({ page }) => {
   await page.goto("/tests/ui/budget-hints.html");
   const cells = page.locator(".initiative-amount-table input");
   const before = await cells.evaluateAll(inputs => inputs.map(input => (input as HTMLInputElement).value));
@@ -10,7 +10,7 @@ test("確定予算のセルにフォーカス・ホバーしても比較の吹�
     await cell.focus();
     await expect(page.getByRole("tooltip")).toHaveCount(0);
     await expect(cell).not.toHaveAttribute("aria-describedby");
-    await expect(cell.locator("..")).toHaveClass(/budget-manual-cell/);
+    expect(await cell.locator("..").evaluate(node => getComputedStyle(node, "::after").content)).toBe("none");
   }
   expect(await cells.evaluateAll(inputs => inputs.map(input => (input as HTMLInputElement).value))).toEqual(before);
   await page.getByRole("button", { name: "一次予算へ", exact: true }).click();

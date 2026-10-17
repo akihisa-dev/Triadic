@@ -2,9 +2,7 @@ import { verifySelectionTotal } from "../tests/selection-total.mjs";
 import { verifyExpansionExpenseOverflow } from "../tests/expansion-expense-overflow.mjs";
 import { verifyOperationHistoryTransfer } from "../tests/operation-history.mjs";
 import { verifyBudgetHints } from "../tests/budget-hints.mjs";
-import { verifyInitiativeMonthShift } from "../tests/initiative-month-shift.mjs";
 import { verifyHistoryIncomeImpact } from "../tests/history-income-impact.mjs";
-import { verifyAnnualAllocation } from "../tests/annual-allocation.mjs";
 import { verifyInitiativeSearch } from "../tests/initiative-search.mjs";
 import { verifyDuplicateInitiative } from "../tests/duplicate-initiative.mjs";
 import { verifyHistoryDifference } from "../tests/history-difference.mjs";
@@ -94,8 +92,6 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyInitiativeDraftReferences(api);
   await verifyDuplicateInitiative(api);
   verifyInitiativeSearch(api);
-  await verifyAnnualAllocation(api);
-  await verifyInitiativeMonthShift(api);
   await verifyConcurrentInitiative(api);
   await verifyInitiativeIdentity(api);
   await verifyInitiativeOverflowRead(api);

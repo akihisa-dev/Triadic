@@ -85,7 +85,7 @@ test("予算選択の列構成・重複防止・比較の符号と画面別の�
   await page.screenshot({ path: `/private/tmp/triadichrome-budget-slots-${testInfo.project.name}.png` });
 });
 
-test("一次予算の引き継ぎ・手修正0・解除と前年入力を操作できる", async ({ page, app }) => {
+test("一次予算の引き継ぎ・手修正0と前年入力を操作できる", async ({ page, app }) => {
   await openSample(page, app);
   const menu = app.getByRole("navigation", { name: "メインナビゲーション" });
   await menu.getByRole("button", { name: "施策一覧", exact: true }).click();
@@ -97,11 +97,8 @@ test("一次予算の引き継ぎ・手修正0・解除と前年入力を操作�
   await app.getByRole("tab", { name: "確定予算", exact: true }).click();
   await expect(april).toHaveValue("120");
   await april.fill("0");
-  const reset = app.getByRole("button", { name: "一次予算を反映する", exact: true });
-  await expect(reset).toBeEnabled();
-  await reset.click();
-  await expect(april).toHaveValue("120");
-  await expect(app.getByRole("spinbutton", { name: "売上高 10月の金額", exact: true })).toHaveValue("100");
+  await expect(april).toHaveValue("0");
+  await expect(app.getByRole("button", { name: /^(一次予算を反映する|年間金額を配分|実施月をまとめて移動)$/ })).toHaveCount(0);
   await menu.getByRole("button", { name: "前年入力", exact: true }).click();
   await selectClassification(app.getByRole("combobox", { name: "部署名", exact: true }), "部署A");
   await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");

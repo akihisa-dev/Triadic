@@ -9,7 +9,6 @@ import { initiativeMonths } from "../../Triadichrome-extension/src/core/domain/c
 import type { PreviousInput } from "../../Triadichrome-extension/src/core/domain/kinds";
 import type { KindId } from "../../Triadichrome-extension/src/core/domain/kinds";
 import type { Account } from "../../Triadichrome-extension/src/core/domain/accountMaster";
-import { reflectPrimaryBudget } from "../../Triadichrome-extension/src/core/tables/initiativeGrid";
 import type { InitiativeEntryDraft } from "../../Triadichrome-extension/src/core/domain/plan";
 import "../../Triadichrome-extension/src/extension/ExtensionPage.css";
 const params = new URLSearchParams(location.search), count = Number(params.get("count") ?? 100), mode = params.get("mode") ?? "previous";
@@ -38,7 +37,6 @@ function Preview() {
    <button onClick={() => setKind(kind === 1 ? 2 : 1)}>種別変更</button>
    <button onClick={() => setDraft({ ...draft, invalidNumbers: !draft.invalidNumbers })}>入力不備変更</button>
    <button onClick={() => setGridAccounts(traceAccounts(accounts.map(account => ({ ...account, accountType: "expense" }))))}>属性変更</button>
-   <button onClick={() => setDraft(reflectPrimaryBudget(draft))}>一次反映</button>
    <button onClick={() => setDraft(initialDraft)}>保存基準へ戻す</button>
   </div>}
   <Profiler id="grid" onRender={(_,phase,actualMs,baseMs)=>measurements.push({phase,actualMs,baseMs})}>

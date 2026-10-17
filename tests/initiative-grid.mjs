@@ -44,16 +44,6 @@ export function verifyInitiativeGrid(api) {
   assert.equal(filled.rows[0].overrides[2][6], "11");
   assert.equal(filled.rows[0].amounts[4], "7");
   assert.equal(api.resolvedAmount(filled.rows[0], 2, 4), "0", "手修正した0は引き継ぎへ伝わる");
-  const reflected = api.reflectPrimaryBudget(filled);
-  for (let index = 0; index < filled.rows.length; index++) {
-    assert.deepEqual(reflected.rows[index].amounts, filled.rows[index].amounts, "一次予算を変更しない");
-    assert.equal(reflected.rows[index].overrides[2], undefined, "全行・全月の手修正と手修正0を解除する");
-    for (const month of [4, 5, 6, 10, 3]) assert.equal(api.resolvedAmount(reflected.rows[index], 2, month), api.resolvedAmount(reflected.rows[index], 1, month));
-  }
-  assert.equal(filled.rows[0].overrides[2][4], "0", "反映前の入力を保持する");
-  reflected.rows[0].amounts = { ...reflected.rows[0].amounts, 4: "20" };
-  assert.equal(api.resolvedAmount(reflected.rows[0], 2, 4), "20", "反映後も一次予算へ追従する");
-  assert.deepEqual(api.reflectPrimaryBudget(api.reflectPrimaryBudget(draft)), api.reflectPrimaryBudget(draft));
   const late = api.pasteInitiativeGrid(draft, 2, { row: 0, column: 6 }, "15\t-0.001");
   assert.equal(late.rows[0].overrides[2][10], "15");
   assert.equal(late.rows[0].overrides[2][11], "-0.001");
@@ -112,9 +102,8 @@ export function verifyInitiativeGrid(api) {
     api.changeInitiativeCell(badPrimary, 2, may, "8"),
     api.pasteInitiativeGrid(badPrimary, 2, may, "8\t9"),
     api.fillInitiativeGrid(badPrimary, 2, { anchor: april, end: may }, "0"),
-    api.reflectPrimaryBudget(badPrimary),
   ]) {
-    assert.equal(api.hasInvalidAmountInput(changed.rows[0]), true, "別種別の入力・貼付・消去・反映で不正状態を解除しない");
+    assert.equal(api.hasInvalidAmountInput(changed.rows[0]), true, "別種別の入力・貼付・消去で不正状態を解除しない");
     assert.throws(() => api.validateInitiative(changed, [], [], []), /有効な数値/);
   }
   const badMay = api.changeInitiativeCell(badPrimary, 1, may, "", { original: "8", inherited: false });
@@ -130,9 +119,6 @@ export function verifyInitiativeGrid(api) {
   const pastedCorrection = api.pasteInitiativeGrid(badMay, 1, april, "0\t");
   assert.equal(pastedCorrection.rows[0].amounts[4], "0"); assert.equal(pastedCorrection.rows[0].amounts[5], "0");
   assert.equal(api.hasInvalidAmountInput(pastedCorrection.rows[0]), false, "明示した貼付範囲だけ不正状態を解除");
-  const badConfirmed = api.changeInitiativeCell(badPrimary, 2, april, "", { original: "7", inherited: true });
-  const primaryOnly = api.reflectPrimaryBudget(badConfirmed);
-  assert.equal(primaryOnly.rows[0].invalidAmounts[2], undefined); assert.equal(api.hasInvalidAmountInput(primaryOnly.rows[0]), true);
   const inherited = api.changeInitiativeCell(draft, 2, april, "", { original: "7", inherited: true });
   const inheritedCancel = api.cancelInitiativeCell(inherited, 2, april, { original: "0", inherited: false });
   assert.equal(inheritedCancel.rows[0].overrides[2][4], undefined, "取消後も一次予算への追従を維持");

@@ -41,7 +41,7 @@ test("選択・範囲・編集モードでは合計を再計算せず、計算�
   expect(await reads()).toBeGreaterThan(previous);
   await cell.fill("0"); // Explicit confirmed zero.
   await expect(april("売上")).toHaveText("0");
-  await page.getByRole("button", { name: "一次反映", exact: true }).click();
+  await cell.fill("1.001");
   await expect(april("売上")).toHaveText("1");
   previous = await reads();
   await page.getByRole("button", { name: "入力不備変更", exact: true }).click();

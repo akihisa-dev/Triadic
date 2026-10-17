@@ -7,10 +7,8 @@
 // 前年Excelの分類名に含むタブ・LF・CR・禁則・アポストロフィ・長名は tests/previous-workbook-export.mjs で実XLSX往復・単一セル更新・元データ保持を確認する。
 // 前年表の行構成変更は tests/ui/previous-selection.html と同名specで実SQLiteの保存統合・選択解除・フォーカス・Delete・貼付・属性変更時の選択維持を確認する。既存サンプルの内容は変えない。
 // Excel名称の_x0041_・_x005F_・日本語・実文字との併存は tests/previous-workbook-export.mjs の合成計画でXLSX往復・マスタ照合・三表とシート参照を確認する。
-// 手修正の点線と属性未設定は既存の手修正・0固定・全月0・相殺データを使う。tests/budget-hints.mjs と tests/ui/budget-tooltips.spec.ts で同額固定・属性未設定・解除・不正入力・吹き出しがないことと入力保持を確認する。
-// 実施月の移動は既存サンプルの複数行と確定手修正を使い、tests/initiative-month-shift.mjs と tests/ui/initiative-month-shift.spec.ts で両種別・年度外拒否・引き継ぎ・保存と取消を確認する。「季節キャンペーン」は2か月延期でき、3月に金額がある施策は延期を拒否する。
+// 属性未設定の表示と金額の入力保持は既存の手修正・0固定・全月0・相殺データを使う。tests/budget-hints.mjs と tests/ui/budget-tooltips.spec.ts で属性未設定・不正入力の保護と、手修正の点線・吹き出しがないことを確認する。
 // 履歴の収支比較は既存サンプルの過去4月100→現在120と確定130を使い、tests/history-income-impact.mjs と tests/ui/history-income-impact.spec.ts で前年・各属性・1円・年間/月別・手修正・セル別上限を確認する。
-// 年間配分は既存サンプルの複数行・一次/確定を使い、tests/annual-allocation.mjs と tests/ui/annual-allocation.spec.ts で端数・正負・比率・0・一括保存・入力保護を確認する。
 // 施策検索は既存サンプルの施策名・備考・過去履歴を使い、tests/initiative-search.mjs と tests/ui/initiative-search.spec.ts で一致規則・移動・入力保護・50件表示・空の計画を確認する。
 // 施策複製は既存サンプルの同科目複数行・分類・確定手修正0を使い、tests/duplicate-initiative.mjs と tests/ui/duplicate-initiative.spec.ts で独立性・登録・取消・入力保護を確認する。
 // 履歴と現在の差分は既存の3時点の備考・4月月額を使い、tests/history-difference.mjs と tests/ui/history-difference.spec.ts で参照専用・1円・手修正・作成識別子・大量表示・失敗を確認する。

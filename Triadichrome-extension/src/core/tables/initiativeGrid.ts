@@ -88,15 +88,6 @@ export function fillInitiativeGrid(draft: InitiativeEntryDraft, kind: KindId, se
     Array.from({ length: bottom - top + 1 }, () => Array<string>(right - left + 1).fill(text)));
 }
 
-/** Clear this initiative's confirmed adjustments and resume following its primary budget. */
-export function reflectPrimaryBudget(draft: InitiativeEntryDraft): InitiativeEntryDraft {
-  return { ...draft, rows: draft.rows.map(row => {
-    const overrides = { ...row.overrides };
-    delete overrides[2];
-    return { ...updateInputErrors(row, 2, [...initiativeMonths]), overrides };
-  }) };
-}
-
 /** Apply the same fixed composition used by the amount item master, before display rounding. */
 export function initiativeAmountTotals(draft: Pick<InitiativeEntryDraft, "rows" | "invalidNumbers">, kind: KindId, accounts: Account[]) {
   const accountById = new Map(accounts.map(account => [account.id, account]));

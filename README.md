@@ -72,7 +72,7 @@ To try the app before editing a real file, generate and open the [test .triadic 
 
 Entering initiative adjustments in the initial budget also supplies the final budget. Overriding a month in the final budget makes that month use the override while other months continue to follow the initial budget. **An explicit override of 0 is also an override.**
 
-“Apply initial budget” (一次予算を反映する) in the final budget removes overrides for every account and month in the displayed initiative and restores inheritance. Previous-year actuals are shared by both budgets and managed on the separate previous-year input screen.
+Previous-year actuals are shared by both budgets and managed on the separate previous-year input screen.
 
 ### Saving and history essentials
 
@@ -144,7 +144,7 @@ The initiative list places breakdown category, period, initiative name, and star
 
 Start year/month is automatically derived from the period classification and monthly amounts, separately for initial/final budgets at load time. The list shows the selected kind's result. “New” uses the first nonzero month in the current fiscal year. “Carryover period” treats April through the last nonzero month as continuous and uses the following month in the previous fiscal year as the start. Intermediate zero months count as continuous. The check occurs before positive and negative account rows cancel, and respects final-budget overrides of 0. It is blank for all-zero months, no period, custom classifications, or a carryover period starting after April or continuing through March. Renaming preserves classification rules, and saving amounts/periods derives it from the new source data. The start date cannot be edited directly.
 
-Amount areas do not permanently display unit, precision, or comparison-formula notes. See this document and Home's calculation explanation. Initiative input/detail cells display numbers only. Above the final-budget table, one “Apply initial budget” action clears every account/month override, including 0, for the displayed initiative. It then follows initial-budget changes. Before registration this changes input; afterward it saves as one autosave operation. Failed saves preserve input with retry/discard available. Storage format, units, and precision are unchanged.
+Amount areas do not permanently display unit, precision, or comparison-formula notes. See this document and Home's calculation explanation. Initiative input/detail cells display numbers only. Storage format, units, and precision are unchanged.
 
 Monthly initiative input uses shaded month headers and light row/column borders. Account selection and deletion share each row, with compact amount padding. Initiative input and detail show account names without codes in both the field and its choices. All account dropdowns and deletion buttons align within the column, which retains enough width for complete names on narrow screens; monthly amounts scroll horizontally within the table. Three monthly total rows—revenue, expenses, profit—always appear at the bottom in the order and composition defined by the amount-item master. Rows without accounts or attributes are excluded, and no rows still displays 0. Effective amounts for the selected budget are added/subtracted in yen according to the composition signs and rounded to whole thousands only for display. Totals follow input, account changes, row addition/deletion, kind changes, and applying the initial budget; totals themselves are not saved. Invalid amounts or out-of-range totals leave affected totals blank and report why. Input the browser cannot interpret numerically leaves totals blank.
 
@@ -583,7 +583,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 一次予算に施策の増減を入力すると、確定予算にも同じ値が引き継がれます。確定予算である月を手修正すると、その月は手修正した値を使い、ほかの月は引き続き一次予算に追従します。**手修正した0も一つの修正**として扱います。
 
-確定予算の「一次予算を反映する」は、表示中の施策の全科目・全月の手修正を解除し、一次予算からの引き継ぎへ戻します。前年の実額は両予算に共通する基準として、別の前年入力画面で管理します。
+前年の実額は両予算に共通する基準として、別の前年入力画面で管理します。
 
 ### 保存と履歴で知っておきたいこと
 
@@ -600,9 +600,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 施策詳細の「複製して新規作成」で、保存済みの分類・備考・科目行と一次／確定予算を新規入力へ引き継げます。名前には重複しない「（コピー）」を付け、手修正0・同額手修正・引き継ぎを保持します。内容を調整して「登録」するまではファイルや予算に追加しません。元の施策は変更せず、保持中の登録前入力は確認後だけ置き換えます。未保存・保存中・過去閲覧中は使えず、登録失敗や取消では入力を保持します。登録前の入力は画面内だけに保持し、ファイル終了で破棄します。保存形式・権限・外部送信に変更はありません。
 
-施策入力・詳細の「年間金額を配分」で、表示中の種別の科目行一つへ年間金額を均等または比率で配分できます。対象月を選び、全12か月の変更前後を確認して「配分を反映」を押します。対象外の月は0になり、確定予算は全月を手修正として保持します。他行・他種別は変えません。1円の端数は小数部分が大きい月から、同率なら4月〜翌3月の順に配り、月額の合計を指定額へ一致させます。負数・0・小数比率にも対応します。確認表は入力と同じ小数点以下3桁まで表示します。未保存編集・保存中・不正入力・過去閲覧では使えません。取消では入力を変えず、登録前は入力だけ、登録済みは通常の自動保存へ一括反映し、保存後は一操作で戻せます。保存失敗では配分後の入力を保持して再試行・入力取消ができます。条件はダイアログ内だけで、保存形式・権限・外部送信は変更しません。
 
-施策入力・詳細の「実施月をまとめて移動」で、全科目行の一次予算・確定予算を前後1〜11か月移動できます。確認する科目行を切り替え、全12か月の変更前後と確定の手修正／引き継ぎを小数点以下3桁まで確認してから、全行へ一括反映します。空いた月は一次0・確定は引き継ぎとし、手修正0・同額手修正も移動先に保持します。年度外へ非0金額や明示手修正が出る場合は、行と月を示して全体を拒否します。年度を循環させず、年間金額を保持します。未保存編集・保存中・不正入力・過去閲覧では使えません。確認中の入力更新やキャンセル・Escでは反映しません。登録前は入力だけ、登録済みは通常の自動保存へ一括反映し、保存後は一操作で戻せます。保存失敗では移動後入力を保持して再試行・入力取消ができます。条件はダイアログ内だけに保持し、保存形式・権限・外部送信は変更しません。
 
 ### 現在の対応範囲と制限
 
@@ -672,7 +670,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 開始年月は期間の分類と月別金額から自動算出し、一次予算と確定予算で別々に読み込み時に導出します。施策一覧では選択中の種別の開始年月を表示します。新規は最初に非0の金額がある当年度の月、期間差は4月から最後に非0の金額がある月までを継続とみなし、その翌月を前年度の開始月とします。途中の0の月も継続として扱います。科目行の正負を相殺する前に判定し、確定予算の手修正0も反映します。全月0、期間未選択・独自分類、期間差が4月以外から始まる・3月まで続く場合は空欄です。改名しても分類の算出規則を維持し、金額・期間の保存後には新しい元データから求めます。開始年月は直接編集できません。
 
 
-各画面の金額欄では単位・精度・比較式の常設注記を表示しません。金額の単位と精度は本書とホームの「計算の仕組み」で確認できます。施策入力・詳細の金額セルは数値だけを表示します。確定予算タブの表の上に「一次予算を反映する」を一つ置き、表示中の施策の全科目・全月の手修正（0を含む）を解除します。その後は一次予算の変更へ追従します。登録前は入力に反映し、登録済み施策は既存の自動保存で一括保存します。保存失敗では入力を保持し、再試行・入力の取り消しができます。保存形式・単位・精度は変更しません。
+各画面の金額欄では単位・精度・比較式の常設注記を表示しません。金額の単位と精度は本書とホームの「計算の仕組み」で確認できます。施策入力・詳細の金額セルは数値だけを表示します。保存形式・単位・精度は変更しません。
 
 総原価表・展開表・施策一覧・前年入力・施策の金額表は、淡い1pxの罫線を基本とし、月・期間計・集計行の区切りだけ濃さを変えています。隣接する罫線が二重にならないようにし、固定見出し・固定列でも同じ線を保ちます。
 
@@ -1080,7 +1078,7 @@ Excel入出力画面とExcelJS・JSZip・Saxesの処理は、入出力を初め�
 
 金額表は、日本語変換中のキーと、変換終了通知の後に届く変換確定キー（keyCode 229）をセル移動・範囲入力・消去・取消のショートカットへ使いません。変換後に改めて押した通常のEnter・Tabはセルを移動します。変換中の自動保存停止・終了後の再開、不正入力保持は維持します。
 
-施策の入力・一覧では、選択種別に非0金額があり科目属性が未設定の行・施策だけに「属性未設定」を表示する。確定予算の明示手修正セルは点線の下線で区別する。一次額・確定額・差額や同額手修正の吹き出しは表示しない。入力・種別・科目属性・取消・過去閲覧のデータに追従し、不正入力には手修正の補助表示を出さない。全月0・負数・大きな増減だけを警告せず、閾値による異常判定を行わない。点検ボタン・専用画面・一括通知・確認済み操作は設けず、計算・保存・登録条件を変えない。判定と表示は画面内だけに保持し、保存形式・権限・外部送信は変更しない。
+施策の入力・一覧では、選択種別に非0金額があり科目属性が未設定の行・施策だけに「属性未設定」を表示する。一次額・確定額・差額や同額手修正の吹き出しは表示しない。入力・種別・科目属性・取消・過去閲覧のデータに追従する。全月0・負数・大きな増減だけを警告せず、閾値による異常判定を行わない。点検ボタン・専用画面・一括通知・確認済み操作は設けず、計算・保存・登録条件を変えない。判定と表示は画面内だけに保持し、保存形式・権限・外部送信は変更しない。
 
 施策一覧の「属性未設定」は画面内の補助表示です。Excelの施策名へは付け加えず、元の名称と金額を出力します。
 
