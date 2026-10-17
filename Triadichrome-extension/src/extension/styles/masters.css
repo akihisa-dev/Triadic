@@ -149,7 +149,7 @@
 .master-data-page .kind-master-table thead th:first-child { width: auto; }
 .master-page.master-index { background: #f8f8f8; padding: 28px; }
 .master-index .master-menu { max-width: 900px; grid-template-columns: 1fr; gap: 0; margin-top: 20px; border: 1px solid #e1e1e1; border-radius: 9px; overflow: hidden; background: white; }
-.master-index .master-menu-item { padding: 14px 18px; border: 0; border-bottom: 1px solid #eeeeee; border-radius: 0; }
+.master-index .master-menu-item { min-height: 64px; padding: 8px 18px; border: 0; border-bottom: 1px solid #eeeeee; border-radius: 0; }
 .master-index .master-menu-item:last-child { border-bottom: 0; }
 .master-index .master-menu-item:hover { background: #f1f1f1; }
 .master-index .master-menu-icon { color: var(--ink); background: #f1f1f1; border-radius: 7px; }

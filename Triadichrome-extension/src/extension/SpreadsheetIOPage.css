@@ -9,6 +9,9 @@
 .io-table-option { display: grid; gap: 8px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
 .io-table-conditions { padding-left: 24px; min-width: 0; }
 .io-table-conditions .kind-selection-slots { margin-bottom: 8px; }
+.io-table-option:not(:has(.io-classifications)) { grid-template-columns: max-content minmax(0, 1fr); align-items: center; column-gap: 16px; }
+.io-table-option:not(:has(.io-classifications)) .io-table-conditions { padding-left: 0; }
+.io-table-option:not(:has(.io-classifications)) .kind-selection-slots { margin-bottom: 0; }
 .io-classifications { display: flex; gap: 16px; flex-wrap: wrap; }
 .io-classifications > * { flex: 1 1 240px; min-width: 0; }
 .io-panel > button { justify-self: start; }
@@ -23,5 +26,6 @@
 .io-preview-table thead { position: sticky; top: 0; background: var(--soft); }
 .io-preview-table td:nth-last-child(-n+2) { text-align: right; }
 @media (max-width: 600px) { .io-panel { padding: 12px; } .io-table-conditions { padding-left: 0; } .io-pair-list { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .io-table-option:not(:has(.io-classifications)) { grid-template-columns: minmax(0, 1fr); } }
 
 .io-previous-panel.is-drag-active { outline: 2px dashed var(--ink); outline-offset: -3px; background: var(--soft); }

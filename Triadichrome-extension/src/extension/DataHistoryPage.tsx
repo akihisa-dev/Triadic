@@ -51,12 +51,14 @@ export function DataHistoryPage({ entries, busy, error, onPreview, onCompare, on
     finally { comparing.current = false; setWorking(false); }
   };
   return <main className="data-history-page" aria-labelledby="data-history-title" aria-busy={working}>
+    <div className="data-history-heading">
     <h1 id="data-history-title">履歴</h1>
     <div className="data-history-actions">
       <button className="secondary-button" type="button" disabled={locked || !ids.length} onClick={() => openDeletion({ ids })}>選択した履歴を削除</button>
       <label htmlFor="history-cutoff">指定日時より前を削除</label>
       <input id="history-cutoff" type="datetime-local" step="1" value={cutoff} disabled={locked} onChange={event => setCutoff(event.target.value)} />
       <button className="secondary-button" type="button" disabled={locked || !older || !before} onClick={() => { if (before) openDeletion({ before }); }}>一括削除</button>
+    </div>
     </div>
     {(failure || error) && <div className="data-history-error" role="alert"><p>{failure || error}</p><button className="text-button" type="button" disabled={locked} onClick={() => void perform(onRetry)}>保存を再試行</button></div>}
     {comparisonFailure && <div className="data-history-error" role="alert"><p>{comparisonFailure.message}</p><button type="button" className="text-button" disabled={locked} onClick={() => void compare(comparisonFailure.entry)}>比較を再試行</button></div>}

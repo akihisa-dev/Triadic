@@ -166,6 +166,8 @@ The breakdown table fixes category, period, subcategory, and initiative-name col
 
 ### Masters, aggregations, and amount precision
 
+The master entry keeps the existing text and icon sizes, with compact vertical row padding.
+
 New files contain the 57 accounts and 15 aggregations in the [agreed defaults](REQUIREMENTS.md#新規ファイルのデフォルト科目集計). Existing masters are not supplemented or overwritten. Cost-summary subtotals/totals may share display names on multiple rows; profit margin follows ordinary profit. Amount input keeps up to three decimal places in thousands of yen (one yen). Saving, initiative/previous-year aggregation, differences, and period totals use whole-yen integers without converting to fractional thousands before display. Both signs are exact up to 9,007,199,254,740,991 yen; sums/differences exceeding this range are errors. These tables display reasons in the table area while sidebar, back, kind, and classification controls remain usable. Correcting amounts or conditions recalculates; display failure does not rewrite the plan. Tables, charts, and breakdowns round to whole thousands, including negative absolute values, with negative zero shown as 0; editing preserves original precision. Margins round to one decimal place; division by zero is blank.
 
 All masters share headings, counts, compact registration fields, and bordered tables. Headers remain fixed while scrolling; light alternating backgrounds and borders separate rows. Monochrome is the base, with pale gray for editing rows. Narrow screens wrap registration fields and keep horizontal scrolling inside the table.
@@ -205,6 +207,8 @@ In the cost summary, “all departments” offers every industry in the master, 
 Click category/period/name/start-date headers to toggle ascending ▲/descending ▼, initially ascending and resetting ascending on a different column. Names use Japanese name order; dates use the displayed kind's year/month; blanks always last and ties retain registration order. Unselected classifications are distinct from numeric IDs, including 0 and negative IDs. Only display order changes, returning to registration order on leaving and never saving to the file. Sorting also works in past viewing. Other tables and master headers show names only, without filters or “Clear.” Account-master drag/keyboard reorder remains available. See [Monthly amount requirements](REQUIREMENTS.md#月別金額と保存データ) and [Monthly amounts and storage](DATA_MODEL.md).
 
 ## Excel import and export
+
+In Import/export, the breakdown table and initiative list place the table name and budget selection on one row, wrapping on narrow screens. Text sizes and export settings behavior are unchanged.
 
 In sidebar “Import/export,” select the cost summary, breakdown table, and/or initiative list. Only selected tables and “Calculation inputs” (計算元) are exported to `yyyy年度予算.xlsx` using the plan's fiscal year (for example, `2026年度予算.xlsx`). Original headers, borders, backgrounds, column widths, and body merges of category names remain. The breakdown table exports the same period and subcategory columns, ordering, vertical merges, and four fixed left columns. The initiative list fixes category, period, initiative name, and start year/month at the left, as on screen.
 
@@ -257,6 +261,8 @@ Because the browser does not expose absolute paths, one reopening reference (`Fi
 Chrome file selection, creation, and drops yielding file references are supported. Read/write permission is checked and granted before editing opens. A drop without a reference does not start editing and directs you to “Open file.” Permission denial/canceled selection preserves the original file and last memory. Failure to remember a reference does not invalidate opening/saving; entry explains reselecting after restart. Storage compatibility follows [Storage-format policy](#storage-format-policy).
 
 ## Data history
+
+The history heading and deletion controls share one row and wrap on narrow screens, preserving text sizes and the deletion confirmation flow.
 
 Use “View differences” beside a timestamp to compare that checkpoint with the currently saved plan. The read-only comparison includes initiatives, classifications, monthly amounts, previous-year actuals, masters, memberships, aggregation signs, ordering, and saved display settings. Search, category filters, and 50-item pages help inspect additions, deletions, and changes. Monetary differences retain one-yen precision, and final-budget inheritance is distinguished from explicit overrides, including zero and same-value overrides. The comparison does not save checkpoints or modify the file, undo history, selection, permissions, or storage format. Unsaved input and unseen external file updates are excluded. Failed comparisons can be retried.
 
@@ -702,6 +708,8 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 ### マスタ・集計・金額の精度
 
+マスタ入口は文字とアイコンの大きさを維持し、各行の上下の余白を抑えています。
+
 新規ファイルには[合意済みのデフォルト科目・集計](REQUIREMENTS.md#新規ファイルのデフォルト科目集計)の57科目と15集計を登録済みで用意します。既存ファイルのマスタを追加・上書きしません。総原価表の小計・合計は同じ表示名で複数行に並び、経常利益の直後に利益率を表示します。金額の入力は千円単位で小数点以下3桁（1円）まで保持し、保存・施策集計・前年集計・差額・期間計は1円単位の整数で扱います。表示の直前まで千円の小数へ変換せず、正負とも9,007,199,254,740,991円まで正確に扱い、合計や差がその範囲を超えた場合はエラーにします。総原価表・展開表では表の部分に理由を表示し、サイドバー・戻る・種別や分類の選択は利用できます。金額を修正するか表示条件を変更すると再計算します。表示の失敗で計画ファイルを書き換えません。表・グラフ・内訳では整数の千円に四捨五入し（負数も絶対値で四捨五入、負のゼロは0）、編集時は元の精度を保持します。利益率は小数点以下1桁で四捨五入し、ゼロでの除算は空欄です。
 
 全マスタは見出し・件数・コンパクトな登録欄・枠付きの表を共通の見た目に揃えています。列見出しはスクロール中も固定し、薄い交互の背景と罫線で行を区切ります。他の画面と同じモノクロを基本とし、編集中の行は薄いグレーで示します。狭い画面では登録欄を折り返し、表内を横スクロールできます。
@@ -740,6 +748,8 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 施策一覧の「展開名・期間名・施策名・開始年月」は、見出しを押すたびに昇順▲・降順▼を切り替えます。初回と別の列を選んだときは昇順です。名称は日本語の名称順、開始年月は表示中の種別の年月順で、空欄は常に最後、同値は登録順です。未選択は実在する番号と区別し、0や負のIDでも登録された名称を使います。表示順だけを変え、画面を離れると登録順へ戻り、ファイルへ保存しません。過去閲覧中も利用できます。総原価表・展開表とマスタ一覧の見出しは項目名だけです。フィルターと解除用の「クリア」はありません。勘定科目マスタの保存順を変えるドラッグ・キーボード操作は利用できます。詳細は[月別金額の要件](REQUIREMENTS.md#月別金額と保存データ)と[月別金額と保存構造](DATA_MODEL.md)を参照してください。
 
 ## Excelの入出力
+
+入出力の「展開表」「施策一覧」は、表名と予算選択を横に並べ、狭い画面では折り返します。文字の大きさと出力条件の操作は維持しています。
 
 サイドバーの「入出力」で総原価表・展開表・施策一覧を選び、選んだ表と「計算元」だけを、計画の基準年度を使った`yyyy年度予算.xlsx`（例：2026年度予算.xlsx）へ出力します。元の見出し・罫線・背景・列幅・展開名の本文結合を維持します。展開表も画面と同じ期間名列・展開区分列・期間ごとの順序と縦結合を出力し、左端の4列を固定します。施策一覧の左端は画面と同じ「展開名・期間名・施策名・開始年月」の4列を固定します。
 
@@ -790,6 +800,8 @@ Chromeのファイル選択、新規作成、ファイル参照を取得でき�
 ファイルを開く共通処理（選択・続きから・ドロップ）では、100バイト未満を拒否し、先頭16バイトのSQLite署名を確認してから全量を読み込みます。明らかに別形式の大容量ファイルは全量を読みません。容量の上限や切り捨ては追加せず、その後も保存形式・構造・参照関係・金額・履歴の完全検証を行います。拒否時は元のファイルと直近ファイルの記憶を変更しません。
 
 ## データの履歴
+
+履歴の見出しと削除操作欄は一行に並び、狭い画面では折り返します。文字の大きさと削除前の確認操作は維持しています。
 
 履歴比較の「収支への影響」で、前年実額＋施策の増減による売上・費用・利益を、履歴・現在・増減（現在−履歴）で確認できます。一次／確定予算と年間／月別を切り替え、初期表示は一次予算の年間です。全業種・全部署を対象に、各時点の科目属性と金額項目マスタの構成を使います。売上は売上−売上原価、費用は費用、利益は売上−売上原価−費用＋利益属性で、未設定属性は既存規則に従って除きます。確定の引き継ぎ・手修正0を反映し、年間は円精度の月額を合算します。1円の差も分かるよう小数点以下3桁まで表示し、上限超過は該当する値だけに示します。「変更項目」で従来の一覧へ切り替えられ、検索条件は収支計算を変えません。比較は参照専用で、計算結果・選択は画面内だけに保持します。
 
