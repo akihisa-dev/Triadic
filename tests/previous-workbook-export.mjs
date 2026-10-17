@@ -25,6 +25,24 @@ export async function verifyPreviousWorkbookExport(api) {
       if (typeof cell.value === "string" || cell.formula) assert.deepEqual(reopened.getWorksheet(ws.name).getCell(cell.address).value, cell.value, `三表の文字列・数式: ${ws.name}!${cell.address}`);
     })));
   }
+  for (const name of ["営業\t部署", "営業\n部署", "営業\r部署", "日本語", "'部署'", "部署/業種:*?[]\\", "長".repeat(40), "_x0041_\t_x005F_"]) {
+    for (const field of ["industries", "departments"]) {
+      const named = { ...plan, [field]: plan[field].map(row => ({ ...row, [field === "industries" ? "industryName" : "departmentName"]: name })) };
+      const beforeNames = structuredClone(named);
+      const pairs = [{ industryId: named.industries[0].id, departmentId: named.departments[0].id }];
+      const bytes = await api.createPreviousWorkbookBytes(named, pairs);
+      assert.deepEqual(await api.parsePreviousWorkbook(bytes, named), [], `分類名のXLSX往復: ${field} ${name}`);
+      const wb = new ExcelJS.Workbook(); await wb.xlsx.load(bytes);
+      const ws = wb.worksheets[0];
+      assert.equal(ws.name, wb.getWorksheet("_triadichrome").getCell("A3").value);
+      assert.ok(ws.name.length <= 31); assert.doesNotMatch(ws.name, /[\t\r\n]/);
+      ws.getCell("D4").value = 0.001;
+      const patches = await api.parsePreviousWorkbook(await api.serializeWorkbook(wb), named);
+      assert.equal(patches.length, 1); assert.equal(patches[0].month, 5); assert.equal(patches[0].after, "0.001");
+      assert.equal(patches[0].industryId, pairs[0].industryId); assert.equal(patches[0].departmentId, pairs[0].departmentId);
+      assert.deepEqual(named, beforeNames, "出力用のシート名だけを整え、分類名と前年額を変更しない");
+    }
+  }
   const pairs = plan.industries.flatMap(i => plan.departments.map(d => ({ industryId: i.id, departmentId: d.id })));
   assert.equal(plan.accounts.length, 330); assert.equal(pairs.length, 18);
   const before = structuredClone(plan);

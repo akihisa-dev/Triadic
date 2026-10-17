@@ -36,7 +36,7 @@ export function createPreviousWorkbook(contents: PlanContents, pairs: PreviousPa
     if (!industry || !department) throw new Error("業種・部署が見つかりません。");
     if (!industry.identity || !department.identity) throw new Error("分類の作成識別子が正しくありません。");
     if (!department.industryIds.includes(pair.industryId)) throw new Error("部署に設定されている業種を選択してください。");
-    const name = `${index + 1}_${industry.industryName}_${department.departmentName}`.replace(/[\\/*?:\[\]]/g, "_").slice(0, 31).replace(/^'|'$/g, "_");
+    const name = `${index + 1}_${industry.industryName}_${department.departmentName}`.replace(/[\\/*?:\[\]\t\r\n]/g, "_").slice(0, 31).replace(/^'|'$/g, "_");
     const ws = sheet(wb, name, [14, 30, ...initiativeMonths.map(() => 14)], 1, 2);
     ws.getCell("A1").value = "前年入力";
     ws.getCell("A2").value = `${contents.fiscalYear}年度 · ${industry.industryName} · ${department.departmentName} · 単位：千円`;
