@@ -1,3 +1,4 @@
+// 取消・やり直しの履歴転記は tests/operation-history.mjs で3/10/40件の取得1行・1BLOB上限、全履歴・状態と失敗再試行を確認する。
 // 異年度の履歴比較は tests/history-difference.mjs と tests/ui/history-year.html・specで選択時の拒否・再試行・参照専用・選択保持を確認する。
 // 前年Excelの分類名に含むタブ・LF・CR・禁則・アポストロフィ・長名は tests/previous-workbook-export.mjs で実XLSX往復・単一セル更新・元データ保持を確認する。
 // 前年表の行構成変更は tests/ui/previous-selection.html と同名specで実SQLiteの保存統合・選択解除・フォーカス・Delete・貼付・属性変更時の選択維持を確認する。既存サンプルの内容は変えない。

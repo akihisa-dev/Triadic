@@ -1,3 +1,4 @@
+import { verifyOperationHistoryTransfer } from "../tests/operation-history.mjs";
 import { verifyBudgetHints } from "../tests/budget-hints.mjs";
 import { verifyInitiativeMonthShift } from "../tests/initiative-month-shift.mjs";
 import { verifyHistoryIncomeImpact } from "../tests/history-income-impact.mjs";
@@ -147,6 +148,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyInitiativeFiscalYear(api);
   await verifyPlanSession(api);
   await verifySavedOperations(api);
+  await verifyOperationHistoryTransfer(api);
   await verifyNoChangeSave(api);
   await verifyRecentFile(api);
   await verifySamplePlan(api);
