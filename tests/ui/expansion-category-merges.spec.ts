@@ -25,15 +25,19 @@ test("大量行の途中から描画しても区分セルの結合と列位置�
     await region.evaluate((node, top) => { node.scrollTop = top; }, top);
     await expect.poll(async () => table.locator("tbody tr[aria-rowindex]").first().getAttribute("aria-rowindex")).not.toBeNull();
     await expect.poll(async () => table.locator("tbody .expansion-category").first().getAttribute("rowspan")).toMatch(/^[1-9]\d*$/);
-    const valid = await table.locator("tbody tr[aria-rowindex]").evaluateAll(rows => rows.filter(row => !row.classList.contains("expansion-subtotal")).every(row => {
-      const item = Number(row.querySelector(".initiative-name-button")!.textContent!.replace("区分確認", ""));
-      const group = [...row.parentElement!.querySelectorAll(".expansion-category")].find(cell => {
-        const start = Number(cell.parentElement!.getAttribute("aria-rowindex"));
-        const index = Number(row.getAttribute("aria-rowindex"));
-        return start <= index && index < start + (cell as HTMLTableCellElement).rowSpan;
+    await expect.poll(() => table.locator("tbody tr[aria-rowindex]").evaluateAll(rows => {
+      const items = rows.filter(row => !row.classList.contains("expansion-subtotal"));
+      return items.length > 0 && items.every(row => {
+        const parent = row.parentElement;
+        if (!parent) return false;
+        const item = Number(row.querySelector(".initiative-name-button")!.textContent!.replace("区分確認", ""));
+        const group = [...parent.querySelectorAll(".expansion-category")].find(cell => {
+          const start = Number(cell.parentElement!.getAttribute("aria-rowindex"));
+          const index = Number(row.getAttribute("aria-rowindex"));
+          return start <= index && index < start + (cell as HTMLTableCellElement).rowSpan;
+        });
+        return group?.textContent === ["負ID区分", "ゼロID区分", "正ID区分", ""][item % 4];
       });
-      return group?.textContent === ["負ID区分", "ゼロID区分", "正ID区分", ""][item % 4];
-    }));
-    expect(valid).toBe(true);
+    })).toBe(true);
   }
 });

@@ -7,7 +7,7 @@ import { resolvedAmount, type KindSelections } from "../domain/kinds";
 import type { PlanContents } from "../domain/plan";
 import { buildPeriodCostComparison, tablePeriods, expansionPeriodAmount } from "../tables/periodTables";
 import { buildKindExpansionTable, filterPlan, type ClassificationFilter } from "../tables/planTables";
-import { groupExpansionCategories, groupExpansionPeriods } from "../tables/expansionTable";
+import { createExpansionGrouping, groupExpansionCategories, groupExpansionPeriods } from "../tables/expansionTable";
 import { initiativeTotals } from "../tables/initiativeTotals";
 import { initiativesForKind } from "../tables/initiatives";
 import { amountItems } from "../domain/amountItems";
@@ -228,6 +228,7 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
   if (options.tables.includes("expansion-table")) {
     const selected = options.selections["expansion-table"];
     const table = expansionTable!;
+    const grouping = createExpansionGrouping(contents);
     const labels = [...selected.map(k => masters.kinds.get(k)!.kindName), ...(selected.length === 2 ? ["比較"] : [])];
     const width = labels.length * 2;
     const ws = sheet(wb, "展開表", [11, 11, 17, 34, ...tablePeriods.flatMap(() => labels.flatMap(() => [14, 14]))], 3, 4);
@@ -261,9 +262,9 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
     for (const group of table.groups) {
       const start = next;
       const members: number[] = [];
-      for (const period of groupExpansionPeriods(group.initiatives, contents.periodTypes)) {
+      for (const period of groupExpansionPeriods(group.initiatives, grouping.periods)) {
         const periodStart = next;
-        for (const category of groupExpansionCategories(period.initiatives, contents.expansionCategories)) {
+        for (const category of groupExpansionCategories(period.initiatives, grouping.categories)) {
           const categoryStart = next;
           for (const item of category.initiatives) {
           const r = next++; members.push(r);

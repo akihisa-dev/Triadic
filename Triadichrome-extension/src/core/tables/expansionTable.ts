@@ -39,34 +39,39 @@ export function buildExpansionTable<T extends ExpansionInitiative>(contents: Omi
   };
 }
 
-/** Group only the displayed rows; retain the original registration order and amounts. */
-export function groupExpansionPeriods<T extends { periodTypeId?: number | null }>(initiatives: T[], periodTypes: PlanContents["periodTypes"]) {
-  const members = new Map<number | null, T[]>();
-  const known = new Set(periodTypes.map(period => period.id));
-  for (const item of initiatives) {
-    const id = item.periodTypeId != null && known.has(item.periodTypeId) ? item.periodTypeId : null;
-    const group = members.get(id) ?? [];
-    group.push(item);
-    members.set(id, group);
-  }
-  return [...periodTypes.map(period => ({ id: period.id as number | null, name: period.periodName })), { id: null, name: "" }]
-    .flatMap(period => {
-      const items = members.get(period.id);
-      return items?.length ? [{ ...period, initiatives: items }] : [];
-    });
+type GroupingIndex = ReadonlyMap<number, { name: string; position: number }>;
+const periodIndex = (periods: PlanContents["periodTypes"]): GroupingIndex => new Map(periods.map((period, position) => [period.id, { name: period.periodName, position }]));
+const categoryIndex = (categories: PlanContents["expansionCategories"]): GroupingIndex => new Map(categories.map((category, position) => [category.id, { name: category.categoryName, position }]));
+/** Share master lookup and ordering across all expansions, periods, and budget selections. */
+export function createExpansionGrouping(contents: Pick<PlanContents, "periodTypes" | "expansionCategories">) {
+  return { periods: periodIndex(contents.periodTypes), categories: categoryIndex(contents.expansionCategories) };
 }
 
-/** Group within a period; keep registration order inside each subcategory. */
-export function groupExpansionCategories<T extends { expansionCategoryId?: number | null }>(initiatives: T[], categories: PlanContents["expansionCategories"]) {
+/** Group only present periods; retain registration order within each period. */
+export function groupExpansionPeriods<T extends { periodTypeId?: number | null }>(initiatives: T[], periods: PlanContents["periodTypes"] | GroupingIndex) {
+  if (!initiatives.length) return [];
+  const index = Array.isArray(periods) ? periodIndex(periods) : periods;
+  const members = new Map<number | null, T[]>();
+  for (const item of initiatives) {
+    const id = item.periodTypeId != null && index.has(item.periodTypeId) ? item.periodTypeId : null;
+    const items = members.get(id) ?? [];
+    items.push(item); members.set(id, items);
+  }
+  return [...members].sort(([a], [b]) => (a === null ? Infinity : index.get(a)!.position) - (b === null ? Infinity : index.get(b)!.position))
+    .map(([id, items]) => ({ id, name: id === null ? "" : index.get(id)!.name, initiatives: items }));
+}
+
+/** Group only present subcategories using the shared master order. */
+export function groupExpansionCategories<T extends { expansionCategoryId?: number | null }>(initiatives: T[], categories: PlanContents["expansionCategories"] | GroupingIndex) {
+  if (!initiatives.length) return [];
+  const index = Array.isArray(categories) ? categoryIndex(categories) : categories;
   const members = new Map<number | null, T[]>();
   for (const item of initiatives) {
     const id = item.expansionCategoryId ?? null;
+    if (id !== null && !index.has(id)) continue;
     const items = members.get(id) ?? [];
-    items.push(item);
-    members.set(id, items);
+    items.push(item); members.set(id, items);
   }
-  return [...categories.map(category => category.id), null].flatMap(id => {
-    const items = members.get(id);
-    return items?.length ? [{ id, initiatives: items }] : [];
-  });
+  return [...members].sort(([a], [b]) => (a === null ? Infinity : index.get(a)!.position) - (b === null ? Infinity : index.get(b)!.position))
+    .map(([id, items]) => ({ id, initiatives: items }));
 }
