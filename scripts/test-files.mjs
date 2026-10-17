@@ -1,3 +1,4 @@
+import { verifyInitiativeMonthShift } from "../tests/initiative-month-shift.mjs";
 import { verifyHistoryIncomeImpact } from "../tests/history-income-impact.mjs";
 import { verifyAnnualAllocation } from "../tests/annual-allocation.mjs";
 import { verifyInitiativeSearch } from "../tests/initiative-search.mjs";
@@ -80,6 +81,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyDuplicateInitiative(api);
   verifyInitiativeSearch(api);
   await verifyAnnualAllocation(api);
+  await verifyInitiativeMonthShift(api);
   await verifyConcurrentInitiative(api);
   await verifyInitiativeIdentity(api);
   await verifyInitiativeOverflowRead(api);

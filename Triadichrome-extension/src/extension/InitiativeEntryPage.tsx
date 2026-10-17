@@ -2,6 +2,7 @@ import type { ExpansionCategory } from "../core/domain/expansionCategoryMaster";
 import { reflectPrimaryBudget } from "../core/tables/initiativeGrid";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
 import { InitiativeAmountGrid } from "./InitiativeAmountGrid";
+import { InitiativeMonthShift } from "./InitiativeMonthShift";
 import { AnnualAllocation } from "./AnnualAllocation";
 import { ClassificationSelect } from "./ClassificationSelect";
 import { INITIAL_KINDS } from "../core/domain/kinds";
@@ -112,7 +113,7 @@ export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions
         <button className="secondary-button" type="button" disabled={readOnly || isSaving || !draft.rows.some(row => Object.keys(row.overrides?.[2] ?? {}).length > 0)}
           onClick={() => onDraftChange(reflectPrimaryBudget(draft))}>一次予算を反映する</button>
       </div>}
-      <div className="initiative-allocation-action"><AnnualAllocation draft={draft} kind={kind} accounts={accounts} disabled={readOnly || isSaving || Boolean(editing?.pending) || Boolean(editing?.saving)} onChange={onDraftChange} /></div>
+      <div className="initiative-allocation-action"><AnnualAllocation draft={draft} kind={kind} accounts={accounts} disabled={readOnly || isSaving || Boolean(editing?.pending) || Boolean(editing?.saving)} onChange={onDraftChange} /><InitiativeMonthShift draft={draft} accounts={accounts} disabled={readOnly || isSaving || Boolean(editing?.pending) || Boolean(editing?.saving)} onChange={onDraftChange} /></div>
       <div className="initiative-amount-table-container" id="kind-amount-panel" role="tabpanel" aria-labelledby={`kind-tab-${kind}`} aria-label="月別計画金額の入力表" tabIndex={0}>
         <InitiativeAmountGrid key={kind} draft={draft} kind={kind}
           accounts={accounts} savedRows={editing?.savedRows} rowOperationsDisabled={editing?.saving ?? false} isSaving={readOnly || isSaving} onDraftChange={onDraftChange} />
