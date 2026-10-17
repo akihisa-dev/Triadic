@@ -18,6 +18,7 @@ import { formatYen } from "../core/domain/amounts";
 const amountText = (amount: number | null | undefined) => amount === undefined ? "" : amount === null ? "属性未設定" : formatYen(amount);
 
 type InitiativeListPageProps = {
+  trial?: { excluded: number[]; onToggle: (id: number) => void } | undefined;
   selection: ReactNode;
   selectedKind: KindId;
   initiatives: Initiative[];
@@ -30,7 +31,7 @@ type InitiativeListPageProps = {
   navigationBlocked: boolean;
 };
 
-export function InitiativeListPage({ selection, selectedKind, initiatives, accounts, expansions, periodTypes, fiscalYear, onAddInitiative, onOpenInitiative, navigationBlocked }: InitiativeListPageProps) {
+export function InitiativeListPage({ trial, selection, selectedKind, initiatives, accounts, expansions, periodTypes, fiscalYear, onAddInitiative, onOpenInitiative, navigationBlocked }: InitiativeListPageProps) {
   const readOnly = useHistoryReadOnly();
   const [sort, setSort] = useState<InitiativeSort | null>(null);
   const [focusedId, setFocusedId] = useState<number | null>(null);
@@ -67,7 +68,7 @@ export function InitiativeListPage({ selection, selectedKind, initiatives, accou
     <div className="initiative-list-heading">
       <h1 id="initiative-list-title">施策一覧</h1>
       {selection}
-      <button className="primary-button" type="button" disabled={navigationBlocked || readOnly} onClick={onAddInitiative}>施策を追加</button>
+      {!trial && <button className="primary-button" type="button" disabled={navigationBlocked || readOnly} onClick={onAddInitiative}>施策を追加</button>}
     </div>
     <TableCalculationBoundary resetKeys={[initiatives, accounts, selectedKind, fiscalYear]}>
     <div ref={container} className="initiative-list-container" role="region" aria-label="施策一覧の月別売上・費用・利益" tabIndex={0}>
@@ -91,15 +92,16 @@ export function InitiativeListPage({ selection, selectedKind, initiatives, accou
             {amountItems.map((metric, index) => <th key={metric.id} scope="col" className={index === amountItems.length - 1 ? "initiative-month-end" : undefined}>{metric.name}</th>)}
           </Fragment>)}</tr>
         </thead>
-        <tbody><WindowRows items={rendered} count={displayed.length} height={28} columns={40} render={(item, index) => <tr key={item.id} aria-rowindex={index + 3}>
+        <tbody><WindowRows items={rendered} count={displayed.length} height={28} columns={40} render={(item, index) => <tr key={item.id} aria-rowindex={index + 3} className={trial?.excluded.includes(item.id) ? "trial-excluded" : undefined}>
           <td className="initiative-list-fixed initiative-list-expansion">{item.expansionId == null ? "" : expansionNames.get(item.expansionId) ?? ""}</td>
           <td className="initiative-list-fixed initiative-list-period">{item.periodTypeId == null ? "" : periodNames.get(item.periodTypeId) ?? ""}</td>
           <th scope="row" className="initiative-list-fixed initiative-list-name" title={item.note || item.name}>
+            <span className={trial ? "trial-initiative-name" : undefined}>{trial && <input className="trial-adoption-checkbox" type="checkbox" aria-label={`${item.name}を採用`} checked={!trial.excluded.includes(item.id)} disabled={navigationBlocked} onFocus={() => setFocusedId(item.id)} onChange={() => trial.onToggle(item.id)} />}
             <button className="initiative-name-button" type="button" disabled={navigationBlocked} onFocus={() => setFocusedId(item.id)}
               onBlur={event => {
                 // Native Tab blurs before focusing its destination. Do not unmount that neighbour between the events.
                 if (!(event.relatedTarget instanceof Node && event.currentTarget.closest("tbody")?.contains(event.relatedTarget))) setFocusedId(null);
-              }} onClick={() => onOpenInitiative(item)}>{item.name}{unclassifiedIds.has(item.id) && <span className="initiative-attribute-hint"> · 属性未設定</span>}</button>
+              }} onClick={() => onOpenInitiative(item)}>{item.name}{unclassifiedIds.has(item.id) && <span className="initiative-attribute-hint"> · 属性未設定</span>}</button></span>
           </th>
           <td className="initiative-list-fixed initiative-list-start">{item.startYearMonths[selectedKind]}</td>
           {errors.has(item.id) ? <td colSpan={36} role="alert" style={{ textAlign: "left" }}>{errors.get(item.id)} 施策を開いて金額を修正してください。</td> : initiativeMonths.map(month => <Fragment key={month}>

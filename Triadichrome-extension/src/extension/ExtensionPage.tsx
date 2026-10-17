@@ -22,11 +22,12 @@ import { choosePlanDestination } from "./filePicker";
 import { usePlanSession } from "./usePlanSession";
 
 export function ExtensionPage() {
+  const [trialActive, setTrialActive] = useState(false);
   const [closeError, setCloseError] = useState("");
   const [closeRequested, setCloseRequested] = useState(false);
   const suggestedName = useRef("Untitled.triadic");
   const chooseDestination = useCallback(() => choosePlanDestination(suggestedName.current), []);
-  const { session, snapshot } = usePlanSession(chooseDestination, closeRequested);
+  const { session, snapshot } = usePlanSession(chooseDestination, closeRequested || trialActive);
   const { history: dataHistory, historyError } = snapshot;
   if (snapshot.name) suggestedName.current = snapshot.name;
   const entry = useFileEntry(session, snapshot.name, () => setCloseError(""));
@@ -61,7 +62,7 @@ export function ExtensionPage() {
   const restoreHistory = (id: number) => session.restore(id, chooseDestination);
   const deleteHistory = (deletion: HistoryDeletion) => session.deleteHistory(deletion, chooseDestination);
   return <div className="app-shell"><FadeSwap value={fileName} className="app-switch">{displayedFile => displayedFile
-    ? <HomePage onChangePlan={changePlan} fileName={displayName} initialContents={displayedContents.current!} onChangeMaster={changeMaster} onChangeAggregations={changeAggregations} onChangeExpansions={changeExpansions} onChangeExpansionCategories={changeExpansionCategories} onChangeIndustries={changeIndustries} onChangeDepartments={changeDepartments} onChangePeriodTypes={changePeriodTypes} onRegisterInitiative={register} onUpdateInitiative={update} onPrepareSave={prepareSave}
+    ? <HomePage onTrialActiveChange={setTrialActive} onChangePlan={changePlan} fileName={displayName} initialContents={displayedContents.current!} onChangeMaster={changeMaster} onChangeAggregations={changeAggregations} onChangeExpansions={changeExpansions} onChangeExpansionCategories={changeExpansionCategories} onChangeIndustries={changeIndustries} onChangeDepartments={changeDepartments} onChangePeriodTypes={changePeriodTypes} onRegisterInitiative={register} onUpdateInitiative={update} onPrepareSave={prepareSave}
       onCompareHistory={id => session.compareHistory(id)} dataHistory={dataHistory} historyError={historyError} historyBusy={isBusy || snapshot.busy} onPreviewHistory={previewHistory} onRestoreHistory={restoreHistory} onDeleteHistory={deleteHistory}
       canUndo={snapshot.canUndo} canRedo={snapshot.canRedo} operationRevision={snapshot.operationRevision} onTravelOperation={direction => session.travelOperation(direction, chooseDestination)}
       onRetryHistory={async () => { await prepareSave(); await session.checkpoint(true, chooseDestination); }}

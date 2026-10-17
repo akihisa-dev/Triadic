@@ -1,3 +1,4 @@
+import { verifyTrialBudget } from "../tests/trial-budget.mjs";
 import { verifyBudgetHints } from "../tests/budget-hints.mjs";
 import { verifyInitiativeMonthShift } from "../tests/initiative-month-shift.mjs";
 import { verifyHistoryIncomeImpact } from "../tests/history-income-impact.mjs";
@@ -78,6 +79,7 @@ import { withNodeBundle } from "./node-bundle.mjs";
 import { projectRoot as root } from "./paths.mjs";
 await withNodeBundle("tests/core-api.ts", async production => {
   const api = { ...production, createTriadicDatabase: (year = 2026) => production.createTriadicDatabase(year) };
+  await verifyTrialBudget(api);
   await verifyInitiativeDraftReferences(api);
   await verifyDuplicateInitiative(api);
   verifyInitiativeSearch(api);
