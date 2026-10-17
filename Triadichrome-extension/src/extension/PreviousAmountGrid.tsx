@@ -15,14 +15,6 @@ import { StatusNotice } from "./StatusNotice";
 export function PreviousAmountGrid({ contents, draft, onChange }: {
   contents: PlanContents; draft: PreviousInput | undefined; onChange: (draft: PreviousInput) => void;
 }) {
-  const { selection, setSelection, editing, setEditing, table, dragging, original, bounds, focus, extendSelection } = useGridInteraction();
-  const [error, setError] = useState("");
-  const [cellErrors, setCellErrors] = useState<Record<string, { accountId: number; month: number; message: string }>>({});
-  const clearCellError = (accountId: number, month: number) => setCellErrors(current => {
-    const next = { ...current }; delete next[`${accountId}:${month}`]; return next;
-  });
-  const inputsByAccount = useMemo(() => new Map(draft?.rows.map(row => [row.accountId, row])), [draft?.rows]);
-  const cellError = Object.values(cellErrors).find(item => !isValidAmount(inputsByAccount.get(item.accountId)?.amounts[item.month] || "0"))?.message;
   const { rows, calculationFailed } = useMemo(() => {
     const invalid = draft?.rows.some(row => Object.values(row.amounts).some(value => value !== undefined && value !== "" && !isValidAmount(value))) ?? false;
     try {
@@ -33,6 +25,24 @@ export function PreviousAmountGrid({ contents, draft, onChange }: {
       return { rows: buildCostTable(contents.accounts, contents.aggregations, [], contents.fiscalYear), calculationFailed: true };
     }
   }, [contents, draft]);
+  // A coordinate selection belongs to this exact displayed row structure.
+  // Remount interaction state before painting reordered/inserted/deleted rows.
+  const structure = rows.map(row => `${row.kind}:${row.id}`).join("|");
+  return <PreviousAmountGridBody key={structure} contents={contents} draft={draft} onChange={onChange} rows={rows} calculationFailed={calculationFailed} />;
+}
+
+function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFailed }: {
+  contents: PlanContents; draft: PreviousInput | undefined; onChange: (draft: PreviousInput) => void;
+  rows: ReturnType<typeof buildCostTable>; calculationFailed: boolean;
+}) {
+  const { selection, setSelection, editing, setEditing, table, dragging, original, bounds, focus, extendSelection } = useGridInteraction();
+  const [error, setError] = useState("");
+  const [cellErrors, setCellErrors] = useState<Record<string, { accountId: number; month: number; message: string }>>({});
+  const clearCellError = (accountId: number, month: number) => setCellErrors(current => {
+    const next = { ...current }; delete next[`${accountId}:${month}`]; return next;
+  });
+  const inputsByAccount = useMemo(() => new Map(draft?.rows.map(row => [row.accountId, row])), [draft?.rows]);
+  const cellError = Object.values(cellErrors).find(item => !isValidAmount(inputsByAccount.get(item.accountId)?.amounts[item.month] || "0"))?.message;
   const salesGroupId = contents.aggregations.find(group => group.required === "sales")?.id;
   const periodAmounts = useMemo(() => {
     const sales = rows.find(row => row.kind === "group" && row.id === salesGroupId);

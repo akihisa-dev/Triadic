@@ -1,0 +1,30 @@
+import { test, expect } from "@playwright/test";
+for (const action of ["並び替え", "挿入", "削除"]) test(`前年表は${action}の保存統合で選択を解除する`, async ({page}) => {
+  await page.goto('/tests/ui/previous-selection.html');
+  const a = page.getByRole('textbox', {name:'売上高 4月の前年金額', exact:true});
+  const b = page.getByRole('textbox', {name:'グループ売上高 4月の前年金額', exact:true});
+  await a.fill('101'); await a.press('Enter'); await a.click();
+  await a.press('Shift+ArrowRight');
+  await expect(page.locator('.previous-cell-selected')).toHaveCount(2);
+  await page.getByRole('button', {name:`${action}を統合`, exact:true}).click();
+  await expect(page.locator('output')).toHaveText(`${action}の保存統合完了`);
+  await expect(page.locator('.previous-cell-selected')).toHaveCount(0);
+  await expect(a).not.toBeFocused(); await expect(b).not.toBeFocused();
+  await page.locator('body').press('Delete');
+  await expect(a).toHaveValue('101'); await expect(b).toHaveValue('200');
+  await a.click(); await a.press('Delete');
+  await expect(a).toHaveValue('0'); await expect(b).toHaveValue('200');
+  await a.evaluate(node => {const clipboardData=new DataTransfer();clipboardData.setData('text/plain','777');node.dispatchEvent(new ClipboardEvent('paste',{bubbles:true,clipboardData}));});
+  await expect(a).toHaveValue('777'); await expect(b).toHaveValue('200');
+  await expect(a).toBeFocused();
+  await expect(page.locator('.previous-cell-selected')).toHaveCount(1);
+});
+test('前年表は行構成の変わらない属性変更では選択を維持する', async ({page}) => {
+  await page.goto('/tests/ui/previous-selection.html');
+  const a=page.getByRole('textbox',{name:'売上高 4月の前年金額',exact:true});
+  await a.click();await a.press('Shift+ArrowRight');
+  await page.getByRole('button',{name:'属性変更を統合'}).click();
+  await expect(page.locator('output')).toHaveText('属性変更の保存統合完了');
+  await expect(page.locator('.previous-cell-selected')).toHaveCount(2);
+  await expect(page.getByRole('textbox',{name:'売上高 5月の前年金額',exact:true})).toBeFocused();
+});
