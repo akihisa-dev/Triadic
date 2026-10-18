@@ -1,5 +1,6 @@
 import { hasUnclassifiedAmount } from "../core/domain/budgetHints";
 import { AccountRowSelect } from "./AccountRowSelect";
+import { gridCellEvents, nextGridCell } from "./gridCellEvents";
 import { useGridInteraction } from "./useGridInteraction";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -22,7 +23,8 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
   isSaving: boolean; onDraftChange: (draft: InitiativeEntryDraft) => void;
 }) {
   const readOnly = useHistoryReadOnly();
-  const { selection, setSelection, editing, setEditing, table, dragging, original, bounds, focus, extendSelection } = useGridInteraction();
+  const grid = useGridInteraction();
+  const { selection, setSelection, setEditing, table, original, bounds, extendSelection } = grid;
   const [error, setError] = useState("");
   const [activeAccount, setActiveAccount] = useState<string | null>(null);
   const originalInherited = useRef(false);
@@ -88,88 +90,43 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                     original.current = invalidInput?.original ?? value;
                     originalInherited.current = invalidInput?.inherited ?? (kind === 2 && row.overrides?.[2]?.[month] === undefined);
                   };
+                  const acceptInput = (input: HTMLInputElement) => {
+                    if (invalidInput || input.validity.badInput) { setError("金額に有効な数値を入力してください。"); return false; }
+                    return true;
+                  };
+                  const events = gridCellEvents(grid, cell, value, {
+                    captureOriginal, blocked: isSaving, onTyping: input => input.select(),
+                    change: (value, badInput) => changeCell(cell, value, badInput),
+                    cancel: editing => {
+                      if (editing || invalidInput) onDraftChange(cancelInitiativeCell(draft, kind, cell, { original: original.current, inherited: originalInherited.current }));
+                      setError("");
+                    },
+                    commit: input => {
+                      if (!acceptInput(input)) return false;
+                      try { changeCell(cell, normalizeGridAmount(value)); setError(""); return true; }
+                      catch (failure) { setError((failure as Error).message); return false; }
+                    },
+                    fill: (selection, text, input) => {
+                      if (input && !acceptInput(input)) return;
+                      apply(() => fillInitiativeGrid(draft, kind, selection, text));
+                    },
+                    paste: (start, text, selection) => apply(() => pasteInitiativeGrid(draft, kind, start, text, selection)),
+                    copy: bounds => draft.rows.slice(bounds.top, bounds.bottom + 1).map((_, offset) =>
+                      months.slice(bounds.left, bounds.right + 1).map((_, columnOffset) => valueAt({ row: bounds.top + offset, column: bounds.left + columnOffset }) || "0").join("\t")
+                    ).join("\n"),
+                    next: (from, key, shift) => nextGridCell(from, key, shift, draft.rows.length, target => canEditInitiativeCell(draft, kind, target)),
+                  });
                   const selected = bounds && index >= bounds.top && index <= bounds.bottom && column >= bounds.left && column <= bounds.right;
                   return <td key={month} className={selected ? "initiative-cell-selected" : ""}
                     onPointerEnter={event => extendSelection(cell, event.buttons)}
-                    onPointerDown={event => {
-                      if (isSaving || event.button !== 0 || (event.target as HTMLElement).closest("button")
-                        || (editing && selection?.end.row === index && selection.end.column === column && !event.shiftKey)) return;
-                      event.preventDefault(); dragging.current = true; focus(cell, event.shiftKey);
-                    }}>
+                    onPointerDown={events.onPointerDown}>
                     <input type="number" step="0.001" inputMode="decimal" data-row={index} data-column={column}
                       ref={input => { if (input) input.setCustomValidity(invalidInput ? "金額に有効な数値を入力してください。"
                         : input.value === "" || isValidAmount(input.value) ? "" : "金額は千円単位・小数点以下3桁までで入力してください。"); }}
                       aria-label={`${accountName} ${month}月の金額`}
                       aria-invalid={Boolean(invalidInput) || value !== "" && !isValidAmount(value)}
                       disabled={readOnly || isSaving || !canEditInitiativeCell(draft, kind, cell)} value={value}
-                      onFocus={event => {
-                        captureOriginal(); event.currentTarget.select();
-                        setSelection(current => current && (current.anchor.row === index && current.anchor.column === column
-                          || current.end.row === index && current.end.column === column) ? current : { anchor: cell, end: cell });
-                      }}
-                      onBlur={() => setEditing(false)}
-                      onDoubleClick={() => { setEditing(true); captureOriginal(); }}
-                      onChange={event => {
-                        if (!editing) captureOriginal();
-                        setEditing(true);
-                        changeCell(cell, event.target.value, event.target.validity.badInput);
-                      }}
-                      onCopy={event => {
-                        if (editing || !bounds) return;
-                        event.preventDefault();
-                        event.clipboardData.setData("text/plain", draft.rows.slice(bounds.top, bounds.bottom + 1).map((_, offset) =>
-                          months.slice(bounds.left, bounds.right + 1).map((_, columnOffset) => valueAt({ row: bounds.top + offset, column: bounds.left + columnOffset }) || "0").join("\t")
-                        ).join("\n"));
-                      }}
-                      onPaste={event => {
-                        if (!event.clipboardData.types.includes("text/plain")) { event.preventDefault(); return; }
-                        if (editing) return;
-                        event.preventDefault();
-                        const text = event.clipboardData.getData("text/plain");
-                        apply(() => pasteInitiativeGrid(draft, kind, bounds ? { row: bounds.top, column: bounds.left } : cell, text, selection));
-                      }}
-                      onKeyDown={event => {
-                        if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229 || isSaving) return;
-                        if (!editing && event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) event.currentTarget.select();
-                        if (event.key === "Escape") {
-                          event.preventDefault(); if (editing || invalidInput) onDraftChange(cancelInitiativeCell(draft, kind, cell, { original: original.current, inherited: originalInherited.current }));
-                          setEditing(false); setSelection({ anchor: cell, end: cell }); setError(""); return;
-                        }
-                        if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && selection) {
-                          event.preventDefault();
-                          if (invalidInput || event.currentTarget.validity.badInput) { setError("金額に有効な数値を入力してください。"); return; }
-                          apply(() => fillInitiativeGrid(draft, kind, selection, value)); return;
-                        }
-                        if (["Delete", "Backspace"].includes(event.key) && !editing && selection) {
-                          event.preventDefault(); apply(() => fillInitiativeGrid(draft, kind, selection, "0")); return;
-                        }
-                        if (event.key === "F2") { event.preventDefault(); captureOriginal(); setEditing(true); return; }
-                        if (editing && !["Enter", "Tab"].includes(event.key)) return;
-                        if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter", "Tab"].includes(event.key)) return;
-                        event.preventDefault();
-                        if (editing) {
-                          if (invalidInput || event.currentTarget.validity.badInput) { setError("金額に有効な数値を入力してください。"); return; }
-                          try { changeCell(cell, normalizeGridAmount(value)); setError(""); }
-                          catch (failure) { setError((failure as Error).message); return; }
-                        }
-                        const from = event.shiftKey && !editing && selection ? selection.end : cell;
-                        let row = from.row, col = from.column;
-                        const backwards = event.key === "ArrowUp" || event.key === "ArrowLeft" || (event.shiftKey && ["Enter", "Tab"].includes(event.key));
-                        const step = backwards ? -1 : 1;
-                        if (["ArrowUp", "ArrowDown", "Enter"].includes(event.key)) row += step;
-                        else col += step;
-                        if (event.key === "Tab") {
-                          if (col > 11) { col = 0; row++; }
-                          if (col < 0) { col = 11; row--; }
-                        }
-                        while (row >= 0 && row < draft.rows.length && col >= 0 && col < 12
-                          && !canEditInitiativeCell(draft, kind, { row, column: col })) {
-                          if (["ArrowUp", "ArrowDown", "Enter"].includes(event.key)) row += step;
-                          else { col += step; if (event.key === "Tab") { if (col > 11) { col = 0; row++; } if (col < 0) { col = 11; row--; } } }
-                        }
-                        if (canEditInitiativeCell(draft, kind, { row, column: col })) focus({ row, column: col }, event.shiftKey && event.key.startsWith("Arrow"));
-                        else { setEditing(false); if (event.key === "Tab") event.currentTarget.blur(); }
-                      }}
+                      {...events.input}
                     />
                   </td>
                 })}

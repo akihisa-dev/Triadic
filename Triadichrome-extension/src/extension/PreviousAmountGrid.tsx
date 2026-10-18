@@ -1,5 +1,6 @@
 import { useAdaptiveTableHeader } from "./useAdaptiveTableHeader";
 import { normalizeGridAmount } from "../core/tables/grid";
+import { gridCellEvents, nextGridCell } from "./gridCellEvents";
 import { useGridInteraction } from "./useGridInteraction";
 import { useMemo, useState } from "react";
 import { previousByAccount } from "../core/tables/planTables";
@@ -38,7 +39,8 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
   contents: PlanContents; draft: PreviousInput | undefined; onChange: (draft: PreviousInput) => void;
   rows: ReturnType<typeof buildCostTable>; calculationFailed: boolean;
 }) {
-  const { selection, setSelection, editing, setEditing, table, dragging, original, bounds, focus, extendSelection } = useGridInteraction();
+  const grid = useGridInteraction();
+  const { selection, setEditing, table, original, bounds, extendSelection } = grid;
   const freezeHeader = useAdaptiveTableHeader(table);
   const [error, setError] = useState("");
   const [cellErrors, setCellErrors] = useState<Record<string, { accountId: number; month: number; message: string }>>({});
@@ -73,56 +75,37 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
             const cell = { row: rowIndex, column };
             const selected = bounds && rowIndex >= bounds.top && rowIndex <= bounds.bottom && column >= bounds.left && column <= bounds.right;
             const value = inputsByAccount.get(row.id)?.amounts[month] ?? "0";
+            const events = row.kind === "account" && draft ? gridCellEvents(grid, cell, value, {
+              captureOriginal: () => { original.current = value; },
+              change: value => changeCell(row.id, month, value),
+              cancel: editing => {
+                if (editing) {
+                  changeCell(row.id, month, original.current);
+                  if (isValidAmount(original.current || "0")) clearCellError(row.id, month);
+                }
+              },
+              commit: () => {
+                try { changeCell(row.id, month, normalizeGridAmount(value)); clearCellError(row.id, month); return true; }
+                catch (failure) { setCellErrors(current => ({ ...current, [`${row.id}:${month}`]: { accountId: row.id, month, message: (failure as Error).message } })); return false; }
+              },
+              fill: (selection, text) => apply(() => fillPreviousGrid(draft, rowIds, selection, text)),
+              paste: (start, text, selection) => apply(() => pastePreviousGrid(draft, rowIds, start, text, selection)),
+              copy: bounds => rows.slice(bounds.top, bounds.bottom + 1).map(item => initiativeMonths.slice(bounds.left, bounds.right + 1).map(m =>
+                item.kind === "account" ? inputsByAccount.get(item.id)?.amounts[m] || "0" : calculationFailed ? "" : item.kind === "ratio" ? formatRate(item.previous[m]) : item.previous[m] === undefined ? "" : yenToAmount(item.previous[m]!)
+              ).join("\t")).join("\n"),
+              next: (from, key, shift) => {
+                const vertical = key === "ArrowUp" || ((key === "Enter" || key === "Tab") && shift) ? -1 : 1;
+                return nextGridCell(from, key, shift, rows.length, target => rowIds[target.row] !== null,
+                  target => ({ ...target, row: target.row + vertical }));
+              },
+            }) : null;
             return <td key={month} className={`${row.kind === "account" && draft ? "previous-input-cell" : ""}${selected ? " previous-cell-selected" : ""}`}
               onPointerEnter={event => extendSelection(cell, event.buttons)}>
               {row.kind !== "account" || !draft ? (calculationFailed ? "" : row.kind === "ratio" ? formatRate(row.previous[month]) : formatYen(row.previous[month])) :
                 <input type="text" inputMode="decimal" data-row={rowIndex} data-column={column}
                   aria-label={`${row.name} ${month}月の前年金額`} aria-invalid={value !== undefined && value !== "" && !isValidAmount(value)} value={value}
-                  onFocus={event => { original.current = value; event.currentTarget.select(); setSelection(current => current && (current.anchor.row === rowIndex && current.anchor.column === column || current.end.row === rowIndex && current.end.column === column) ? current : { anchor: cell, end: cell }); }}
-                  onBlur={() => setEditing(false)}
-                  onPointerDown={event => {
-                    if (event.button !== 0 || (editing && selection?.end.row === rowIndex && selection.end.column === column && !event.shiftKey)) return;
-                    event.preventDefault(); dragging.current = true; focus(cell, event.shiftKey);
-                  }}
-                  onDoubleClick={() => { setEditing(true); original.current = value; }}
-                  onChange={event => { if (!editing) original.current = value; setEditing(true); changeCell(row.id, month, event.target.value); }}
-                  onCopy={event => {
-                    if (editing || !bounds) return;
-                    event.preventDefault();
-                    event.clipboardData.setData("text/plain", rows.slice(bounds.top, bounds.bottom + 1).map(item => initiativeMonths.slice(bounds.left, bounds.right + 1).map(m =>
-                      item.kind === "account" ? inputsByAccount.get(item.id)?.amounts[m] || "0" : calculationFailed ? "" : item.kind === "ratio" ? formatRate(item.previous[m]) : item.previous[m] === undefined ? "" : yenToAmount(item.previous[m]!)
-                    ).join("\t")).join("\n"));
-                  }}
-                  onPaste={event => {
-                    if (!event.clipboardData.types.includes("text/plain")) { event.preventDefault(); return; }
-                    if (editing) return;
-                    event.preventDefault();
-                    const start = bounds ? { row: bounds.top, column: bounds.left } : cell;
-                    const text = event.clipboardData.getData("text/plain");
-                    apply(() => pastePreviousGrid(draft, rowIds, start, text, selection));
-                  }}
-                  onKeyDown={event => {
-                    if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
-                    if (event.key === "Escape") { event.preventDefault(); if (editing) { changeCell(row.id, month, original.current); if (isValidAmount(original.current || "0")) clearCellError(row.id, month); } setEditing(false); setSelection({ anchor: cell, end: cell }); return; }
-                    if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && selection) { event.preventDefault(); apply(() => fillPreviousGrid(draft, rowIds, selection, value)); return; }
-                    if ((event.key === "Delete" || event.key === "Backspace") && !editing && selection) { event.preventDefault(); apply(() => fillPreviousGrid(draft, rowIds, selection, "0")); return; }
-                    if (event.key === "F2") { event.preventDefault(); original.current = value; setEditing(true); return; }
-                    if (editing && event.key !== "Enter" && event.key !== "Tab") return;
-                    if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter", "Tab"].includes(event.key)) return;
-                    event.preventDefault();
-                    if (editing) { try { changeCell(row.id, month, normalizeGridAmount(value)); clearCellError(row.id, month); } catch (failure) { setCellErrors(current => ({ ...current, [`${row.id}:${month}`]: { accountId: row.id, month, message: (failure as Error).message } })); return; } }
-                    const from = event.shiftKey && !editing && selection ? selection.end : cell;
-                    let nextRow = from.row, nextColumn = from.column;
-                    if (event.key === "ArrowLeft") nextColumn--;
-                    if (event.key === "ArrowRight") nextColumn++;
-                    if (event.key === "Tab") { nextColumn += event.shiftKey ? -1 : 1; if (nextColumn > 11) { nextColumn = 0; nextRow++; } if (nextColumn < 0) { nextColumn = 11; nextRow--; } }
-                    const vertical = event.key === "ArrowUp" || (["Enter", "Tab"].includes(event.key) && event.shiftKey) ? -1 : 1;
-                    if (["ArrowUp", "ArrowDown", "Enter"].includes(event.key)) nextRow += vertical;
-                    while (nextRow >= 0 && nextRow < rows.length && rowIds[nextRow] === null) nextRow += vertical;
-                    if (nextRow >= 0 && nextRow < rows.length && nextColumn >= 0 && nextColumn < 12) focus({ row: nextRow, column: nextColumn }, event.shiftKey && event.key.startsWith("Arrow"));
-                    else if (event.key === "Tab") { event.currentTarget.blur(); setEditing(false); }
-                    else setEditing(false);
-                  }} />}
+                  onPointerDown={events!.onPointerDown}
+                  {...events!.input} />}
             </td>;
           })}
           {previousPeriods.map((period, index) => <td key={period.id} className={periodCellClass(period, true)}>
