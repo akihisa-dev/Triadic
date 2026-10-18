@@ -24,16 +24,28 @@ test('Excelは初回入出力だけで読み込み、読み込み途中でも他
   await navigate(page,'施策一覧');await expect(page.getByRole('heading',{name:'施策一覧',exact:true})).toBeVisible();
 });
 test('入出力コードの読込失敗で計画を保持し、再読込後に開き直せる',async({page})=>{
-  let requests=0;
-  await page.route('**/SpreadsheetIOPage-*.js',async route=>{requests++;if(requests===1)await route.abort();else await route.continue();});
-  await openProduction(page);await navigate(page,'入出力');
+  let blocked=0, recovered=0, failLoading=true;
+  await page.route(/SpreadsheetIOPage-[^/]+\.js(?:\?.*)?$/,async route=>{
+    if(failLoading){blocked++;await route.abort();}
+    else{recovered++;await route.continue();}
+  });
+  await openProduction(page);await navigate(page,'総原価表');
+  const sales = page.locator('.cost-data-row').first();
+  await expect(sales).toBeVisible();
+  const savedAmounts = await sales.allTextContents();
+  await navigate(page,'入出力');
   await expect(page.getByRole('alert')).toContainText('保存済みの計画は保持');
   await navigate(page,'総原価表');await expect(page.getByRole('table',{name:'総原価表',exact:true})).toBeVisible();
+  expect(await sales.allTextContents()).toEqual(savedAmounts);
   await navigate(page,'入出力');await expect(page.getByRole('alert')).toBeVisible();
+  expect(blocked).toBeGreaterThan(0);
+  expect(recovered).toBe(0);
+  failLoading=false;
   page.once('dialog',dialog=>dialog.accept());
   await page.getByRole('button',{name:'画面を再読み込み',exact:true}).click();
   await openProduction(page);await navigate(page,'入出力');
   await expect(page.getByRole('button',{name:'選んだ表を出力',exact:true})).toBeVisible();
-  expect(requests).toBe(2);
+  expect(recovered).toBeGreaterThan(0);
   await navigate(page,'総原価表');await expect(page.getByRole('table',{name:'総原価表',exact:true})).toBeVisible();
+  expect(await sales.allTextContents()).toEqual(savedAmounts);
 });
