@@ -199,7 +199,9 @@ test("施策名・備考・月別金額を入力し、画面を往復しても�
   const titleBox = (await app.getByRole("heading", { name: "施策入力", exact: true }).boundingBox())!;
   const nameBox = (await name.boundingBox())!;
   expect(nameBox.y).toBeGreaterThan(titleBox.y + titleBox.height);
-  expect(nameBox.x).toBe(titleBox.x);
+  const backBox = (await app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true }).boundingBox())!;
+  expect(Math.abs(backBox.y + backBox.height / 2 - titleBox.y - titleBox.height / 2)).toBeLessThan(1);
+  expect(nameBox.x).toBe(backBox.x);
   const registerBox = (await app.getByRole("button", { name: "登録", exact: true }).boundingBox())!;
   expect(registerBox.x).toBeGreaterThanOrEqual(nameBox.x);
   expect(registerBox.y).toBeGreaterThanOrEqual(nameBox.y);
