@@ -114,7 +114,9 @@ test("施策がない展開も名称とゼロの小計を同じ列で表示す�
   await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "確定予算");
   await settleMotion(app.locator("body"));
   const rows = app.locator(".expansion-table .expansion-subtotal");
-  await expect(rows).toHaveCount(7);
+  await expect(rows).toHaveCount(8);
+  await expect(rows.locator(".expansion-group")).toHaveText(["コスト", "料金改定", "荷主撤退", "物量増減", "売上拡販", "拠点集約", "生産性向上", "効率化"]);
+  await expect(rows.locator(".expansion-subtotal-name")).toHaveText(["コスト計", "料金改定計", "荷主撤退計", "物量増減計", "売上拡販計", "拠点集約計", "生産性向上計", "効率化計"]);
   for (const row of await rows.all()) {
     await expect(row.locator("th")).toHaveCount(2);
     await expect(row.locator(".expansion-subtotal-name")).toHaveAttribute("colspan", "3");

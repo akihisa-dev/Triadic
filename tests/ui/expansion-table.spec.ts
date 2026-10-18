@@ -10,7 +10,7 @@ test("展開名ごとの集計・並び順・編集からの移動と再読込�
   await expect(table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "前年", exact: true }) }).getByRole("cell").first()).toHaveText("20,342");
   await expect(table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "合計", exact: true }) }).getByRole("cell").first()).toHaveText("20,757");
   await expect(table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "展開計", exact: true }) }).getByRole("cell").first()).toHaveText("415");
-  await expect(table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "撤退計", exact: true }) }).getByRole("cell").first()).toHaveText("");
+  await expect(table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "荷主撤退計", exact: true }) }).getByRole("cell").first()).toHaveText("");
   await expect(table.locator("thead tr").first().locator("th").first()).toHaveText("展開名");
   await expect(table.locator("thead tr").first().locator("th").nth(1)).toHaveText("期間名");
   await expect(table.locator("thead tr").first().locator("th").nth(2)).toHaveText("展開区分");
