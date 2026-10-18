@@ -1,3 +1,4 @@
+import { prepareClassificationPlan } from "./classification-plan";
 import { test, expect, settleMotion, selectClassification } from "./fixtures";
 
 test("前年は列見出しから社内控除後売上まで縦横スクロール中も固定する", async ({ page, app }, testInfo) => {
@@ -132,7 +133,7 @@ test("前年の初期合計・片側の分類・全件への切り替え", async
 
 
 test("部署・業種の順序、所属候補と期間合計の表示・入力追従", async ({ page, app }) => {
-  await page.goto("/tests/ui/preview.html?data=large");
+  await prepareClassificationPlan(page);
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("navigation").getByRole("button", { name: "前年入力", exact: true }).click();
@@ -154,6 +155,11 @@ test("部署・業種の順序、所属候補と期間合計の表示・入力�
   await expect(sales.locator("td.period-half")).toHaveText(["6,001", "6,000"]);
   await expect(sales.locator("td.period-annual")).toHaveText("12,001");
   await expect(app.locator(".previous-grid .period-half input, .previous-grid .period-annual input")).toHaveCount(0);
+  await april.press("Tab");
+  const navigation = app.getByRole("navigation", { name: "メインナビゲーション" });
+  await navigation.getByRole("button", { name: "総原価表", exact: true }).click();
+  await navigation.getByRole("button", { name: "前年入力", exact: true }).click();
+  await expect(april).toHaveValue("1001.499");
   await expect.poll(() => app.locator("html").evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
 });
 

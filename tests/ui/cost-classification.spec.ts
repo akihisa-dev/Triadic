@@ -1,3 +1,4 @@
+import { prepareClassificationPlan } from "./classification-plan";
 import { test, expect, settleMotion } from "./fixtures";
 
 test("総原価表は部署・業種の順のドロップダウンで個別と全件合計を切り替える", async ({ page, app }) => {
@@ -28,7 +29,7 @@ test("総原価表は部署・業種の順のドロップダウンで個別と�
 });
 
 test("金額未登録の分類も候補に表示し、部署の所属に絞る", async ({ page, app }) => {
-  await page.goto("/tests/ui/preview.html?data=large");
+  await prepareClassificationPlan(page);
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("navigation").getByRole("button", { name: "総原価表", exact: true }).click();
