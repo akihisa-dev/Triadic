@@ -22,7 +22,21 @@ test("マスタの直下の日時履歴から全画面を閲覧でき、編集�
   await expect(app.getByRole("textbox", { name: "施策名", exact: true })).toBeDisabled();
   await expect(app.getByRole("textbox", { name: "備考", exact: true })).toHaveValue("履歴確認用の過去の状態");
   const firstAmount = app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).first();
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
+  await expect(app.getByRole("tab", { name: "一次予算", exact: true })).toHaveAttribute("aria-selected", "true");
   await expect(firstAmount).toHaveValue("100");
+  await expect(firstAmount).toBeDisabled();
+  await app.getByRole("tab", { name: "確定予算", exact: true }).click();
+  await expect(firstAmount).toHaveValue("130");
+  await expect(app.getByRole("tab", { name: "確定予算", exact: true })).toHaveAttribute("aria-selected", "true");
+  await app.getByRole("button", { name: "現在に戻る", exact: true }).click();
+  await menu.getByRole("button", { name: "履歴", exact: true }).click();
+  await app.locator(".history-date").nth(1).click();
+  await menu.getByRole("button", { name: "施策一覧", exact: true }).click();
+  await app.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
+  await expect(app.getByRole("tab", { name: "一次予算", exact: true })).toHaveAttribute("aria-selected", "true");
+  await expect(firstAmount).toHaveValue("110");
   await expect(firstAmount).toBeDisabled();
   await app.getByRole("tab", { name: "確定予算", exact: true }).click();
   await expect(firstAmount).toHaveValue("130");
@@ -47,6 +61,8 @@ test("マスタの直下の日時履歴から全画面を閲覧でき、編集�
   await expect(app.locator(".history-date"), "閲覧で履歴を増やさない").toHaveCount(3);
   await menu.getByRole("button", { name: "施策一覧", exact: true }).click();
   await app.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
+  await expect(app.getByRole("tab", { name: "一次予算", exact: true })).toHaveAttribute("aria-selected", "true");
   await expect(firstAmount).toHaveValue("120");
   await expect(firstAmount).toBeEnabled();
 });
@@ -66,6 +82,8 @@ test("復元確認の取消、復元成功、復元前へ戻す操作と再読�
   await app.locator(".history-date").nth(1).click();
   await menu.getByRole("button", { name: "施策一覧", exact: true }).click();
   await app.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
+  await expect(app.getByRole("tab", { name: "一次予算", exact: true })).toHaveAttribute("aria-selected", "true");
   await expect(app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).first()).toHaveValue("120");
   await app.getByLabel("過去のデータを閲覧中").getByRole("button", { name: "この時点に戻す", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "この時点に戻す", exact: true }).click();
@@ -102,6 +120,8 @@ test("複数選択・指定日時より前の削除は確認後だけ行い、�
   await expect(app.locator(".history-date")).toHaveCount(0);
   await menu.getByRole("button", { name: "施策一覧", exact: true }).click();
   await app.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
+  await expect(app.getByRole("tab", { name: "一次予算", exact: true })).toHaveAttribute("aria-selected", "true");
   await expect(app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).first()).toHaveValue("120");
 });
 
@@ -143,6 +163,8 @@ test("復元の保存失敗では閲覧中の状態と現在のデータを保�
   await expect(app.locator(".history-date")).toHaveCount(3);
   await menu.getByRole("button", { name: "施策一覧", exact: true }).click();
   await app.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
+  await expect(app.getByRole("tab", { name: "一次予算", exact: true })).toHaveAttribute("aria-selected", "true");
   await expect(app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).first()).toHaveValue("120");
 });
 
@@ -254,5 +276,7 @@ test("自動記録エラーは閉じる操作を出さず、通常通知を閉�
   await expect(app.locator(".history-date")).toHaveCount(4);
   await menu.getByRole("button", { name: "施策一覧", exact: true }).click();
   await app.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
+  await expect(app.getByRole("tab", { name: "一次予算", exact: true })).toHaveAttribute("aria-selected", "true");
   await expect(app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).first()).toHaveValue("120");
 });

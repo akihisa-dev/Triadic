@@ -13,6 +13,8 @@ test("複製した全種別を調整して登録し、元の施策と独立し�
   const name = app.getByRole("textbox", { name: "施策名", exact: true });
   const april = app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).first();
   await expect(name).toHaveValue("既存商品の販売拡大（コピー）");
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
+  await expect(app.getByRole("tab", { name: "一次予算", exact: true })).toHaveAttribute("aria-selected", "true");
   await expect(april).toHaveValue("120");
   await app.getByRole("tab", { name: "確定予算", exact: true }).click();
   await expect(april).toHaveValue("130");
@@ -28,12 +30,16 @@ test("複製した全種別を調整して登録し、元の施策と独立し�
   await expect(app.getByRole("button", { name: "既存商品の販売拡大（コピー）", exact: true })).toHaveCount(0);
   await app.getByRole("button", { name: "操作をやり直す", exact: true }).click();
   await app.getByRole("button", { name: "既存商品の販売拡大（コピー）", exact: true }).click();
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
+  await expect(app.getByRole("tab", { name: "一次予算", exact: true })).toHaveAttribute("aria-selected", "true");
   await expect(april).toHaveValue("120.001");
   await app.getByRole("button", { name: "複製して新規作成", exact: true }).click();
   await expect(name).toHaveValue("既存商品の販売拡大（コピー）（コピー）");
   await app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "破棄して一覧へ戻る", exact: true }).click();
   await app.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
+  await expect(app.getByRole("tab", { name: "一次予算", exact: true })).toHaveAttribute("aria-selected", "true");
   await expect(april).toHaveValue("120");
 });
 
@@ -82,10 +88,14 @@ test("複製の登録失敗では入力を保持し、元の施策へ影響し�
   await app.getByRole("button", { name: "登録", exact: true }).click();
   await expect(app.getByRole("alert")).toBeVisible();
   await expect(app.getByRole("textbox", { name: "施策名", exact: true })).toHaveValue("既存商品の販売拡大（コピー）");
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
+  await expect(app.getByRole("tab", { name: "一次予算", exact: true })).toHaveAttribute("aria-selected", "true");
   await expect(app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).first()).toHaveValue("120");
   await app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "破棄して一覧へ戻る", exact: true }).click();
   await expect(app.getByRole("button", { name: "既存商品の販売拡大（コピー）", exact: true })).toHaveCount(0);
   await app.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
+  await expect(app.getByRole("tab", { name: "一次予算", exact: true })).toHaveAttribute("aria-selected", "true");
   await expect(app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).first()).toHaveValue("120");
 });
