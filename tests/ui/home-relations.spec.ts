@@ -84,10 +84,22 @@ test("ドラッグには接続線が追従し、離すと元の配置へ滑ら�
   const neighborAfter = (await neighbor.boundingBox())!;
   expect(neighborAfter.x).toBeCloseTo(neighborBefore.x, 1);
   expect(neighborAfter.y).toBeCloseTo(neighborBefore.y, 1);
+  // Capture before React handles the real release and after its handler in the same event task.
+  // No animation frame can run between these two measurements.
+  await input.evaluate(node => {
+    window.addEventListener("pointerup", () => {
+      const before = node.getBoundingClientRect();
+      window.addEventListener("pointerup", () => {
+        const after = node.getBoundingClientRect();
+        node.setAttribute("data-release-delta", JSON.stringify([after.x - before.x, after.y - before.y]));
+      }, { once: true });
+    }, { once: true, capture: true });
+  });
   await page.mouse.up();
+  const releaseDelta = JSON.parse((await input.getAttribute("data-release-delta"))!) as number[];
+  expect(releaseDelta).toHaveLength(2);
+  for (const delta of releaseDelta) expect(Math.abs(delta)).toBeLessThan(1);
   await expect(home).toBeVisible();
-  const released = (await input.boundingBox())!;
-  expect(Math.abs(released.x - dragged.x)).toBeLessThan(15);
   await expect.poll(async () => Math.abs((await input.boundingBox())!.x - box.x)).toBeLessThan(.1);
   await input.locator(".home-relation-name").click();
   await expect(input).toHaveAttribute("aria-pressed", "true");
