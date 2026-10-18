@@ -1,6 +1,6 @@
 import { test, expect, settleMotion } from './fixtures';
 
-test('縦書き集計名が表示範囲の中央へ追従し、行とL字を再構築しない', async ({ app }) => {
+test('縦書き集計名が表示範囲の中央へ追従し、行とL字を再構築しない', async ({ app }, testInfo) => {
   await app.getByRole('button', { name: '新規作成', exact: true }).click();
   await app.getByRole('button', { name: 'サイドバーを開く', exact: true }).click();
   await app.getByRole('button', { name: 'マスタ', exact: true }).click();
@@ -10,15 +10,22 @@ test('縦書き集計名が表示範囲の中央へ追従し、行とL字を再�
     const table = node as HTMLTableElement;
     const region = table.closest('.aggregation-grid-scroll')!;
     const sign = table.querySelector('.master-sign-selector')!.getBoundingClientRect();
+    const page = table.closest('.aggregation-master-page')!, container = page.parentElement!;
+    const bounds = page.getBoundingClientRect(), outside = container.getBoundingClientRect();
     return {
       width: table.getBoundingClientRect().width,
       viewport: region.getBoundingClientRect().width,
       rows: [...table.tBodies[0]!.rows].map(row => row.getBoundingClientRect().height),
       sign: [sign.width, sign.height],
+      balance: Math.abs((bounds.left - outside.left) - (outside.right - bounds.right)),
+      available: region.parentElement!.getBoundingClientRect().width - 48,
     };
   });
-  expect(density.width).toBeLessThanOrEqual(542);
-  expect(density.viewport).toBeLessThanOrEqual(542);
+  expect(density.balance).toBeLessThanOrEqual(1);
+  if (testInfo.project.name === 'desktop') {
+    expect(density.viewport).toBeGreaterThan(800);
+    expect(Math.abs(density.viewport - density.available)).toBeLessThanOrEqual(1);
+  }
   expect(density.rows.every(height => height === 31)).toBe(true);
   expect(density.sign).toEqual([64, 30]);
   const region = app.getByRole('region', { name: '集計の構成', exact: true });

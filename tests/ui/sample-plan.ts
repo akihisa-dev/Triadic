@@ -1,3 +1,4 @@
+// 集計マスタの画面幅・左右余白、移動先の仮表示・取消・ドロップ・保存失敗は tests/ui/aggregation-drop.spec.ts と aggregation-master.spec.ts で確認する。保存データは追加しない。
 // 集計マスタの縦横の密度と既存の加減切替寸法、縦書き名の範囲内追従、スクロール時の行・L字・金額不変、ドラッグ時の自動スクロールは tests/ui/aggregation-master.spec.ts で確認する。
 // 集計マスタは既存の科目・集計と共通順を使用する。L字の多段所属・減算・未所属・空集計、保存失敗は tests/ui/aggregation-master.spec.ts で確認する。サンプルの業務データは変更しない。
 // マスタ入口・入出力・履歴の余白と文字・アイコンの維持は tests/ui/compact-surfaces.spec.ts で確認する。保存データは追加しない。

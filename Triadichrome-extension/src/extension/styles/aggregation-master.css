@@ -1,7 +1,7 @@
 .home-content:has(.aggregation-master-page) { overflow: hidden; }
 .page-switch:has(>.aggregation-master-page) { height: 100%; min-height: 0; }
-.aggregation-master-page { display: flex; flex-direction: column; height: 100%; min-height: 0; padding: 6px 8px 8px; gap: 6px; }
-.aggregation-master-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; flex-shrink: 0; width: 100%; max-width: 542px; min-height: 28px; }
+.aggregation-master-page { display: flex; flex-direction: column; height: 100%; min-height: 0; min-width: 0; width: 100%; max-width: 1120px; margin: 0 auto; padding: 12px 24px 16px; gap: 10px; }
+.aggregation-master-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; flex-shrink: 0; width: 100%; min-height: 28px; }
 .aggregation-master-heading>div { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .aggregation-master-heading .secondary-button { min-height: 28px; padding: 3px 7px; font-size: 12px; }
 .aggregation-master-heading h1 { font-size: 18px; margin: 0; }
@@ -9,7 +9,7 @@
 .aggregation-add-form { display: flex; align-items: end; gap: 8px; flex-wrap: wrap; }
 .aggregation-add-form label { display: flex; flex-direction: column; gap: 4px; }
 .aggregation-add-form input { min-height: 32px; }
-.aggregation-grid-scroll { flex: 1; width: 100%; max-width: 542px; min-height: 0; overflow: auto; position: relative; }
+.aggregation-grid-scroll { flex: 1; width: 100%; min-height: 0; overflow: auto; position: relative; scrollbar-gutter: stable; }
 .aggregation-grid-surface { position: relative; width: 100%; isolation: isolate; }
 .aggregation-layout-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-size: 12px; line-height: 18px; position: relative; z-index: 1; }
 .aggregation-layout-table th, .aggregation-layout-table td { height: 31px; padding: 0 5px; background: var(--canvas); border-right: 1px solid var(--table-line); border-bottom: 1px solid var(--table-line); font-weight: 400; text-align: left; }
@@ -35,8 +35,13 @@
 .aggregation-tray-outlines path.is-highlighted { stroke: #426d99; }
 .aggregation-master-page .aggregation-vertical-name { position: absolute; z-index: 3; width: 24px; min-width: 0; min-height: 0; padding: 0; display: flex; align-items: center; justify-content: center; writing-mode: vertical-rl; text-orientation: upright; font-size: 12px; font-weight: 400; line-height: 18px; letter-spacing: 1px; border: 0; border-radius: 0; background: transparent; color: var(--ink); }
 .aggregation-master-page .aggregation-vertical-name:disabled { opacity: 1; }
-.aggregation-layout-table .aggregation-drop-before>:not(.aggregation-gutter) { box-shadow: inset 0 2px var(--ink); }
-.aggregation-layout-table .aggregation-drop-into>:not(.aggregation-gutter) { outline: 1px dashed var(--focus); outline-offset: -2px; }
+.aggregation-layout-table .aggregation-drop-slot>td { height: 36px; border: 0; background: #e6edf4; color: #426d99; padding: 0 6px; }
+.aggregation-layout-table .aggregation-drop-slot>.aggregation-gutter { background: transparent; }
+.aggregation-slot-grip { text-align: center; }
+.aggregation-slot-content { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.aggregation-slot-content small { margin-left: auto; padding-right: 8px; font-size: 11px; }
+.aggregation-layout-table .aggregation-drag-source>th, .aggregation-layout-table .aggregation-drag-source .aggregation-drag-handle { opacity: .3; }
+.aggregation-layout-table .aggregation-drop-into>:not(.aggregation-gutter) { background: #e6edf4; }
 .aggregation-unassign { width: 100%; min-height: 40px; border: 1px dashed var(--line); background: var(--soft); }
 
 .aggregation-layout-table .aggregation-empty>.aggregation-handle-cell, .aggregation-layout-table .aggregation-empty>th { background: var(--soft); border-bottom-color: var(--table-line); }
@@ -47,3 +52,4 @@
 .aggregation-layout-table { z-index: auto; }
 .aggregation-layout-table .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .aggregation-label-text { position: absolute; top: 0; left: 0; width: 24px; height: max-content; display: flex; align-items: center; justify-content: center; white-space: nowrap; will-change: transform; }
+@media (max-width: 640px) { .aggregation-master-page { padding: 10px 12px; } }
