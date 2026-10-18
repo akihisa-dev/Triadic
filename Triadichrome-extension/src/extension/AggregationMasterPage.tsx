@@ -20,7 +20,7 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
   const readOnly = useHistoryReadOnly();
   const order = useMemo(() => orderedMasterRows(accounts, groups), [accounts, groups]);
   const ranges = useMemo(() => aggregationRanges(order, groups), [order, groups]);
-  const gutter = Math.max(44, ...ranges.map(range => (range.lane + 1) * 44));
+  const gutter = Math.max(28, ...ranges.map(range => (range.lane + 1) * 28));
   const byAccount = useMemo(() => new Map(accounts.map(account => [account.id, account])), [accounts]);
   const byGroup = useMemo(() => new Map(groups.map(group => [group.id, group])), [groups]);
   const owners = useMemo(() => new Map(groups.flatMap(group => group.members.map(member => [masterRowKey(member), { parent: group.id, sign: member.sign }] as const))), [groups]);
@@ -78,7 +78,7 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
       const right = first ? first.cells[3]!.getBoundingClientRect().left - rect.left : rect.width;
       const trays = ranges.flatMap(range => range.segments.map((segment, index) => {
         const top = rows[segment.start]!.top, bottom = rows[segment.end]!.bottom;
-        const x = range.lane * 44 + 0.5, spine = x + 38;
+        const x = range.lane * 28 + 0.5, spine = x + 24;
         const target = segment.groupIndex === null ? null : rows[segment.groupIndex]!;
         // Fill and outline use exactly the same geometry as the table cells.
         const path = target
@@ -103,7 +103,7 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
       const node = labelNodes.current.get(tray.key);
       return node ? [{ tray, node, height: node.offsetHeight }] : [];
     });
-    const headerHeight = grid.tHead?.offsetHeight ?? 26;
+    const headerHeight = grid.tHead?.offsetHeight ?? 24;
     let frame = 0;
     const update = () => {
       frame = 0;
@@ -157,10 +157,10 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
         setDragVelocity(event.clientY < bounds.top + edge ? -Math.min(14, (bounds.top + edge - event.clientY) / 3)
           : event.clientY > bounds.bottom - edge ? Math.min(14, (event.clientY - bounds.bottom + edge) / 3) : 0);
       }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) dragVelocity.current = 0; }}>
-      <div className="aggregation-grid-surface" ref={surface} style={{ minWidth: gutter + 400 }}>
+      <div className="aggregation-grid-surface" ref={surface} style={{ minWidth: Math.max(500, gutter + 360) }}>
         <svg className="aggregation-trays aggregation-tray-fills" aria-hidden="true" width={geometry.width} height={geometry.height}>
           {geometry.trays.map(tray => <path key={tray.key} data-group-id={tray.id} d={tray.path} className={highlight === tray.id ? "is-highlighted" : undefined} />)}</svg>
-        <table className="aggregation-layout-table" ref={table} aria-label="集計マスタ"><colgroup><col style={{ width: gutter }} /><col style={{ width: 28 }} /><col /><col style={{ width: 78 }} /></colgroup>
+        <table className="aggregation-layout-table" ref={table} aria-label="集計マスタ"><colgroup><col style={{ width: gutter }} /><col style={{ width: 20 }} /><col /><col style={{ width: 76 }} /></colgroup>
           <thead><tr><th scope="col">集計の範囲</th><th scope="col"><span className="sr-only">移動</span></th><th scope="col">科目・集計</th><th scope="col">加減</th></tr></thead>
           <tbody>{order.map((row, index) => {
             const key = masterRowKey(row), account = row.kind === "account" ? byAccount.get(row.id)! : null, group = row.kind === "group" ? byGroup.get(row.id)! : null;

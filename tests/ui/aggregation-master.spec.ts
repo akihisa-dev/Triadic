@@ -6,6 +6,21 @@ test('縦書き集計名が表示範囲の中央へ追従し、行とL字を再�
   await app.getByRole('button', { name: 'マスタ', exact: true }).click();
   await app.getByRole('button', { name: /^集計マスタ/ }).click();
   await settleMotion(app.locator('body'));
+  const density = await app.locator('.aggregation-layout-table').evaluate(node => {
+    const table = node as HTMLTableElement;
+    const region = table.closest('.aggregation-grid-scroll')!;
+    const sign = table.querySelector('.master-sign-selector')!.getBoundingClientRect();
+    return {
+      width: table.getBoundingClientRect().width,
+      viewport: region.getBoundingClientRect().width,
+      rows: [...table.tBodies[0]!.rows].map(row => row.getBoundingClientRect().height),
+      sign: [sign.width, sign.height],
+    };
+  });
+  expect(density.width).toBeLessThanOrEqual(542);
+  expect(density.viewport).toBeLessThanOrEqual(542);
+  expect(density.rows.every(height => height === 31)).toBe(true);
+  expect(density.sign).toEqual([64, 30]);
   const region = app.getByRole('region', { name: '集計の構成', exact: true });
   const name = app.getByRole('button', { name: '経常利益の範囲', exact: true }).locator('.aggregation-label-text');
   await expect(name).toBeVisible();
