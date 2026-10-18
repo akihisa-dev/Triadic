@@ -35,13 +35,22 @@
 .aggregation-tray-outlines path.is-highlighted { stroke: #426d99; }
 .aggregation-master-page .aggregation-vertical-name { position: absolute; z-index: 3; width: 24px; min-width: 0; min-height: 0; padding: 0; display: flex; align-items: center; justify-content: center; writing-mode: vertical-rl; text-orientation: upright; font-size: 12px; font-weight: 400; line-height: 18px; letter-spacing: 1px; border: 0; border-radius: 0; background: transparent; color: var(--ink); }
 .aggregation-master-page .aggregation-vertical-name:disabled { opacity: 1; }
-.aggregation-layout-table .aggregation-drop-slot>td { height: 36px; border: 0; background: #e6edf4; color: #426d99; padding: 0 6px; }
+.aggregation-layout-table .aggregation-drop-slot>td { height: 36px; border: 0; background: var(--soft); color: var(--ink); padding: 0 6px; }
 .aggregation-layout-table .aggregation-drop-slot>.aggregation-gutter { background: transparent; }
 .aggregation-slot-grip { text-align: center; }
 .aggregation-slot-content { display: flex; align-items: center; gap: 8px; font-size: 12px; }
 .aggregation-slot-content small { margin-left: auto; padding-right: 8px; font-size: 11px; }
+.aggregation-master-page[data-drop-intent="order"] .aggregation-slot-content small { color: var(--muted); }
+.aggregation-master-page[data-drop-intent="member"] .aggregation-drop-slot>td:not(.aggregation-gutter) { background: #e6edf4; color: #426d99; }
+.aggregation-slot-destination { color: #426d99; font-weight: 600; }
+.aggregation-master-page[data-drop-intent="member"] .aggregation-tray-fills path.is-highlighted { fill: #d7e6f3; }
+.aggregation-master-page .aggregation-vertical-name.is-drop-target { color: #426d99; font-weight: 600; }
+.aggregation-master-page[data-drop-intent="member"] .is-member>.aggregation-handle-cell,
+.aggregation-master-page[data-drop-intent="member"] .is-member>th { background: #f0f5f9; }
+.aggregation-master-page[data-drop-intent="member"] .is-member>.aggregation-sign-cell { background: var(--canvas); }
 .aggregation-layout-table .aggregation-drag-source>th, .aggregation-layout-table .aggregation-drag-source .aggregation-drag-handle { opacity: .3; }
-.aggregation-layout-table .aggregation-drop-into>:not(.aggregation-gutter) { background: #e6edf4; }
+.aggregation-master-page[data-drop-intent="member"] .aggregation-layout-table .aggregation-subtotal.aggregation-drop-into>.aggregation-handle-cell,
+.aggregation-master-page[data-drop-intent="member"] .aggregation-layout-table .aggregation-subtotal.aggregation-drop-into>th { background: transparent; color: #426d99; }
 .aggregation-unassign { width: 100%; min-height: 40px; border: 1px dashed var(--line); background: var(--soft); }
 
 .aggregation-layout-table .aggregation-empty>.aggregation-handle-cell, .aggregation-layout-table .aggregation-empty>th { background: var(--soft); border-bottom-color: var(--table-line); }

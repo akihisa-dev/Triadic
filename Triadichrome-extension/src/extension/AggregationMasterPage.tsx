@@ -40,7 +40,7 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
   const draggedGroup = dragged?.kind === "group" ? byGroup.get(dragged.id) : null;
   const draggedName = draggedAccount?.displayName ?? draggedAccount?.accountName ?? draggedGroup?.displayName ?? draggedGroup?.name ?? "";
   const dropGroup = dragged && drop?.into ? Number(drop.key.slice("group:".length)) : null;
-  const highlightedGroup = dropGroup ?? highlight;
+  const highlightedGroup = dragged ? dropGroup : highlight;
   const editGroup = (group: Aggregation) => { if (!disabled) { dismiss(); controller.begin({ id: group.id, name: group.name, displayName: group.displayName ?? group.name }); } };
   const finishEdit = async () => { await controller.flush(); controller.end(); };
   const surface = useRef<HTMLDivElement>(null);
@@ -146,7 +146,7 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
     setDragged(null); setDrop(null);
   };
 
-  return <main className="aggregation-master-page master-data-page" aria-labelledby="aggregation-master-title" aria-busy={isSaving || busy} onCompositionStart={() => controller.pause()} onCompositionEnd={() => controller.resume()}
+  return <main className="aggregation-master-page master-data-page" data-drop-intent={dragged && drop ? drop.into ? "member" : "order" : undefined} aria-labelledby="aggregation-master-title" aria-busy={isSaving || busy} onCompositionStart={() => controller.pause()} onCompositionEnd={() => controller.resume()}
     onKeyDown={event => { if (event.key === "Escape" && dragged) { event.preventDefault(); event.stopPropagation(); setDragged(null); setDrop(null); } }}>
     <div className="aggregation-master-heading"><div><button className="text-button" type="button" disabled={isSaving || busy || autoSave.pending} onClick={onBack}>← マスタへ戻る</button><h1 id="aggregation-master-title">集計マスタ</h1></div>
       <button className="secondary-button" type="button" disabled={disabled} onClick={() => { dismiss(); setAdding(true); }}>＋ 集計を追加</button></div>
@@ -171,14 +171,16 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
           <tbody>{order.map((row, index) => {
             const key = masterRowKey(row), account = row.kind === "account" ? byAccount.get(row.id)! : null, group = row.kind === "group" ? byGroup.get(row.id)! : null;
             const label = account?.accountName ?? group!.name, display = account?.displayName ?? group?.displayName ?? label;
-            const owner = owners.get(key), active = highlight === group?.id, member = owner?.parent === highlight;
+            const owner = owners.get(key), active = highlightedGroup === group?.id, member = owner?.parent === highlightedGroup;
             const blockedTarget = !!dragged && row.kind === "group" && forbidden.has(row.id);
             return <Fragment key={key}>
               {dragged && drop?.key === key && <tr className="aggregation-drop-slot" aria-label={`${draggedName}の移動先`}
                 onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }}
                 onDrop={event => { event.preventDefault(); if (drop.into && group) attach(dragged, group); else reorder(dragged, row); }}>
                 <td className="aggregation-gutter" /><td className="aggregation-slot-grip" aria-hidden="true">⠿</td>
-                <td colSpan={2}><div className="aggregation-slot-content"><span>{draggedName}</span><small>ここに移動</small></div></td>
+                <td colSpan={2}><div className="aggregation-slot-content"><span>{draggedName}</span>
+                  {drop.into && group && <><span aria-hidden="true">→</span><span className="aggregation-slot-destination">{group.name}に所属</span></>}
+                  <small>{drop.into ? "所属変更" : "行順のみ · 所属は変更しません"}</small></div></td>
               </tr>}
               <tr data-row={key} className={`${group ? `aggregation-subtotal${group.members.length ? "" : " aggregation-empty"}` : ""} ${active ? "is-highlighted" : member ? "is-member" : ""} ${drop?.key === key && drop.into ? "aggregation-drop-into" : ""} ${dragged && masterRowKey(dragged) === key ? "aggregation-drag-source" : ""}`}
               onClick={() => setHighlight(group?.id ?? owner?.parent ?? null)}
@@ -212,7 +214,7 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
           })}</tbody>
         </table>
         <svg className="aggregation-trays aggregation-tray-outlines" aria-hidden="true" width={geometry.width} height={geometry.height}>{geometry.trays.map(tray => <path key={tray.key} data-group-id={tray.id} d={tray.path} className={highlightedGroup === tray.id ? "is-highlighted" : undefined} />)}</svg>
-        {geometry.trays.map(tray => <button key={tray.key} type="button" className="aggregation-vertical-name" style={{ left: tray.x, top: tray.top, height: tray.height }} aria-label={`${tray.name}の範囲${dragged ? "へ移動" : ""}`} aria-pressed={highlight === tray.id}
+        {geometry.trays.map(tray => <button key={tray.key} type="button" className={`aggregation-vertical-name${dropGroup === tray.id ? " is-drop-target" : ""}`} style={{ left: tray.x, top: tray.top, height: tray.height }} aria-label={`${tray.name}の範囲${dragged ? "へ移動" : ""}`} aria-pressed={highlightedGroup === tray.id}
           disabled={disabled || (!!dragged && forbidden.has(tray.id))}
           onClick={() => { if (dragged) attach(dragged, byGroup.get(tray.id)!); else setHighlight(current => current === tray.id ? null : tray.id); }}
           onDragOver={event => { if (dragged && !disabled && !forbidden.has(tray.id)) { event.preventDefault(); showDrop(`group:${tray.id}`, true); } }}

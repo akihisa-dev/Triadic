@@ -64,7 +64,7 @@ test('行間を開いた仮表示の取消とドロップを、保存順・所�
   const slot = await preview(app, '店内売上高', false);
   expect(await rows.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-row')))).toEqual(order);
   expect(await position()).toBe(targetTop + 36);
-  await expect(slot).toContainText('ここに移動');
+  await expect(slot).toContainText('行順のみ · 所属は変更しません');
   await app.getByRole('button', { name: '旅費を移動', exact: true }).press('Escape');
   await expect(slot).toHaveCount(0);
   await expect.poll(position).toBe(targetTop);
@@ -86,6 +86,46 @@ test('行間を開いた仮表示の取消とドロップを、保存順・所�
   await expect(app.getByRole('button', { name: '社内売上小計の範囲', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(travel.getByRole('button', { name: '加算', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(app.locator('.aggregation-drop-slot')).toHaveCount(0);
+});
+
+test('所属変更だけが所属先のL字・縦書き名・集計行を一体に強調する', async ({ app, page }, testInfo) => {
+  await app.getByRole('button', { name: '新規作成', exact: true }).click();
+  await openMaster(app);
+  const rows = app.locator('tr[data-row]');
+  const original = await rows.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-row')));
+  const travel = rows.filter({ has: app.getByRole('button', { name: '旅費を移動', exact: true }) });
+  // A pre-existing selection must not look like a destination during ordering.
+  await travel.getByRole('rowheader').click();
+  const orderSlot = await preview(app, '店内売上高', false);
+  await expect(orderSlot).toContainText('行順のみ · 所属は変更しません');
+  await expect(orderSlot.locator('.aggregation-slot-destination')).toHaveCount(0);
+  await expect(app.locator('.aggregation-trays path.is-highlighted')).toHaveCount(0);
+  await expect(app.locator('.aggregation-vertical-name[aria-pressed="true"]')).toHaveCount(0);
+  const orderColor = await orderSlot.locator('td').last().evaluate(node => getComputedStyle(node).backgroundColor);
+
+  const memberSlot = await preview(app, '社内売上小計', true);
+  await expect(memberSlot).toContainText('社内売上小計に所属');
+  await expect(memberSlot.locator('small')).toHaveText('所属変更');
+  const target = rows.filter({ has: app.getByRole('button', { name: '社内売上小計を移動', exact: true }) });
+  const groupId = (await target.getAttribute('data-row'))!.split(':')[1];
+  await expect.poll(() => app.locator('.aggregation-trays path.is-highlighted').evaluateAll(nodes => nodes.map(node => node.getAttribute('data-group-id')))).toEqual([groupId, groupId]);
+  const name = app.getByRole('button', { name: '社内売上小計の範囲へ移動', exact: true });
+  await expect(name).toHaveAttribute('aria-pressed', 'true');
+  await expect(name).toHaveCSS('font-weight', '600');
+  await settleMotion(app.locator('body'));
+  const color = await name.evaluate(node => getComputedStyle(node).color);
+  await expect(target.getByRole('rowheader')).toHaveCSS('color', color);
+  expect(await memberSlot.locator('td').last().evaluate(node => getComputedStyle(node).backgroundColor)).not.toBe(orderColor);
+  expect(await rows.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-row')))).toEqual(original);
+  if (testInfo.project.name === 'desktop') await page.screenshot({ path: '/private/tmp/triadichrome-membership-intent-final.png' });
+
+  await preview(app, '店内売上高', false);
+  await expect(app.locator('.aggregation-trays path.is-highlighted')).toHaveCount(0);
+  await expect(name).toHaveAttribute('aria-pressed', 'false');
+  await app.getByRole('button', { name: '旅費を移動', exact: true }).press('Escape');
+  await expect(app.locator('.aggregation-drop-slot')).toHaveCount(0);
+  await expect(app.getByRole('button', { name: '管理可能費小計の範囲', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  expect(await rows.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-row')))).toEqual(original);
 });
 
 test('仮表示へのドロップが保存に失敗しても、行とL字と加減を元のまま保つ', async ({ app, page }) => {
