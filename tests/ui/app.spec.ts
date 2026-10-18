@@ -479,27 +479,31 @@ test("確認用画面と配布用ビルドの表示・操作が一致する", as
   }
 });
 
-for (const [date, year] of [["2027-03-31T12:00:00+09:00", 2026], ["2027-04-01T12:00:00+09:00", 2027]] as const) {
-  test(`年度スロットの初期値は4月始まりの当年度: ${date}`, async ({ page, app }) => {
-    await page.clock.install({ time: new Date(date) });
-    await page.reload();
-    const slot = app.getByRole("spinbutton", { name: "年度", exact: true });
-    await expect(slot).toHaveAttribute("aria-valuenow", String(year));
-    await slot.press("ArrowDown");
-    await expect(slot).toHaveAttribute("aria-valuenow", String(year + 1));
-    await slot.press("ArrowUp");
-    await expect(slot).toHaveAttribute("aria-valuenow", String(year));
-    await slot.hover();
-    await page.mouse.wheel(0, 60);
-    await expect(slot).toHaveAttribute("aria-valuenow", String(year + 1));
-    await app.getByRole("button", { name: "当年度", exact: true }).click();
-    await expect(slot).toHaveAttribute("aria-valuenow", String(year));
-    await app.getByRole("button", { name: "次の年度", exact: true }).click();
-    await expect(slot).toHaveAttribute("aria-valuenow", String(year + 1));
-    await app.getByRole("button", { name: "新規作成", exact: true }).click();
-    await expect(app.locator(".home-header")).toContainText(`${year + 1}年度`);
-  });
-}
+test.describe("日本時間の年度境界", () => {
+  test.use({ timezoneId: "Asia/Tokyo" });
+  for (const [date, year] of [["2027-03-31T12:00:00+09:00", 2026], ["2027-04-01T12:00:00+09:00", 2027]] as const) {
+    test(`年度スロットの初期値は4月始まりの当年度: ${date}`, async ({ page, app }) => {
+      await page.clock.install({ time: new Date(date) });
+      await page.reload();
+      const slot = app.getByRole("spinbutton", { name: "年度", exact: true });
+      await expect(slot).toHaveAttribute("aria-valuenow", String(year));
+      await slot.press("ArrowDown");
+      await expect(slot).toHaveAttribute("aria-valuenow", String(year + 1));
+      await slot.press("ArrowUp");
+      await expect(slot).toHaveAttribute("aria-valuenow", String(year));
+      await slot.hover();
+      await page.mouse.wheel(0, 60);
+      await expect(slot).toHaveAttribute("aria-valuenow", String(year + 1));
+      await app.getByRole("button", { name: "当年度", exact: true }).click();
+      await expect(slot).toHaveAttribute("aria-valuenow", String(year));
+      await app.getByRole("button", { name: "次の年度", exact: true }).click();
+      await expect(slot).toHaveAttribute("aria-valuenow", String(year + 1));
+      await app.getByRole("button", { name: "新規作成", exact: true }).click();
+      await expect(app.locator(".home-header")).toContainText(`${year + 1}年度`);
+    });
+  }
+
+});
 
 test("年度スロットをドラッグして選び、ページの位置を保つ", async ({ page, app }) => {
   const slot = app.getByRole("spinbutton", { name: "年度", exact: true });
