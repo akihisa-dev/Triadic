@@ -443,12 +443,17 @@ test("確認用画面と配布用ビルドの表示・操作が一致する", as
         // different amounts. Compare the same explicit viewing position.
         for (const target of [app, production]) {
           await target.locator(".home-content").evaluate(node => node.scrollTo(0, 0));
+          await target.locator(".initiative-entry-page").evaluate(node => node.scrollTo(0, 0));
           await target.locator(".initiative-grid-scroll").evaluate(node => node.scrollTo(0, 0));
+          for (const selector of [".home-content", ".initiative-entry-page", ".initiative-grid-scroll"]) {
+            expect(await target.locator(selector).evaluate(node => [node.scrollLeft, node.scrollTop])).toEqual([0, 0]);
+          }
         }
       }
       await expect(app.locator("img")).toHaveCount(1);
       await expect.poll(() => app.locator("img").evaluateAll(images => images.every(image => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0))).toBe(true);
       await expect.poll(() => production.locator("img").evaluateAll(images => images.every(image => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0))).toBe(true);
+      expect(await app.locator("body").evaluate(node => [node.clientWidth, node.clientHeight])).toEqual(await production.locator("body").evaluate(node => [node.clientWidth, node.clientHeight]));
       expect(await app.locator("body").ariaSnapshot()).toBe(await production.locator("body").ariaSnapshot());
       await page.mouse.move(0, 0);
       await production.mouse.move(0, 0);
