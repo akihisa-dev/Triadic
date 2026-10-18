@@ -38,13 +38,27 @@ export async function verifyReferenceRecovery(api, base, external, command) {
   for(const mode of ['cancel','failure','save-as']) {
     let stored=external.slice(), destinationBytes=null, writes=0;
     const original={name:'外部変更.triadic',async isSameEntry(other){return other===this},async getFile(){return new File([stored],this.name)},async createWritable(){let pending;return {async write(value){writes++;pending=new Uint8Array(value)},async close(){stored=pending},async abort(){}}}};
-    const destination={name:'保持した入力.triadic',async getFile(){return new File([destinationBytes??new Uint8Array()],this.name)},async createWritable(){let pending;return {async write(value){pending=new Uint8Array(value)},async close(){if(mode==='failure')throw new Error('確認用の保存失敗');destinationBytes=pending},async abort(){}}}};
+    const destination={name:'保持した入力.triadic',async getFile(){return new File([destinationBytes??new Uint8Array()],this.name)},async createWritable(){let pending;return {async write(value){pending=new Uint8Array(value)},async close(){if(fail)throw new Error('確認用の保存失敗');destinationBytes=pending},async abort(){}}}};
     const session=new api.PlanSession();const contents=await api.readPlanContents(base);await session.open({...contents,bytes:base,name:original.name,handle:original});
+    const originalSnapshot=session.getSnapshot();
+    let fail=mode==='failure';
     const before=structuredClone(command),unregister=api.registerFileConflictRecovery(async()=>mode==='cancel'?null:destination);
     try {
       if(mode==='save-as') {await session.dispatch(command,async()=>original);assert.equal(session.getHandle(),destination);await api.validateTriadicDatabase(destinationBytes)}
       else {await assert.rejects(session.dispatch(command,async()=>original),mode==='cancel'?/入力は.*保持/:/保存失敗/);assert.deepEqual(session.getSnapshot().contents.initiatives,contents.initiatives);assert.equal(destinationBytes,null)}
       assert.deepEqual(command,before);assert.equal(writes,0);assert.deepEqual(stored,external);
     } finally {unregister()}
+    if(mode!=='save-as') {
+      assert.deepEqual(session.getSnapshot(),originalSnapshot,'失敗で計画・履歴・操作取消を保持');
+      fail=false;
+      const stop=api.registerFileConflictRecovery(async()=>destination);
+      try {
+        await session.dispatch(command,async()=>original);
+        assert.equal(session.getHandle(),destination,'同じ入力の再試行で別ファイルへ保存');
+        await api.validateTriadicDatabase(destinationBytes);
+        assert.deepEqual(stored,external);
+        assert.equal(writes,0);
+      } finally {stop()}
+    }
   }
 }

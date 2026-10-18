@@ -1,3 +1,4 @@
+import { verifyClassificationIndirectRebase } from '../tests/classification-indirect-rebase.mjs';
 import { verifySelectionTotal } from "../tests/selection-total.mjs";
 import { verifyExpansionExpenseOverflow } from "../tests/expansion-expense-overflow.mjs";
 import { verifyOperationHistoryTransfer } from "../tests/operation-history.mjs";
@@ -102,6 +103,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyOrderRebase(api);
   await verifyRowAccountRebase(api);
   await verifyClassificationRebase(api);
+  await verifyClassificationIndirectRebase(api);
   await verifyPreviousInputRebase(api);
   await verifyAccountAddRebase(api);
   await verifyAccountReferenceRebase(api);
