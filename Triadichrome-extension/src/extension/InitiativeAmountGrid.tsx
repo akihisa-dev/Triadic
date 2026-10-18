@@ -52,8 +52,8 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
     onDraftChange(changeInitiativeCell(draft, kind, cell, value, badInput ? { original: original.current, inherited: originalInherited.current } : undefined));
   };
   return <>
-    <StatusNotice message={error || totals.error} error {...(error ? { onDismiss: () => setError("") } : {})} />
-    <GridSelectionTotal total={selectedTotal} />
+    <StatusNotice message={error || totals.error || selectedTotal?.error || ""} error {...(error ? { onDismiss: () => setError("") } : {})} />
+    <GridSelectionTotal total={selectedTotal} compact />
     <div className="initiative-grid-scroll">
         <table ref={table} className="initiative-amount-table" aria-label="月別計画金額">
           <thead>

@@ -186,6 +186,8 @@ test("合計エラーと保存失敗が重ならず入力を取り消せる", as
   await amount.click();
   await settleMotion(app.locator("body"));
   const originalBounds = await amount.boundingBox();
+  const region = app.locator(".initiative-grid-scroll");
+  const originalRegion = await region.boundingBox();
   await amount.fill("0.0001");
   const cancel = app.getByRole("button", { name: "入力を取り消す", exact: true });
   await expect(cancel).toBeVisible();
@@ -197,8 +199,13 @@ test("合計エラーと保存失敗が重ならず入力を取り消せる", as
   expect(boxes).toHaveLength(2);
   expect(boxes[0]!.bottom).toBeLessThanOrEqual(boxes[1]!.top);
   expect(await amount.boundingBox()).toEqual(originalBounds);
+  expect(await region.boundingBox()).toEqual(originalRegion);
+  await expect(app.locator(".grid-selection-total")).toHaveText("計算できません");
   await cancel.click();
   await expect(amount).toHaveValue("0");
+  await settleMotion(app.locator("body"));
+  expect(await amount.boundingBox()).toEqual(originalBounds);
+  expect(await region.boundingBox()).toEqual(originalRegion);
   await expect(app.getByRole("alert")).toHaveCount(0);
   await amount.fill("0.0001");
   await expect(cancel).toBeVisible();
