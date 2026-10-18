@@ -2,7 +2,7 @@ import type { ExpansionMonths } from "../core/tables/expansionTable";
 import { useRowWindow, WindowRows } from "./VirtualTableRows";
 import { TableCalculationBoundary } from "./TableCalculationBoundary";
 import { periodCellClass } from "./periodCellStyle";
-import type { ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { Fragment, memo, useMemo, useRef, useState } from "react";
 import { expansionPeriodAmount, tablePeriods } from "../core/tables/periodTables";
 import { type Initiative, type PlanContents } from "../core/domain/plan";
@@ -23,6 +23,27 @@ const AmountCells = memo(function AmountCells({ values }: { values: ExpansionMon
     })}
   </Fragment>)}</Fragment>);
 });
+type ExpansionItem = NonNullable<ReturnType<ReturnType<typeof createExpansionTableView>>["flat"][number]["item"]>;
+function ExpansionGroupCell({ name, span, title }: { name: string; span?: number; title?: string }) {
+  return <th rowSpan={span} scope="rowgroup" className="expansion-group" title={title}>{name}</th>;
+}
+function ExpansionSubtotalCells({ name, values }: { name: string; values: ExpansionMonths[] }) {
+  return <><th colSpan={3} scope="row" className="expansion-subtotal-name">{name}計</th><AmountCells values={values} /></>;
+}
+/** Row content and navigation are identical; each renderer owns spans and focus retention. */
+function ExpansionInitiativeCells({ item, source, kind, onOpen, period, category, focusHandlers }: {
+  item: ExpansionItem; source: Initiative; kind: KindId; onOpen: Props["onOpenInitiative"];
+  period: { name: string; span: number } | null; category: { name: string; span: number } | null;
+  focusHandlers?: Pick<ButtonHTMLAttributes<HTMLButtonElement>, "onFocus" | "onBlur">;
+}) {
+  return <>
+    {period && <th rowSpan={period.span} className="expansion-period">{period.name}</th>}
+    {category && <td rowSpan={category.span} className="expansion-category" title={category.name}>{category.name}</td>}
+    <th scope="row" className="expansion-name"><button className="initiative-name-button" type="button" {...focusHandlers}
+      title={item.note || item.name} onClick={() => onOpen(source, kind)}>{item.name}</button></th>
+    <AmountCells values={item.values} />
+  </>;
+}
 export function ExpansionTablePage({ contents, selected, selection, onOpenInitiative }: Props) {
   return <main className="initiative-list-page expansion-table-page" aria-labelledby="expansion-table-title">
     <div className="initiative-list-heading">
@@ -104,24 +125,24 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
         const categorySpan = Math.min(row.categoryCount - row.categoryOffset, range.end - index);
         const periodSpan = Math.min((row.period?.initiatives.length ?? 0) - row.periodOffset, range.end - index);
         return <tr key={row.item?.id ?? `subtotal:${row.group.expansion.id}`} className={row.subtotal ? "expansion-subtotal" : undefined} aria-rowindex={index + 7}>
-          {firstGroup && <th rowSpan={groupSpan} scope="rowgroup" className="expansion-group" title={row.group.expansion.expansionName}>{row.group.expansion.expansionName}</th>}
-          {row.subtotal ? <><th colSpan={3} scope="row" className="expansion-subtotal-name">{row.group.expansion.expansionName}計</th><AmountCells values={row.group.values} /></>
-            : <>{firstPeriod && <th rowSpan={periodSpan} className="expansion-period">{row.period!.name}</th>}
-              {firstCategory && <td rowSpan={categorySpan} className="expansion-category" title={categoryName(row.item!)}>{categoryName(row.item!)}</td>}
-              <th scope="row" className="expansion-name"><button className="initiative-name-button" type="button" {...focusHandlers(row.item!.id)} title={row.item!.note || row.item!.name} onClick={() => onOpenInitiative(sourceInitiatives.get(row.item!.id)!, selected[0]!)}>{row.item!.name}</button></th><AmountCells values={row.item!.values} /></>}
+          {firstGroup && <ExpansionGroupCell name={row.group.expansion.expansionName} span={groupSpan} title={row.group.expansion.expansionName} />}
+          {row.subtotal ? <ExpansionSubtotalCells name={row.group.expansion.expansionName} values={row.group.values} />
+            : <ExpansionInitiativeCells item={row.item!} source={sourceInitiatives.get(row.item!.id)!} kind={selected[0]!} onOpen={onOpenInitiative}
+              period={firstPeriod ? { name: row.period!.name, span: periodSpan } : null}
+              category={firstCategory ? { name: categoryName(row.item!), span: categorySpan } : null}
+              focusHandlers={focusHandlers(row.item!.id)} />}
         </tr>;
       }} /></tbody> : groups.map(({ group, periods }) => { return <tbody key={group.expansion.id}>
         {periods.map((period, periodIndex) => period.categories.flatMap((category, categoryGroupIndex) => category.initiatives.map((item, categoryIndex) => {
           const firstPeriod = categoryGroupIndex === 0 && categoryIndex === 0;
           return <tr key={item.id}>
-          {periodIndex === 0 && firstPeriod && <th rowSpan={group.initiatives.length + 1} scope="rowgroup" className="expansion-group">{group.expansion.expansionName}</th>}
-          {firstPeriod && <th rowSpan={period.initiatives.length} className="expansion-period">{period.name}</th>}
-          {categoryIndex === 0 && <td rowSpan={category.initiatives.length} className="expansion-category" title={categoryName(item)}>{categoryName(item)}</td>}
-          <th scope="row" className="expansion-name"><button className="initiative-name-button" type="button" title={item.note || item.name} onClick={() => onOpenInitiative(sourceInitiatives.get(item.id)!, selected[0]!)}>{item.name}</button></th>
-          <AmountCells values={item.values} />
+          {periodIndex === 0 && firstPeriod && <ExpansionGroupCell name={group.expansion.expansionName} span={group.initiatives.length + 1} />}
+          <ExpansionInitiativeCells item={item} source={sourceInitiatives.get(item.id)!} kind={selected[0]!} onOpen={onOpenInitiative}
+            period={firstPeriod ? { name: period.name, span: period.initiatives.length } : null}
+            category={categoryIndex === 0 ? { name: categoryName(item), span: category.initiatives.length } : null} />
         </tr>; }))) }
-        <tr className="expansion-subtotal">{group.initiatives.length === 0 && <th scope="rowgroup" className="expansion-group">{group.expansion.expansionName}</th>}
-          <th colSpan={3} scope="row" className="expansion-subtotal-name">{group.expansion.expansionName}計</th><AmountCells values={group.values} />
+        <tr className="expansion-subtotal">{group.initiatives.length === 0 && <ExpansionGroupCell name={group.expansion.expansionName} />}
+          <ExpansionSubtotalCells name={group.expansion.expansionName} values={group.values} />
         </tr>
       </tbody>; })}</table>
     </div>;
