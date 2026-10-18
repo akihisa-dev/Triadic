@@ -138,8 +138,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
       expect(dragEnd.find(sample => sample.text.includes("ファイルを開く"))!.opacity).toBeLessThan(0.25);
     });
 
-    test("エラーはフェードし、表示・消去で入口の位置が動かない", async ({ page, app }, testInfo) => {
-      testInfo.annotations.push({ type: "expected-console", description: "sqlite3_step() rc= 26 SQLITE_NOTADB SQL = PRAGMA user_version" });
+    test("エラーはフェードし、表示・消去で入口の位置が動かない", async ({ page, app }) => {
       await page.getByLabel("ファイル操作", { exact: true }).selectOption("invalid");
       await expect(page.getByRole("status")).toHaveText("操作できます");
       await expect(app.getByRole("button", { name: "ファイルを開く", exact: true })).toBeVisible();
