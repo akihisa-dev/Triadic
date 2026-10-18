@@ -29,8 +29,8 @@ export async function verifyNoChangeSave(api) {
     snapshots = 0;
     for (const prepared of [
       await tasks.prepareKindSelectionSave(bytes, 'cost-table', contents.kindSelections['cost-table'], now),
-      await tasks.prepareAggregationSave(bytes, {type:'move',member,parentId:member.parentId,sign:member.sign}, true, now),
-      await tasks.prepareAggregationSave(bytes, {type:'update',...contents.aggregations[0]}, true, now),
+      await tasks.prepareAggregationSave(bytes, {type:'move',member,parentId:member.parentId,sign:member.sign}, now),
+      await tasks.prepareAggregationSave(bytes, {type:'update',...contents.aggregations[0]}, now),
     ]) {
       assert.equal(prepared.operation, null);
       assert.equal(prepared.bytes, bytes, '無変更は元bytesを返す');
@@ -40,7 +40,7 @@ export async function verifyNoChangeSave(api) {
     assert.equal(snapshots, 0, '無変更の種別・所属・集計更新は取消用コピーを作らない');
     await assert.rejects(tasks.prepareKindSelectionSave(bytes, 'cost-table', [1, 1], now), /種別/);
     await assert.rejects(tasks.prepareKindSelectionSave(bytes, 'unknown', [1], now), /表示対象/);
-    await assert.rejects(tasks.prepareAggregationSave(bytes, {type:'move',member:{kind:'account',id:999999},parentId:member.parentId,sign:1},true,now), /見つかりません/);
+    await assert.rejects(tasks.prepareAggregationSave(bytes, {type:'move',member:{kind:'account',id:999999},parentId:member.parentId,sign:1},now), /見つかりません/);
     assert.equal(snapshots, 0, '不正入力はコピー作成より先に拒否');
     let writes = 0, reads = 0, notifications = 0;
     const handle = {name:'同値.triadic',async getFile(){reads++; throw new Error('同値でファイルを読まない');},async createWritable(){writes++;throw new Error('同値で書かない');}};

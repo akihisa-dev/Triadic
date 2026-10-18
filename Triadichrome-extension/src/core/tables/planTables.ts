@@ -14,7 +14,7 @@ export function matchesClassification(filter: ClassificationFilter, industry: nu
   return (filter.industries === null || (industry != null && filter.industries.includes(industry))) && (filter.departments === null || (department != null && filter.departments.includes(department)));
 }
 export function filterPlan(contents: PlanContents, filter: ClassificationFilter): PlanContents {
-  return { ...contents, initiatives: contents.initiatives.filter(item => matchesClassification(filter, item.industryId, item.departmentId)), previousAmounts: contents.previousAmounts.filter(item => matchesClassification(filter, item.industryId, item.departmentId)), details: contents.details?.filter(item => matchesClassification(filter, item.industryId, item.departmentId)) };
+  return { ...contents, initiatives: contents.initiatives.filter(item => matchesClassification(filter, item.industryId, item.departmentId)), previousAmounts: contents.previousAmounts.filter(item => matchesClassification(filter, item.industryId, item.departmentId)) };
 }
 export function previousByAccount(contents: PlanContents) {
   const result = new Map<number, Partial<Record<typeof initiativeMonths[number], number>>>();

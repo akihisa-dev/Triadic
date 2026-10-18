@@ -7,7 +7,7 @@ import { readContents } from "./readPlan";
  * Validate the input, both business snapshots and the final complete file as before.
  * Aggregation edits cannot change initiatives or their derived start months.
  */
-export async function prepareAggregationSave(bytes: Uint8Array, change: AggregationChange, includeDetails = true, now = new Date().toISOString()) {
+export async function prepareAggregationSave(bytes: Uint8Array, change: AggregationChange, now = new Date().toISOString()) {
   return prepareSave(bytes, now, database => {
     const apply = prepareAggregationChange(database, change);
     if (apply === null) return null;
@@ -15,5 +15,5 @@ export async function prepareAggregationSave(bytes: Uint8Array, change: Aggregat
       apply();
       return true;
     };
-  }, database => readContents(database, includeDetails));
+  }, readContents);
 }

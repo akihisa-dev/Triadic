@@ -9,7 +9,6 @@ export * from "../../Triadichrome-extension/src/core/storage/operationSnapshot";
 export * from "../../Triadichrome-extension/src/core/storage/defaultCostMaster";
 export * from "../../Triadichrome-extension/src/core/storage/departmentMaster";
 export * from "../../Triadichrome-extension/src/core/storage/departmentSchema";
-export * from "../../Triadichrome-extension/src/core/storage/details";
 export * from "../../Triadichrome-extension/src/core/storage/expansionMaster";
 export * from "../../Triadichrome-extension/src/core/storage/expansionSchema";
 export * from "../../Triadichrome-extension/src/core/storage/industryMaster";

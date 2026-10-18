@@ -36,11 +36,11 @@ export async function processPlan<K extends keyof Tasks>(task: K, ...args: Param
   });
 }
 export const createTriadicDatabase: Tasks["createTriadicDatabase"] = (...args) => processPlan("createTriadicDatabase", ...args);
-export const readPlanContents: Tasks["readPlanContents"] = bytes => processPlan("readPlanContents", bytes, typeof Worker === "undefined");
-export const readSavedPlan: Tasks["readSavedPlan"] = bytes => processPlan("readSavedPlan", bytes, typeof Worker === "undefined");
-export const readSnapshotContents: Tasks["readSnapshotContents"] = bytes => processPlan("readSnapshotContents", bytes, typeof Worker === "undefined");
+export const readPlanContents: Tasks["readPlanContents"] = bytes => processPlan("readPlanContents", bytes);
+export const readSavedPlan: Tasks["readSavedPlan"] = bytes => processPlan("readSavedPlan", bytes);
+export const readSnapshotContents: Tasks["readSnapshotContents"] = bytes => processPlan("readSnapshotContents", bytes);
 export const applyPlanCommand: Tasks["applyPlanCommand"] = (...args) => processPlan("applyPlanCommand", ...args);
-export const prepareAggregationSave: Tasks["prepareAggregationSave"] = (bytes, change) => processPlan("prepareAggregationSave", bytes, change, typeof Worker === "undefined");
+export const prepareAggregationSave: Tasks["prepareAggregationSave"] = (bytes, change) => processPlan("prepareAggregationSave", bytes, change);
 export const applyOperationSnapshot: Tasks["applyOperationSnapshot"] = (...args) => processPlan("applyOperationSnapshot", ...args);
 export const createBusinessSnapshot: Tasks["createBusinessSnapshot"] = (...args) => processPlan("createBusinessSnapshot", ...args);
 export const readDataHistory: Tasks["readDataHistory"] = (...args) => processPlan("readDataHistory", ...args);
@@ -51,4 +51,4 @@ export const restoreDataHistory: Tasks["restoreDataHistory"] = (...args) => proc
 export const deleteDataHistory: Tasks["deleteDataHistory"] = (...args) => processPlan("deleteDataHistory", ...args);
 
 export const prepareKindSelectionSave: Tasks["prepareKindSelectionSave"] = (...args) => processPlan("prepareKindSelectionSave", ...args);
-export const prepareOrdinarySave: Tasks["prepareOrdinarySave"] = (bytes, command, year) => processPlan("prepareOrdinarySave", bytes, command, year, typeof Worker === "undefined");
+export const prepareOrdinarySave: Tasks["prepareOrdinarySave"] = (bytes, command, year) => processPlan("prepareOrdinarySave", bytes, command, year);

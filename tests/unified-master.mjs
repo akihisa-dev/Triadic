@@ -86,7 +86,7 @@ export async function verifyUnifiedMaster(api) {
   const child=owner.members.find(member=>member.kind==='account');
   const change={type:'move',member:{kind:'account',id:child.id},parentId:owner.id,sign:-child.sign,presentationOrder:api.orderedMasterRows(original.accounts,original.aggregations)};
   const prepare=api.processingTasks.prepareAggregationSave;
-  const prepared=await prepare(sample,change,true,'2026-10-10T00:00:00.000Z');
+  const prepared=await prepare(sample,change,'2026-10-10T00:00:00.000Z');
   assert.deepEqual(prepared.contents,await api.readPlanContents(prepared.bytes));
   assert.deepEqual(prepared.contents,await api.readPlanContents(await api.changeAggregationMaster(sample,change)), 'shared preparation has the same business result');
   assert.deepEqual(prepared.contents.initiatives,original.initiatives);
@@ -97,9 +97,9 @@ export async function verifyUnifiedMaster(api) {
   assert.deepEqual(prepared.savedHistory.entries,oldHistory.entries,'existing checkpoints survive preparation');
   for (const entry of oldHistory.entries) assert.deepEqual(await api.readHistorySnapshot(prepared.bytes,entry.id),await api.readHistorySnapshot(sample,entry.id));
   const fresh=await api.createTriadicDatabase(2026);
-  const initialSave=await prepare(fresh,{...change,presentationOrder:undefined},true,'2026-10-10T00:00:00.000Z');
+  const initialSave=await prepare(fresh,{...change,presentationOrder:undefined},'2026-10-10T00:00:00.000Z');
   assert.deepEqual(await api.readSnapshotContents(await api.readHistorySnapshot(initialSave.bytes,initialSave.savedHistory.entries[0].id)),await api.readPlanContents(fresh),'first save preserves the original business state');
-  const unchanged=await prepare(prepared.bytes,change,true,'2026-10-10T00:01:00.000Z');
+  const unchanged=await prepare(prepared.bytes,change,'2026-10-10T00:01:00.000Z');
   assert.equal(unchanged.operation,null,'same sign must not add an undo operation');
   assert.deepEqual(unchanged.savedHistory,prepared.savedHistory,'five-minute deadline and history entries remain unchanged');
   await assert.rejects(prepare(sample,{type:'move',member:{kind:'group',id:owner.id},parentId:owner.id,sign:1}),/自分|循環/);

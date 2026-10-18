@@ -32,13 +32,13 @@ try{
   const variants={small:base,initiatives};
   const db=await api.openTriadicDatabase(base);
   try{
-   const contents=await api.readPlanContents(base,false);
+   const contents=await api.readPlanContents(base);
    for(const account of contents.accounts)for(const industry of contents.industries)for(const department of contents.departments)if(department.industryIds.includes(industry.id))for(let month=1;month<=12;month++)db.run('INSERT INTO previous_amounts(account_id,industry_id,department_id,month,amount_yen)VALUES(?,?,?,?,?)',[account.id,industry.id,department.id,month,1]);
    variants.previous=db.export();
   }finally{db.close();}
   const snapshot=await api.createBusinessSnapshot(base),history=await api.openTriadicDatabase(base);
   try{for(let id=1;id<=50;id++)history.run('INSERT INTO data_history(id,recorded_at,snapshot)VALUES(?,?,?)',[id,new Date(Date.UTC(2026,0,1,0,id)).toISOString(),snapshot]);history.run('UPDATE data_history_state SET next_id=51 WHERE id=1');variants.history=history.export();}finally{history.close();}
-  for(const[name,bytes]of Object.entries(variants)){const {contents,savedHistory}=await api.processingTasks.readSavedPlan(bytes,false);console.log('FILE_FIXTURE '+JSON.stringify({name,bytes:bytes.length,initiatives:contents.initiatives.length,previous:contents.previousAmounts.length,history:savedHistory.entries.length}));await writeFile(join(dir,name+'.triadic'),bytes);}
+  for(const[name,bytes]of Object.entries(variants)){const {contents,savedHistory}=await api.processingTasks.readSavedPlan(bytes);console.log('FILE_FIXTURE '+JSON.stringify({name,bytes:bytes.length,initiatives:contents.initiatives.length,previous:contents.previousAmounts.length,history:savedHistory.entries.length}));await writeFile(join(dir,name+'.triadic'),bytes);}
  });
  for(const version of ['before','after']){
   const out=join(dir,version);await mkdir(out);

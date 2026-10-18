@@ -1,10 +1,11 @@
+import { readDerivedPlan } from "./derived-plan.mjs";
 import assert from "node:assert/strict";
 
 export async function verifyYenPrecision(api) {
   const maximum = Number.MAX_SAFE_INTEGER;
   const annual = api.tablePeriods.find(period => period.id === "annual");
   const original = await api.createTriadicDatabase(2026);
-  const defaults = await api.readPlanContents(original);
+  const defaults = await readDerivedPlan(api, original);
   const accountId = defaults.accounts.find(account => account.accountType === "sales").id;
   const priorInput = amount => ({ industryId: 1, departmentId: 1, rows: [{ accountId, amounts: { 4: amount } }] });
   const draft = amount => ({ ...api.createInitiativeDraft("2026"), name: "境界の精度確認", expansionId: 1, industryId: 1, departmentId: 1, rows: [{ accountId, amounts: { 4: amount } }] });
@@ -16,7 +17,7 @@ export async function verifyYenPrecision(api) {
     assert.equal(api.yenToAmount(yen), text);
     // Stored source strings survive readback and every calculated value stays integer yen.
     const previousBytes = await api.savePreviousAmounts(original, priorInput(text));
-    const previous = await api.readPlanContents(previousBytes);
+    const previous = await readDerivedPlan(api, previousBytes);
     assert.equal(previous.previousAmounts.find(row => row.month === 4).amount, text);
     assert.equal(api.previousByAccount(previous).get(accountId)[4], yen);
     assert.equal(api.previousTotals(previous)[4].sales, yen);
@@ -26,7 +27,7 @@ export async function verifyYenPrecision(api) {
     assert.equal(api.expansionPeriodAmount(api.buildKindExpansionTable(previous, [1], "registered").total[0], annual, "sales"), yen);
 
     const initiativeBytes = await api.registerInitiative(original, draft(text));
-    const contents = await api.readPlanContents(initiativeBytes);
+    const contents = await readDerivedPlan(api, initiativeBytes);
     assert.equal(contents.initiatives[0].rows[0].amounts[4], text);
     assert.equal(api.initiativesForKind(contents.initiatives, contents.accounts, 1)[0].months[4].sales, yen);
     assert.equal(api.amountToYen(contents.details.find(row => row.kindId === 1 && row.month === 4).sales), yen);
@@ -53,7 +54,7 @@ export async function verifyYenPrecision(api) {
     // Opposite values cannot be subtracted exactly within the allowed range.
     assert.throws(() => api.combineTotals({ 4: { sales: yen, profit: yen } }, { 4: { sales: -yen, profit: -yen } }, -1), /範囲/);
     assert.equal(costAccount(differenceOverflow).values[1][4], 0);
-    assert.deepEqual(await api.readPlanContents(initiativeBytes), contents, "集計や失敗で保存値を変更しない");
+    assert.deepEqual(await readDerivedPlan(api, initiativeBytes), contents, "集計や失敗で保存値を変更しない");
     assert.equal(api.formatYen(yen), `${sign < 0 ? "-" : ""}9,007,199,254,741`);
     assert.equal(api.formatTableYen(sign * 499), "");
     assert.equal(api.formatYen(sign * 500), sign < 0 ? "-1" : "1");

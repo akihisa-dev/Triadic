@@ -14,8 +14,6 @@ type DetailValues = {
   amount: string; sales: string | null; profit: string | null; initiativeOrder: number; rowOrder: number;
 };
 export type DetailRecord = DetailValues & DetailTarget;
-export type DetailField = "name" | "note" | "fiscalYear" | "expansionId" | "departmentId" | "periodTypeId" | "industryId" | "accountId" | "amount";
-export type DetailChange = { target: DetailTarget; field: DetailField; value: string };
 export function detailKey(target: DetailTarget): string {
   return target.source === "previous" ? `previous:${target.previousId}` : `initiative:${target.rowId}:${target.kindId}:${target.month}`;
 }

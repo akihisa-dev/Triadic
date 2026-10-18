@@ -10,7 +10,7 @@ type OrdinaryPreparation = { bytes: Uint8Array; operation: null }
   | Awaited<ReturnType<typeof finishPreparedSave<ReturnType<typeof readContents>>>>;
 
 /** The existing validated change callbacks run once on our private connection. */
-export async function prepareOrdinarySave(bytes: Uint8Array, command: PlanCommand, fiscalYear: number, includeDetails = true): Promise<OrdinaryPreparation> {
+export async function prepareOrdinarySave(bytes: Uint8Array, command: PlanCommand, fiscalYear: number): Promise<OrdinaryPreparation> {
   const database = await openTriadicDatabase(bytes);
   try {
     const comparison = prepareCommandComparison(database, command);
@@ -27,6 +27,6 @@ export async function prepareOrdinarySave(bytes: Uint8Array, command: PlanComman
     if (!changed) return { bytes, operation: null };
     // Before comes from untouched input; never snapshot the modified connection as the original.
     const before = await createBusinessSnapshot(bytes);
-    return await finishPreparedSave(database, before, new Date().toISOString(), db => readContents(db, includeDetails));
+    return await finishPreparedSave(database, before, new Date().toISOString(), readContents);
   } finally { database.close(); }
 }

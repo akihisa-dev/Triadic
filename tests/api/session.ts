@@ -1,7 +1,5 @@
-import { changeDetail } from "../../Triadichrome-extension/src/core/storage/details";
 import { PlanSession } from "../../Triadichrome-extension/src/extension/PlanSession";
-import { writePlanChange, type OpenPlan } from "../../Triadichrome-extension/src/extension/planFile";
-import type { DetailChange } from "../../Triadichrome-extension/src/core/domain/details";
+import { type OpenPlan } from "../../Triadichrome-extension/src/extension/planFile";
 import type { PlanCommand } from "../../Triadichrome-extension/src/core/domain/planCommands";
 async function writePlanCommand(plan: OpenPlan, command: PlanCommand, destination: () => Promise<FileSystemFileHandle>): Promise<OpenPlan> {
   const session = new PlanSession();
@@ -16,10 +14,6 @@ export const saveDepartmentMaster = (plan: OpenPlan, change: Extract<PlanCommand
 export const saveExpansionMaster = (plan: OpenPlan, change: Extract<PlanCommand, { type: "expansion" }>["change"], destination: () => Promise<FileSystemFileHandle>) => writePlanCommand(plan, { type: "expansion", change }, destination);
 export const saveIndustryMaster = (plan: OpenPlan, change: Extract<PlanCommand, { type: "industry" }>["change"], destination: () => Promise<FileSystemFileHandle>) => writePlanCommand(plan, { type: "industry", change }, destination);
 export const savePeriodMaster = (plan: OpenPlan, change: Extract<PlanCommand, { type: "period" }>["change"], destination: () => Promise<FileSystemFileHandle>) => writePlanCommand(plan, { type: "period", change }, destination);
-export const saveDetailChange = async (plan: OpenPlan, change: DetailChange) => {
-  if (!plan.handle) throw new Error("「保存を再試行」から保存先を選択してください。");
-  return writePlanChange(plan, plan.handle, await changeDetail(plan.bytes, change));
-};
 export const saveInitiative = (plan: OpenPlan, draft: Extract<PlanCommand, { type: "initiative.register" }>["draft"], destination: () => Promise<FileSystemFileHandle>) => writePlanCommand(plan, { type: "initiative.register", draft }, destination);
 export const saveInitiativeUpdate = (plan: OpenPlan, id: number, _year: number | null, draft: Extract<PlanCommand, { type: "initiative.update" }>["draft"]) => writePlanCommand(plan, { type: "initiative.update", id, draft }, async () => { throw new Error("保存先がありません。"); });
 

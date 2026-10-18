@@ -128,7 +128,7 @@ export async function compareSavedHistory(bytes: Uint8Array, id: number): Promis
             change, field, before: left?.text ?? "—", after: (right?.text ?? "—") + (left?.text === right?.text ? "（別の項目）" : "") });
         }
       }
-      return { differences, impact: compareHistoryIncome(readContents(past, false), readContents(current, false)) };
+      return { differences, impact: compareHistoryIncome(readContents(past), readContents(current)) };
     } finally { past.close(); }
   } finally { current.close(); }
 }

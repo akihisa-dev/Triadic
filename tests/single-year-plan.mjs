@@ -1,8 +1,9 @@
+import { readDerivedPlan } from "./derived-plan.mjs";
 import assert from "node:assert/strict";
 
 export async function verifySingleYearPlan(api) {
   let bytes = await api.createTriadicDatabase(2027);
-  let contents = await api.readPlanContents(bytes);
+  let contents = await readDerivedPlan(api, bytes);
   assert.equal(contents.fiscalYear, 2027);
   assert.deepEqual(contents.kinds.map(kind => kind.kindName), ["一次予算", "確定予算"]);
   const account = contents.accounts.find(account => account.accountType === "sales");
@@ -13,7 +14,7 @@ export async function verifySingleYearPlan(api) {
   await assert.rejects(api.registerInitiative(bytes, { ...draft, departmentId: null }), /部署/);
   await assert.rejects(api.registerInitiative(bytes, { ...draft, rows: [{ ...draft.rows[0], overrides: { 3: { 4: "1" } } }] }), /種別/);
   bytes = await api.registerInitiative(bytes, draft);
-  contents = await api.readPlanContents(bytes);
+  contents = await readDerivedPlan(api, bytes);
   const initiative = contents.initiatives[0];
   const row = initiative.rows[0];
   assert.equal(api.resolvedAmount(row, 2, 4), "100");
@@ -21,7 +22,7 @@ export async function verifySingleYearPlan(api) {
   assert.equal(api.resolvedAmount(row, 2, 11), "0", "手修正0を維持する");
   const changed = { ...draft, rows: [{ ...row, amounts: { ...row.amounts, 4: "120", 10: "120", 11: "120" } }] };
   bytes = await api.updateInitiative(bytes, initiative.id, 2027, changed);
-  contents = await api.readPlanContents(bytes);
+  contents = await readDerivedPlan(api, bytes);
   const updated = contents.initiatives[0].rows[0];
   assert.equal(api.resolvedAmount(updated, 2, 4), "120", "未修正月は一次予算に追従する");
   assert.equal(api.resolvedAmount(updated, 2, 10), "150", "手修正は固定する");
@@ -32,24 +33,24 @@ export async function verifySingleYearPlan(api) {
   assert.equal(api.canChangeAccountRow({ amounts: {}, overrides: { 2: { 10: "0.001" } } }), false, "確定予算だけ非0でも使用中");
   assert.equal(api.canChangeAccountRow({ amounts: {}, overrides: { 2: { 4: "0" } } }), true);
   bytes = await api.savePreviousAmounts(bytes, { industryId: draft.industryId, departmentId: draft.departmentId, rows: [{ accountId: account.id, amounts: { 4: "1000.001" } }] });
-  contents = await api.readPlanContents(bytes);
+  contents = await readDerivedPlan(api, bytes);
   assert.equal(contents.previousAmounts[0].amount, "1000.001");
   bytes = await api.savePreviousAmounts(bytes, { industryId: draft.industryId, departmentId: draft.departmentId, rows: [{ accountId: account.id, amounts: { 4: "1001" } }] });
-  contents = await api.readPlanContents(bytes);
+  contents = await readDerivedPlan(api, bytes);
   assert.equal(contents.previousAmounts.length, 1, "同じ組み合わせは更新する");
   assert.equal(contents.previousAmounts[0].amount, "1001");
   assert.deepEqual(contents.kindSelections, { "initiative-list": [2], "cost-table": [1], "expansion-table": [1] });
   for (const screen of ["cost-table", "expansion-table"]) {
     for (const selected of [[1, 2], [2, 1], [2], [1]]) {
       bytes = await api.saveKindSelection(bytes, screen, selected);
-      assert.deepEqual((await api.readPlanContents(bytes)).kindSelections[screen], selected);
+      assert.deepEqual((await readDerivedPlan(api, bytes)).kindSelections[screen], selected);
     }
     for (const selected of [[], [1, 1], [1, 3], [0], [4], [5]]) await assert.rejects(api.saveKindSelection(bytes, screen, selected), /選択/);
   }
   await assert.rejects(api.saveKindSelection(bytes, "initiative-list", [1, 2]), /選択/);
   await assert.rejects(api.saveKindSelection(bytes, "unknown", [1]), /表示対象/);
   bytes = await api.saveKindSelection(bytes, "initiative-list", [1]);
-  contents = await api.readPlanContents(bytes);
+  contents = await readDerivedPlan(api, bytes);
   assert.deepEqual(contents.kindSelections["initiative-list"], [1]);
   const cost = api.buildKindCostTable(contents, [1, 2]).find(row => row.kind === "account" && row.id === account.id);
   assert.deepEqual(cost.values.map(values => values[4]), [1001000, 1121000, 1121000], "前年＋各種別の前年差");
@@ -68,7 +69,7 @@ export async function verifySingleYearPlan(api) {
   assert.equal(single.groups[0].initiatives[0].values.length, 1);
   assert.deepEqual(expansion.total.map(months => months[4].sales), [1121000, 1121000, 0]);
   bytes = await api.savePreviousAmounts(bytes, { industryId: contents.industries[1].id, departmentId: contents.departments[1].id, rows: [{ accountId: account.id, amounts: { 4: "20" } }] });
-  contents = await api.readPlanContents(bytes);
+  contents = await readDerivedPlan(api, bytes);
   const filtered = api.filterPlan(contents, { industries: [draft.industryId], departments: [draft.departmentId] });
   assert.equal(api.previousTotals(contents)[4].sales, 1021000);
   assert.equal(api.previousTotals(filtered)[4].sales, 1001000);
@@ -77,26 +78,27 @@ export async function verifySingleYearPlan(api) {
   const prior = contents.details.find(detail => detail.kindId === 0 && detail.industryId === draft.industryId);
   assert.equal(prior.initiativeName, "前年"); assert.equal(prior.kindName, "前年");
   assert.ok(contents.details.every(detail => detail.fiscalYear === 2027));
-  const confirmed = contents.details.find(detail => detail.kindId === 2 && detail.month === 4);
-  bytes = await api.changeDetail(bytes, { target: confirmed, field: "amount", value: "90" });
-  contents = await api.readPlanContents(bytes);
-  assert.equal(contents.details.find(detail => detail.kindId === 2 && detail.month === 4).amount, "90");
-  assert.equal(contents.details.find(detail => detail.kindId === 1 && detail.month === 4).amount, "120");
-  await assert.rejects(api.changeDetail(bytes, { target: confirmed, field: "amount", value: "91" }), /変更されています/);
-  await assert.rejects(api.changeDetail(bytes, { target: contents.details.find(detail => detail.kindId === 2 && detail.month === 4), field: "fiscalYear", value: "2028" }), /固定/);
-  const latestPrior = contents.details.find(detail => detail.id === prior.id);
-  bytes = await api.changeDetail(bytes, { target: latestPrior, field: "amount", value: "1002" });
-  contents = await api.readPlanContents(bytes);
-  assert.equal(api.previousTotals(contents)[4].sales, 1022000);
+  const amountBase=bytes, current=contents.initiatives[0];
+  const command=value=>({type:'initiative.update',id:current.id,draft:{...current,fiscalYear:'2027',rows:current.rows.map(row=>({...row,overrides:{2:{...row.overrides[2],4:value}}}))}});
+  bytes=await api.applyPlanCommand(bytes,command('90'),2027);
+  contents=await readDerivedPlan(api,bytes);
+  assert.equal(contents.details.find(detail=>detail.kindId===2 && detail.month===4).amount,'90');
+  assert.equal(contents.details.find(detail=>detail.kindId===1 && detail.month===4).amount,'120');
+  const conflicting=await api.applyPlanCommand(amountBase,command('91'),2027);
+  assert.equal(await api.rebasePlan(amountBase,bytes,conflicting),null,'同じ月への異なる更新を拒否');
+  await assert.rejects(api.applyPlanCommand(bytes,{...command('90'),draft:{...current,fiscalYear:'2028'}},2027),/基準年度/);
+  bytes=await api.applyPlanCommand(bytes,{type:'settings',change:{type:'previous',input:{industryId:draft.industryId,departmentId:draft.departmentId,rows:[{accountId:account.id,amounts:{4:'1002'}}]}}},2027);
+  contents=await readDerivedPlan(api,bytes);
+  assert.equal(api.previousTotals(contents)[4].sales,1022000);
   for (const [change, id] of [[api.changeAccountMaster, account.id], [api.changeIndustryMaster, draft.industryId], [api.changeDepartmentMaster, draft.departmentId]]) {
     await assert.rejects(change(bytes, { type: "delete", id }), /使用|前年/);
   }
   const zeroDraft = { ...draft, name: "全行0", rows: [{ accountId: account.id, amounts: {} }] };
   bytes = await api.registerInitiative(bytes, zeroDraft);
-  const zero = (await api.readPlanContents(bytes)).initiatives.find(item => item.name === "全行0");
+  const zero = (await readDerivedPlan(api, bytes)).initiatives.find(item => item.name === "全行0");
   const emptySelection = { ...zeroDraft, rows: [{ ...zero.rows[0], accountId: null, amounts: Object.fromEntries(api.initiativeMonths.map(month => [month, ""])) }] };
   const removed = await api.updateInitiative(bytes, zero.id, 2027, emptySelection);
-  assert.equal((await api.readPlanContents(removed)).initiatives.find(item => item.id === zero.id).rows.length, 0, "既存の空欄・未選択行は再読込で残らない");
+  assert.equal((await readDerivedPlan(api, removed)).initiatives.find(item => item.id === zero.id).rows.length, 0, "既存の空欄・未選択行は再読込で残らない");
   const removedDb = await api.openTriadicDatabase(removed);
   assert.equal(removedDb.exec("SELECT COUNT(*) FROM initiative_amounts WHERE row_id = ?", [zero.rows[0].id])[0].values[0][0], 0);
   removedDb.close();
@@ -104,11 +106,11 @@ export async function verifySingleYearPlan(api) {
   await assert.rejects(api.updateInitiative(bytes, zero.id, 2027, { ...emptySelection, rows: [{ ...emptySelection.rows[0], overrides: { 2: { 4: "1" } } }] }), /勘定科目/);
   await assert.rejects(api.updateInitiative(bytes, initiative.id, 2027, { ...changed, rows: [{ ...updated, accountId: null, amounts: {} , overrides: {} }] }), /全種別/);
   bytes = await api.updateInitiative(bytes, zero.id, 2027, { ...zeroDraft, rows: [] });
-  assert.equal((await api.readPlanContents(bytes)).initiatives.find(item => item.id === zero.id).rows.length, 0, "最後の行も全種別0なら削除できる");
-  const beforeReset = (await api.readPlanContents(bytes)).initiatives[0];
+  assert.equal((await readDerivedPlan(api, bytes)).initiatives.find(item => item.id === zero.id).rows.length, 0, "最後の行も全種別0なら削除できる");
+  const beforeReset = (await readDerivedPlan(api, bytes)).initiatives[0];
   const resetRows = beforeReset.rows.map(row => ({ ...row, overrides: { ...row.overrides, 2: {} } }));
   bytes = await api.updateInitiative(bytes, beforeReset.id, 2027, { ...changed, rows: resetRows });
-  const afterReset = (await api.readPlanContents(bytes)).initiatives[0].rows[0];
+  const afterReset = (await readDerivedPlan(api, bytes)).initiatives[0].rows[0];
   assert.equal(api.resolvedAmount(afterReset, 2, 11), "120", "手修正0を解除すると一次予算を引き継ぐ");
   assert.equal(api.resolvedAmount(afterReset, 2, 4), "120");
   assert.deepEqual(contents.kinds.map(kind => kind.kindName), ["一次予算", "確定予算"]);

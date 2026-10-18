@@ -5,7 +5,6 @@ import { deriveStartYearMonth } from "../domain/initiativeStartMonth";
 import { yenToAmount } from "../domain/amounts";
 import { INITIAL_KINDS, type KindOverrides } from "../domain/kinds";
 import type { Initiative, InitiativeRow, PlanContents } from "../domain/plan";
-import { buildDetails } from "../tables/details";
 import { readPlanSettings } from "./settings";
 import { listAccounts } from "./accountMaster";
 import { listAggregations } from "./aggregations";
@@ -44,16 +43,16 @@ export function listInitiatives(db: Database, fiscalYear: number, initiativeId?:
         startYearMonths: { 1: deriveStartYearMonth(fiscalYear, rule, rows, 1), 2: deriveStartYearMonth(fiscalYear, rule, rows, 2) }, rows, months: {} };
     });
 }
-export function readContents(db: Database, includeDetails = true): PlanContents {
+export function readContents(db: Database): PlanContents {
   const settings = readPlanSettings(db);
   const accounts = listAccounts(db);
   const contents: PlanContents = { ...settings, accounts, initiatives: listInitiatives(db, settings.fiscalYear),
     aggregations: listAggregations(db), expansions: listExpansions(db), expansionCategories: listExpansionCategories(db), industries: listIndustries(db), departments: listDepartments(db), periodTypes: listPeriodTypes(db), kinds: INITIAL_KINDS.map(kind => ({ ...kind })) };
-  return includeDetails ? { ...contents, details: buildDetails(contents) } : contents;
+  return contents;
 }
-async function read(bytes: Uint8Array, open: typeof openTriadicDatabase, includeDetails: boolean): Promise<PlanContents> {
+async function read(bytes: Uint8Array, open: typeof openTriadicDatabase): Promise<PlanContents> {
   const db = await open(bytes);
-  try { return readContents(db, includeDetails); } finally { db.close(); }
+  try { return readContents(db); } finally { db.close(); }
 }
-export const readPlanContents = (bytes: Uint8Array, includeDetails = true) => read(bytes, openTriadicDatabase, includeDetails);
-export const readSnapshotContents = (bytes: Uint8Array, includeDetails = true) => read(bytes, openBusinessSnapshot, includeDetails);
+export const readPlanContents = (bytes: Uint8Array) => read(bytes, openTriadicDatabase);
+export const readSnapshotContents = (bytes: Uint8Array) => read(bytes, openBusinessSnapshot);

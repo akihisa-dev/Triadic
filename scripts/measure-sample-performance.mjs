@@ -13,17 +13,15 @@ await withNodeBundle('tests/performance-api.ts', async api => {
   };
   let contents; let renderedRows;
   for (let trial=0; trial<3; trial++) {
-    contents = await timed('readWithDetails',()=>api.readPlanContents(bytes));
-    await timed('readWithoutDetails',()=>api.readPlanContents(bytes,false));
+    contents = await timed('readPlan',()=>api.readPlanContents(bytes));
     const html = await timed('renderInitiativeMarkup',()=>api.renderInitiativeList(contents));
     renderedRows = html.split('<tr').length-1;
     await timed('deriveDetails',()=>api.buildDetails(contents));
-    await timed('compareWithDetails',()=>JSON.stringify(contents));
-    await timed('compareWithoutDetails',()=>JSON.stringify(contents,(key,value)=>key==='details'?undefined:value));
+    await timed('comparePlan',()=>JSON.stringify(contents));
     const item=contents.initiatives[0];
     await timed('updateOneInitiative',()=>api.updateInitiative(bytes,item.id,item.fiscalYear,{...item,fiscalYear:String(item.fiscalYear),note:item.note+' 確認'}));
   }
-  console.log(JSON.stringify({bytes:bytes.length,initiatives:contents.initiatives.length,details:contents.details.length,renderedRows,
+  console.log(JSON.stringify({bytes:bytes.length,initiatives:contents.initiatives.length,details:api.buildDetails(contents).length,renderedRows,
     milliseconds:Object.fromEntries(Object.entries(timings).map(([name,values])=>[name,{trials:values,median:[...values].sort((a,b)=>a-b)[1]}])),
     note:'画面の描画時間は別途ブラウザで確認してください。ここでのrenderはHTML文字列生成のみです。'},null,2));
 });

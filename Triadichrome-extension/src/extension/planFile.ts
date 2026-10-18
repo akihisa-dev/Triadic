@@ -19,7 +19,7 @@ export function planContents(plan: OpenPlan): PlanContents {
 export async function writePlanChange(plan: OpenPlan, handle: FileSystemFileHandle, bytes: Uint8Array, options: { historyPrepared?: boolean; now?: string; allowRebase?: boolean } = {}): Promise<OpenPlan> {
   if (!handle.name.toLowerCase().endsWith(TRIADIC_FILE_EXTENSION)) throw new Error("拡張子は.triadicにしてください。");
   if (!options.historyPrepared) bytes = await trackHistoryChange(plan.bytes, bytes, options.now);
-  const { contents, savedHistory } = await processPlan("readSavedPlan", bytes, typeof Worker === "undefined");
+  const { contents, savedHistory } = await processPlan("readSavedPlan", bytes);
   return writeCheckedFile(plan, { ...contents, savedHistory, bytes, name: handle.name, handle }, options.allowRebase === true);
 }
 
@@ -39,7 +39,7 @@ async function writeCheckedFile(plan: OpenPlan, prepared: OpenPlan & { handle: F
       if (allowRebase && !plan.destinationBytes) {
         const merged = await processPlan("rebasePlan", plan.bytes, prepared.bytes, current);
         if (merged) {
-          const { contents, savedHistory } = await processPlan("readSavedPlan", merged.bytes, typeof Worker === "undefined");
+          const { contents, savedHistory } = await processPlan("readSavedPlan", merged.bytes);
           saved = { ...contents, savedHistory, bytes: merged.bytes, name: prepared.name, handle: prepared.handle, rebasedOperation: merged.operation };
           return merged.bytes;
         }

@@ -29,9 +29,9 @@ export async function verifyReadSavedPlan(api) {
   } finally { Database.prototype.exec = exec; }
   for (const bytes of [original, changed, checkpoint]) {
     const before = bytes.slice();
-    for (const includeDetails of [true, false]) {
-      assert.deepEqual(await read(bytes, includeDetails), {
-        contents: await api.readPlanContents(bytes, includeDetails),
+    {
+      assert.deepEqual(await read(bytes), {
+        contents: await api.readPlanContents(bytes),
         savedHistory: await api.readDataHistory(bytes),
       }, '計画と履歴を別々に読んだ結果と一致');
     }

@@ -1,3 +1,4 @@
+import { readDerivedPlan } from "./derived-plan.mjs";
 import { verifyReferenceSample } from "./reference-sample.mjs";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -56,7 +57,7 @@ export async function verifySamplePlan(api, { excel = false } = {}) {
       assert.equal(ordinary.budget[month], expected, "科目属性による施策別利益と集計マスタの階層計算が一致する");
     }
   }
-  const plan = await readPlanContents(bytes);
+  const plan = await readDerivedPlan(api, bytes);
   assert.deepEqual(plan.expansionCategories.map(item => item.categoryName), ["下払いUP", "ベースアップ", "設備投資", "燃料費UP", "電気料金UP", "その他"], "確認用データの区分はデフォルト6件だけにする");
   assert.equal(plan.initiatives.find(item => item.name === "通信運搬費と消耗品費の削減").expansionCategoryId, plan.expansionCategories.find(item => item.categoryName === "その他").id);
   assert.deepEqual(new Set(plan.expansions.find(item => item.expansionName === "コスト").categoryIds), new Set(plan.expansionCategories.map(item => item.id)));

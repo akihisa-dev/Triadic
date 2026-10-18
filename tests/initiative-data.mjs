@@ -1,3 +1,4 @@
+import { readDerivedPlan } from "./derived-plan.mjs";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -34,7 +35,7 @@ export async function verifyInitiativeData(api, root) {
   api.validateInitiative({ ...draft, rows: manyRows }, manyAccounts, [], initial.expansions, initial.departments, initial.periodTypes, initial.industries);
   assert.equal(reads, 1000, "科目マスタを一度だけ索引化し、入力行ごとに再走査しない");
   const result = await registerInitiative(bytes, draft);
-  const contents = await readPlanContents(result);
+  const contents = await readDerivedPlan(api, result);
   const record = api.initiativesForKind(contents.initiatives, contents.accounts, 1)[0];
   assert.equal(record.name, "登録する施策");
   assert.equal(record.note, draft.note);
@@ -57,9 +58,9 @@ export async function verifyInitiativeData(api, root) {
   await assert.rejects(registerInitiative(bytes, { ...draft, rows: [{ accountId: null, amounts: {} }] }), /勘定科目/);
   await assert.rejects(changeAccountMaster(result, { type: "delete", id: initial.accounts[3].id }), /使用/);
   const database = await openTriadicDatabase(result);
-  assert.deepEqual((await readPlanContents(result)).details.filter(row => row.kindId === 1).slice(0,12).map(row => [row.year, row.month]),
+  assert.deepEqual((await readDerivedPlan(api, result)).details.filter(row => row.kindId === 1).slice(0,12).map(row => [row.year, row.month]),
     [[2026,4],[2026,5],[2026,6],[2026,7],[2026,8],[2026,9],[2026,10],[2026,11],[2026,12],[2027,1],[2027,2],[2027,3]]);
-  const loaded = await readPlanContents(result);
+  const loaded = await readDerivedPlan(api, result);
   const april = loaded.details.filter(row => row.kindId === 1 && row.month === 4);
   const detailSum = april.reduce((totals, row) => [api.addYen(totals[0], api.amountToYen(row.sales)), api.addYen(totals[1], api.amountToYen(row.profit))], [0,0]);
   assert.deepEqual(detailSum, [95500, 85500]);

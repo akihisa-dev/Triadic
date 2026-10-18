@@ -29,14 +29,18 @@ export async function verifyKindAmountStorage(api) {
   let updated = (await api.readPlanContents(bytes)).initiatives[0].rows[0];
   assert.equal(api.resolvedAmount(updated, 2, 4), "100", "同額で明示した100も固定する");
   assert.equal(api.resolvedAmount(updated, 2, 5), "0", "明示0を不在と混同しない");
-  const stale = (await api.readPlanContents(bytes)).details.find(item => item.kindId === 2 && item.month === 4);
+  const staleBase=bytes, stale=(await api.readPlanContents(bytes)).initiatives[0];
   const reset = { ...updated, overrides: { 2: { 5: "0", 6: "50" } } };
   bytes = await api.updateInitiative(bytes, initiative.id, 2026, { ...draft, rows: [reset] });
   updated = (await api.readPlanContents(bytes)).initiatives[0].rows[0];
   assert.equal(api.resolvedAmount(updated, 2, 4), "120", "解除で一次へ戻る");
   assert.equal(updated.overrides[2][4], undefined);
   bytes = await api.updateInitiative(bytes, initiative.id, 2026, { ...draft, rows: [{ ...updated, overrides: { ...updated.overrides, 2: { ...updated.overrides[2], 4: "100" } } }] });
-  await assert.rejects(api.changeDetail(bytes, { target: stale, field: "amount", value: "101" }), /変更されています/, "解除・再追加で明細revisionが戻っても古い編集を拒否する");
+  const readded=(await api.readPlanContents(bytes)).initiatives[0];
+  assert.ok(readded.revision>stale.revision,'解除・再追加も現行施策の更新番号へ反映');
+  const external=await api.updateInitiative(bytes,initiative.id,2026,{...draft,rows:readded.rows.map(row=>({...row,overrides:{2:{...row.overrides[2],4:'102'}}}))});
+  const local=await api.updateInitiative(staleBase,initiative.id,2026,{...draft,rows:stale.rows.map(row=>({...row,overrides:{2:{...row.overrides[2],4:'101'}}}))});
+  assert.equal(await api.rebasePlan(staleBase,local,external),null,'解除・再追加後の同じ月の相反変更を拒否');
   const restored = await api.applyOperationSnapshot(bytes, snapshot);
   assert.deepEqual((await api.readPlanContents(restored)).initiatives[0].rows, [row]);
   // Construct the old storage shape only inside synthetic test copies, never migrate a user file.
