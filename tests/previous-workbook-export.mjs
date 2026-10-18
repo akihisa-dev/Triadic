@@ -25,7 +25,8 @@ export async function verifyPreviousWorkbookExport(api) {
       if (typeof cell.value === "string" || cell.formula) assert.deepEqual(reopened.getWorksheet(ws.name).getCell(cell.address).value, cell.value, `三表の文字列・数式: ${ws.name}!${cell.address}`);
     })));
   }
-  for (const name of ["営業\t部署", "営業\n部署", "営業\r部署", "日本語", "'部署'", "部署/業種:*?[]\\", "長".repeat(40), "_x0041_\t_x005F_"]) {
+  for (const name of ["営業\t部署", "営業\n部署", "営業\r部署", "日本語", "'部署'", "部署/業種:*?[]\\", "長".repeat(40), "_x0041_\t_x005F_",
+    "&lt;", "&amp;", "&quot;", "&apos;", "&gt;", "A&B", "&#65;", "&amp;lt;", "&lt;&gt;_x0041_"]) {
     for (const field of ["industries", "departments"]) {
       const named = { ...plan, [field]: plan[field].map(row => ({ ...row, [field === "industries" ? "industryName" : "departmentName"]: name })) };
       const beforeNames = structuredClone(named);
@@ -35,6 +36,13 @@ export async function verifyPreviousWorkbookExport(api) {
       const wb = new ExcelJS.Workbook(); await wb.xlsx.load(bytes);
       const ws = wb.worksheets[0];
       assert.equal(ws.name, wb.getWorksheet("_triadichrome").getCell("A3").value);
+      assert.equal(ws.name, api.createPreviousWorkbook(named, pairs).worksheets[0].name, "読込でシート名が変わらない");
+      // XML normalizes CR/CRLF to LF in cell text; literal entity strings stay literal.
+      assert.equal(ws.getCell("A2").value, `${named.fiscalYear}年度 · ${named.industries[0].industryName} · ${named.departments[0].departmentName} · 単位：千円`.replace(/\r\n?/g, "\n"), "シート内の分類名は元の文字列を保持");
+      assert.doesNotMatch(ws.name, /&(lt|amp|quot|apos|gt);/);
+      if (["&lt;", "&amp;", "&quot;", "&apos;", "&gt;"].includes(name)) assert.equal(ws.name,
+        `1_${field === "industries" ? "_" : named.industries[0].industryName}_${field === "departments" ? "_" : named.departments[0].departmentName}`);
+      if (["A&B", "&#65;"].includes(name)) assert.ok(ws.name.includes(name), "通常の&と数値実体参照はシート名でも保持");
       assert.ok(ws.name.length <= 31); assert.doesNotMatch(ws.name, /[\t\r\n]/);
       ws.getCell("D4").value = 0.001;
       const patches = await api.parsePreviousWorkbook(await api.serializeWorkbook(wb), named);
