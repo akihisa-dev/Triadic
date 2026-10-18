@@ -58,6 +58,8 @@ test("ファイルを開き、サイドバーを操作して入口へ戻る", as
   await expect(app.getByRole("dialog")).toHaveCount(0);
   await attachImage(testInfo, "サイドバー", await preview.screenshot());
   await page.keyboard.press("Tab");
+  await expect(app.getByRole("button", { name: "施策を検索", exact: true })).toBeFocused();
+  await page.keyboard.press("Tab");
   await expect(close).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(sidebar.getByRole("button", { name: "Home", exact: true })).toBeFocused();
@@ -111,6 +113,8 @@ test("サイドバーを開いたまま施策一覧とホームを往復でき�
   await expect(navigation.getByRole("button")).toHaveText(["Home", "施策一覧", "総原価表", "展開表", "前年入力", "入出力", "マスタ", "履歴"]);
   await expect(home).toHaveAttribute("aria-current", "page");
   await expect(initiativeEntry).not.toHaveAttribute("aria-current", "page");
+  await page.keyboard.press("Tab");
+  await expect(app.getByRole("button", { name: "施策を検索", exact: true })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(sidebar.getByRole("button", { name: "サイドバーを閉じる" })).toBeFocused();
   await page.keyboard.press("Tab");
