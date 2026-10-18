@@ -115,9 +115,11 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
       await expect(app.getByRole("main", { name: "施策一覧", exact: true })).toBeVisible();
       await expect(app.getByRole("button", { name: "施策一覧", exact: true })).toHaveAttribute("aria-current", "page");
 
+      await app.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
+      await expect(app.getByRole("alertdialog", { name: "ファイルを閉じる", exact: true })).toBeVisible();
       const closing = await app.locator("body").evaluate(sampleChange, {
         observe: ".app-switch",
-        actions: [{ frame: 0, selector: ".sidebar-footer button" }, { frame: 2, selector: ".confirmation-dialog[open] .primary-button" }],
+        actions: [{ frame: 0, selector: ".confirmation-dialog[open] .primary-button" }],
       });
       expect(closing.some(sample => sample.text.includes("画面テスト.triadic") && sample.opacity > 0 && sample.opacity < 0.9)).toBe(true);
       expect(closing.find(sample => sample.text.includes("ファイルを開く"))!.opacity).toBeLessThan(0.25);
