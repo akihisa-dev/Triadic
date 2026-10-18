@@ -4,26 +4,26 @@ for (const subject of ['account', 'group']) for (const space of [' ', '　']) te
   await app.getByRole('button', { name: '新規作成', exact: true }).click();
   await app.getByRole('button', { name: 'サイドバーを開く', exact: true }).click();
   await app.getByRole('navigation', { name: 'メインナビゲーション' }).getByRole('button', { name: 'マスタ', exact: true }).click();
-  await app.getByRole('button', { name: /^勘定科目マスタ/ }).click();
   const name = subject === 'account' ? '売上高' : '追従確認集計';
+  await app.getByRole('button', { name: subject === 'account' ? /^勘定科目マスタ/ : /^集計マスタ/ }).click();
   if (subject === 'group') {
-    await app.getByRole('combobox', { name: '科目属性', exact: true }).selectOption('group');
-    await app.getByRole('textbox', { name: '名称', exact: true }).fill(name);
+    await app.getByRole('button', { name: '＋ 集計を追加', exact: true }).click();
+    await app.getByRole('textbox', { name: '集計名', exact: true }).fill(name);
     await app.getByRole('button', { name: '登録', exact: true }).click();
-    await app.getByRole('combobox', { name: `${name}の集計`, exact: true }).selectOption({ label: '費用集計' });
-    await expect(app.getByRole('button', { name: `${name}を編集`, exact: true })).toBeEnabled();
-  }
-  await app.getByRole('button', { name: `${name}を編集`, exact: true }).click();
-  const editing = app.locator('.master-row-editing');
+    await expect(app.getByRole('button', { name: `${name}を移動`, exact: true })).toBeEnabled();
+    await app.getByRole('button', { name: `${name}を移動`, exact: true }).press('F2');
+  } else await app.getByRole('button', { name: `${name}を編集`, exact: true }).click();
+  const editing = app.locator(subject === 'account' ? '.master-row-editing' : '.aggregation-inline-edit');
   const display = editing.getByRole('textbox', { name: /の表示名$/ });
-  const formal = editing.getByRole('textbox', { name: /の名称$/ });
+  const formal = editing.getByRole('textbox', { name: /の(?:名称|集計名)$/ });
   await display.fill(`${space}${name}${space}`);
   await expect(app.getByRole('button', { name: '完了', exact: true })).toBeEnabled();
   await formal.fill('新 名称');
   await expect(display).toHaveValue('新 名称');
   await expect(app.getByRole('button', { name: '完了', exact: true })).toBeEnabled();
   await app.getByRole('button', { name: '完了', exact: true }).click();
-  await app.getByRole('button', { name: '新 名称を編集', exact: true }).click();
+  if(subject === 'account') await app.getByRole('button', { name: '新 名称を編集', exact: true }).click();
+  else await app.getByRole('button', { name: '新 名称を移動', exact: true }).press('F2');
   await expect(display).toHaveValue('新 名称');
   // Interior spaces identify a deliberately different display name.
   await display.fill('独自 表示');
@@ -68,7 +68,7 @@ for (const mode of ['during', 'failure']) test(`空白正規化後の改名で�
   await app.getByRole('button', { name: '売上高を編集', exact: true }).click();
   const row = app.locator('.master-row-editing');
   const display = row.getByRole('textbox', { name: /の表示名$/ });
-  const name = row.getByRole('textbox', { name: /の名称$/ });
+  const name = row.getByRole('textbox', { name: /の(?:名称|集計名)$/ });
   await display.fill(' 売上高 ');
   await expect(app.getByRole('button', { name: '完了', exact: true })).toBeEnabled();
   await name.fill('途中の名称');

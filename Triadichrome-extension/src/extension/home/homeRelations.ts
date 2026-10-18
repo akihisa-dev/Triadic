@@ -1,4 +1,5 @@
 export const nodes = [
+  { page: "aggregation-master", name: "集計マスタ", icon: "master", x: 900, y: -210, master: true },
   { page: "amount-item-master", name: "金額項目マスタ", icon: "master", x: 320, y: 0, master: true },
   { page: "account-type-master", name: "科目属性マスタ", icon: "master", x: 320, y: -126, master: true },
   { page: "account-master", name: "勘定科目マスタ", icon: "master", x: 640, y: -42, master: true },
@@ -26,7 +27,7 @@ export const edges: { from: HomeDestination; to: HomeDestination; label: string;
   { from: "account-type-master", to: "account-master", label: "科目属性を選択", kind: "reference", at: { x: 550, y: -105 } },
   { from: "previous-input", to: "cost-table", label: "前年の実額", kind: "amount", at: { x: 1200, y: 0 } },
   { from: "kind-master", to: "initiative-list", label: "種別ごとに入力", kind: "reference", at: { x: 300, y: 315 } },
-  { from: "account-master", to: "cost-table", label: "表示順・集計・加減", kind: "structure", at: { x: 860, y: 0 } },
+  { from: "aggregation-master", to: "cost-table", label: "表示順・集計・加減", kind: "structure", at: { x: 1060, y: -140 } },
   { from: "account-master", to: "initiative-list", label: "科目を選択", kind: "reference", at: { x: 640, y: 105 } },
   { from: "industry-master", to: "department-master", label: "所属業種を設定", kind: "structure", at: { x: 0, y: 126 } },
   { from: "industry-master", to: "initiative-list", label: "部署の所属から業種を選択", kind: "reference", at: { x: 240, y: 126 } },

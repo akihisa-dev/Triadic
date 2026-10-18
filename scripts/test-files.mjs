@@ -1,3 +1,4 @@
+import { verifyAggregationLayout } from "../tests/aggregation-layout.mjs";
 import { verifyClassificationIndirectRebase } from '../tests/classification-indirect-rebase.mjs';
 import { verifySelectionTotal } from "../tests/selection-total.mjs";
 import { verifyExpansionExpenseOverflow } from "../tests/expansion-expense-overflow.mjs";
@@ -113,6 +114,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyAggregationRebase(api);
   await verifyAggregationPositions(api);
   await verifyUnifiedMaster(api);
+  await verifyAggregationLayout(api);
   await verifyMasterOrderStorage(api);
   await verifySchemaBoundary(api);
   await verifyYenPrecision(api);

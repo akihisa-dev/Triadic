@@ -13,6 +13,7 @@ import { InitiativeEntryPage } from "./InitiativeEntryPage";
 import { InitiativeListPage } from "./InitiativeListPage";
 import { InitiativeDetailPage } from "./InitiativeDetailPage";
 import { MasterPage } from "./MasterPage";
+import { AggregationMasterPage } from "./AggregationMasterPage";
 import { AccountMasterPage } from "./AccountMasterPage";
 import { CostTablePage } from "./CostTablePage";
 import { DataHistoryPage } from "./DataHistoryPage";
@@ -43,7 +44,7 @@ export function WorkspacePage({ displayed, workspace }: { displayed: Screen; wor
     case "initiative-list": return <InitiativeListPage expansions={contents.expansions} periodTypes={contents.periodTypes} onAddInitiative={startInitiative} selectedKind={contents.kindSelections["initiative-list"][0]!} selection={kindSelection("initiative-list")} initiatives={initiatives} accounts={accounts} fiscalYear={String(contents.fiscalYear)} onOpenInitiative={openInitiative} navigationBlocked={navigationBlocked} />;
     case "cost-table": return <CostTablePage view={workspace.costTableView} navigationBlocked={navigationBlocked} onOpenInitiative={openInitiative} selection={kindSelection("cost-table")} contents={contents} selected={contents.kindSelections["cost-table"]} />;
     case "expansion-table": return <ExpansionTablePage selection={kindSelection("expansion-table")} contents={contents} selected={contents.kindSelections["expansion-table"]} onOpenInitiative={openInitiative} />;
-    case "master": return <MasterPage onOpenAmountItems={() => setPage("amount-item-master")} onOpenAccountTypes={() => setPage("account-type-master")} onOpenAccounts={() => setPage("account-master")} onOpenExpansions={() => setPage("expansion-master")} onOpenExpansionCategories={() => setPage("expansion-category-master")} onOpenIndustries={() => setPage("industry-master")} onOpenDepartments={() => setPage("department-master")} onOpenPeriods={() => setPage("period-master")} onOpenKinds={() => setPage("kind-master")} />;
+    case "master": return <MasterPage onOpenAggregations={() => setPage("aggregation-master")} onOpenAmountItems={() => setPage("amount-item-master")} onOpenAccountTypes={() => setPage("account-type-master")} onOpenAccounts={() => setPage("account-master")} onOpenExpansions={() => setPage("expansion-master")} onOpenExpansionCategories={() => setPage("expansion-category-master")} onOpenIndustries={() => setPage("industry-master")} onOpenDepartments={() => setPage("department-master")} onOpenPeriods={() => setPage("period-master")} onOpenKinds={() => setPage("kind-master")} />;
     case "amount-item-master": return <AmountItemMasterPage isSaving={isSaving} onBack={() => setPage("master")} />;
     case "account-type-master": return <AccountTypeMasterPage isSaving={isSaving} onBack={() => setPage("master")} />;
     case "kind-master": return <KindMasterPage kinds={contents.kinds} isSaving={isSaving} onBack={() => setPage("master")} />;
@@ -52,6 +53,7 @@ export function WorkspacePage({ displayed, workspace }: { displayed: Screen; wor
     case "industry-master": return <IndustryMasterPage industries={contents.industries} isSaving={isSaving} onPendingChange={setEditPending} onPrepareSave={onPrepareSave} onChange={changeIndustries} onBack={() => setPage("master")} />;
     case "expansion-category-master": return <ExpansionCategoryMasterPage expansionCategories={contents.expansionCategories} usedIds={new Set([...contents.expansions.flatMap(item => item.categoryIds ?? []), ...initiatives.flatMap(item => item.expansionCategoryId == null ? [] : [item.expansionCategoryId]), ...(initiativeDraft.expansionCategoryId == null ? [] : [initiativeDraft.expansionCategoryId])])} isSaving={isSaving} onPendingChange={setEditPending} onPrepareSave={onPrepareSave} onChange={changeExpansionCategories} onBack={() => setPage("master")} />;
     case "expansion-master": return <ExpansionMasterPage usedExpansionIds={new Set([...initiatives.map(item => item.expansionId), initiativeDraft.expansionId].filter((id): id is number => id !== null))} expansions={contents.expansions} expansionCategories={contents.expansionCategories} isSaving={isSaving} onPendingChange={setEditPending} onPrepareSave={onPrepareSave} onChange={changeExpansions} onBack={() => setPage("master")} />;
+    case "aggregation-master": return <AggregationMasterPage onPendingChange={setEditPending} onPrepareSave={onPrepareSave} accounts={accounts} groups={contents.aggregations} isSaving={isSaving} onChange={changeAggregations} onBack={() => setPage("master")} />;
     case "account-master": return <AccountMasterPage accounts={accounts} groups={contents.aggregations} onChangeAggregations={changeAggregations} usedAccountIds={usedAccountIds} isSaving={isSaving} onPendingChange={setEditPending} onPrepareSave={onPrepareSave} onChange={changeMaster} onBack={() => setPage("master")} />;
   }
 }

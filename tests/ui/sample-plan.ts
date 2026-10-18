@@ -1,3 +1,5 @@
+// 縦書き集計名の範囲内追従、スクロール時の行・L字・金額不変、ドラッグ時の自動スクロールは tests/ui/aggregation-master.spec.ts で確認する。
+// 集計マスタは既存の科目・集計と共通順を使用する。L字の多段所属・減算・未所属・空集計、保存失敗は tests/ui/aggregation-master.spec.ts で確認する。サンプルの業務データは変更しない。
 // マスタ入口・入出力・履歴の余白と文字・アイコンの維持は tests/ui/compact-surfaces.spec.ts で確認する。保存データは追加しない。
 // 施策入力の上部の一行配置と余白は tests/ui/initiative-header-layout.spec.ts、上部全体と月見出しの固定は tests/ui/initiative-grid.spec.ts で新規・登録済み、縦横スクロールと末尾入力を確認する。
 // 選択合計エラー時の一行表示・固定通知・表領域と入力位置の維持は tests/ui/selection-total.spec.ts と auto-save.spec.ts で新規・登録済みを確認する。既存データを使い、保存内容は追加しない。

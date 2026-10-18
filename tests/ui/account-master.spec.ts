@@ -47,7 +47,7 @@ test("マスタから科目を管理し、施策で選択して再読込でき�
   await expect(app.getByRole("heading", { name: "マスタ", exact: true })).toBeVisible();
   await app.getByRole("button", { name: /^勘定科目マスタ/ }).click();
   await expect(master).toHaveAttribute("aria-current", "page");
-  await expect(app.getByRole("table", { name: "科目・集計一覧" }).getByRole("columnheader")).toHaveText(["順序", "科目コード", "名称", "表示名", "科目属性", "集計", "加減", "操作"]);
+  await expect(app.getByRole("table", { name: "勘定科目一覧" }).getByRole("columnheader")).toHaveText(["順序", "科目コード", "名称", "表示名", "科目属性", "操作"]);
   const name = app.getByRole("textbox", { name: "名称", exact: true });
   const register = app.getByRole("button", { name: "登録", exact: true });
   await name.fill("   ");
@@ -99,7 +99,7 @@ test("マスタから科目を管理し、施策で選択して再読込でき�
   const editedCode = app.getByRole("textbox", { name: "売上高の科目コード", exact: true });
   const editedName = app.getByRole("textbox", { name: "売上高の名称", exact: true });
   await expect(editedCode).toBeFocused();
-  await expect(app.getByRole("table", { name: "科目・集計一覧" }).getByRole("textbox")).toHaveCount(3);
+  await expect(app.getByRole("table", { name: "勘定科目一覧" }).getByRole("textbox")).toHaveCount(3);
   await settleMotion(app.locator("body"));
   await attachImage(testInfo, "勘定科目マスタ・表内編集", await page.locator("#app-preview").screenshot());
   await editedName.fill("");
@@ -168,7 +168,7 @@ test("空のマスタへの案内と、保存に失敗した登録内容を保�
   await app.getByRole("button", { name: "登録", exact: true }).click();
   await expect(app.getByRole("alert")).toHaveText("テスト用の保存失敗です。");
   await expect(name).toHaveValue("売上高");
-  await expect(app.getByRole("table", { name: "科目・集計一覧" }).locator("tbody tr")).toHaveCount(4);
+  await expect(app.getByRole("table", { name: "勘定科目一覧" }).locator("tbody tr")).toHaveCount(0);
   await expect(app.getByRole("button", { name: "登録", exact: true })).toBeEnabled();
 });
 
@@ -219,5 +219,5 @@ test("一覧が長くても削除確認は画面中央に開き、キャンセ�
   await expect(dialog).toHaveCount(0);
   await expect(trigger).toBeFocused();
   expect(await app.locator(".account-master-list").evaluate(readPosition)).toEqual(before);
-  await expect(app.getByRole("table").getByRole("row")).toHaveCount(30);
+  await expect(app.getByRole("table").getByRole("row")).toHaveCount(26);
 });

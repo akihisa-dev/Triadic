@@ -1,3 +1,4 @@
+export * from "../../Triadichrome-extension/src/core/tables/aggregationLayout";
 export * from "../../Triadichrome-extension/src/core/domain/budgetHints";
 export * from "../../Triadichrome-extension/src/core/tables/historyIncomeImpact";
 export * from "../../Triadichrome-extension/src/core/domain/initiativeSearch";
