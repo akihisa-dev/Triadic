@@ -38,6 +38,11 @@ test("画面の保存項目と参照先をたどり、関連図の入口へ戻�
   await settleMotion(app.locator("body"));
   await expect(app.getByRole("region", { name: "画面とマスタの相関図" })).toBeVisible();
   await expect(app.getByRole("button", { name: "操作を取り消す", exact: true })).toBeDisabled();
-  await app.getByRole("main", { name: "ホーム" }).getByRole("button", { name: "施策一覧", exact: true }).press("Enter");
+  const initiatives = app.getByRole("main", { name: "ホーム" }).getByRole("button", { name: "施策一覧", exact: true });
+  await initiatives.press("Enter");
+  await expect(initiatives).toHaveAttribute("aria-pressed", "true");
+  await expect(app.getByRole("heading", { name: "施策一覧", exact: true })).toHaveCount(0);
+  await expect(app.getByRole("button", { name: "操作を取り消す", exact: true })).toBeDisabled();
+  await initiatives.press("Enter");
   await expect(app.getByRole("heading", { name: "施策一覧", exact: true })).toBeVisible();
 });
