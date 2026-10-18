@@ -14,6 +14,9 @@ function signature(collection: ReferenceCollection, item: object) {
 
 /** Reconcile only published current data, never a history preview or failed save. */
 export function reconcileInitiativeDraftReferences(draft: InitiativeEntryDraft, before: PlanContents, after: PlanContents, local?: LocalDraftReference | null): InitiativeEntryDraft {
+  const oldAccounts = new Map(before.accounts.map(account => [account.id, account]));
+  const nextAccounts = new Map(after.accounts.map(account => [account.id, account]));
+  const accountChecks = new Map<number, boolean>();
   const sameIdentity = (collection: "departments" | "industries", id: number | null | undefined) => {
     if (id == null) return true;
     const old = before[collection].find(item => item.id === id), next = after[collection].find(item => item.id === id);
@@ -21,10 +24,13 @@ export function reconcileInitiativeDraftReferences(draft: InitiativeEntryDraft, 
   };
   const sameReference = (collection: ReferenceCollection, id: number | null | undefined) => {
     if (id == null) return true;
-    const old = before[collection].find(item => item.id === id), next = after[collection].find(item => item.id === id);
-    if (!old || !next) return false;
+    if (collection === "accounts" && accountChecks.has(id)) return accountChecks.get(id)!;
+    const old = collection === "accounts" ? oldAccounts.get(id) : before[collection].find(item => item.id === id);
+    const next = collection === "accounts" ? nextAccounts.get(id) : after[collection].find(item => item.id === id);
     const expected = local?.collection === collection && local.id === id ? local.expected : old;
-    return signature(collection, expected) === signature(collection, next);
+    const same = !!old && !!next && signature(collection, expected!) === signature(collection, next);
+    if (collection === "accounts") accountChecks.set(id, same);
+    return same;
   };
   const departmentId = sameIdentity("departments", draft.departmentId) ? draft.departmentId ?? null : null;
   const industryId = departmentId != null && sameIdentity("industries", draft.industryId)

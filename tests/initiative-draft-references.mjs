@@ -38,5 +38,23 @@ export async function verifyInitiativeDraftReferences(api) {
     assert.equal(api.reconcileInitiativeDraftReferences(draft, before, after, { collection, id, expected }), draft, '同じ画面で保存した改名は保持');
   }
   assert.equal(api.reconcileInitiativeDraftReferences(reset, replaced, before).departmentId, null, '再試行・取消で旧選択を復活させない');
+  for (const count of [100, 500, 1000]) {
+    let idReads = 0;
+    const accounts = Array.from({ length: count }, (_, index) => ({ ...before.accounts[0],
+      get id() { idReads++; return index + 1; }, accountCode: String(index).padStart(3, '0') }));
+    const repeated = { ...draft, rows: Array.from({ length: 1000 }, (_, index) => ({ ...draft.rows[0], id: `row-${index}`, accountId: count })) };
+    const indexedPlan = { ...before, accounts };
+    assert.equal(api.reconcileInitiativeDraftReferences(repeated, indexedPlan, indexedPlan), repeated);
+    assert.ok(idReads <= 2 * count, `科目IDの照合は行数ではなく科目数に比例: ${count}科目、${idReads}回`);
+  }
+  const repeated = { ...draft, rows: [draft.rows[0], { ...draft.rows[0], id: 'repeat' }, { ...draft.rows[0], id: 'empty', accountId: null }] };
+  for (const accounts of [[], before.accounts.map(a => ({ ...a, accountType: a.accountType === 'expense' ? 'sales' : 'expense' }))]) {
+    const reconciled = api.reconcileInitiativeDraftReferences(repeated, before, { ...before, accounts });
+    assert.deepEqual(reconciled.rows.map(row => row.accountId), [null, null, null]);
+    assert.equal(reconciled.rows[0].amounts, draft.rows[0].amounts);
+    assert.equal(reconciled.rows[0].overrides, draft.rows[0].overrides);
+    assert.equal(reconciled.rows[0].invalidAmounts, draft.rows[0].invalidAmounts);
+    assert.equal(reconciled.rows[2], repeated.rows[2]);
+  }
   console.log('PASS: 未登録施策の部署再作成・業種同一性・所属・各マスタの保護、改名と無関係変更、金額と一時値保持');
 }
