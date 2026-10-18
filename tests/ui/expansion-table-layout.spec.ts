@@ -70,6 +70,8 @@ test("展開表の結合セル・固定列・全月の列境界をスクロー�
     expect(layout.horizontal).toBe(true);
   };
   await check();
+  const originalName = await region.locator(".initiative-name-button").first().textContent();
+  const originalAmount = await region.locator("tbody td:not(.expansion-category)").first().textContent();
   // Stress cell contents without changing the saved plan or production sample.
   await region.evaluate(node => {
     node.querySelector(".initiative-name-button")!.textContent = "長い施策名".repeat(60);
@@ -99,7 +101,11 @@ test("展開表の結合セル・固定列・全月の列境界をスクロー�
   }));
   expect(bottom.moved).toBe(true);
   expect(bottom.lastRowBottom).toBeLessThanOrEqual(bottom.regionBottom + 1);
-  await region.evaluate(node => { node.scrollLeft = 0; node.scrollTop = 0; });
+  await region.evaluate((node, original) => {
+    node.querySelector(".initiative-name-button")!.textContent = original.name;
+    node.querySelector("tbody td:not(.expansion-category)")!.textContent = original.amount;
+    node.scrollLeft = 0; node.scrollTop = 0;
+  }, { name: originalName, amount: originalAmount });
   const initiative = region.locator(".initiative-name-button").first();
   await initiative.click();
   await expect(app.getByRole("textbox", { name: "施策名", exact: true })).toHaveValue("設備更新と償却費の見直し");
