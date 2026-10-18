@@ -58,7 +58,7 @@ test("狭い画面でも長い科目名をコードなしで全文表示し、�
     context.font = style.font;
     const cell = select.closest("th")!;
     const remove = cell.querySelector("button")!;
-    const container = select.closest(".initiative-amount-table-container")!;
+    const container = select.closest(".initiative-grid-scroll")!;
     return {
       available: select.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 20,
       text: context.measureText(select.selectedOptions[0]!.textContent!).width,
@@ -70,6 +70,10 @@ test("狭い画面でも長い科目名をコードなしで全文表示し、�
   expect(dimensions.available).toBeGreaterThanOrEqual(dimensions.text);
   expect(dimensions.contained).toBe(true);
   expect(dimensions.horizontalScroll).toBe(true);
+  expect(await app.locator("html").evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
+  const scroll = app.locator(".initiative-grid-scroll");
+  await scroll.evaluate(node => { node.scrollLeft = node.scrollWidth; });
+  expect(await scroll.evaluate(node => node.scrollLeft)).toBeGreaterThan(0);
   const edges = await table.getByRole("combobox").evaluateAll(nodes => nodes.map(node => {
     const rect = node.getBoundingClientRect();
     const remove = node.closest("th")!.querySelector("button")!.getBoundingClientRect();
@@ -77,6 +81,8 @@ test("狭い画面でも長い科目名をコードなしで全文表示し、�
   }));
   expect(edges[0]).toEqual(edges[1]);
   const lastMonth = table.getByRole("spinbutton", { name: "固定資産減価償却費 3月の金額", exact: true });
+  await lastMonth.scrollIntoViewIfNeeded();
+  await expect(lastMonth).toBeInViewport();
   await lastMonth.fill("12.345");
   await expect(lastMonth).toHaveValue("12.345");
   await expect(select).toBeDisabled();

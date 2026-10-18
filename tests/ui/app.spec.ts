@@ -238,7 +238,7 @@ test("金額表の各セルを編集でき、狭い画面でも最後の月に�
   await prepareAccountRows(app);
   await trigger.click();
   const table = app.getByRole("table", { name: "月別計画金額", exact: true });
-  const region = app.locator("#kind-amount-panel");
+  const region = app.locator(".initiative-grid-scroll");
   await expect(table.getByRole("columnheader")).toHaveText(["勘定科目", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月", "1月", "2月", "3月"]);
   expect(await table.getByRole("combobox").evaluateAll(inputs => inputs.map(input => (input as HTMLSelectElement).selectedOptions[0]?.textContent))).toEqual(["売上高", "消耗品費", "給与手当"]);
   await expect(table.getByRole("spinbutton")).toHaveCount(36);
