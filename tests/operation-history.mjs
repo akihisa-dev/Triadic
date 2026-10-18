@@ -50,5 +50,26 @@ export async function verifyOperationHistoryTransfer(api) {
     }
     await session.travelOperation(-1,forbidden);await session.travelOperation(1,forbidden);
   }
+  const tracked=await api.trackHistoryChange(initial,await api.saveKindSelection(initial,'cost-table',[1,2]));
+  const history=await api.recordDataHistory(tracked,new Date().toISOString(),true);
+  const selected=(await api.readDataHistory(history)).entries[0].id;
+  for(const restore of [() => api.restoreDataHistory(history,selected), () => api.applyOperationSnapshot(history,snapshot)]) {
+    const before=history.slice(), touched=new Set(), closed=new Set();
+    const originalRun=SQL.Database.prototype.run, originalExec=SQL.Database.prototype.exec, originalClose=SQL.Database.prototype.close;
+    let inserted=0;
+    SQL.Database.prototype.exec=function(...args){touched.add(this);return originalExec.apply(this,args)};
+    SQL.Database.prototype.run=function(sql,...args){
+      touched.add(this);
+      if(sql==='INSERT INTO data_history VALUES (?, ?, ?)' && ++inserted===2) throw new Error('履歴転記の途中失敗');
+      return originalRun.call(this,sql,...args);
+    };
+    SQL.Database.prototype.close=function(){closed.add(this);return originalClose.call(this)};
+    try {await assert.rejects(restore(),/履歴転記の途中失敗/)}
+    finally {SQL.Database.prototype.run=originalRun;SQL.Database.prototype.exec=originalExec;SQL.Database.prototype.close=originalClose}
+    assert.equal(inserted,2);
+    assert.ok([...touched].every(db=>closed.has(db)),'途中失敗でも全作業接続を解放');
+    assert.deepEqual(history,before,'復元元の履歴と業務内容を保持');
+    await api.validateTriadicDatabase(await restore());
+  }
   console.log('PASS: 取消・やり直しの履歴転記3/10/40件、取得1行・1BLOB上限、ID・日時・BLOB・状態・削除維持、失敗・拒否・外部変更と再試行');
 }
