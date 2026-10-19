@@ -47,10 +47,11 @@ test('縦書き集計名が表示範囲の中央へ追従し、行とL字を再�
   expect(await app.locator('.aggregation-layout-table tbody tr').evaluateAll(nodes => nodes.map(node => node.getAttribute('data-row')))).toEqual(rows);
   await region.evaluate(node => { node.scrollTop = 0; });
   const handle = app.getByRole('button', { name: '売上高を移動', exact: true });
-  await handle.click();
-  await region.evaluate(node => {
-    const bounds = node.getBoundingClientRect();
-    node.dispatchEvent(new DragEvent('dragover', { bubbles: true, clientX: bounds.left + 100, clientY: bounds.bottom - 8, dataTransfer: new DataTransfer() }));
+  await handle.evaluate(node => {
+    const rect = node.getBoundingClientRect(), point = { clientX: rect.left + 8, clientY: rect.top + 8, pointerId: 1, button: 0, buttons: 1, isPrimary: true };
+    node.dispatchEvent(new PointerEvent('pointerdown', { ...point, bubbles: true }));
+    const bounds = node.closest('.aggregation-grid-scroll')!.getBoundingClientRect();
+    node.ownerDocument.dispatchEvent(new PointerEvent('pointermove', { ...point, bubbles: true, clientX: bounds.right - 90, clientY: bounds.bottom - 8 }));
   });
   await expect.poll(() => region.evaluate(node => node.scrollTop)).toBeGreaterThan(10);
   await handle.press('Escape');
