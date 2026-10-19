@@ -66,3 +66,50 @@ test('集計の同じ行で表示名を編集し、保存失敗と必須集計�
   await app.getByRole('button', { name: '完了', exact: true }).click();
   await expect(app.locator('.aggregation-inline-edit')).toHaveCount(0);
 });
+
+test('集計の登録時に集計名と表示名を別々に指定し、再読込後も保持する', async ({ app }) => {
+  await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
+  await app.getByRole('button', { name: 'サイドバーを開く', exact: true }).click();
+  await master(app, '集計マスタ');
+  await app.getByRole('button', { name: '＋ 集計を追加', exact: true }).click();
+  const form = app.getByRole('form', { name: '集計の新規登録' });
+  const name = form.getByRole('textbox', { name: '集計名', exact: true });
+  const display = form.getByRole('textbox', { name: '表示名', exact: true });
+  await name.fill('新規集計');
+  await expect(display).toHaveValue('新規集計');
+  await display.fill('小計');
+  await name.fill('確認用集計');
+  await expect(display).toHaveValue('小計');
+  await display.fill('　 ');
+  await expect(form.getByRole('button', { name: '登録', exact: true })).toBeDisabled();
+  await display.fill('小計');
+  await form.getByRole('button', { name: '登録', exact: true }).click();
+  await expect(form).toHaveCount(0);
+  const pool = app.getByRole('table', { name: '未所属の科目・集計', exact: true });
+  await expect(pool).toContainText('小計');
+  await expect(pool).toContainText('確認用集計');
+  await app.getByRole('button', { name: 'ファイルを閉じる', exact: true }).click();
+  await app.getByRole('alertdialog', { name: 'ファイルを閉じる', exact: true }).getByRole('button', { name: '閉じる', exact: true }).click();
+  await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
+  await app.getByRole('button', { name: 'サイドバーを開く', exact: true }).click();
+  await master(app, '集計マスタ');
+  await app.getByRole('button', { name: '確認用集計を移動', exact: true }).press('F2');
+  await expect(app.getByRole('textbox', { name: '確認用集計の集計名', exact: true })).toHaveValue('確認用集計');
+  await expect(app.getByRole('textbox', { name: '確認用集計の表示名', exact: true })).toHaveValue('小計');
+});
+
+test('集計の新規登録に失敗しても集計名と表示名の入力を保持する', async ({ app, page }) => {
+  await page.locator('#scenario').selectOption('save-failure');
+  await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
+  await app.getByRole('button', { name: 'サイドバーを開く', exact: true }).click();
+  await master(app, '集計マスタ');
+  await app.getByRole('button', { name: '＋ 集計を追加', exact: true }).click();
+  const form = app.getByRole('form', { name: '集計の新規登録' });
+  await form.getByRole('textbox', { name: '集計名', exact: true }).fill('未保存の集計');
+  await form.getByRole('textbox', { name: '表示名', exact: true }).fill('未保存の表示');
+  await form.getByRole('button', { name: '登録', exact: true }).click();
+  await expect(app.getByRole('alert')).toContainText('テスト用の保存失敗');
+  await expect(form.getByRole('textbox', { name: '集計名', exact: true })).toHaveValue('未保存の集計');
+  await expect(form.getByRole('textbox', { name: '表示名', exact: true })).toHaveValue('未保存の表示');
+  await expect(app.getByRole('table', { name: '未所属の科目・集計', exact: true })).not.toContainText('未保存の集計');
+});

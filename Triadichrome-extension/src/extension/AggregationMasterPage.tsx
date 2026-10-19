@@ -33,6 +33,7 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
   const [highlight, setHighlight] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [dragged, setDragged] = useState<MasterRow | null>(null);
   const [liftedKey, setLiftedKey] = useState<string | null>(null);
   const [liftedHeight, setLiftedHeight] = useState(36);
@@ -88,7 +89,7 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
     };
     dragFrame.current = requestAnimationFrame(scroll);
   };
-  const { notice, dismiss, save } = useMasterOperation<AggregationChange>({ onChange, successMessage: () => "", onSuccess: change => { if (change.type === "add") { setAdding(false); setName(""); } } });
+  const { notice, dismiss, save } = useMasterOperation<AggregationChange>({ onChange, successMessage: () => "", onSuccess: change => { if (change.type === "add") { setAdding(false); setName(""); setDisplayName(""); } } });
   const perform = async (change: AggregationChange) => {
     if (disabled) return false;
     setBusy(true);
@@ -219,9 +220,10 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
     onKeyDown={event => { if (event.key === "Escape" && dragged) { event.preventDefault(); event.stopPropagation(); pointerDrag.current?.cancel(); lifted.current?.cancel(); setDragged(null); showDrop(null); } }}>
     <div className="aggregation-master-heading"><div><button className="text-button" type="button" disabled={isSaving || busy || autoSave.pending} onClick={onBack}>← マスタへ戻る</button><h1 id="aggregation-master-title">集計マスタ</h1></div>
       <button className="secondary-button" type="button" disabled={disabled} onClick={() => { dismiss(); setAdding(true); }}>＋ 集計を追加</button></div>
-    {adding && <form className="aggregation-add-form" aria-label="集計の新規登録" onSubmit={event => { event.preventDefault(); if (name.trim()) void perform({ type: "add", name }); }}>
-      <label>集計名<input autoFocus value={name} disabled={disabled} onChange={event => setName(event.target.value)} /></label>
-      <button className="primary-button" type="submit" disabled={disabled || !name.trim()}>登録</button><button className="text-button" type="button" disabled={disabled} onClick={() => setAdding(false)}>キャンセル</button></form>}
+    {adding && <form className="aggregation-add-form" aria-label="集計の新規登録" onSubmit={event => { event.preventDefault(); if (name.trim() && displayName.trim()) void perform({ type: "add", name, displayName }); }}>
+      <label>集計名<input autoFocus value={name} disabled={disabled} onChange={event => { const value = event.target.value; if (displayName.trim() === name.trim()) setDisplayName(value); setName(value); }} /></label>
+      <label>表示名<input value={displayName} disabled={disabled} onChange={event => setDisplayName(event.target.value)} /></label>
+      <button className="primary-button" type="submit" disabled={disabled || !name.trim() || !displayName.trim()}>登録</button><button className="text-button" type="button" disabled={disabled} onClick={() => setAdding(false)}>キャンセル</button></form>}
     <StatusNotice {...notice} onDismiss={dismiss} />
     <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave} />
     <ConfirmationDialog open={deleting !== null} title="集計を削除" message={`「${deleting?.name ?? ""}」を削除しますか？`} confirmLabel="削除する" busy={isSaving || busy} onCancel={() => setDeleting(null)} onConfirm={() => { if (deleting && !disabled) void perform({ type: "delete", id: deleting.id }).then(() => setDeleting(null)); }} />
