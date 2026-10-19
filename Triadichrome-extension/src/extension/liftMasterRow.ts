@@ -1,4 +1,5 @@
 export type LiftedMasterRow = {
+  height: number;
   move: (point: { clientX: number; clientY: number }) => void;
   settle: (saved: Promise<boolean>, slot?: HTMLTableRowElement | null) => void;
   cancel: () => void;
@@ -6,7 +7,7 @@ export type LiftedMasterRow = {
 };
 
 /** The floating copy is inert; only the original row participates in editing and saving. */
-export function liftMasterRow(row: HTMLTableRowElement, pointer: { clientX: number; clientY: number }, onDone: () => void, destination: () => HTMLTableRowElement | null = () => row): LiftedMasterRow {
+export function liftMasterRow(row: HTMLTableRowElement, pointer: { clientX: number; clientY: number }, onDone: () => void, destination: () => HTMLTableRowElement | null = () => row, rows: HTMLTableRowElement[] = [row]): LiftedMasterRow {
   const doc = row.ownerDocument, win = doc.defaultView!;
   const first = row.cells[1]!.getBoundingClientRect(), bounds = row.getBoundingClientRect();
   let width = bounds.right - first.left;
@@ -19,22 +20,29 @@ export function liftMasterRow(row: HTMLTableRowElement, pointer: { clientX: numb
   block.style.width = `${width}px`;
   const table = doc.createElement("table");
   table.className = "aggregation-layout-table";
-  const body = table.createTBody(), copy = row.cloneNode(true) as HTMLTableRowElement;
-  copy.removeAttribute("data-row");
-  copy.removeAttribute("data-pool-row");
-  copy.classList.remove("aggregation-drag-source", "aggregation-lifted-source", "is-highlighted", "is-member", "aggregation-drop-into");
-  copy.deleteCell(0);
-  for (const [index, cell] of [...copy.cells].entries()) cell.style.width = `${row.cells[index + 1]!.getBoundingClientRect().width}px`;
-  copy.querySelectorAll("[id]").forEach(node => node.removeAttribute("id"));
-  body.append(copy); block.append(table); layer.append(block); doc.body.append(layer);
-  const offset = { x: pointer.clientX - first.left, y: pointer.clientY - bounds.top };
-  let x = first.left, y = bounds.top - 4, frame = 0, finished = false, settling = false;
-  const position = () => { frame = 0; block.style.transform = `translate3d(${x}px,${y}px,0)`; block.style.width = `${width}px`; };
+  const body = table.createTBody();
+  // Read original sizes in one batch before constructing the inert floating block.
+  const measurements = rows.map(item => ({ row: item, height: item.getBoundingClientRect().height, widths: [...item.cells].slice(1).map(cell => cell.getBoundingClientRect().width) }));
+  const sourceOffset = measurements.slice(0, rows.indexOf(row)).reduce((sum, item) => sum + item.height, 0);
+  const height = measurements.reduce((sum, item) => sum + item.height, 0);
+  for (const item of measurements) {
+    const copy = item.row.cloneNode(true) as HTMLTableRowElement;
+    copy.removeAttribute("data-row"); copy.removeAttribute("data-pool-row");
+    copy.classList.remove("aggregation-drag-source", "aggregation-lifted-source", "is-highlighted", "is-member", "aggregation-drop-into");
+    copy.deleteCell(0);
+    for (const [index, cell] of [...copy.cells].entries()) cell.style.width = `${item.widths[index]}px`;
+    copy.querySelectorAll("[id]").forEach(node => node.removeAttribute("id"));
+    body.append(copy);
+  }
+  block.append(table); layer.append(block); doc.body.append(layer);
+  const offset = { x: pointer.clientX - first.left, y: pointer.clientY - bounds.top + sourceOffset };
+  let x = first.left, y = bounds.top - sourceOffset - 4, frame = 0, finished = false, settling = false;
+  const position = () => { frame = 0; block.style.transform = `translate3d(${x}px,${y}px,0)`; };
   position();
   const follow = (event: { clientX: number; clientY: number }) => {
     if (settling) return;
     x = event.clientX - offset.x; y = event.clientY - offset.y - 4;
-    if (!frame) frame = win.requestAnimationFrame(position);
+    position();
   };
   function destroy() {
     if (finished) return;
@@ -57,14 +65,16 @@ export function liftMasterRow(row: HTMLTableRowElement, pointer: { clientX: numb
         targetX = left; targetY = rect.top; targetWidth = rect.right - left;
       }
       const amount = reduced ? 1 : 1 - Math.exp(-Math.min(40, now - lastTime) / 42);
+      const previousWidth = width;
       lastTime = now; x += (targetX - x) * amount; y += (targetY - y) * amount; width += (targetWidth - width) * amount;
+      if (width !== previousWidth) block.style.width = `${width}px`;
       position();
       if (resolved && Math.abs(targetX - x) + Math.abs(targetY - y) + Math.abs(targetWidth - width) < .3 && (reduced || now - stableSince > 32)) destroy();
       else frame = win.requestAnimationFrame(tick);
     };
     frame = win.requestAnimationFrame(tick);
   }
-  return { move: follow, settle: land, cancel: () => land(Promise.resolve(false)), destroy };
+  return { height, move: follow, settle: land, cancel: () => land(Promise.resolve(false)), destroy };
 }
 
 export type MasterPointerDrag = { cancel: () => void; destroy: () => void };

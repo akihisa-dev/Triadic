@@ -1,3 +1,4 @@
+// 集計と全子孫をまとめる並べ替え・浮遊表示・所属と加減の保持は tests/aggregation-layout.mjs と tests/ui/aggregation-drop.spec.ts で確認する。保存項目は増やさない。
 // L字の高さが足りない縦書き名だけを隠し、集計行名・配置を保つ表示と再表示は tests/ui/aggregation-labels.spec.ts で確認する。保存データは変えない。
 // 新規科目・集計の右側プールと所属・解除・再読込は tests/ui/aggregation-pool.spec.ts で確認する。保存項目の追加はない。
 // 行を浮かせる毎描画の追従、行間の途中反転・連続した着地、取消・失敗時の復元は tests/ui/aggregation-drop.spec.ts で確認する。保存データは追加しない。

@@ -42,8 +42,8 @@ export function aggregationRanges(order: MasterRow[], groups: Aggregation[]): Ag
   });
 }
 
-/** Move a group together with its descendants, preserving their saved relative order. */
-export function placedMasterRows(order: MasterRow[], groups: Aggregation[], source: MasterRow, target: MasterRow): MasterRow[] {
+/** Collect once per gesture; ordering and the floating block share this exact set. */
+export function masterRowSubtree(groups: Aggregation[], source: MasterRow): Set<string> {
   const moving = new Set([masterRowKey(source)]);
   if (source.kind === "group") {
     const byId = new Map(groups.map(group => [group.id, group]));
@@ -58,10 +58,24 @@ export function placedMasterRows(order: MasterRow[], groups: Aggregation[], sour
       }
     }
   }
+  return moving;
+}
+
+/** Move a group together with its descendants, preserving their saved relative order. */
+export function placedMasterRows(order: MasterRow[], groups: Aggregation[], source: MasterRow, target: MasterRow, after = false): MasterRow[] {
+  const moving = masterRowSubtree(groups, source);
   if (moving.has(masterRowKey(target))) throw new Error("自身や配下の行へ移動できません。");
   const remaining = order.filter(row => !moving.has(masterRowKey(row)));
   const at = remaining.findIndex(row => masterRowKey(row) === masterRowKey(target));
   if (at < 0) throw new Error("移動先が見つかりません。");
-  remaining.splice(at, 0, ...order.filter(row => moving.has(masterRowKey(row))));
+  remaining.splice(at + (after ? 1 : 0), 0, ...order.filter(row => moving.has(masterRowKey(row))));
   return remaining;
+}
+
+/** Arrow movement skips the selected block rather than moving its total row through its children. */
+export function shiftedMasterRows(order: MasterRow[], groups: Aggregation[], source: MasterRow, direction: -1 | 1): MasterRow[] | null {
+  const moving = masterRowSubtree(groups, source);
+  const indices = order.flatMap((row, index) => moving.has(masterRowKey(row)) ? [index] : []);
+  const target = order[(direction < 0 ? indices[0]! : indices.at(-1)!) + direction];
+  return target ? placedMasterRows(order, groups, source, target, direction > 0) : null;
 }

@@ -3,7 +3,7 @@ import type { Account } from "../core/domain/accountMaster";
 import type { Aggregation } from "../core/domain/aggregations";
 import type { AggregationChange } from "../core/domain/aggregationMaster";
 import { masterRowKey, orderedMasterRows, type MasterRow } from "../core/domain/masterRows";
-import { aggregationRanges, placedMasterRows } from "../core/tables/aggregationLayout";
+import { aggregationRanges, placedMasterRows, masterRowSubtree, shiftedMasterRows } from "../core/tables/aggregationLayout";
 import { aggregationForbidden } from "../core/tables/aggregationGraph";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
 import { MasterSignSelector } from "./MasterSignSelector";
@@ -13,10 +13,10 @@ import { useAutoSave, type AutoSaveProps } from "./useAutoSave";
 import { AutoSaveStatus } from "./AutoSaveStatus";
 import { ConfirmationDialog } from "./ConfirmationDialog";
 import { liftMasterRow, startMasterPointerDrag, type LiftedMasterRow, type MasterPointerDrag } from "./liftMasterRow";
+import { AggregationTrays } from "./AggregationTrays";
 import { AggregationDropSlot, type MasterDrop, type MasterDropSlot } from "./AggregationDropSlot";
 
 type Props = AutoSaveProps & { accounts: Account[]; groups: Aggregation[]; isSaving: boolean; onChange: (change: AggregationChange) => Promise<void>; onBack: () => void };
-type Tray = { key: string; id: number; name: string; x: number; top: number; height: number; path: string };
 
 export function AggregationMasterPage({ accounts, groups, isSaving, onChange, onBack, onPendingChange, onPrepareSave }: Props) {
   const readOnly = useHistoryReadOnly();
@@ -35,6 +35,9 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
   const [name, setName] = useState("");
   const [dragged, setDragged] = useState<MasterRow | null>(null);
   const [liftedKey, setLiftedKey] = useState<string | null>(null);
+  const [liftedHeight, setLiftedHeight] = useState(36);
+  const liftedKeys = useMemo(() => liftedKey && byRow.has(liftedKey) ? masterRowSubtree(groups, byRow.get(liftedKey)!) : new Set<string>(), [groups, byRow, liftedKey]);
+  const draggedKeys = useMemo(() => dragged ? masterRowSubtree(groups, dragged) : new Set<string>(), [groups, dragged]);
   const lifted = useRef<LiftedMasterRow | null>(null);
   const pointerDrag = useRef<MasterPointerDrag | null>(null);
   const consumeClick = useRef(false);
@@ -70,7 +73,6 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
   const table = useRef<HTMLTableElement>(null);
   const viewport = useRef<HTMLDivElement>(null);
   const pool = useRef<HTMLElement>(null);
-  const labelNodes = useRef(new Map<string, HTMLSpanElement>());
   const dragVelocity = useRef(0);
   const dragFrame = useRef(0);
   const setDragVelocity = (speed: number) => {
@@ -86,7 +88,6 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
     };
     dragFrame.current = requestAnimationFrame(scroll);
   };
-  const [geometry, setGeometry] = useState<{ width: number; height: number; trays: Tray[] }>({ width: 0, height: 0, trays: [] });
   const { notice, dismiss, save } = useMasterOperation<AggregationChange>({ onChange, successMessage: () => "", onSuccess: change => { if (change.type === "add") { setAdding(false); setName(""); } } });
   const perform = async (change: AggregationChange) => {
     if (disabled) return false;
@@ -94,63 +95,6 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
     try { return await save(change); }
     finally { setBusy(false); }
   };
-
-  useLayoutEffect(() => {
-    const element = surface.current!, grid = table.current!;
-    const measure = () => {
-      const rect = element.getBoundingClientRect();
-      const rows = [...grid.tBodies[0]!.querySelectorAll<HTMLTableRowElement>("tr[data-row]")].map(row => {
-        const bounds = row.getBoundingClientRect();
-        return { top: bounds.top - rect.top, bottom: bounds.bottom - rect.top };
-      });
-      const first = grid.tBodies[0]?.querySelector<HTMLTableRowElement>("tr[data-row]");
-      const right = first ? first.cells[3]!.getBoundingClientRect().left - rect.left : rect.width;
-      const trays = ranges.flatMap(range => range.segments.map((segment, index) => {
-        const top = rows[segment.start]!.top, bottom = rows[segment.end]!.bottom;
-        const x = range.lane * 28 + 0.5, spine = x + 24;
-        const target = segment.groupIndex === null ? null : rows[segment.groupIndex]!;
-        // Fill and outline use exactly the same geometry as the table cells.
-        const path = target
-          ? `M${x} ${top - .5}H${spine}V${target.top - .5}H${right - .5}V${target.bottom - .5}H${spine}V${bottom - .5}H${x}Z`
-          : `M${x} ${top - .5}H${spine}V${bottom - .5}H${x}Z`;
-        return { key: `${range.id}:${index}`, id: range.id, name: range.name, x, top, height: bottom - top, path };
-      }));
-      const next = { width: rect.width, height: rect.height, trays };
-      setGeometry(previous => JSON.stringify(previous) === JSON.stringify(next) ? previous : next);
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(element); observer.observe(grid);
-    return () => observer.disconnect();
-  }, [ranges, drop]);
-
-  useLayoutEffect(() => {
-    const scroller = viewport.current!, grid = table.current!;
-    // Cache intrinsic text sizes. Wheel/drag scrolling only changes transforms,
-    // without React renders, table measurements, or rebuilding any L-shaped path.
-    const labels = geometry.trays.flatMap(tray => {
-      const node = labelNodes.current.get(tray.key);
-      return node ? [{ tray, node, height: node.offsetHeight }] : [];
-    });
-    const headerHeight = grid.tHead?.offsetHeight ?? 24;
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      const top = scroller.scrollTop + headerHeight, bottom = scroller.scrollTop + scroller.clientHeight;
-      for (const { tray, node, height } of labels) {
-        const visibleTop = Math.max(top, tray.top), visibleBottom = Math.min(bottom, tray.top + tray.height);
-        const y = Math.max(0, Math.min(tray.height - height, (visibleTop + visibleBottom - height) / 2 - tray.top));
-        node.style.transform = `translate3d(0,${Math.round(y)}px,0)`;
-        node.style.visibility = height <= tray.height && visibleBottom > visibleTop ? "visible" : "hidden";
-      }
-    };
-    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
-    update();
-    scroller.addEventListener("scroll", schedule, { passive: true });
-    const observer = new ResizeObserver(schedule);
-    observer.observe(scroller);
-    return () => { cancelAnimationFrame(frame); observer.disconnect(); scroller.removeEventListener("scroll", schedule); };
-  }, [geometry.trays]);
 
   useLayoutEffect(() => () => { cancelAnimationFrame(dragFrame.current); dragFrame.current = 0; dragVelocity.current = 0; }, []);
   useLayoutEffect(() => () => { pointerDrag.current?.destroy(); lifted.current?.destroy(); }, []);
@@ -166,14 +110,14 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
   const reorder = (source: MasterRow, target: MasterRow) => {
     if (disabled || masterRowKey(source) === masterRowKey(target)) return;
     // Ordering alone never changes membership, even when the row is a group.
-    const next = order.filter(row => masterRowKey(row) !== masterRowKey(source));
-    next.splice(next.findIndex(row => masterRowKey(row) === masterRowKey(target)), 0, source);
+    if (masterRowSubtree(groups, source).has(masterRowKey(target))) return;
+    const next = placedMasterRows(order, groups, source, target);
     const saved = perform({ type: "reorder", order: next });
     lifted.current?.settle(saved, table.current?.querySelector<HTMLTableRowElement>(".aggregation-drop-slot:not(.is-closing)"));
     setDragged(null); showDrop(null);
   };
 
-  const pointerTarget = (source: MasterRow, point: { clientX: number; clientY: number }): MasterDrop | null => {
+  const pointerTarget = (source: MasterRow, point: { clientX: number; clientY: number }, moving: Set<string>, blocked: Set<number>): MasterDrop | null => {
     const scroller = viewport.current!;
     const hit = scroller.ownerDocument.elementFromPoint(point.clientX, point.clientY);
     if (hit && pool.current?.contains(hit)) {
@@ -186,43 +130,45 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
     }
     setDragVelocity(point.clientY < bounds.top + edge ? -Math.min(14, (bounds.top + edge - point.clientY) / 3)
       : point.clientY > bounds.bottom - edge ? Math.min(14, (point.clientY - bounds.bottom + edge) / 3) : 0);
-    const element = scroller.ownerDocument.elementFromPoint(point.clientX, point.clientY);
+    const element = hit;
     if (!element || !scroller.contains(element)) return null;
     const slot = element.closest<HTMLTableRowElement>(".aggregation-drop-slot:not(.is-closing)");
     if (slot) return { key: slot.dataset.dropTarget!, into: slot.dataset.dropInto === "true" };
     const vertical = element.closest<HTMLElement>(".aggregation-vertical-name");
     const target = element.closest<HTMLTableRowElement>("tr[data-row]");
     const key = vertical ? `group:${vertical.dataset.groupId}` : target?.dataset.row;
-    if (!key || key === masterRowKey(source)) return null;
+    if (!key || moving.has(key)) return null;
     const candidate = byRow.get(key);
     if (!candidate) return null;
     const into = !!vertical || candidate.kind === "group" && point.clientY > target!.getBoundingClientRect().top + 7;
     if (!into && poolKeys.has(masterRowKey(source))) return null;
-    if (into && aggregationForbidden(byGroup, source).has(candidate.id)) return null;
+    if (into && blocked.has(candidate.id)) return null;
     return { key, into };
   };
   const beginPointer = (handle: HTMLButtonElement, down: PointerEvent, source: MasterRow) => {
     if (disabled || down.button !== 0 || !down.isPrimary) return;
     pointerDrag.current?.destroy(); consumeClick.current = false;
+    const moving = masterRowSubtree(groups, source), blocked = aggregationForbidden(byGroup, source);
     let latest = down;
     const clear = () => { pointerRefresh.current = null; setDragVelocity(0); setDragged(null); showDrop(null); };
     const preview = (point: PointerEvent) => {
       latest = point; lifted.current?.move(point);
-      const target = pointerTarget(source, point); showDrop(target?.key ?? null, target?.into ?? false);
+      const target = pointerTarget(source, point, moving, blocked); showDrop(target?.key ?? null, target?.into ?? false);
     };
     pointerDrag.current = startMasterPointerDrag(handle, down, {
       start: point => {
         lifted.current?.destroy();
+        const originalRows = [...(handle.closest("main")!.querySelectorAll<HTMLTableRowElement>("tr[data-row],tr[data-pool-row]"))].filter(node => moving.has(node.dataset.row ?? node.dataset.poolRow!));
         lifted.current = liftMasterRow(handle.closest("tr")!, point, () => { lifted.current = null; setLiftedKey(null); }, () => {
-          const key = masterRowKey(source);
-          return table.current?.querySelector<HTMLTableRowElement>(`tr[data-row="${key}"]`) ?? pool.current?.querySelector<HTMLTableRowElement>(`tr[data-pool-row="${key}"]`) ?? null;
-        });
+          return [...(table.current?.querySelectorAll<HTMLTableRowElement>("tr[data-row]") ?? []), ...(pool.current?.querySelectorAll<HTMLTableRowElement>("tr[data-pool-row]") ?? [])].find(node => moving.has(node.dataset.row ?? node.dataset.poolRow!)) ?? null;
+        }, originalRows);
+        setLiftedHeight(originalRows.length > 1 ? lifted.current.height : 36);
         setLiftedKey(masterRowKey(source)); setDragged(source); consumeClick.current = true;
         pointerRefresh.current = () => preview(latest);
       },
       move: preview,
       release: point => {
-        const target = pointerTarget(source, point);
+        const target = pointerTarget(source, point, moving, blocked);
         pointerRefresh.current = null; setDragVelocity(0);
         if (target?.key === "unassign") attach(source, null);
         else if (target?.into) attach(source, byGroup.get(Number(target.key.slice("group:".length)))!);
@@ -234,18 +180,17 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
   };
 
   const renderRow = (row: MasterRow, inPool: boolean) => {
-    const index = order.findIndex(item => masterRowKey(item) === masterRowKey(row));
     const key = masterRowKey(row), account = row.kind === "account" ? byAccount.get(row.id)! : null, group = row.kind === "group" ? byGroup.get(row.id)! : null;
     const label = account?.accountName ?? group!.name, display = account?.displayName ?? group?.displayName ?? label;
     const owner = owners.get(key), active = highlightedGroup === group?.id, member = owner?.parent === highlightedGroup;
     const slot = dropSlots.find(candidate => candidate.key === key);
     return <Fragment key={key}>
-      {slot && <AggregationDropSlot slot={slot} name={draggedName} onClosed={closedKey => setDropSlots(previous => previous.filter(candidate => candidate.key !== closedKey || !candidate.closing))}>
+      {slot && <AggregationDropSlot slot={slot} name={draggedName} height={liftedHeight} onClosed={closedKey => setDropSlots(previous => previous.filter(candidate => candidate.key !== closedKey || !candidate.closing))}>
         <span>{draggedName}</span>
         {slot.into && group && <><span aria-hidden="true">→</span><span className="aggregation-slot-destination">{group.name}に所属</span></>}
         <small>{slot.into ? "所属変更" : "行順のみ · 所属は変更しません"}</small>
       </AggregationDropSlot>}
-      <tr data-row={inPool ? undefined : key} data-pool-row={inPool ? key : undefined} className={`${group ? `aggregation-subtotal${group.members.length ? "" : " aggregation-empty"}` : ""} ${active ? "is-highlighted" : member ? "is-member" : ""} ${drop?.key === key && drop.into ? "aggregation-drop-into" : ""} ${dragged && masterRowKey(dragged) === key ? "aggregation-drag-source" : ""} ${liftedKey === key ? "aggregation-lifted-source" : ""}`}
+      <tr data-row={inPool ? undefined : key} data-pool-row={inPool ? key : undefined} className={`${group ? `aggregation-subtotal${group.members.length ? "" : " aggregation-empty"}` : ""} ${active ? "is-highlighted" : member ? "is-member" : ""} ${drop?.key === key && drop.into ? "aggregation-drop-into" : ""} ${draggedKeys.has(key) ? "aggregation-drag-source" : ""} ${liftedKeys.has(key) ? "aggregation-lifted-source" : ""}`}
       onClick={() => setHighlight(group?.id ?? owner?.parent ?? null)}>
       <td className="aggregation-gutter" />
       <td className="aggregation-handle-cell"><button type="button" className="text-button aggregation-drag-handle" aria-label={`${label}を移動`} aria-pressed={dragged !== null && masterRowKey(dragged) === key} disabled={disabled} draggable={false}
@@ -255,8 +200,8 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
           if (event.key === "Escape") { setDragged(null); showDrop(null); }
           if (event.key === "Delete" || event.key === "Backspace") { event.preventDefault(); attach(row, null); }
           if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-            event.preventDefault(); const target = order[index + (event.key === "ArrowUp" ? -1 : 1)];
-            if (target) { const next = [...order]; next.splice(index, 1); next.splice(index + (event.key === "ArrowUp" ? -1 : 1), 0, row); void perform({ type: "reorder", order: next }); }
+            event.preventDefault(); const next = shiftedMasterRows(order, groups, row, event.key === "ArrowUp" ? -1 : 1);
+            if (next) void perform({ type: "reorder", order: next });
           }
         }} onClick={event => { event.stopPropagation(); if (consumeClick.current) { consumeClick.current = false; return; } if (dragged && group && masterRowKey(dragged) !== key) attach(dragged, group); else setDragged(current => current && masterRowKey(current) === key ? null : row); }}>⠿</button></td>
       <th scope="row" onDoubleClick={() => { if (group) editGroup(group); }}>{editing?.id === group?.id && editing ? <div className="aggregation-inline-edit" onKeyDown={event => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); void finishEdit(); } if (event.key === "Escape" && !autoSave.pending) controller.end(); }}>
@@ -283,17 +228,13 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
     <div className="aggregation-workspace">
     <div className="aggregation-grid-scroll" ref={viewport} role="region" aria-label="集計の構成" tabIndex={0}>
       <div className="aggregation-grid-surface" ref={surface} style={{ minWidth: Math.max(500, gutter + 360) }}>
-        <svg className="aggregation-trays aggregation-tray-fills" aria-hidden="true" width={geometry.width} height={geometry.height}>
-          {geometry.trays.map(tray => <path key={tray.key} data-group-id={tray.id} d={tray.path} className={highlightedGroup === tray.id ? "is-highlighted" : undefined} />)}</svg>
+        <AggregationTrays ranges={ranges} slots={dropSlots} table={table} surface={surface} viewport={viewport} highlighted={highlightedGroup} destination={dropGroup} dragged={!!dragged} disabled={disabled} forbidden={forbidden}
+          onChoose={id => { if (dragged) attach(dragged, byGroup.get(id)!); else setHighlight(current => current === id ? null : id); }} />
         <table className="aggregation-layout-table" ref={table} aria-label="集計マスタ"><colgroup><col style={{ width: gutter }} /><col style={{ width: 20 }} /><col /><col style={{ width: 76 }} /></colgroup>
           <thead><tr><th scope="col">集計の範囲</th><th scope="col"><span className="sr-only">移動</span></th><th scope="col">科目・集計</th><th scope="col">加減</th></tr></thead>
           <tbody>{placedRows.map(row => renderRow(row, false))}</tbody>
         </table>
-        <svg className="aggregation-trays aggregation-tray-outlines" aria-hidden="true" width={geometry.width} height={geometry.height}>{geometry.trays.map(tray => <path key={tray.key} data-group-id={tray.id} d={tray.path} className={highlightedGroup === tray.id ? "is-highlighted" : undefined} />)}</svg>
-        {geometry.trays.map(tray => <button key={tray.key} data-group-id={tray.id} type="button" className={`aggregation-vertical-name${dropGroup === tray.id ? " is-drop-target" : ""}`} style={{ left: tray.x, top: tray.top, height: tray.height }} aria-label={`${tray.name}の範囲${dragged ? "へ移動" : ""}`} aria-pressed={highlightedGroup === tray.id}
-          disabled={disabled || (!!dragged && forbidden.has(tray.id))}
-          onClick={() => { if (dragged) attach(dragged, byGroup.get(tray.id)!); else setHighlight(current => current === tray.id ? null : tray.id); }}
-          ><span className="aggregation-label-text" ref={node => { if (node) labelNodes.current.set(tray.key, node); else labelNodes.current.delete(tray.key); }}>{tray.name}</span></button>)}
+
       </div>
     </div>
     <aside ref={pool} className={`aggregation-pool${drop?.key === "unassign" ? " is-drop-target" : ""}`} aria-label="未所属プール">

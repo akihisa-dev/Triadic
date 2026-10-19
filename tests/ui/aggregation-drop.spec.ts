@@ -23,8 +23,11 @@ async function movePointer(app: FrameLocator, point: { clientX: number; clientY:
   }, point);
 }
 async function preview(app: FrameLocator, target: string, into: boolean) {
+  const handle = app.getByRole('button', { name: '旅費を移動', exact: true });
+  const active = await handle.getAttribute('aria-pressed') === 'true' && await app.locator('.aggregation-floating-row').count() > 0;
+  if (!active) await expect(app.locator('.aggregation-floating-row')).toHaveCount(0);
   const point = await pointAt(app.getByRole('button', { name: target + 'を移動', exact: true }), into);
-  await app.getByRole('button', { name: '旅費を移動', exact: true }).evaluate(node => {
+  if (!active) await handle.evaluate(node => {
     const bounds = node.getBoundingClientRect(), clientX = bounds.left + bounds.width / 2, clientY = bounds.top + bounds.height / 2;
     node.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX, clientY, pointerId: 1, button: 0, buttons: 1, isPrimary: true }));
     node.ownerDocument.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: clientX + 12, clientY, pointerId: 1, button: 0, buttons: 1, isPrimary: true }));
@@ -205,7 +208,7 @@ test('行間の切替と途中反転を現在の高さからつなぎ、行の�
     const positions: number[] = [];
     for (let index = 0; index < 6; index++) {
       doc.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 1, button: 0, buttons: 1, isPrimary: true, clientX: startX + index * 5, clientY }));
-      await frame(); await frame();
+      await frame();
       positions.push(doc.querySelector('.aggregation-floating-row')!.getBoundingClientRect().left);
     }
     return { closing, reopening, positions };
@@ -222,4 +225,51 @@ test('行間の切替と途中反転を現在の高さからつなぎ、行の�
   await expect(app.locator('.aggregation-floating-row')).toHaveCount(0);
   await expect(app.locator('.aggregation-drop-slot')).toHaveCount(0);
   expect(await rows.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-row')))).toEqual(original);
+});
+
+test('集計を掴むと配下の子集計・科目も浮き、行順だけの移動で所属と加減を保つ', async ({ app, page }, testInfo) => {
+  await app.getByRole('button', { name: '新規作成', exact: true }).click();
+  await openMaster(app);
+  const table = app.getByRole('table', { name: '集計マスタ', exact: true });
+  const rows = table.locator('tr[data-row]');
+  const original = await rows.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-row')!));
+  const signs = () => rows.evaluateAll(nodes => Object.fromEntries(nodes.map(node => [node.getAttribute('data-row'), node.querySelector('.master-sign-selector [aria-pressed="true"]')?.getAttribute('aria-label') ?? null])));
+  const beforeSigns = await signs();
+  const source = table.getByRole('button', { name: '売上合計を移動', exact: true });
+  const sourceKey = (await source.locator('xpath=ancestor::tr').getAttribute('data-row'))!;
+  const moving = original.slice(0, original.indexOf(sourceKey) + 1);
+  expect(moving).toHaveLength(7);
+  await source.scrollIntoViewIfNeeded();
+  const from = (await source.boundingBox())!;
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(from.x + from.width / 2 + 12, from.y + from.height / 2, { steps: 3 });
+  const block = app.locator('.aggregation-floating-row');
+  await expect(block).toBeVisible();
+  await expect(block.locator('tbody tr')).toHaveCount(7);
+  await expect(block).toContainText('社外売上小計');
+  await expect(block).toContainText('社内売上小計');
+  await expect(block).toContainText('グループ売上高');
+  for (const key of moving) await expect(table.locator(`tr[data-row="${key}"]>.aggregation-handle-cell`)).toHaveCSS('opacity', '0');
+  const target = table.getByRole('row').filter({ has: app.getByRole('button', { name: '通信運搬費を移動', exact: true }) });
+  const targetKey = (await target.getAttribute('data-row'))!;
+  await target.getByRole('rowheader').scrollIntoViewIfNeeded();
+  const to = (await target.getByRole('rowheader').boundingBox())!, viewport = (await app.getByRole('region', { name: '集計の構成', exact: true }).boundingBox())!;
+  await page.mouse.move(Math.max(viewport.x + 12, Math.min(viewport.x + viewport.width - 12, to.x + 20)), to.y + 1);
+  const slot = app.getByRole('row', { name: '合計の移動先', exact: true });
+  await expect(slot).toBeVisible();
+  await settleMotion(slot);
+  expect(await slot.evaluate(node => node.getBoundingClientRect().height)).toBe(217);
+  await expect(slot).toContainText('行順のみ');
+  expect(await rows.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-row')))).toEqual(original);
+  if (testInfo.project.name === 'desktop') await page.screenshot({ path: '/private/tmp/triadichrome-group-block.png' });
+  await page.mouse.up();
+  await expect(block).toHaveCount(0);
+  await expect(app.locator('.aggregation-drop-slot')).toHaveCount(0);
+  const expected = original.filter(key => !moving.includes(key));
+  expected.splice(expected.indexOf(targetKey), 0, ...moving);
+  expect(await rows.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-row')))).toEqual(expected);
+  expect(await signs()).toEqual(beforeSigns);
+  const groupId = sourceKey.split(':')[1];
+  await expect(app.locator(`.aggregation-tray-outlines path[data-group-id="${groupId}"]`)).toHaveCount(1);
 });

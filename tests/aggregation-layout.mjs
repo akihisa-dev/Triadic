@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 export async function verifyAggregationLayout(api) {
-  const { aggregationRanges, placedMasterRows, orderedMasterRows, masterRowKey, changeAggregationMaster, createTriadicDatabase, readPlanContents } = api;
+  const { aggregationRanges, placedMasterRows, masterRowSubtree, shiftedMasterRows, orderedMasterRows, masterRowKey, changeAggregationMaster, createTriadicDatabase, readPlanContents } = api;
   let bytes = await createTriadicDatabase(2026);
   const before = await readPlanContents(bytes), order = orderedMasterRows(before.accounts, before.aggregations);
   const original = JSON.stringify(order);
@@ -24,6 +24,20 @@ export async function verifyAggregationLayout(api) {
   const descendants = before.aggregations.find(item => item.id === source.id).members;
   const block = [...descendants, source].map(masterRowKey);
   assert.deepEqual(nextOrder.filter(row => block.includes(masterRowKey(row))).map(masterRowKey), order.filter(row => block.includes(masterRowKey(row))).map(masterRowKey), '集計を移しても配下の相対順を維持');
+  const nested = { kind: 'group', id: before.aggregations.find(group => group.name === '売上合計').id };
+  const keys = masterRowSubtree(before.aggregations, nested);
+  assert.equal(keys.size, 7, '子集計の配下まで移動対象に含める');
+  const nestedOrder = placedMasterRows(order, before.aggregations, nested, target);
+  const nestedBlock = nestedOrder.filter(row => keys.has(masterRowKey(row)));
+  const start = nestedOrder.findIndex(row => keys.has(masterRowKey(row)));
+  assert.deepEqual(nestedOrder.slice(start, start + keys.size), nestedBlock, '並べ替えでも配下全体を一つの連続した塊にする');
+  const reordered = await readPlanContents(await changeAggregationMaster(bytes, { type: 'reorder', order: nestedOrder }));
+  assert.deepEqual(reordered.aggregations.map(({masterOrder, ...group}) => group).sort((a,b) => a.id - b.id), before.aggregations.map(({masterOrder, ...group}) => group).sort((a,b) => a.id - b.id), '行順だけの集計移動は全階層の所属・加減を変えない');
+  const down = shiftedMasterRows(order, before.aggregations, nested, 1);
+  assert.ok(down);
+  assert.deepEqual(down.filter(row => keys.has(masterRowKey(row))), order.filter(row => keys.has(masterRowKey(row))), '上下キーも配下の相対順を保つ');
+  assert.equal(shiftedMasterRows(order, before.aggregations, nested, -1), null, '表の先頭の集計群を自分の配下へ動かさない');
+  assert.throws(() => placedMasterRows(order, before.aggregations, nested, before.aggregations.find(group => group.name === '社外売上小計').members[0]), /配下/);
   const snapshot = bytes.slice();
   bytes = await changeAggregationMaster(bytes, { type: 'move', member: source, parentId: target.id, sign: -1, presentationOrder: nextOrder });
   const after = await readPlanContents(bytes);
