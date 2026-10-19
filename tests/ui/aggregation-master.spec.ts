@@ -56,6 +56,9 @@ test('縦書き集計名が表示範囲の中央へ追従し、行とL字を再�
   });
   await expect.poll(() => region.evaluate(node => node.scrollTop)).toBeGreaterThan(10);
   await handle.press('Escape');
+  // Closing the temporary gap can move the browser's scroll anchor upward.
+  await expect(app.locator('.aggregation-drop-slot')).toHaveCount(0);
+  await expect(app.locator('.aggregation-floating-row')).toHaveCount(0);
   const stopped = await region.evaluate(node => node.scrollTop);
   await region.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
   expect(await region.evaluate(node => node.scrollTop)).toBe(stopped);

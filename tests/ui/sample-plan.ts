@@ -1,3 +1,4 @@
+// L字の高さが足りない縦書き名だけを隠し、集計行名・配置を保つ表示と再表示は tests/ui/aggregation-labels.spec.ts で確認する。保存データは変えない。
 // 新規科目・集計の右側プールと所属・解除・再読込は tests/ui/aggregation-pool.spec.ts で確認する。保存項目の追加はない。
 // 行を浮かせる毎描画の追従、行間の途中反転・連続した着地、取消・失敗時の復元は tests/ui/aggregation-drop.spec.ts で確認する。保存データは追加しない。
 // 集計マスタの画面幅・左右余白、所属先のL字・縦書き名・集計行の一体強調と行順のみの区別、移動先の仮表示・取消・ドロップ・保存失敗は tests/ui/aggregation-drop.spec.ts と aggregation-master.spec.ts で確認する。保存データは追加しない。

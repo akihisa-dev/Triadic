@@ -141,7 +141,7 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
         const visibleTop = Math.max(top, tray.top), visibleBottom = Math.min(bottom, tray.top + tray.height);
         const y = Math.max(0, Math.min(tray.height - height, (visibleTop + visibleBottom - height) / 2 - tray.top));
         node.style.transform = `translate3d(0,${Math.round(y)}px,0)`;
-        node.style.visibility = visibleBottom > visibleTop ? "visible" : "hidden";
+        node.style.visibility = height <= tray.height && visibleBottom > visibleTop ? "visible" : "hidden";
       }
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
