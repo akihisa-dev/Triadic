@@ -10,11 +10,12 @@ async function openMaster(app: FrameLocator) {
 
 async function preview(app: FrameLocator, target: string, into: boolean) {
   await app.getByRole('button', { name: '旅費を移動', exact: true }).evaluate(node => {
-    node.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
+    const bounds = node.getBoundingClientRect();
+    node.dispatchEvent(new DragEvent('dragstart', { bubbles: true, clientX: bounds.left + bounds.width / 2, clientY: bounds.top + bounds.height / 2, dataTransfer: new DataTransfer() }));
   });
   await app.getByRole('button', { name: target + 'を移動', exact: true }).evaluate((node, into) => {
     const row = node.closest('tr')!, bounds = row.getBoundingClientRect();
-    row.dispatchEvent(new DragEvent('dragover', { bubbles: true, clientY: bounds.top + (into ? 20 : 1), dataTransfer: new DataTransfer() }));
+    row.dispatchEvent(new DragEvent('dragover', { bubbles: true, clientX: row.cells[2]!.getBoundingClientRect().left + 20, clientY: bounds.top + (into ? 20 : 1), dataTransfer: new DataTransfer() }));
   }, into);
   const slot = app.getByRole('row', { name: '旅費の移動先', exact: true });
   await expect(slot).toBeVisible();
@@ -36,17 +37,25 @@ test('マウスで開いた行間にドロップでき、移動先を示す仮�
   await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
   await page.mouse.down();
   await page.mouse.move(from.x + from.width / 2 + 12, from.y + from.height / 2, { steps: 4 });
+  const block = app.locator('.aggregation-floating-row');
+  await expect(block).toBeVisible();
+  await expect(block).toContainText(sourceName);
+  const liftedFrom = (await block.boundingBox())!;
+  await expect(handle.locator('xpath=ancestor::td')).toHaveCSS('opacity', '0');
   await page.mouse.move(to.x + 30, to.y + 1, { steps: 16 });
   const slot = app.getByRole('row', { name: sourceName + 'の移動先', exact: true });
   await expect(slot).toBeVisible();
+  await expect.poll(async () => Math.abs((await block.boundingBox())!.y - liftedFrom.y)).toBeGreaterThan(20);
   const bounds = (await slot.locator('.aggregation-slot-content').boundingBox())!;
   await page.mouse.move(bounds.x + 30, bounds.y + bounds.height / 2, { steps: 4 });
   await expect(slot).toBeVisible();
   expect(await rows.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-row')))).toEqual(order);
-  if (testInfo.project.name === 'desktop') await page.screenshot({ path: '/private/tmp/triadichrome-balanced-drop-final.png' });
+  if (testInfo.project.name === 'desktop') await page.screenshot({ path: '/private/tmp/triadichrome-lifted-row.png' });
   await page.mouse.up();
   await expect(slot).toHaveCount(0);
   await expect(handle).toBeEnabled();
+  await expect(block).toHaveCount(0);
+  await expect(handle.locator('xpath=ancestor::td')).toHaveCSS('opacity', '1');
   const moved = await rows.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-row')));
   const travelKey = await handle.locator('xpath=ancestor::tr').getAttribute('data-row');
   expect(moved.indexOf(travelKey)).toBe(moved.indexOf(await target.getAttribute('data-row')) - 1);
@@ -63,10 +72,11 @@ test('行間を開いた仮表示の取消とドロップを、保存順・所�
   const targetTop = await position();
   const slot = await preview(app, '店内売上高', false);
   expect(await rows.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-row')))).toEqual(order);
-  expect(await position()).toBe(targetTop + 36);
+  await expect.poll(position).toBe(targetTop + 36);
   await expect(slot).toContainText('行順のみ · 所属は変更しません');
   await app.getByRole('button', { name: '旅費を移動', exact: true }).press('Escape');
   await expect(slot).toHaveCount(0);
+  await expect(app.locator('.aggregation-floating-row')).toHaveCount(0);
   await expect.poll(position).toBe(targetTop);
   expect(await app.locator('.aggregation-tray-outlines path').evaluateAll(nodes => nodes.map(node => node.getAttribute('d')))).toEqual(paths);
 
@@ -139,6 +149,8 @@ test('仮表示へのドロップが保存に失敗しても、行とL字と加�
   await (await preview(app, '社内売上小計', true)).dispatchEvent('drop');
   await expect(app.getByRole('alert')).toContainText('テスト用の保存失敗');
   await expect(app.locator('.aggregation-drop-slot')).toHaveCount(0);
+  await expect(app.locator('.aggregation-floating-row')).toHaveCount(0);
+  await expect(app.getByRole('button', { name: '旅費を移動', exact: true }).locator('xpath=ancestor::td')).toHaveCSS('opacity', '1');
   expect(await rows.evaluateAll(nodes => nodes.map(node => [node.getAttribute('data-row'), node.querySelector('[aria-pressed="true"]')?.getAttribute('aria-label')]))).toEqual(order);
   await expect.poll(() => app.locator('.aggregation-tray-outlines path').evaluateAll(nodes => nodes.map(node => node.getAttribute('d')))).toEqual(paths);
 });

@@ -12,6 +12,7 @@ import { useMasterOperation } from "./useMasterOperation";
 import { useAutoSave, type AutoSaveProps } from "./useAutoSave";
 import { AutoSaveStatus } from "./AutoSaveStatus";
 import { ConfirmationDialog } from "./ConfirmationDialog";
+import { liftMasterRow, type LiftedMasterRow } from "./liftMasterRow";
 
 type Props = AutoSaveProps & { accounts: Account[]; groups: Aggregation[]; isSaving: boolean; onChange: (change: AggregationChange) => Promise<void>; onBack: () => void };
 type Tray = { key: string; id: number; name: string; x: number; top: number; height: number; path: string };
@@ -28,6 +29,8 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const [dragged, setDragged] = useState<MasterRow | null>(null);
+  const [liftedKey, setLiftedKey] = useState<string | null>(null);
+  const lifted = useRef<LiftedMasterRow | null>(null);
   const forbidden = useMemo(() => aggregationForbidden(byGroup, dragged), [byGroup, dragged]);
   const [drop, setDrop] = useState<{ key: string; into: boolean } | null>(null);
   const showDrop = (key: string, into: boolean) => setDrop(previous => previous?.key === key && previous.into === into ? previous : { key, into });
@@ -129,12 +132,14 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
   }, [geometry.trays]);
 
   useLayoutEffect(() => () => { cancelAnimationFrame(dragFrame.current); dragFrame.current = 0; dragVelocity.current = 0; }, [dragged]);
+  useLayoutEffect(() => () => lifted.current?.destroy(), []);
 
   const attach = (source: MasterRow, parent: Aggregation | null) => {
     if (disabled) return;
     if (parent && aggregationForbidden(byGroup, source).has(parent.id)) return;
     const presentationOrder = parent ? placedMasterRows(order, groups, source, { kind: "group", id: parent.id }) : order;
-    void perform({ type: "move", member: source, parentId: parent?.id ?? null, sign: owners.get(masterRowKey(source))?.sign ?? 1, presentationOrder });
+    const saved = perform({ type: "move", member: source, parentId: parent?.id ?? null, sign: owners.get(masterRowKey(source))?.sign ?? 1, presentationOrder });
+    lifted.current?.settle(saved);
     setDragged(null); setDrop(null);
   };
   const reorder = (source: MasterRow, target: MasterRow) => {
@@ -142,12 +147,13 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
     // Ordering alone never changes membership, even when the row is a group.
     const next = order.filter(row => masterRowKey(row) !== masterRowKey(source));
     next.splice(next.findIndex(row => masterRowKey(row) === masterRowKey(target)), 0, source);
-    void perform({ type: "reorder", order: next });
+    const saved = perform({ type: "reorder", order: next });
+    lifted.current?.settle(saved);
     setDragged(null); setDrop(null);
   };
 
   return <main className="aggregation-master-page master-data-page" data-drop-intent={dragged && drop ? drop.into ? "member" : "order" : undefined} aria-labelledby="aggregation-master-title" aria-busy={isSaving || busy} onCompositionStart={() => controller.pause()} onCompositionEnd={() => controller.resume()}
-    onKeyDown={event => { if (event.key === "Escape" && dragged) { event.preventDefault(); event.stopPropagation(); setDragged(null); setDrop(null); } }}>
+    onKeyDown={event => { if (event.key === "Escape" && dragged) { event.preventDefault(); event.stopPropagation(); lifted.current?.cancel(); setDragged(null); setDrop(null); } }}>
     <div className="aggregation-master-heading"><div><button className="text-button" type="button" disabled={isSaving || busy || autoSave.pending} onClick={onBack}>← マスタへ戻る</button><h1 id="aggregation-master-title">集計マスタ</h1></div>
       <button className="secondary-button" type="button" disabled={disabled} onClick={() => { dismiss(); setAdding(true); }}>＋ 集計を追加</button></div>
     {adding && <form className="aggregation-add-form" aria-label="集計の新規登録" onSubmit={event => { event.preventDefault(); if (name.trim()) void perform({ type: "add", name }); }}>
@@ -177,12 +183,12 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
               {dragged && drop?.key === key && <tr className="aggregation-drop-slot" aria-label={`${draggedName}の移動先`}
                 onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }}
                 onDrop={event => { event.preventDefault(); if (drop.into && group) attach(dragged, group); else reorder(dragged, row); }}>
-                <td className="aggregation-gutter" /><td className="aggregation-slot-grip" aria-hidden="true">⠿</td>
+                <td className="aggregation-gutter" /><td className="aggregation-slot-grip" aria-hidden="true"><span>⠿</span></td>
                 <td colSpan={2}><div className="aggregation-slot-content"><span>{draggedName}</span>
                   {drop.into && group && <><span aria-hidden="true">→</span><span className="aggregation-slot-destination">{group.name}に所属</span></>}
                   <small>{drop.into ? "所属変更" : "行順のみ · 所属は変更しません"}</small></div></td>
               </tr>}
-              <tr data-row={key} className={`${group ? `aggregation-subtotal${group.members.length ? "" : " aggregation-empty"}` : ""} ${active ? "is-highlighted" : member ? "is-member" : ""} ${drop?.key === key && drop.into ? "aggregation-drop-into" : ""} ${dragged && masterRowKey(dragged) === key ? "aggregation-drag-source" : ""}`}
+              <tr data-row={key} className={`${group ? `aggregation-subtotal${group.members.length ? "" : " aggregation-empty"}` : ""} ${active ? "is-highlighted" : member ? "is-member" : ""} ${drop?.key === key && drop.into ? "aggregation-drop-into" : ""} ${dragged && masterRowKey(dragged) === key ? "aggregation-drag-source" : ""} ${liftedKey === key ? "aggregation-lifted-source" : ""}`}
               onClick={() => setHighlight(group?.id ?? owner?.parent ?? null)}
               onDragOver={event => {
                 if (!dragged || disabled) return;
@@ -193,7 +199,12 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
               }} onDrop={event => { event.preventDefault(); if (!dragged || !drop || drop.key !== key) return; if (drop.into && group) attach(dragged, group); else reorder(dragged, row); }}>
               <td className="aggregation-gutter" />
               <td className="aggregation-handle-cell"><button type="button" className="text-button aggregation-drag-handle" aria-label={`${label}を移動`} aria-pressed={dragged !== null && masterRowKey(dragged) === key} disabled={disabled} draggable={!disabled}
-                onDragStart={event => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", key); setDragged(row); }} onDragEnd={() => { setDragged(null); setDrop(null); }}
+                onDragStart={event => {
+                  lifted.current?.destroy();
+                  event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", key);
+                  lifted.current = liftMasterRow(event.currentTarget.closest("tr")!, event, event.dataTransfer, () => { lifted.current = null; setLiftedKey(null); });
+                  setLiftedKey(key); setDragged(row);
+                }} onDragEnd={() => { lifted.current?.cancel(); setDragged(null); setDrop(null); }}
                 onKeyDown={event => {
                   if (event.key === "F2" && group) { event.preventDefault(); editGroup(group); }
                   if (event.key === "Escape") { setDragged(null); setDrop(null); }
