@@ -35,7 +35,8 @@ test('科目専用マスタと集計マスタを分離し、所属・加減・�
   await app.getByRole('button', { name: '営業利益を移動', exact: true }).press('Escape');
   await app.getByRole('button', { name: '費用科目2を移動', exact: true }).press('Delete');
   await expect(app.getByRole('button', { name: '費用科目2を移動', exact: true })).toBeEnabled();
-  await expect(sign('費用科目2')).toBeDisabled();
+  await expect(app.getByRole('table', { name: '未所属の科目・集計', exact: true })).toContainText('費用科目2');
+  await expect(sign('費用科目2')).toHaveCount(0);
   const paths = await app.locator('.aggregation-tray-outlines path').evaluateAll(nodes => nodes.map(node => node.getAttribute('data-group-id')));
   await app.getByRole('button', { name: 'ファイルを閉じる', exact: true }).click();
   await app.getByRole('alertdialog', { name: 'ファイルを閉じる', exact: true }).getByRole('button', { name: '閉じる', exact: true }).click();
@@ -43,7 +44,8 @@ test('科目専用マスタと集計マスタを分離し、所属・加減・�
   await app.getByRole('button', { name: 'サイドバーを開く', exact: true }).click();
   await master(app, '集計マスタ');
   await expect(sign('費用集計')).toHaveAttribute('aria-pressed', 'true');
-  await expect(sign('費用科目2')).toBeDisabled();
+  await expect(app.getByRole('table', { name: '未所属の科目・集計', exact: true })).toContainText('費用科目2');
+  await expect(sign('費用科目2')).toHaveCount(0);
   await expect.poll(() => app.locator('.aggregation-tray-outlines path').evaluateAll(nodes => nodes.map(node => node.getAttribute('data-group-id')))).toEqual(paths);
 });
 

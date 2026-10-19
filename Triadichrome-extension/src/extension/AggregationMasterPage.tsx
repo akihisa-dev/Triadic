@@ -22,11 +22,14 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
   const readOnly = useHistoryReadOnly();
   const order = useMemo(() => orderedMasterRows(accounts, groups), [accounts, groups]);
   const byRow = useMemo(() => new Map(order.map(row => [masterRowKey(row), row])), [order]);
-  const ranges = useMemo(() => aggregationRanges(order, groups), [order, groups]);
-  const gutter = Math.max(28, ...ranges.map(range => (range.lane + 1) * 28));
   const byAccount = useMemo(() => new Map(accounts.map(account => [account.id, account])), [accounts]);
   const byGroup = useMemo(() => new Map(groups.map(group => [group.id, group])), [groups]);
   const owners = useMemo(() => new Map(groups.flatMap(group => group.members.map(member => [masterRowKey(member), { parent: group.id, sign: member.sign }] as const))), [groups]);
+  const poolRows = useMemo(() => order.filter(row => !owners.has(masterRowKey(row)) && (row.kind === "account" || !byGroup.get(row.id)!.required && !byGroup.get(row.id)!.members.length)), [order, owners, byGroup]);
+  const poolKeys = useMemo(() => new Set(poolRows.map(masterRowKey)), [poolRows]);
+  const placedRows = useMemo(() => order.filter(row => !poolKeys.has(masterRowKey(row))), [order, poolKeys]);
+  const ranges = useMemo(() => aggregationRanges(placedRows, groups), [placedRows, groups]);
+  const gutter = Math.max(28, ...ranges.map(range => (range.lane + 1) * 28));
   const [highlight, setHighlight] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
@@ -66,6 +69,7 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
   const surface = useRef<HTMLDivElement>(null);
   const table = useRef<HTMLTableElement>(null);
   const viewport = useRef<HTMLDivElement>(null);
+  const pool = useRef<HTMLElement>(null);
   const labelNodes = useRef(new Map<string, HTMLSpanElement>());
   const dragVelocity = useRef(0);
   const dragFrame = useRef(0);
@@ -171,6 +175,11 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
 
   const pointerTarget = (source: MasterRow, point: { clientX: number; clientY: number }): MasterDrop | null => {
     const scroller = viewport.current!;
+    const hit = scroller.ownerDocument.elementFromPoint(point.clientX, point.clientY);
+    if (hit && pool.current?.contains(hit)) {
+      setDragVelocity(0);
+      return poolKeys.has(masterRowKey(source)) ? null : { key: "unassign", into: true };
+    }
     const bounds = scroller.getBoundingClientRect(), edge = 48;
     if (point.clientX < bounds.left || point.clientX > bounds.right || point.clientY < bounds.top || point.clientY > bounds.bottom) {
       setDragVelocity(0); return null;
@@ -179,7 +188,6 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
       : point.clientY > bounds.bottom - edge ? Math.min(14, (point.clientY - bounds.bottom + edge) / 3) : 0);
     const element = scroller.ownerDocument.elementFromPoint(point.clientX, point.clientY);
     if (!element || !scroller.contains(element)) return null;
-    if (element.closest(".aggregation-unassign")) return { key: "unassign", into: true };
     const slot = element.closest<HTMLTableRowElement>(".aggregation-drop-slot:not(.is-closing)");
     if (slot) return { key: slot.dataset.dropTarget!, into: slot.dataset.dropInto === "true" };
     const vertical = element.closest<HTMLElement>(".aggregation-vertical-name");
@@ -189,6 +197,7 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
     const candidate = byRow.get(key);
     if (!candidate) return null;
     const into = !!vertical || candidate.kind === "group" && point.clientY > target!.getBoundingClientRect().top + 7;
+    if (!into && poolKeys.has(masterRowKey(source))) return null;
     if (into && aggregationForbidden(byGroup, source).has(candidate.id)) return null;
     return { key, into };
   };
@@ -204,7 +213,10 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
     pointerDrag.current = startMasterPointerDrag(handle, down, {
       start: point => {
         lifted.current?.destroy();
-        lifted.current = liftMasterRow(handle.closest("tr")!, point, () => { lifted.current = null; setLiftedKey(null); });
+        lifted.current = liftMasterRow(handle.closest("tr")!, point, () => { lifted.current = null; setLiftedKey(null); }, () => {
+          const key = masterRowKey(source);
+          return table.current?.querySelector<HTMLTableRowElement>(`tr[data-row="${key}"]`) ?? pool.current?.querySelector<HTMLTableRowElement>(`tr[data-pool-row="${key}"]`) ?? null;
+        });
         setLiftedKey(masterRowKey(source)); setDragged(source); consumeClick.current = true;
         pointerRefresh.current = () => preview(latest);
       },
@@ -221,6 +233,43 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
     });
   };
 
+  const renderRow = (row: MasterRow, inPool: boolean) => {
+    const index = order.findIndex(item => masterRowKey(item) === masterRowKey(row));
+    const key = masterRowKey(row), account = row.kind === "account" ? byAccount.get(row.id)! : null, group = row.kind === "group" ? byGroup.get(row.id)! : null;
+    const label = account?.accountName ?? group!.name, display = account?.displayName ?? group?.displayName ?? label;
+    const owner = owners.get(key), active = highlightedGroup === group?.id, member = owner?.parent === highlightedGroup;
+    const slot = dropSlots.find(candidate => candidate.key === key);
+    return <Fragment key={key}>
+      {slot && <AggregationDropSlot slot={slot} name={draggedName} onClosed={closedKey => setDropSlots(previous => previous.filter(candidate => candidate.key !== closedKey || !candidate.closing))}>
+        <span>{draggedName}</span>
+        {slot.into && group && <><span aria-hidden="true">→</span><span className="aggregation-slot-destination">{group.name}に所属</span></>}
+        <small>{slot.into ? "所属変更" : "行順のみ · 所属は変更しません"}</small>
+      </AggregationDropSlot>}
+      <tr data-row={inPool ? undefined : key} data-pool-row={inPool ? key : undefined} className={`${group ? `aggregation-subtotal${group.members.length ? "" : " aggregation-empty"}` : ""} ${active ? "is-highlighted" : member ? "is-member" : ""} ${drop?.key === key && drop.into ? "aggregation-drop-into" : ""} ${dragged && masterRowKey(dragged) === key ? "aggregation-drag-source" : ""} ${liftedKey === key ? "aggregation-lifted-source" : ""}`}
+      onClick={() => setHighlight(group?.id ?? owner?.parent ?? null)}>
+      <td className="aggregation-gutter" />
+      <td className="aggregation-handle-cell"><button type="button" className="text-button aggregation-drag-handle" aria-label={`${label}を移動`} aria-pressed={dragged !== null && masterRowKey(dragged) === key} disabled={disabled} draggable={false}
+        onPointerDown={event => beginPointer(event.currentTarget, event.nativeEvent, row)}
+        onKeyDown={event => {
+          if (event.key === "F2" && group) { event.preventDefault(); editGroup(group); }
+          if (event.key === "Escape") { setDragged(null); showDrop(null); }
+          if (event.key === "Delete" || event.key === "Backspace") { event.preventDefault(); attach(row, null); }
+          if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+            event.preventDefault(); const target = order[index + (event.key === "ArrowUp" ? -1 : 1)];
+            if (target) { const next = [...order]; next.splice(index, 1); next.splice(index + (event.key === "ArrowUp" ? -1 : 1), 0, row); void perform({ type: "reorder", order: next }); }
+          }
+        }} onClick={event => { event.stopPropagation(); if (consumeClick.current) { consumeClick.current = false; return; } if (dragged && group && masterRowKey(dragged) !== key) attach(dragged, group); else setDragged(current => current && masterRowKey(current) === key ? null : row); }}>⠿</button></td>
+      <th scope="row" onDoubleClick={() => { if (group) editGroup(group); }}>{editing?.id === group?.id && editing ? <div className="aggregation-inline-edit" onKeyDown={event => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); void finishEdit(); } if (event.key === "Escape" && !autoSave.pending) controller.end(); }}>
+        <input autoFocus aria-label={`${label}の集計名`} value={editing.name} disabled={!!group?.required} onChange={event => controller.change({ ...editing, name: event.target.value, displayName: editing.name.trim() === editing.displayName.trim() ? event.target.value : editing.displayName })} />
+        <input autoFocus={!!group?.required} aria-label={`${label}の表示名`} value={editing.displayName} onChange={event => controller.change({ ...editing, displayName: event.target.value })} />
+        <button type="button" className="text-button" disabled={autoSave.saving} onClick={() => void finishEdit()}>完了</button>
+        <button type="button" className="text-button" disabled={autoSave.pending || !!group?.required || !!group?.members.length || !!owner} onClick={() => { controller.end(); setDeleting(group!); }}>削除</button>
+      </div> : <>{display}{group && group.name !== display && <span className="aggregation-internal-name">{group.name}</span>}</>}</th>
+      <td className="aggregation-sign-cell">{!inPool && <MasterSignSelector name={label} value={owner?.sign ?? null} disabled={disabled || !owner} onChange={sign => perform({ type: "move", member: row, parentId: owner!.parent, sign })} />}</td>
+    </tr></Fragment>;
+
+  };
+
   return <main className="aggregation-master-page master-data-page" data-drop-intent={dragged && drop ? drop.into ? "member" : "order" : undefined} aria-labelledby="aggregation-master-title" aria-busy={isSaving || busy} onCompositionStart={() => controller.pause()} onCompositionEnd={() => controller.resume()}
     onKeyDown={event => { if (event.key === "Escape" && dragged) { event.preventDefault(); event.stopPropagation(); pointerDrag.current?.cancel(); lifted.current?.cancel(); setDragged(null); showDrop(null); } }}>
     <div className="aggregation-master-heading"><div><button className="text-button" type="button" disabled={isSaving || busy || autoSave.pending} onClick={onBack}>← マスタへ戻る</button><h1 id="aggregation-master-title">集計マスタ</h1></div>
@@ -231,46 +280,14 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
     <StatusNotice {...notice} onDismiss={dismiss} />
     <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave} />
     <ConfirmationDialog open={deleting !== null} title="集計を削除" message={`「${deleting?.name ?? ""}」を削除しますか？`} confirmLabel="削除する" busy={isSaving || busy} onCancel={() => setDeleting(null)} onConfirm={() => { if (deleting && !disabled) void perform({ type: "delete", id: deleting.id }).then(() => setDeleting(null)); }} />
+    <div className="aggregation-workspace">
     <div className="aggregation-grid-scroll" ref={viewport} role="region" aria-label="集計の構成" tabIndex={0}>
       <div className="aggregation-grid-surface" ref={surface} style={{ minWidth: Math.max(500, gutter + 360) }}>
         <svg className="aggregation-trays aggregation-tray-fills" aria-hidden="true" width={geometry.width} height={geometry.height}>
           {geometry.trays.map(tray => <path key={tray.key} data-group-id={tray.id} d={tray.path} className={highlightedGroup === tray.id ? "is-highlighted" : undefined} />)}</svg>
         <table className="aggregation-layout-table" ref={table} aria-label="集計マスタ"><colgroup><col style={{ width: gutter }} /><col style={{ width: 20 }} /><col /><col style={{ width: 76 }} /></colgroup>
           <thead><tr><th scope="col">集計の範囲</th><th scope="col"><span className="sr-only">移動</span></th><th scope="col">科目・集計</th><th scope="col">加減</th></tr></thead>
-          <tbody>{order.map((row, index) => {
-            const key = masterRowKey(row), account = row.kind === "account" ? byAccount.get(row.id)! : null, group = row.kind === "group" ? byGroup.get(row.id)! : null;
-            const label = account?.accountName ?? group!.name, display = account?.displayName ?? group?.displayName ?? label;
-            const owner = owners.get(key), active = highlightedGroup === group?.id, member = owner?.parent === highlightedGroup;
-            const slot = dropSlots.find(candidate => candidate.key === key);
-            return <Fragment key={key}>
-              {slot && <AggregationDropSlot slot={slot} name={draggedName} onClosed={closedKey => setDropSlots(previous => previous.filter(candidate => candidate.key !== closedKey || !candidate.closing))}>
-                <span>{draggedName}</span>
-                {slot.into && group && <><span aria-hidden="true">→</span><span className="aggregation-slot-destination">{group.name}に所属</span></>}
-                <small>{slot.into ? "所属変更" : "行順のみ · 所属は変更しません"}</small>
-              </AggregationDropSlot>}
-              <tr data-row={key} className={`${group ? `aggregation-subtotal${group.members.length ? "" : " aggregation-empty"}` : ""} ${active ? "is-highlighted" : member ? "is-member" : ""} ${drop?.key === key && drop.into ? "aggregation-drop-into" : ""} ${dragged && masterRowKey(dragged) === key ? "aggregation-drag-source" : ""} ${liftedKey === key ? "aggregation-lifted-source" : ""}`}
-              onClick={() => setHighlight(group?.id ?? owner?.parent ?? null)}>
-              <td className="aggregation-gutter" />
-              <td className="aggregation-handle-cell"><button type="button" className="text-button aggregation-drag-handle" aria-label={`${label}を移動`} aria-pressed={dragged !== null && masterRowKey(dragged) === key} disabled={disabled} draggable={false}
-                onPointerDown={event => beginPointer(event.currentTarget, event.nativeEvent, row)}
-                onKeyDown={event => {
-                  if (event.key === "F2" && group) { event.preventDefault(); editGroup(group); }
-                  if (event.key === "Escape") { setDragged(null); showDrop(null); }
-                  if (event.key === "Delete" || event.key === "Backspace") { event.preventDefault(); attach(row, null); }
-                  if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-                    event.preventDefault(); const target = order[index + (event.key === "ArrowUp" ? -1 : 1)];
-                    if (target) { const next = [...order]; next.splice(index, 1); next.splice(index + (event.key === "ArrowUp" ? -1 : 1), 0, row); void perform({ type: "reorder", order: next }); }
-                  }
-                }} onClick={event => { event.stopPropagation(); if (consumeClick.current) { consumeClick.current = false; return; } if (dragged && group && masterRowKey(dragged) !== key) attach(dragged, group); else setDragged(current => current && masterRowKey(current) === key ? null : row); }}>⠿</button></td>
-              <th scope="row" onDoubleClick={() => { if (group) editGroup(group); }}>{editing?.id === group?.id && editing ? <div className="aggregation-inline-edit" onKeyDown={event => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); void finishEdit(); } if (event.key === "Escape" && !autoSave.pending) controller.end(); }}>
-                <input autoFocus aria-label={`${label}の集計名`} value={editing.name} disabled={!!group?.required} onChange={event => controller.change({ ...editing, name: event.target.value, displayName: editing.name.trim() === editing.displayName.trim() ? event.target.value : editing.displayName })} />
-                <input autoFocus={!!group?.required} aria-label={`${label}の表示名`} value={editing.displayName} onChange={event => controller.change({ ...editing, displayName: event.target.value })} />
-                <button type="button" className="text-button" disabled={autoSave.saving} onClick={() => void finishEdit()}>完了</button>
-                <button type="button" className="text-button" disabled={autoSave.pending || !!group?.required || !!group?.members.length || !!owner} onClick={() => { controller.end(); setDeleting(group!); }}>削除</button>
-              </div> : <>{display}{group && group.name !== display && <span className="aggregation-internal-name">{group.name}</span>}</>}</th>
-              <td className="aggregation-sign-cell"><MasterSignSelector name={label} value={owner?.sign ?? null} disabled={disabled || !owner} onChange={sign => perform({ type: "move", member: row, parentId: owner!.parent, sign })} /></td>
-            </tr></Fragment>;
-          })}</tbody>
+          <tbody>{placedRows.map(row => renderRow(row, false))}</tbody>
         </table>
         <svg className="aggregation-trays aggregation-tray-outlines" aria-hidden="true" width={geometry.width} height={geometry.height}>{geometry.trays.map(tray => <path key={tray.key} data-group-id={tray.id} d={tray.path} className={highlightedGroup === tray.id ? "is-highlighted" : undefined} />)}</svg>
         {geometry.trays.map(tray => <button key={tray.key} data-group-id={tray.id} type="button" className={`aggregation-vertical-name${dropGroup === tray.id ? " is-drop-target" : ""}`} style={{ left: tray.x, top: tray.top, height: tray.height }} aria-label={`${tray.name}の範囲${dragged ? "へ移動" : ""}`} aria-pressed={highlightedGroup === tray.id}
@@ -278,7 +295,15 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
           onClick={() => { if (dragged) attach(dragged, byGroup.get(tray.id)!); else setHighlight(current => current === tray.id ? null : tray.id); }}
           ><span className="aggregation-label-text" ref={node => { if (node) labelNodes.current.set(tray.key, node); else labelNodes.current.delete(tray.key); }}>{tray.name}</span></button>)}
       </div>
-      {dragged && <button className="aggregation-unassign" type="button" disabled={disabled} onClick={() => attach(dragged, null)}>未所属へ移動</button>}
+    </div>
+    <aside ref={pool} className={`aggregation-pool${drop?.key === "unassign" ? " is-drop-target" : ""}`} aria-label="未所属プール">
+      <h2>未所属<span>{poolRows.length}</span></h2>
+      <div className="aggregation-pool-scroll"><table className="aggregation-layout-table aggregation-pool-table" aria-label="未所属の科目・集計">
+        <colgroup><col style={{ width: 0 }} /><col style={{ width: 20 }} /><col /><col style={{ width: 0 }} /></colgroup>
+        <tbody>{poolRows.map(row => renderRow(row, true))}</tbody>
+      </table></div>
+      {dragged && <button className="aggregation-unassign" type="button" disabled={disabled || poolKeys.has(masterRowKey(dragged))} onClick={() => attach(dragged, null)}>未所属へ移動</button>}
+    </aside>
     </div>
   </main>;
 }

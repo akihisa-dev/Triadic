@@ -6,10 +6,10 @@ export type LiftedMasterRow = {
 };
 
 /** The floating copy is inert; only the original row participates in editing and saving. */
-export function liftMasterRow(row: HTMLTableRowElement, pointer: { clientX: number; clientY: number }, onDone: () => void): LiftedMasterRow {
+export function liftMasterRow(row: HTMLTableRowElement, pointer: { clientX: number; clientY: number }, onDone: () => void, destination: () => HTMLTableRowElement | null = () => row): LiftedMasterRow {
   const doc = row.ownerDocument, win = doc.defaultView!;
   const first = row.cells[1]!.getBoundingClientRect(), bounds = row.getBoundingClientRect();
-  const width = bounds.right - first.left;
+  let width = bounds.right - first.left;
   const layer = doc.createElement("div");
   layer.className = "aggregation-floating-layer";
   layer.setAttribute("aria-hidden", "true");
@@ -21,6 +21,7 @@ export function liftMasterRow(row: HTMLTableRowElement, pointer: { clientX: numb
   table.className = "aggregation-layout-table";
   const body = table.createTBody(), copy = row.cloneNode(true) as HTMLTableRowElement;
   copy.removeAttribute("data-row");
+  copy.removeAttribute("data-pool-row");
   copy.classList.remove("aggregation-drag-source", "aggregation-lifted-source", "is-highlighted", "is-member", "aggregation-drop-into");
   copy.deleteCell(0);
   for (const [index, cell] of [...copy.cells].entries()) cell.style.width = `${row.cells[index + 1]!.getBoundingClientRect().width}px`;
@@ -28,7 +29,7 @@ export function liftMasterRow(row: HTMLTableRowElement, pointer: { clientX: numb
   body.append(copy); block.append(table); layer.append(block); doc.body.append(layer);
   const offset = { x: pointer.clientX - first.left, y: pointer.clientY - bounds.top };
   let x = first.left, y = bounds.top - 4, frame = 0, finished = false, settling = false;
-  const position = () => { frame = 0; block.style.transform = `translate3d(${x}px,${y}px,0)`; };
+  const position = () => { frame = 0; block.style.transform = `translate3d(${x}px,${y}px,0)`; block.style.width = `${width}px`; };
   position();
   const follow = (event: { clientX: number; clientY: number }) => {
     if (settling) return;
@@ -43,22 +44,22 @@ export function liftMasterRow(row: HTMLTableRowElement, pointer: { clientX: numb
     if (finished || settling) return;
     settling = true; win.cancelAnimationFrame(frame); position();
     let resolved = false, lastTime = win.performance.now(), stableSince = lastTime;
-    let targetX = x, targetY = y;
+    let targetX = x, targetY = y, targetWidth = width;
     const reduced = win.matchMedia("(prefers-reduced-motion: reduce)").matches;
     void saved.catch(() => false).then(() => { resolved = true; });
     block.style.boxShadow = "0 0 0 #0000";
     const tick = (now: number) => {
       if (finished) return;
-      const target = resolved ? row : slot?.isConnected ? slot : null;
+      const target = resolved ? destination() : slot?.isConnected ? slot : null;
       const rect = target?.getBoundingClientRect(), left = target?.cells[1]?.getBoundingClientRect().left;
       if (rect && left !== undefined) {
-        if (Math.abs(targetX - left) + Math.abs(targetY - rect.top) > .1) stableSince = now;
-        targetX = left; targetY = rect.top;
+        if (Math.abs(targetX - left) + Math.abs(targetY - rect.top) + Math.abs(targetWidth - (rect.right - left)) > .1) stableSince = now;
+        targetX = left; targetY = rect.top; targetWidth = rect.right - left;
       }
       const amount = reduced ? 1 : 1 - Math.exp(-Math.min(40, now - lastTime) / 42);
-      lastTime = now; x += (targetX - x) * amount; y += (targetY - y) * amount;
+      lastTime = now; x += (targetX - x) * amount; y += (targetY - y) * amount; width += (targetWidth - width) * amount;
       position();
-      if (resolved && Math.abs(targetX - x) + Math.abs(targetY - y) < .3 && (reduced || now - stableSince > 32)) destroy();
+      if (resolved && Math.abs(targetX - x) + Math.abs(targetY - y) + Math.abs(targetWidth - width) < .3 && (reduced || now - stableSince > 32)) destroy();
       else frame = win.requestAnimationFrame(tick);
     };
     frame = win.requestAnimationFrame(tick);

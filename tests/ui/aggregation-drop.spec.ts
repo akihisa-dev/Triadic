@@ -14,7 +14,7 @@ async function pointAt(target: Locator, into: boolean) {
     const row = node.closest('tr')!;
     row.cells[2]!.scrollIntoView({ block: 'center', inline: 'center' });
     const bounds = row.getBoundingClientRect(), region = row.closest('.aggregation-grid-scroll')!.getBoundingClientRect();
-    return { clientX: Math.min(region.right - 12, row.cells[2]!.getBoundingClientRect().left + 20), clientY: bounds.top + (into ? 20 : 1) };
+    return { clientX: Math.max(region.left + 12, Math.min(region.right - 12, row.cells[2]!.getBoundingClientRect().left + 20)), clientY: bounds.top + (into ? 20 : 1) };
   }, into);
 }
 async function movePointer(app: FrameLocator, point: { clientX: number; clientY: number }) {
@@ -38,7 +38,8 @@ async function release(slot: Locator) {
   await settleMotion(slot);
   await slot.evaluate(node => {
     const rect = node.querySelector('.aggregation-slot-content')!.getBoundingClientRect();
-    node.ownerDocument.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: rect.left + 20, clientY: rect.top + rect.height / 2, pointerId: 1, button: 0, isPrimary: true }));
+    const region = node.closest('.aggregation-grid-scroll')!.getBoundingClientRect();
+    node.ownerDocument.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: Math.max(region.left + 12, Math.min(region.right - 12, rect.left + 20)), clientY: rect.top + rect.height / 2, pointerId: 1, button: 0, isPrimary: true }));
   });
 }
 
@@ -191,7 +192,7 @@ test('行間の切替と途中反転を現在の高さからつなぎ、行の�
     const move = (row: HTMLTableRowElement) => {
       const rect = row.getBoundingClientRect(), region = row.closest('.aggregation-grid-scroll')!.getBoundingClientRect();
       doc.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 1, button: 0, buttons: 1, isPrimary: true,
-        clientX: Math.min(region.right - 12, row.cells[2]!.getBoundingClientRect().left + 20), clientY: rect.top + 1 }));
+        clientX: Math.max(region.left + 12, Math.min(region.right - 12, row.cells[2]!.getBoundingClientRect().left + 20)), clientY: rect.top + 1 }));
     };
     move(second); await frame(); await frame(); await frame();
     const closing = height();
@@ -200,7 +201,7 @@ test('行間の切替と途中反転を現在の高さからつなぎ、行の�
     const slot = doc.querySelector<HTMLTableRowElement>(`.aggregation-drop-slot[data-drop-target="${key}"]`)!;
     const rect = slot.getBoundingClientRect(), cell = slot.cells[2]!.getBoundingClientRect();
     const region = first.closest('.aggregation-grid-scroll')!.getBoundingClientRect();
-    const startX = Math.min(region.right - 70, cell.left + 20), clientY = rect.top + Math.min(5, rect.height / 2);
+    const startX = Math.max(region.left + 12, Math.min(region.right - 40, cell.left + 20)), clientY = rect.top + Math.min(5, rect.height / 2);
     const positions: number[] = [];
     for (let index = 0; index < 6; index++) {
       doc.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 1, button: 0, buttons: 1, isPrimary: true, clientX: startX + index * 5, clientY }));

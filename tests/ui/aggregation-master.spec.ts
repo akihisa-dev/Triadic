@@ -6,7 +6,7 @@ test('縦書き集計名が表示範囲の中央へ追従し、行とL字を再�
   await app.getByRole('button', { name: 'マスタ', exact: true }).click();
   await app.getByRole('button', { name: /^集計マスタ/ }).click();
   await settleMotion(app.locator('body'));
-  const density = await app.locator('.aggregation-layout-table').evaluate(node => {
+  const density = await app.getByRole('table', { name: '集計マスタ', exact: true }).evaluate(node => {
     const table = node as HTMLTableElement;
     const region = table.closest('.aggregation-grid-scroll')!;
     const sign = table.querySelector('.master-sign-selector')!.getBoundingClientRect();
@@ -18,12 +18,12 @@ test('縦書き集計名が表示範囲の中央へ追従し、行とL字を再�
       rows: [...table.tBodies[0]!.rows].map(row => row.getBoundingClientRect().height),
       sign: [sign.width, sign.height],
       balance: Math.abs((bounds.left - outside.left) - (outside.right - bounds.right)),
-      available: region.parentElement!.getBoundingClientRect().width - 48,
+      available: region.parentElement!.getBoundingClientRect().width - page.querySelector('.aggregation-pool')!.getBoundingClientRect().width - 12,
     };
   });
   expect(density.balance).toBeLessThanOrEqual(1);
   if (testInfo.project.name === 'desktop') {
-    expect(density.viewport).toBeGreaterThan(800);
+    expect(density.viewport).toBeGreaterThan(600);
     expect(Math.abs(density.viewport - density.available)).toBeLessThanOrEqual(1);
   }
   expect(density.rows.every(height => height === 31)).toBe(true);
@@ -46,12 +46,13 @@ test('縦書き集計名が表示範囲の中央へ追従し、行とL字を再�
   expect(await app.locator('.aggregation-tray-outlines path').evaluateAll(nodes => nodes.map(node => node.getAttribute('d')))).toEqual(paths);
   expect(await app.locator('.aggregation-layout-table tbody tr').evaluateAll(nodes => nodes.map(node => node.getAttribute('data-row')))).toEqual(rows);
   await region.evaluate(node => { node.scrollTop = 0; });
+  if (testInfo.project.name === 'narrow') await app.getByRole('button', { name: 'サイドバーを閉じる', exact: true }).first().click();
   const handle = app.getByRole('button', { name: '売上高を移動', exact: true });
   await handle.evaluate(node => {
     const rect = node.getBoundingClientRect(), point = { clientX: rect.left + 8, clientY: rect.top + 8, pointerId: 1, button: 0, buttons: 1, isPrimary: true };
     node.dispatchEvent(new PointerEvent('pointerdown', { ...point, bubbles: true }));
     const bounds = node.closest('.aggregation-grid-scroll')!.getBoundingClientRect();
-    node.ownerDocument.dispatchEvent(new PointerEvent('pointermove', { ...point, bubbles: true, clientX: bounds.right - 90, clientY: bounds.bottom - 8 }));
+    node.ownerDocument.dispatchEvent(new PointerEvent('pointermove', { ...point, bubbles: true, clientX: (bounds.left + bounds.right) / 2, clientY: bounds.bottom - 8 }));
   });
   await expect.poll(() => region.evaluate(node => node.scrollTop)).toBeGreaterThan(10);
   await handle.press('Escape');
@@ -85,8 +86,8 @@ test('集計マスタのL字・所属変更・加減・登録を総原価表へ�
   await app.getByRole('button', { name: '＋ 集計を追加', exact: true }).click();
   await app.getByRole('textbox', { name: '集計名', exact: true }).fill('新しい集計');
   await app.getByRole('button', { name: '登録', exact: true }).click();
-  await expect(table.locator('tbody tr')).toHaveCount(73);
-  await expect(table.locator('tbody tr').last()).toContainText('新しい集計');
+  await expect(table.locator('tbody tr')).toHaveCount(72);
+  await expect(app.getByRole('complementary', { name: '未所属プール', exact: true })).toContainText('新しい集計');
   if (testInfo.project.name === 'narrow') await app.getByRole('button', { name: 'サイドバーを開く', exact: true }).click();
   await app.getByRole('button', { name: '総原価表', exact: true }).click();
   await settleMotion(app.locator('body'));

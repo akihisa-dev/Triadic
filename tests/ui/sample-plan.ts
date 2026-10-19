@@ -1,3 +1,4 @@
+// 新規科目・集計の右側プールと所属・解除・再読込は tests/ui/aggregation-pool.spec.ts で確認する。保存項目の追加はない。
 // 行を浮かせる毎描画の追従、行間の途中反転・連続した着地、取消・失敗時の復元は tests/ui/aggregation-drop.spec.ts で確認する。保存データは追加しない。
 // 集計マスタの画面幅・左右余白、所属先のL字・縦書き名・集計行の一体強調と行順のみの区別、移動先の仮表示・取消・ドロップ・保存失敗は tests/ui/aggregation-drop.spec.ts と aggregation-master.spec.ts で確認する。保存データは追加しない。
 // 集計マスタの縦横の密度と既存の加減切替寸法、縦書き名の範囲内追従、スクロール時の行・L字・金額不変、ドラッグ時の自動スクロールは tests/ui/aggregation-master.spec.ts で確認する。
