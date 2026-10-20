@@ -33,8 +33,11 @@ test("画面とデータの対応が実際の保存テーブル・列・参照�
       }
       const details = screenData.find(screen => screen.page === "details");
       assert.equal(details.name, "明細");
-      assert.deepEqual(details.tables.map(item => item.table), ["document_info"], "空の明細画面は共通ヘッダーの年度だけを参照する");
-      assert.ok(details.calculated.some(text => text.includes("入力・計算・保存は行いません")));
+      assert.deepEqual(details.tables.map(item => item.table), ["document_info"], "明細一覧は共通ヘッダーの年度だけを参照する");
+      assert.ok(details.calculated.some(text => text.includes("画面内だけで保持")));
+      const detailEditor = screenData.find(screen => screen.page === "detail-editor");
+      assert.deepEqual(detailEditor.tables.map(item => item.table), ["document_info"]);
+      assert.ok(detailEditor.calculated.some(text => text.includes("内容入力・計算・ファイルへの保存は行いません")));
       const list = screenData.find(item => item.page === "initiative-list");
       for (const name of ["expansions", "period_types"]) assert.ok(list.tables.some(item => item.table === name), "施策一覧の展開名と期間名の参照先を説明する");
       for (const field of ["expansion_id", "period_type_id"]) assert.ok(list.tables.find(item => item.table === "initiatives").fields.includes(field), "施策の分類への所属を説明する");

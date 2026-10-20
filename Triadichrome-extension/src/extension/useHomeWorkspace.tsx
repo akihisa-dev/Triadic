@@ -1,3 +1,4 @@
+import type { DetailDocument } from "./DetailsPage";
 import type { CostTableView } from "./CostTablePage";
 import { useWorkspaceNavigation } from "./workspace/useWorkspaceNavigation";
 import { useWorkspaceHistory } from "./workspace/useWorkspaceHistory";
@@ -24,7 +25,9 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
   const isSidebarOpen = sidebar.expanded;
   const collapseSidebar = sidebar.collapse;
   const screens = useScreenHistory<Screen>({ page: "home", selectedInitiative: null, detailOrigin: "initiative-list" },
-    (left, right) => left.page === right.page && left.selectedInitiative?.id === right.selectedInitiative?.id && left.detailOrigin === right.detailOrigin && left.detailKind === right.detailKind);
+    (left, right) => left.page === right.page && left.selectedInitiative?.id === right.selectedInitiative?.id && left.detailOrigin === right.detailOrigin && left.detailKind === right.detailKind && left.selectedDetailId === right.selectedDetailId);
+  const [detailDocuments, setDetailDocuments] = useState<DetailDocument[]>([]);
+  const nextDetailId = useRef(1);
   const screen = screens.current;
   const { selectedInitiative } = screen;
   const navigate = screens.navigate;
@@ -47,6 +50,18 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
   const navigationBlocked = saveAsMutation.busy || isSaving || restoreMutation.busy || operationMutation.busy || editPending || historyBusy;
   const { discardRequest, setDiscardRequest, openInitiative, requestNavigation, setPage, startInitiative, duplicateInitiative } = useWorkspaceNavigation(
     screens, contents, preview !== null, navigationBlocked, saving, { initiativeDraft, setInitiativeDraft }, dismissNotice);
+  const openDetail = (id: number) => {
+    if (navigationBlocked || saving.current || preview || discardRequest || !detailDocuments.some(item => item.id === id)) return;
+    dismissNotice();
+    requestNavigation({ ...screen, page: "detail-editor", selectedDetailId: id });
+  };
+  const createDetail = (name: string, description: string) => {
+    if (navigationBlocked || saving.current || preview || discardRequest || !name.trim()) return;
+    const document: DetailDocument = { id: nextDetailId.current++, name: name.trim(), description: description.trim() };
+    setDetailDocuments(previous => [...previous, document]);
+    dismissNotice();
+    requestNavigation({ ...screen, page: "detail-editor", selectedDetailId: document.id });
+  };
   const operationBlocked = navigationBlocked || preview !== null || restoreRequested || discardRequest !== null || hasInitiativeDraftInput(initiativeDraft);
   const saveAs = async () => {
     if (operationBlocked || saveAsMutation.running.current) return;
@@ -104,6 +119,7 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
 
   return {
     restoreMutation, saveAsMutation, saveAs, setEditPending, openInitiative, menuButton, relationView, costTableView, sidebar,
+    detailDocuments, openDetail, createDetail,
     isSidebarOpen, screen, initiativeDraft, setInitiativeDraft, preview, setPreview,
     restoreRequested, setRestoreRequested, restoreError, setRestoreError, contents, currentContents,
     notice, dismissNotice, isSaving, operationMutation, navigationBlocked, discardRequest,

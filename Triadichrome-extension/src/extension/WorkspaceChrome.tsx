@@ -108,7 +108,7 @@ export function WorkspaceSidebar({ workspace }: { workspace: HomeWorkspace }) {
               <SidebarIcon name="expansion" />
               <span className="sidebar-label">展開表</span>
             </button>
-            <button className="sidebar-item" type="button" aria-label="明細" disabled={navigationBlocked} aria-current={page === "details" ? "page" : undefined} onClick={() => { dismissNotice(); setPage("details"); }}>
+            <button className="sidebar-item" type="button" aria-label="明細" disabled={navigationBlocked} aria-current={page === "details" || page === "detail-editor" ? "page" : undefined} onClick={() => { dismissNotice(); setPage("details"); }}>
               <SidebarIcon name="entry" />
               <span className="sidebar-label">明細</span>
             </button>
