@@ -108,6 +108,10 @@ export function WorkspaceSidebar({ workspace }: { workspace: HomeWorkspace }) {
               <SidebarIcon name="expansion" />
               <span className="sidebar-label">展開表</span>
             </button>
+            <button className="sidebar-item" type="button" aria-label="明細" disabled={navigationBlocked} aria-current={page === "details" ? "page" : undefined} onClick={() => { dismissNotice(); setPage("details"); }}>
+              <SidebarIcon name="entry" />
+              <span className="sidebar-label">明細</span>
+            </button>
             <button className="sidebar-item" type="button" aria-label="前年入力" disabled={navigationBlocked} aria-current={page === "previous-input" ? "page" : undefined} onClick={() => setPage("previous-input")}>
               <SidebarIcon name="previous" /><span className="sidebar-label">前年入力</span>
             </button>

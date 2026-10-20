@@ -106,9 +106,11 @@ The entry screen and shared header display the version beside the app name. It i
 
 ### File entry and sidebar
 
+“Details” (明細) appears immediately below Breakdown table and opens an empty screen with only its heading. Detail entry, calculation, and storage are not implemented yet.
+
 Implemented screens include the `.triadic` entry screen, Home, previous-year input, initiative input/list/details, cost summary, breakdown table, masters, and account, aggregation, breakdown-category, industry, department, period, and budget-kind masters. Entry supports “Continue,” “Open file,” “New,” and file drops. The previous plan is above separate open/new areas. The open-file area says “Drop a .triadic file here”; dragging a file highlights the whole area with a pale blue background, blue dashed border, and “Drop here to open.” Choose the new file's year in a vertical slot, defaulting to the current April-based fiscal year with its date range shown. Numbers flow vertically, spin with wheel/drag momentum, then decelerate to a year position. Focus at drag start does not shift the page. Up/down keys and clicks on adjacent years move one year at a time; OS reduced-motion settings suppress inertia.
 
-The sidebar normally forms a 64px icon rail. Hovering shows item names and the filename; leaving collapses it. Keyboard focus within the rail also expands it. Opening with the top-left hamburger keeps it open after the pointer leaves or the screen changes. The hamburger, close button, or Esc returns to the rail. Expansion smoothly pushes the main panel aside; even on narrow screens it is limited to 280px and half the viewport width. Rail icons also open Home, Initiative list, Cost summary, Breakdown table, Previous-year input, Import/export, Masters, History, and Close file. Touch uses buttons rather than hover. Opening a file starts on Home with the rail collapsed.
+The sidebar normally forms a 64px icon rail. Hovering shows item names and the filename; leaving collapses it. Keyboard focus within the rail also expands it. Opening with the top-left hamburger keeps it open after the pointer leaves or the screen changes. The hamburger, close button, or Esc returns to the rail. Expansion smoothly pushes the main panel aside; even on narrow screens it is limited to 280px and half the viewport width. Rail icons also open Home, Initiative list, Cost summary, Breakdown table, Details, Previous-year input, Import/export, Masters, History, and Close file. Touch uses buttons rather than hover. Opening a file starts on Home with the rail collapsed.
 
 ### Home and disclosure of calculations and data
 
@@ -639,7 +641,9 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 現在の実装は、`.triadic`ファイルを開く入口画面、ホーム画面、前年入力、施策入力・施策一覧・施策詳細画面、総原価表、展開表、マスタ画面、勘定科目マスタ・集計マスタ・展開マスタ・業種マスタ・部署マスタ・期間マスタ・種別マスタ画面です。入口では「続きから」「ファイルを開く」「新規作成」とファイルのドロップを扱います。前回の計画を上段に置き、ファイルを開く操作と新規作成を下段に分けます。「ファイルを開く」欄には「.triadicファイルをここにドロップ」を表示し、ファイルをドラッグ中は欄全体の淡い青の背景・青い破線と「ここにドロップして開く」の見出しで受け入れ先を示します。新規作成の年度は、上下に回すスロットで選びます。初期値は4月始まりの当年度で、対象期間も併記します。数字は上下に流れ、ホイールやドラッグの勢いに応じて回転した後、減速して年度の位置で止まります。ドラッグ開始時のフォーカスでページの位置を変えません。上下キーと前後の年度のクリックは1年ずつ移動し、OSの「動きを減らす」設定では慣性を抑えます。
 
-サイドバーは普段、幅64pxのアイコンだけのレールです。カーソルを重ねると項目名とファイル名を表示し、外すと折り畳みます。キーボードでレール内へ移動した場合も展開します。画面左上のハンバーガーボタンで開くと、カーソルを外した後や画面を切り替えた後も開いた状態を維持します。ハンバーガーボタン・閉じるボタン・Escキーでレールへ戻せます。展開時はメインパネルを滑らかに押しのけて横に並び、狭い画面でも最大280px、画面幅の半分までに収めます。「Home」「施策一覧」「総原価表」「展開表」「前年入力」「入出力」「マスタ」「履歴」と「ファイルを閉じる」はレールのアイコンからも操作できます。タッチ操作ではホバー展開を行わず、ボタンで開閉します。ファイルを開くとレール状態のホームから開始します。
+「展開表」の直下に「明細」を置き、見出しだけの空画面を開きます。明細の入力・計算・保存はまだ行いません。
+
+サイドバーは普段、幅64pxのアイコンだけのレールです。カーソルを重ねると項目名とファイル名を表示し、外すと折り畳みます。キーボードでレール内へ移動した場合も展開します。画面左上のハンバーガーボタンで開くと、カーソルを外した後や画面を切り替えた後も開いた状態を維持します。ハンバーガーボタン・閉じるボタン・Escキーでレールへ戻せます。展開時はメインパネルを滑らかに押しのけて横に並び、狭い画面でも最大280px、画面幅の半分までに収めます。「Home」「施策一覧」「総原価表」「展開表」「明細」「前年入力」「入出力」「マスタ」「履歴」と「ファイルを閉じる」はレールのアイコンからも操作できます。タッチ操作ではホバー展開を行わず、ボタンで開閉します。ファイルを開くとレール状態のホームから開始します。
 
 ### ホームと計算・データの開示
 

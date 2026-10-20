@@ -73,6 +73,7 @@ import { accountTypes } from "../../Triadichrome-extension/src/core/domain/accou
 
 // All amount literals are in thousands of yen; 0.001 represents one yen.
 // Previous amounts span every industry/department pair; varying sales verify full totals and department/industry filters.
+// 明細の空画面は既存サンプルで tests/ui/details-page.spec.ts によりサイドバーの位置・空表示・画面移動履歴を確認する。保存項目とサンプル内容は変更しない。
 // Shared by the preview and the generated .triadic sample, using the app's own validation.
 export const LARGE_SAMPLE_INITIATIVES = PORTFOLIO_COUNT;
 export const SAMPLE_MAX_BYTES = 50_000_000;
