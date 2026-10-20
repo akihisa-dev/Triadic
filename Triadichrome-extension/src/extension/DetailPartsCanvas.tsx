@@ -1,16 +1,15 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { createPortal } from "react-dom";
-import { arrangeParts, PART_INITIAL, PART_STEP, resizePart, settlePart, type DetailPart, type PartEdge } from "../core/tables/detailParts";
+import { arrangeParts, magnetPosition, PART_INITIAL, PART_STEP, resizePart, settlePart, stableSnapPosition, type DetailPart } from "../core/tables/detailParts";
 import "./DetailPartsCanvas.css";
 
 type Props = { parts: DetailPart[]; disabled: boolean; onChange: (parts: DetailPart[]) => void };
 type Gesture = {
-  pointerId: number; source: HTMLElement; origin: DetailPart; base: DetailPart[]; edge?: PartEdge;
+  pointerId: number; source: HTMLElement; origin: DetailPart; base: DetailPart[]; resizing: boolean;
   pool: boolean; startX: number; startY: number; scrollX: number; scrollY: number;
   clientX: number; clientY: number; valid: boolean; current: DetailPart; signature: string; time: number;
+  destination: DetailPart | null;
 };
-const edges: PartEdge[] = ["top", "right", "bottom", "left"];
-const edgeNames = { top: "上", right: "右", bottom: "下", left: "左" };
 
 export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
   const viewport = useRef<HTMLDivElement>(null);
@@ -20,6 +19,7 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
   latest.current = { parts, disabled, onChange };
   const [display, setDisplay] = useState(parts);
   const [dragging, setDragging] = useState<string | null>(null);
+  const [destination, setDestination] = useState<DetailPart | null>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
 
@@ -54,9 +54,22 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
     else {
       const dx = g.clientX - g.startX + element.scrollLeft - g.scrollX;
       const dy = g.clientY - g.startY + element.scrollTop - g.scrollY;
-      active = g.edge ? resizePart(g.origin, g.edge, dx, dy)
+      active = g.resizing ? resizePart(g.origin, dx, dy)
         : { ...g.origin, x: Math.max(0, g.origin.x + dx), y: Math.max(0, g.origin.y + dy) };
     }
+    if (inside && !g.resizing) {
+      const previous = g.destination ?? (g.pool ? null : settlePart(g.origin));
+      const x = stableSnapPosition(active.x, previous?.x);
+      const y = stableSnapPosition(active.y, previous?.y);
+      if (!g.destination || g.destination.x !== x || g.destination.y !== y) {
+        g.destination = { ...settlePart(active), x, y };
+        setDestination(g.destination);
+      }
+    } else if (g.destination) {
+      g.destination = null;
+      setDestination(null);
+    }
+    if (!g.resizing) active = { ...active, x: magnetPosition(active.x), y: magnetPosition(active.y) };
     g.current = active;
     const signature = `${active.x}:${active.y}:${active.width}:${active.height}:${inside}`;
     if (signature !== g.signature) {
@@ -75,9 +88,9 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
     if (!g) return;
     draw(performance.now(), false);
     cancelAnimationFrame(frame.current);
-    const result = commit && g.valid && !latest.current.disabled ? arrangeParts(g.base, settlePart(g.current, g.edge)) : latest.current.parts;
+    const result = commit && g.valid && !latest.current.disabled ? arrangeParts(g.base, g.destination ?? g.current, true) : latest.current.parts;
     gesture.current = null;
-    setDragging(null); setGhost(null); setDisplay(result);
+    setDragging(null); setGhost(null); setDestination(null); setDisplay(result);
     if (g.source.hasPointerCapture(g.pointerId)) g.source.releasePointerCapture(g.pointerId);
     if (commit && g.valid && !latest.current.disabled) latest.current.onChange(result);
   }
@@ -108,22 +121,22 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
   }, []);
   useEffect(() => { if (disabled) endRef.current(false); }, [disabled]);
 
-  function start(event: ReactPointerEvent<HTMLElement>, part?: DetailPart, edge?: PartEdge) {
+  function start(event: ReactPointerEvent<HTMLElement>, part?: DetailPart, resizing = false) {
     if (disabled || gesture.current || event.button !== 0 || !event.isPrimary) return;
     event.preventDefault(); event.stopPropagation(); event.currentTarget.focus({ preventScroll: true });
     const element = viewport.current!;
     const origin = part ?? { id: crypto.randomUUID(), x: 0, y: 0, ...PART_INITIAL };
     gesture.current = { pointerId: event.pointerId, source: event.currentTarget, origin, base: latest.current.parts,
-      ...(edge ? { edge } : {}), pool: !part, startX: event.clientX, startY: event.clientY,
+      resizing, pool: !part, startX: event.clientX, startY: event.clientY,
       scrollX: element.scrollLeft, scrollY: element.scrollTop, clientX: event.clientX, clientY: event.clientY,
-      valid: false, current: origin, signature: "", time: performance.now() };
+      valid: false, current: origin, destination: null, signature: "", time: performance.now() };
     event.currentTarget.setPointerCapture(event.pointerId);
     setDragging(origin.id);
     const tick = (time: number) => { if (!gesture.current) return; draw(time); frame.current = requestAnimationFrame(tick); };
     frame.current = requestAnimationFrame(tick);
   }
   function change(part: DetailPart) {
-    if (!disabled && !gesture.current) latest.current.onChange(arrangeParts(parts, part));
+    if (!disabled && !gesture.current) latest.current.onChange(arrangeParts(parts, part, true));
   }
   function remove(id: string) {
     if (!disabled && !gesture.current) latest.current.onChange(parts.filter(part => part.id !== id));
@@ -133,6 +146,8 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
   return <div className="detail-workspace">
     <div ref={viewport} className="detail-canvas-viewport" role="region" aria-label="パーツの編集領域" tabIndex={0}>
       <div className="detail-canvas" style={{ width, height }}>
+        {destination && <div className="detail-part-destination" aria-hidden="true"
+          style={{ width: destination.width, height: destination.height, transform: `translate3d(${destination.x}px, ${destination.y}px, 0)` }} />}
         {display.map((part, index) => <div key={part.id} className={`detail-part${dragging === part.id ? " is-dragging" : ""}`}
           style={{ width: part.width, height: part.height, transform: `translate3d(${part.x}px, ${part.y}px, 0)` }}
           role="group" aria-label={`パーツ ${index + 1}`} tabIndex={disabled ? -1 : 0} aria-disabled={disabled}
@@ -144,13 +159,13 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
             const dy = event.key === "ArrowDown" ? PART_STEP : event.key === "ArrowUp" ? -PART_STEP : 0;
             if (dx || dy) { event.preventDefault(); change({ ...part, x: Math.max(0, part.x + dx), y: Math.max(0, part.y + dy) }); }
           }}>
-          {edges.map(edge => <button key={edge} type="button" className={`detail-part-grip grip-${edge}`} disabled={disabled}
-            aria-label={`パーツ ${index + 1}の${edgeNames[edge]}端でサイズ変更`} onPointerDown={event => start(event, part, edge)}
+          <button type="button" className="detail-part-grip" disabled={disabled}
+            aria-label={`パーツ ${index + 1}の右下でサイズ変更`} onPointerDown={event => start(event, part, true)}
             onKeyDown={event => {
               const dx = event.key === "ArrowRight" ? PART_STEP : event.key === "ArrowLeft" ? -PART_STEP : 0;
               const dy = event.key === "ArrowDown" ? PART_STEP : event.key === "ArrowUp" ? -PART_STEP : 0;
-              if (dx || dy) { event.preventDefault(); event.stopPropagation(); change(settlePart(resizePart(part, edge, dx, dy), edge)); }
-            }} />)}
+              if (dx || dy) { event.preventDefault(); event.stopPropagation(); change(settlePart(resizePart(part, dx, dy))); }
+            }} />
           <button type="button" className="detail-part-delete" disabled={disabled} aria-label={`パーツ ${index + 1}を削除`}
             onPointerDown={event => event.stopPropagation()} onClick={() => remove(part.id)}>×</button>
         </div>)}

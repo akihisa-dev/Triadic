@@ -4,19 +4,16 @@
 .detail-editor-page .details-heading, .detail-editor-description { flex-shrink: 0; }
 .detail-workspace { display: flex; flex: 1; min-width: 0; min-height: 120px; margin-top: 20px; border-top: 1px solid var(--line); }
 .detail-canvas-viewport { flex: 1; min-width: 0; min-height: 0; overflow: auto; position: relative; overscroll-behavior: contain; scrollbar-gutter: stable; background: var(--canvas); }
-.detail-canvas { position: relative; isolation: isolate; }
+.detail-canvas { position: relative; isolation: isolate; background-image: radial-gradient(circle, color-mix(in srgb, var(--muted) 25%, transparent) .75px, transparent 1px); background-size: 16px 16px; background-position: -8px -8px; }
 .detail-part { position: absolute; left: 0; top: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; cursor: grab; touch-action: none; user-select: none; transition: transform 240ms cubic-bezier(.2,.85,.2,1), width 240ms cubic-bezier(.2,.85,.2,1), height 240ms cubic-bezier(.2,.85,.2,1), border-color var(--motion-feedback) var(--motion-ease); }
 .detail-part:hover, .detail-part:focus-visible, .detail-part:has(button:focus-visible) { z-index: 2; border-color: var(--control-line); }
 .detail-part.is-dragging { z-index: 3; cursor: grabbing; border-color: var(--accent); transition: none; will-change: transform, width, height; }
+.detail-part-destination { position: absolute; left: 0; top: 0; z-index: 4; pointer-events: none; border: 2px solid #3979e6; border-radius: 8px; background: rgba(57, 121, 230, .14); transition: transform 100ms var(--motion-ease); }
 .detail-part-grip, .detail-part-delete { position: absolute; opacity: 0; pointer-events: none; transition: opacity 120ms var(--motion-ease); }
 .detail-part:hover > button, .detail-part:focus-visible > button, .detail-part:has(button:focus-visible) > button, .detail-part.is-dragging > button { opacity: 1; pointer-events: auto; }
-.detail-part-grip { padding: 0; border: 0; background: transparent; touch-action: none; }
-.detail-part-grip::after { content: ""; position: absolute; inset: 5px; border: 1px solid var(--control-line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 90%, transparent); box-shadow: 0 1px 3px #00000012; }
-.detail-part-grip:hover::after, .detail-part-grip:focus-visible::after, .is-dragging > .detail-part-grip::after { border-color: var(--accent); }
-.grip-left, .grip-right { width: 18px; height: 36px; top: calc(50% - 18px); cursor: ew-resize; }
-.grip-left { left: -9px; } .grip-right { right: -9px; }
-.grip-top, .grip-bottom { width: 36px; height: 18px; left: calc(50% - 18px); cursor: ns-resize; }
-.grip-top { top: -9px; } .grip-bottom { bottom: -9px; }
+.detail-part-grip { right: -7px; bottom: -7px; width: 28px; height: 28px; padding: 0; border: 0; background: transparent; touch-action: none; cursor: nwse-resize; }
+.detail-part-grip::after { content: ""; position: absolute; inset: 5px; border-right: 5px solid var(--surface); border-bottom: 5px solid var(--surface); border-bottom-right-radius: 16px; filter: drop-shadow(1px 1px 0 var(--control-line)) drop-shadow(-.5px -.5px 0 var(--control-line)); }
+.detail-part-grip:hover::after, .detail-part-grip:focus-visible::after, .is-dragging > .detail-part-grip::after { filter: drop-shadow(1px 1px 0 var(--accent)) drop-shadow(-.5px -.5px 0 var(--accent)); }
 .detail-part-delete { right: 5px; top: 4px; width: 24px; height: 24px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: var(--soft); color: var(--ink); font-size: 19px; line-height: 1; cursor: pointer; }
 .detail-part-delete:hover { background: var(--line); }
 .detail-part[aria-disabled="true"] { cursor: default; }
@@ -27,4 +24,4 @@
 .detail-pool-source:disabled { cursor: default; }
 .detail-part-ghost { position: fixed; z-index: 10000; pointer-events: none; background: var(--surface); border: 1px solid var(--accent); border-radius: 8px; opacity: .85; box-shadow: 0 4px 16px #00000012; }
 @media (max-width: 700px) { .detail-part-pool { padding: 16px 10px; } .detail-workspace { margin-top: 16px; } }
-@media (prefers-reduced-motion: reduce) { .detail-part { transition-duration: 1ms; } .detail-part-grip, .detail-part-delete { transition-duration: 1ms; } }
+@media (prefers-reduced-motion: reduce) { .detail-part, .detail-part-destination { transition-duration: 1ms; } .detail-part-grip, .detail-part-delete { transition-duration: 1ms; } }

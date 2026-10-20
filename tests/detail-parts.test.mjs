@@ -2,42 +2,74 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { withNodeBundle } from '../scripts/node-bundle.mjs';
 
-test('パーツは連鎖した衝突でも重ならず、位置の格子合わせをせずに全件を保持する', async () => {
+test('衝突を解消した全パーツが確定時に16px間隔へ揃い、件数と元配置を保持する', async () => {
   await withNodeBundle('Triadichrome-extension/src/core/tables/detailParts.ts', async ({ arrangeParts, partsOverlap, settlePart }) => {
     const originals = Array.from({ length: 100 }, (_, i) => ({ id: String(i), x: (i % 10) * 164 + .5, y: Math.floor(i / 10) * 100 + .25, width: 160, height: 96 }));
     const before = JSON.stringify(originals);
     for (const active of [{ ...originals[0], width: 800, height: 480 }, { ...originals[99], x: 7.3, y: 9.7 }, { id: 'new', x: 90.1, y: 50.2, width: 160, height: 96 }]) {
-      const result = arrangeParts(originals, active);
-      assert.deepEqual(result.find(p => p.id === active.id), active, '操作しているパーツはポインター位置を保つ');
-      assert.equal(new Set(result.map(p => p.id)).size, originals.length + (active.id === 'new' ? 1 : 0));
-      for (let i = 0; i < result.length; i++) {
-        assert.ok(result[i].x >= 0 && result[i].y >= 0);
-        for (let j = i + 1; j < result.length; j++) assert.ok(!partsOverlap(result[i], result[j]), `${result[i].id} と ${result[j].id} は4px以上離れる`);
+      for (const settled of [false, true]) {
+        const result = arrangeParts(originals, active, settled);
+        assert.deepEqual(result.find(p => p.id === active.id), settled ? settlePart(active) : active);
+        assert.equal(new Set(result.map(p => p.id)).size, originals.length + (active.id === 'new' ? 1 : 0));
+        for (let i = 0; i < result.length; i++) {
+          const part = result[i];
+          assert.ok(part.x >= 0 && part.y >= 0);
+          if (settled) for (const value of [part.x, part.y, part.width, part.height]) assert.equal(value % 16, 0);
+          for (let j = i + 1; j < result.length; j++) assert.ok(!partsOverlap(part, result[j]), `${part.id} と ${result[j].id} は4px以上離れる`);
+        }
       }
-      const settled = settlePart(active);
-      assert.equal(settled.x, active.x, '移動位置は格子に丸めない');
-      assert.equal(settled.y, active.y);
     }
-    assert.equal(JSON.stringify(originals), before, 'ドラッグをキャンセルできるよう元の配置を変更しない');
+    assert.equal(JSON.stringify(originals), before, '取消用の元配置を変更しない');
   });
 });
 
-test('四辺の伸縮は最小64pxと反対側の端を保ち、確定時の寸法だけ16px刻みに揃える', async () => {
-  await withNodeBundle('Triadichrome-extension/src/core/tables/detailParts.ts', async ({ resizePart, settlePart }) => {
-    const part = { id: 'a', x: 17.5, y: 29.25, width: 160, height: 96 };
-    const left = settlePart(resizePart(part, 'left', -13.4, 0), 'left');
-    assert.equal(left.x + left.width, part.x + part.width);
-    assert.equal(left.width % 16, 0);
-    const top = settlePart(resizePart(part, 'top', 0, -17.3), 'top');
-    assert.equal(top.y + top.height, part.y + part.height);
-    assert.equal(top.height % 16, 0);
-    for (const [edge, dx, dy] of [['left', 1000, 0], ['right', -1000, 0], ['top', 0, 1000], ['bottom', 0, -1000]]) {
-      const result = settlePart(resizePart(part, edge, dx, dy), edge);
-      assert.ok(result.width >= 64 && result.height >= 64);
-      assert.ok(result.x >= 0 && result.y >= 0);
+test('移動中は近い位置へ軽く吸着し、境界を跨いでも連続して追従する', async () => {
+  await withNodeBundle('Triadichrome-extension/src/core/tables/detailParts.ts', async ({ magnetPosition, snapPosition }) => {
+    assert.ok(magnetPosition(29) > 29 && magnetPosition(29) < 32, '近づいた位置へ引き寄せるが移動中は完全固定しない');
+    assert.ok(magnetPosition(35) < 35 && magnetPosition(35) > 32);
+    assert.equal(magnetPosition(32), 32);
+    assert.equal(magnetPosition(-10), 0);
+    assert.equal(snapPosition(29), 32);
+    assert.equal(snapPosition(35), 32);
+    let previous = magnetPosition(0);
+    for (let i = 1; i <= 640; i++) {
+      const current = magnetPosition(i / 10);
+      assert.ok(current >= previous && current - previous < .2, '一定方向のドラッグで逆戻りや位置の飛びを作らない');
+      previous = current;
     }
-    const live = resizePart(part, 'right', 7.5, 0);
-    assert.equal(live.width, 167.5, '操作中は丸めず連続的に追従する');
-    assert.equal(settlePart(live, 'right').width, 160);
+  });
+});
+
+test('移動先は境界付近の揺れで往復せず、十分に進めると切り替わる', async () => {
+  await withNodeBundle('Triadichrome-extension/src/core/tables/detailParts.ts', async ({ stableSnapPosition }) => {
+    let target = 32;
+    for (const value of [39, 41, 39.5, 40.5, 44]) {
+      target = stableSnapPosition(value, target);
+      assert.equal(target, 32);
+    }
+    target = stableSnapPosition(45, target);
+    assert.equal(target, 48);
+    for (const value of [41, 39, 40.5, 36]) {
+      target = stableSnapPosition(value, target);
+      assert.equal(target, 48);
+    }
+    assert.equal(stableSnapPosition(35, target), 32);
+    assert.equal(stableSnapPosition(110, 32), 112, '速い移動は複数マス先へ進める');
+    assert.equal(stableSnapPosition(-10, 16), 0);
+    assert.equal(stableSnapPosition(9), 16, 'プールからの初回進入は最寄りへ置く');
+  });
+});
+
+test('右下の斜め伸縮は左上を固定し、最小64pxと幅・高さの16px刻みを守る', async () => {
+  await withNodeBundle('Triadichrome-extension/src/core/tables/detailParts.ts', async ({ resizePart, settlePart }) => {
+    const part = { id: 'a', x: 32, y: 48, width: 160, height: 96 };
+    const live = resizePart(part, 23.5, 39.5);
+    assert.equal(live.width, 183.5); assert.equal(live.height, 135.5);
+    const settled = settlePart(live);
+    assert.equal(settled.x, part.x); assert.equal(settled.y, part.y);
+    assert.equal(settled.width, 176); assert.equal(settled.height, 128);
+    const minimum = settlePart(resizePart(part, -1000, -1000));
+    assert.equal(minimum.width, 64); assert.equal(minimum.height, 64);
+    assert.equal(minimum.x, part.x); assert.equal(minimum.y, part.y);
   });
 });
