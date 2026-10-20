@@ -2,9 +2,12 @@ import { useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { SidebarIcon } from "./SidebarIcon";
 import "./DetailsPage.css";
+import { DetailPartsCanvas } from "./DetailPartsCanvas";
+import type { DetailPart } from "../core/tables/detailParts";
+const emptyParts: DetailPart[] = [];
 
 /** These entries live only in the open workspace; no storage commands consume them. */
-export type DetailDocument = { id: number; name: string; description: string };
+export type DetailDocument = { id: number; name: string; description: string; parts?: DetailPart[] };
 
 export function DetailsPage({ documents, disabled, onCreate, onOpen }: {
   documents: DetailDocument[];
@@ -68,12 +71,13 @@ function DetailCreateDialog({ disabled, onCancel, onCreate, returnFocus }: {
   </dialog>, document.body);
 }
 
-export function DetailEditorPage({ document, disabled, onBack }: { document: DetailDocument | undefined; disabled: boolean; onBack: () => void }) {
+export function DetailEditorPage({ document, disabled, onBack, onPartsChange }: { document: DetailDocument | undefined; disabled: boolean; onBack: () => void; onPartsChange: (parts: DetailPart[]) => void }) {
   return <main className="master-page detail-editor-page" aria-labelledby="detail-editor-title">
     <div className="details-heading">
       <button type="button" className="secondary-button" disabled={disabled} onClick={onBack}>一覧に戻る</button>
       <h1 id="detail-editor-title">{document?.name ?? "明細"}</h1>
     </div>
     {document?.description && <p className="detail-editor-description">{document.description}</p>}
+    <DetailPartsCanvas key={document?.id} parts={document?.parts ?? emptyParts} disabled={disabled || !document} onChange={onPartsChange} />
   </main>;
 }

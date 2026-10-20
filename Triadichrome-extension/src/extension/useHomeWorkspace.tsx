@@ -119,7 +119,7 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
 
   return {
     restoreMutation, saveAsMutation, saveAs, setEditPending, openInitiative, menuButton, relationView, costTableView, sidebar,
-    detailDocuments, openDetail, createDetail,
+    detailDocuments, setDetailDocuments, openDetail, createDetail,
     isSidebarOpen, screen, initiativeDraft, setInitiativeDraft, preview, setPreview,
     restoreRequested, setRestoreRequested, restoreError, setRestoreError, contents, currentContents,
     notice, dismissNotice, isSaving, operationMutation, navigationBlocked, discardRequest,
