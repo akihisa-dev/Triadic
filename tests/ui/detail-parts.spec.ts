@@ -13,7 +13,7 @@ async function openEditor(app: FrameLocator) {
   await settleMotion(app.locator('body'));
 }
 async function dropPart(page: Page, app: FrameLocator, x = 70, y = 90) {
-  const source = (await app.getByRole('button', { name: '空のパーツを追加', exact: true }).boundingBox())!;
+  const source = (await app.getByRole('button', { name: 'テキストパーツを追加', exact: true }).boundingBox())!;
   const canvas = (await app.getByRole('region', { name: 'パーツの編集領域', exact: true }).boundingBox())!;
   await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
   await page.mouse.down();
@@ -29,12 +29,12 @@ async function rectangles(app: FrameLocator) {
   }));
 }
 
-test('プールから空パーツを繰り返し置き、押し出し・ホバー・削除・画面往復を確認する', async ({ app, page }, info) => {
+test('プールからテキストパーツを繰り返し置き、押し出し・ホバー・削除・画面往復を確認する', async ({ app, page }, info) => {
   await openEditor(app);
   await dropPart(page, app);
   await expect(app.locator('.detail-part')).toHaveCount(1);
-  await expect(app.locator('.detail-part').first()).toHaveText('×');
-  await expect(app.getByRole('button', { name: '空のパーツを追加', exact: true })).toBeVisible();
+  await expect(app.locator('.detail-part').first()).toHaveText('ダブルクリックで入力×');
+  await expect(app.getByRole('button', { name: 'テキストパーツを追加', exact: true })).toBeVisible();
   await dropPart(page, app);
   await expect(app.locator('.detail-part')).toHaveCount(2);
   const rects = await rectangles(app), [a, b] = rects;
@@ -131,7 +131,7 @@ test('ドラッグのEscと領域外ドロップは配置を変更せず、自�
   await page.keyboard.press('Escape'); await page.mouse.up();
   await expect(app.locator('.detail-part-destination')).toHaveCount(0);
   await settleMotion(app.locator('body')); expect(await rectangles(app)).toEqual(before);
-  const source = (await app.getByRole('button', { name: '空のパーツを追加', exact: true }).boundingBox())!;
+  const source = (await app.getByRole('button', { name: 'テキストパーツを追加', exact: true }).boundingBox())!;
   await page.mouse.move(source.x + 20, source.y + 20); await page.mouse.down();
   await page.mouse.move(part.x + 120, part.y + 120, { steps: 8 });
   await expect(app.locator('.detail-part-destination')).toBeVisible();
@@ -150,4 +150,48 @@ test('ドラッグのEscと領域外ドロップは配置を変更せず、自�
   await page.mouse.up(); await settleMotion(app.locator('body'));
   const after = (await rectangles(app))[0]!;
   expect(after.x).toBeGreaterThan(before[0]!.x); expect(after.y).toBeGreaterThan(before[0]!.y);
+});
+
+test('テキストはダブルクリックで編集し、改行・外側クリック・Esc・長文スクロールと一時保持を扱う', async ({ app, page }, info) => {
+  await openEditor(app); await dropPart(page, app, 210, 160);
+  const part = app.locator('.detail-part').first();
+  const view = part.getByRole('button', { name: 'パーツ 1のテキストを編集', exact: true });
+  await expect(view).toHaveText('ダブルクリックで入力');
+  await expect(part.getByRole('textbox')).toHaveCount(0);
+  const before = await rectangles(app);
+  await view.dblclick();
+  const input = part.getByRole('textbox', { name: 'パーツ 1の説明文', exact: true });
+  await expect(input).toBeFocused();
+  await input.fill('人件費の算定根拠');
+  await input.press('End'); await input.press('Enter');
+  await input.pressSequentially('単価 × 人数 × 月数');
+  await input.press('ArrowLeft'); await input.press('Backspace');
+  await expect(app.locator('.detail-part')).toHaveCount(1);
+  expect(await rectangles(app)).toEqual(before);
+  await input.fill('人件費の算定根拠\n単価 × 人数 × 月数');
+  await app.getByRole('heading', { name: 'パーツ配置', exact: true }).click();
+  await expect(input).toHaveCount(0);
+  await expect(view).toHaveText('人件費の算定根拠\n単価 × 人数 × 月数');
+  await page.screenshot({ path: `/tmp/triadichrome-text-part-plain-${info.project.name}.png` });
+  await view.dblclick(); await input.fill('Escでも入力を保持'); await input.press('Escape');
+  await expect(input).toHaveCount(0); await expect(view).toHaveText('Escでも入力を保持');
+  await view.press('Enter'); await expect(input).toBeFocused();
+  const longText = Array.from({ length: 30 }, (_, i) => `${i + 1}行目の説明文 <b>装飾なし</b>`).join('\n');
+  await input.fill(longText);
+  expect(await input.evaluate(e => e.scrollHeight > e.clientHeight)).toBe(true);
+  await input.press('Escape');
+  expect(await view.evaluate(e => e.scrollHeight > e.clientHeight)).toBe(true);
+  await view.hover(); await page.mouse.wheel(0, 160);
+  await expect.poll(() => view.evaluate(e => e.scrollTop)).toBeGreaterThan(0);
+  expect(await rectangles(app)).toEqual(before);
+  await expect(view.locator('b')).toHaveCount(0);
+  await page.screenshot({ path: `/tmp/triadichrome-text-part-${info.project.name}.png` });
+  await part.press('ArrowRight'); await settleMotion(app.locator('body'));
+  await expect(view).toHaveText(longText);
+  await view.press('Enter'); await input.fill('画面移動でも入力を保持');
+  await app.getByRole('button', { name: '一覧に戻る', exact: true }).click();
+  await app.getByRole('button', { name: 'パーツ配置を開く', exact: true }).click();
+  await expect(view).toHaveText('画面移動でも入力を保持');
+  await view.dblclick(); await input.fill(''); await input.press('Escape');
+  await expect(view).toHaveText('ダブルクリックで入力');
 });

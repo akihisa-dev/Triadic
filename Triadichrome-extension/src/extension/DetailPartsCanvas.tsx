@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as Reac
 import { createPortal } from "react-dom";
 import { arrangeParts, magnetPosition, PART_INITIAL, PART_STEP, resizePart, settlePart, stableSnapPosition, type DetailPart } from "../core/tables/detailParts";
 import "./DetailPartsCanvas.css";
+import { DetailTextPart } from "./DetailTextPart";
 
 type Props = { parts: DetailPart[]; disabled: boolean; onChange: (parts: DetailPart[]) => void };
 type Gesture = {
@@ -19,6 +20,7 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
   latest.current = { parts, disabled, onChange };
   const [display, setDisplay] = useState(parts);
   const [dragging, setDragging] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [destination, setDestination] = useState<DetailPart | null>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -119,13 +121,13 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
       window.removeEventListener("pointercancel", cancel); window.removeEventListener("keydown", key, true); window.removeEventListener("blur", blur);
     };
   }, []);
-  useEffect(() => { if (disabled) endRef.current(false); }, [disabled]);
+  useEffect(() => { if (disabled) { endRef.current(false); setEditingId(null); } }, [disabled]);
 
   function start(event: ReactPointerEvent<HTMLElement>, part?: DetailPart, resizing = false) {
-    if (disabled || gesture.current || event.button !== 0 || !event.isPrimary) return;
+    if (disabled || gesture.current || (part && editingId === part.id) || event.button !== 0 || !event.isPrimary) return;
     event.preventDefault(); event.stopPropagation(); event.currentTarget.focus({ preventScroll: true });
     const element = viewport.current!;
-    const origin = part ?? { id: crypto.randomUUID(), x: 0, y: 0, ...PART_INITIAL };
+    const origin = part ?? { id: crypto.randomUUID(), x: 0, y: 0, text: "", ...PART_INITIAL };
     gesture.current = { pointerId: event.pointerId, source: event.currentTarget, origin, base: latest.current.parts,
       resizing, pool: !part, startX: event.clientX, startY: event.clientY,
       scrollX: element.scrollLeft, scrollY: element.scrollTop, clientX: event.clientX, clientY: event.clientY,
@@ -141,6 +143,9 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
   function remove(id: string) {
     if (!disabled && !gesture.current) latest.current.onChange(parts.filter(part => part.id !== id));
   }
+  function editText(id: string, text: string) {
+    if (!latest.current.disabled && !gesture.current) latest.current.onChange(latest.current.parts.map(part => part.id === id ? { ...part, text } : part));
+  }
   const width = Math.max(size.width * 2, 1200, ...display.map(part => part.x + part.width + size.width));
   const height = Math.max(size.height * 2, 900, ...display.map(part => part.y + part.height + size.height));
   return <div className="detail-workspace">
@@ -152,6 +157,10 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
           style={{ width: part.width, height: part.height, transform: `translate3d(${part.x}px, ${part.y}px, 0)` }}
           role="group" aria-label={`パーツ ${index + 1}`} tabIndex={disabled ? -1 : 0} aria-disabled={disabled}
           onPointerDown={event => start(event, part)}
+          onDoubleClick={event => {
+            // Pointer capture targets the group when a double-click follows a move gesture.
+            if (!disabled && event.target === event.currentTarget) setEditingId(part.id);
+          }}
           onKeyDown={event => {
             if (event.target !== event.currentTarget || disabled) return;
             if (event.key === "Delete" || event.key === "Backspace") { event.preventDefault(); remove(part.id); }
@@ -159,6 +168,8 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
             const dy = event.key === "ArrowDown" ? PART_STEP : event.key === "ArrowUp" ? -PART_STEP : 0;
             if (dx || dy) { event.preventDefault(); change({ ...part, x: Math.max(0, part.x + dx), y: Math.max(0, part.y + dy) }); }
           }}>
+          <DetailTextPart text={part.text} disabled={disabled} index={index} editing={editingId === part.id}
+            onEditingChange={editing => setEditingId(editing ? part.id : null)} onChange={text => editText(part.id, text)} />
           <button type="button" className="detail-part-grip" disabled={disabled}
             aria-label={`パーツ ${index + 1}の右下でサイズ変更`} onPointerDown={event => start(event, part, true)}
             onKeyDown={event => {
@@ -173,12 +184,12 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
     </div>
     <aside className="detail-part-pool" aria-label="パーツプール">
       <h2>パーツプール</h2>
-      <button type="button" className="detail-pool-source" aria-label="空のパーツを追加" disabled={disabled} onPointerDown={event => start(event)}
+      <button type="button" className="detail-pool-source" aria-label="テキストパーツを追加" disabled={disabled} onPointerDown={event => start(event)}
         onKeyDown={event => {
           if (disabled || (event.key !== "Enter" && event.key !== " ")) return;
           event.preventDefault();
-          change({ id: crypto.randomUUID(), x: viewport.current!.scrollLeft + 16, y: viewport.current!.scrollTop + 16, ...PART_INITIAL });
-        }} />
+          change({ id: crypto.randomUUID(), x: viewport.current!.scrollLeft + 16, y: viewport.current!.scrollTop + 16, text: "", ...PART_INITIAL });
+        }}>テキスト</button>
     </aside>
     {ghost && createPortal(<div className="detail-part-ghost" style={{ left: ghost.x - 80, top: ghost.y - 48, ...PART_INITIAL }} />, document.body)}
   </div>;

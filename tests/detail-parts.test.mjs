@@ -4,7 +4,7 @@ import { withNodeBundle } from '../scripts/node-bundle.mjs';
 
 test('衝突を解消した全パーツが確定時に16px間隔へ揃い、件数と元配置を保持する', async () => {
   await withNodeBundle('Triadichrome-extension/src/core/tables/detailParts.ts', async ({ arrangeParts, partsOverlap, settlePart }) => {
-    const originals = Array.from({ length: 100 }, (_, i) => ({ id: String(i), x: (i % 10) * 164 + .5, y: Math.floor(i / 10) * 100 + .25, width: 160, height: 96 }));
+    const originals = Array.from({ length: 100 }, (_, i) => ({ id: String(i), text: `説明文 ${i}\n根拠を記載`, x: (i % 10) * 164 + .5, y: Math.floor(i / 10) * 100 + .25, width: 160, height: 96 }));
     const before = JSON.stringify(originals);
     for (const active of [{ ...originals[0], width: 800, height: 480 }, { ...originals[99], x: 7.3, y: 9.7 }, { id: 'new', x: 90.1, y: 50.2, width: 160, height: 96 }]) {
       for (const settled of [false, true]) {
@@ -13,6 +13,7 @@ test('衝突を解消した全パーツが確定時に16px間隔へ揃い、件�
         assert.equal(new Set(result.map(p => p.id)).size, originals.length + (active.id === 'new' ? 1 : 0));
         for (let i = 0; i < result.length; i++) {
           const part = result[i];
+          assert.equal(part.text, part.id === active.id ? active.text : originals.find(item => item.id === part.id).text, '移動・伸縮・押し出しで文章を失わない');
           assert.ok(part.x >= 0 && part.y >= 0);
           if (settled) for (const value of [part.x, part.y, part.width, part.height]) assert.equal(value % 16, 0);
           for (let j = i + 1; j < result.length; j++) assert.ok(!partsOverlap(part, result[j]), `${part.id} と ${result[j].id} は4px以上離れる`);

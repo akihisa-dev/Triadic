@@ -1,5 +1,5 @@
 /** Screen-only geometry: gentle attraction during movement, aligned placement on release. */
-export type DetailPart = { id: string; x: number; y: number; width: number; height: number };
+export type DetailPart = { id: string; x: number; y: number; width: number; height: number; text: string };
 export const PART_STEP = 16;
 export const PART_MIN = 64;
 export const PART_GAP = 4;
