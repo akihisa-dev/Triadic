@@ -53,8 +53,8 @@ test('新規科目と新規集計を右側にプールし、掴んで所属さ�
   await expect(table).not.toContainText('追加した科目');
   await expect(group).toBeVisible(); // A placed, empty child group stays in its saved position.
   await app.getByRole('button', { name: 'サイドバーを開く', exact: true }).click();
-  await app.getByRole('button', { name: 'ファイルを閉じる', exact: true }).click();
-  await app.getByRole('alertdialog', { name: 'ファイルを閉じる', exact: true }).getByRole('button', { name: '閉じる', exact: true }).click();
+  await app.getByRole('button', { name: '閉じる', exact: true }).click();
+  await app.getByRole('alertdialog', { name: '閉じる', exact: true }).getByRole('button', { name: '閉じる', exact: true }).click();
   await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
   await app.getByRole('button', { name: 'サイドバーを開く', exact: true }).click();
   await app.getByRole('button', { name: 'マスタ', exact: true }).click();

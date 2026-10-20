@@ -129,7 +129,7 @@ test("ドラッグで矩形を選択して保存し、開き直しても維持�
   await cell(0, 4).click(); await cell(0, 4).press("Shift+ArrowRight");
   await paste(cell(0, 5), "12.345");
   await expect(app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true })).toBeEnabled();
-  await app.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
+  await app.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "施策一覧", exact: true }).click();

@@ -47,6 +47,7 @@ test("新規入力を保持して検索でき、未保存編集では検索を�
   await expect(app.getByRole("textbox", { name: "施策名", exact: true })).toHaveValue("保持する新規入力");
   await app.getByRole("button", { name: "サイドバーを開く", exact: true }).click();
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "履歴", exact: true }).click();
+  await app.getByRole("alertdialog", { name: "履歴を開きますか？", exact: true }).getByRole("button", { name: "はい", exact: true }).click();
   await app.locator(".history-date").last().click();
   await trigger.click();
   await dialog.getByRole("searchbox").fill("履歴確認用の過去の状態");

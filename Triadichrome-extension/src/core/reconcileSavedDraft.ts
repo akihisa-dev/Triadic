@@ -12,7 +12,7 @@ export function reconcileSavedDraft<T>(submitted: T, pending: T, persisted: T): 
         const removed = new Set(base.filter(id => !local.includes(id)));
         return [...new Set([...saved.filter(id => !removed.has(id)), ...local.filter(id => !base.includes(id))])];
       }
-      const key = (item: unknown) => record(item) && (item.id !== undefined ? `id:${item.id}` : item.accountId !== undefined ? `account:${item.accountId}` : undefined);
+      const key = (item: unknown) => record(item) && (item.id !== undefined ? `${item.kind ?? "id"}:${item.id}` : item.accountId !== undefined ? `account:${item.accountId}` : undefined);
       const maps = [base, local, saved].map(items => new Map(items.map(item => [key(item), item])));
       if (maps.some((map, index) => map.has(undefined) || map.size !== [base, local, saved][index]!.length)) return local;
       const [original, edited, committed] = maps;

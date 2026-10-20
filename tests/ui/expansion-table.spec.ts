@@ -34,8 +34,8 @@ test("展開名ごとの集計・並び順・編集からの移動と再読込�
   await app.getByRole("button", { name: /^展開マスタ/ }).click();
   await expect(app.getByRole("button", { name: "効率化を削除", exact: true })).toBeDisabled();
   await expect(app.getByRole("button", { name: "荷主撤退を削除", exact: true })).toBeEnabled();
-  await app.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
-  await app.getByRole("alertdialog", { name: "ファイルを閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
+  await app.getByRole("button", { name: "閉じる", exact: true }).click();
+  await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("complementary", { name: "メニュー" }).getByRole("button", { name: "展開表", exact: true }).click();
   await expect(movedGroup.getByRole("button", { name: "既存商品の販売拡大", exact: true })).toBeVisible();

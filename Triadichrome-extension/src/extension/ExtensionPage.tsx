@@ -26,7 +26,7 @@ export function ExtensionPage() {
   const [closeRequested, setCloseRequested] = useState(false);
   const suggestedName = useRef("Untitled.triadic");
   const chooseDestination = useCallback(() => choosePlanDestination(suggestedName.current), []);
-  const { session, snapshot } = usePlanSession(chooseDestination, closeRequested);
+  const { session, snapshot, windows } = usePlanSession();
   const { history: dataHistory, historyError } = snapshot;
   if (snapshot.name) suggestedName.current = snapshot.name;
   const entry = useFileEntry(session, snapshot.name, () => setCloseError(""));
@@ -37,12 +37,13 @@ export function ExtensionPage() {
 
   useEffect(() => {
     const confirmExit = (event: BeforeUnloadEvent) => {
+      if (windows?.isClosing()) return;
       event.preventDefault();
       event.returnValue = "";
     };
     window.addEventListener("beforeunload", confirmExit);
     return () => window.removeEventListener("beforeunload", confirmExit);
-  }, []);
+  }, [windows]);
   const prepareSave = () => session.prepareSave(chooseDestination);
   const dispatch = async (command: PlanCommand) => {
     return session.dispatch(command, chooseDestination);
@@ -61,14 +62,14 @@ export function ExtensionPage() {
   const restoreHistory = (id: number) => session.restore(id, chooseDestination);
   const deleteHistory = (deletion: HistoryDeletion) => session.deleteHistory(deletion, chooseDestination);
   return <div className="app-shell"><FadeSwap value={fileName} className="app-switch">{displayedFile => displayedFile
-    ? <HomePage onChangePlan={changePlan} fileName={displayName} initialContents={displayedContents.current!} onChangeMaster={changeMaster} onChangeAggregations={changeAggregations} onChangeExpansions={changeExpansions} onChangeExpansionCategories={changeExpansionCategories} onChangeIndustries={changeIndustries} onChangeDepartments={changeDepartments} onChangePeriodTypes={changePeriodTypes} onRegisterInitiative={register} onUpdateInitiative={update} onPrepareSave={prepareSave}
+    ? <HomePage windows={windows} onChangePlan={changePlan} fileName={displayName} initialContents={displayedContents.current!} onChangeMaster={changeMaster} onChangeAggregations={changeAggregations} onChangeExpansions={changeExpansions} onChangeExpansionCategories={changeExpansionCategories} onChangeIndustries={changeIndustries} onChangeDepartments={changeDepartments} onChangePeriodTypes={changePeriodTypes} onRegisterInitiative={register} onUpdateInitiative={update} onPrepareSave={prepareSave}
       onCompareHistory={id => session.compareHistory(id)} dataHistory={dataHistory} historyError={historyError} historyBusy={isBusy || snapshot.busy} onPreviewHistory={previewHistory} onRestoreHistory={restoreHistory} onDeleteHistory={deleteHistory}
       canUndo={snapshot.canUndo} canRedo={snapshot.canRedo} operationRevision={snapshot.operationRevision} onTravelOperation={direction => session.travelOperation(direction, chooseDestination)}
       onRetryHistory={async () => { await prepareSave(); await session.checkpoint(true, chooseDestination); }}
       onSaveAs={() => session.saveAs(() => choosePlanDestination(`${suggestedName.current.replace(/\.triadic$/i, "")} のコピー.triadic`))}
       onCloseFile={() => { if (!busy.current) { setCloseError(""); setCloseRequested(true); } }} />
     : <EntryPage entry={entry} />}</FadeSwap>
-    <ConfirmationDialog open={closeRequested} title="ファイルを閉じる" message={closeError || `「${displayName}」を閉じますか？ 登録前の入力は失われます。`} confirmLabel={closeError ? "保存を再試行して閉じる" : "閉じる"} busy={isBusy || snapshot.busy}
+    <ConfirmationDialog open={closeRequested} title="閉じる" message={closeError || `「${displayName}」をこのウィンドウで閉じますか？ 登録前の入力は失われます。`} confirmLabel={closeError ? "保存を再試行して閉じる" : "閉じる"} busy={isBusy}
       onCancel={() => setCloseRequested(false)} onConfirm={() => {
         if (busy.current) return;
         void (async () => {

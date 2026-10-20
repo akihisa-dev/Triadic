@@ -22,7 +22,7 @@ for (const scenario of ["monthly", "period", "previous", "difference", "normal"]
         await expect(app.getByRole("alert")).toContainText("金額の合計が正確に計算できる範囲を超えています。");
         await expect(app.getByRole("table", { name, exact: true })).toHaveCount(0);
       }
-      await expect(app.getByRole("button", { name: "ファイルを閉じる", exact: true })).toBeEnabled();
+      await expect(app.getByRole("button", { name: "閉じる", exact: true })).toBeEnabled();
       await app.getByRole("button", { name: "前の画面に戻る", exact: true }).click();
       await expect(app.getByRole("heading", { name, exact: true })).toHaveCount(0);
     }

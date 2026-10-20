@@ -70,7 +70,7 @@ test("予算選択の列構成・重複防止・比較の符号と画面別の�
   const listKind = app.getByRole("spinbutton", { name: "種別", exact: true });
   await expect(listKind).toHaveAttribute("aria-valuetext", "確定予算");
   await selectClassification(listKind, "一次予算");
-  await app.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
+  await app.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await menu.getByRole("button", { name: "施策一覧", exact: true }).click();

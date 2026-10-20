@@ -12,6 +12,7 @@ export type InitiativeRow = { id?: string; accountId: number | null; revision?: 
 export type InitiativeEntryDraft = { name: string; note: string; expansionId: number | null; expansionCategoryId?: number | null; departmentId?: number | null; periodTypeId?: number | null; industryId?: number | null; fiscalYear: string; rows: InitiativeRow[]; invalidNumbers?: boolean };
 export type Initiative = {
   id: number;
+  identity?: string;
   name: string;
   note: string;
   expansionId: number | null; expansionCategoryId?: number | null; departmentId?: number | null; periodTypeId?: number | null; industryId?: number | null;

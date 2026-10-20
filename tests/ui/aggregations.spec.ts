@@ -38,8 +38,8 @@ test('科目専用マスタと集計マスタを分離し、所属・加減・�
   await expect(app.getByRole('table', { name: '未所属の科目・集計', exact: true })).toContainText('費用科目2');
   await expect(sign('費用科目2')).toHaveCount(0);
   const paths = await app.locator('.aggregation-tray-outlines path').evaluateAll(nodes => nodes.map(node => node.getAttribute('data-group-id')));
-  await app.getByRole('button', { name: 'ファイルを閉じる', exact: true }).click();
-  await app.getByRole('alertdialog', { name: 'ファイルを閉じる', exact: true }).getByRole('button', { name: '閉じる', exact: true }).click();
+  await app.getByRole('button', { name: '閉じる', exact: true }).click();
+  await app.getByRole('alertdialog', { name: '閉じる', exact: true }).getByRole('button', { name: '閉じる', exact: true }).click();
   await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
   await app.getByRole('button', { name: 'サイドバーを開く', exact: true }).click();
   await master(app, '集計マスタ');
@@ -88,8 +88,8 @@ test('集計の登録時に集計名と表示名を別々に指定し、再読�
   const pool = app.getByRole('table', { name: '未所属の科目・集計', exact: true });
   await expect(pool).toContainText('小計');
   await expect(pool).toContainText('確認用集計');
-  await app.getByRole('button', { name: 'ファイルを閉じる', exact: true }).click();
-  await app.getByRole('alertdialog', { name: 'ファイルを閉じる', exact: true }).getByRole('button', { name: '閉じる', exact: true }).click();
+  await app.getByRole('button', { name: '閉じる', exact: true }).click();
+  await app.getByRole('alertdialog', { name: '閉じる', exact: true }).getByRole('button', { name: '閉じる', exact: true }).click();
   await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
   await app.getByRole('button', { name: 'サイドバーを開く', exact: true }).click();
   await master(app, '集計マスタ');

@@ -79,8 +79,8 @@ test("一覧の施策名から詳細を開き、新規入力の破棄後は空�
   await expect(app.getByRole("textbox", { name: "施策名", exact: true })).toHaveValue("");
   await expect(app.getByRole("textbox", { name: "備考", exact: true })).toHaveValue("");
   await expect(app.getByRole("combobox", { name: "1行目の勘定科目" })).toHaveValue("");
-  await app.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
-  await app.getByRole("alertdialog", { name: "ファイルを閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
+  await app.getByRole("button", { name: "閉じる", exact: true }).click();
+  await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("button", { name: "サイドバーを開く" }).click();
   await app.getByRole("complementary", { name: "メニュー" }).getByRole("button", { name: "施策一覧", exact: true }).click();
@@ -155,8 +155,8 @@ test("属性別に集計した施策を一覧で表示し、種別表示・属�
   await app.getByRole("complementary", { name: "メニュー" }).getByRole("button", { name: "施策一覧", exact: true }).click();
   await expect(row.locator("td:not(.initiative-list-fixed)").nth(2)).toHaveText("976");
   await expect(total.locator("td").nth(2)).toHaveText("986");
-  await app.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
-  await app.getByRole("alertdialog", { name: "ファイルを閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
+  await app.getByRole("button", { name: "閉じる", exact: true }).click();
+  await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("button", { name: "サイドバーを開く" }).click();
   await app.getByRole("complementary", { name: "メニュー" }).getByRole("button", { name: "施策一覧", exact: true }).click();

@@ -1,5 +1,5 @@
 import { openInitiativeEntry, test, expect, selectClassification, attachImage, settleMotion } from "./fixtures";
-import { installMemoryFiles } from "./memory-files";
+import { installCloneableFiles } from "./cloneable-files";
 import { PNG } from "pngjs";
 import pixelmatch from "pixelmatch";
 import { type FrameLocator, type Page } from "@playwright/test";
@@ -92,8 +92,8 @@ test("ファイルを開き、サイドバーを操作して入口へ戻る", as
   expect(await main.boundingBox()).toEqual(fullMain);
 
   await trigger.click();
-  await sidebar.getByRole("button", { name: "ファイルを閉じる" }).click();
-  await app.getByRole("alertdialog", { name: "ファイルを閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
+  await sidebar.getByRole("button", { name: "閉じる" }).click();
+  await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await expect(app.getByRole("heading", { name: "Triadichrome" })).toBeVisible();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
@@ -149,8 +149,8 @@ test("サイドバーを開いたまま施策一覧とホームを往復でき�
 
   await expect(home).toHaveAttribute("aria-current", "page");
   await initiativeEntry.click();
-  await sidebar.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
-  await app.getByRole("alertdialog", { name: "ファイルを閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
+  await sidebar.getByRole("button", { name: "閉じる", exact: true }).click();
+  await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await expect(app.getByRole("heading", { name: "Triadichrome" })).toBeVisible();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await expect(app.getByRole("main", { name: "ホーム", exact: true })).toBeVisible();
@@ -216,8 +216,8 @@ test("施策名・備考・月別金額を入力し、画面を往復しても�
   await attachImage(testInfo, "施策入力・備考と月別金額", await page.locator("#app-preview").screenshot());
 
   await trigger.click();
-  await sidebar.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
-  await app.getByRole("alertdialog", { name: "ファイルを閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
+  await sidebar.getByRole("button", { name: "閉じる", exact: true }).click();
+  await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await trigger.click();
   await openInitiativeEntry(app);
@@ -352,8 +352,8 @@ test("新しい計画の年度を一度選び、閉じた後に同じ年度で�
   await expect(app.locator(".home-header")).toContainText("2030年度");
   await expect(app.locator(".home-file-name")).toHaveText("Untitled.triadic");
   await app.getByRole("button", { name: "サイドバーを開く" }).click();
-  await app.getByRole("button", { name: "ファイルを閉じる" }).click();
-  await app.getByRole("alertdialog", { name: "ファイルを閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
+  await app.getByRole("button", { name: "閉じる" }).click();
+  await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await expect(app.locator(".home-file-name")).toHaveText("Untitled.triadic");
   await expect(app.locator(".home-header")).toContainText("2030年度");
@@ -406,7 +406,7 @@ test("確認用画面と配布用ビルドの表示・操作が一致する", as
     await production.setViewportSize({ width: Math.round(bounds.width), height: Math.round(bounds.height) });
     const bytes = await page.evaluate(async path => (await import(path)).fixtureBytes as number[], "/tests/ui/preview.ts");
     await production.goto("/Triadichrome-extension/index.html");
-    await production.evaluate(installMemoryFiles, { bytes, scenario: "normal" as const });
+    await production.evaluate(installCloneableFiles, { bytes, name: "画面テスト.triadic" });
     await expect(production).toHaveTitle("Triadichrome");
     await expect(production.getByRole("heading", { name: "Triadichrome" })).toBeVisible();
     for (const state of ["入口", "ホーム", "サイドバー", "施策入力"] as const) {

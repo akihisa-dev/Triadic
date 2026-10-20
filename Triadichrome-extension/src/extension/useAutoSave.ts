@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AutoSave } from "../core/autoSave";
 import { useSavedOperationRevision } from "./SavedOperationRevision";
+import { registerAutoSave } from "./flushAutoSaves";
 
 export type AutoSaveProps = {
   onPendingChange: (pending: boolean) => void;
@@ -11,6 +12,7 @@ export function useAutoSave<T>(save: (draft: T) => Promise<void>, onPendingChang
   const operation = useRef(save);
   useLayoutEffect(() => { operation.current = save; });
   const [controller] = useState(() => new AutoSave<T>(draft => operation.current(draft)));
+  useLayoutEffect(() => registerAutoSave(controller), [controller]);
   const revision = useSavedOperationRevision();
   const previousRevision = useRef(revision);
   useLayoutEffect(() => {

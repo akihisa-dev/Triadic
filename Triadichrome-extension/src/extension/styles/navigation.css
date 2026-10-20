@@ -38,6 +38,16 @@
   white-space: nowrap;
 }
 
+.home-window-label {
+  min-width: 0;
+  max-width: 16rem;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .home-icon-button {
   display: grid;
   width: 40px;

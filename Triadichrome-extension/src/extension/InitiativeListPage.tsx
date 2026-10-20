@@ -15,6 +15,7 @@ import type { KindId } from "../core/domain/kinds";
 import { sortInitiatives, type InitiativeSort } from "../core/tables/initiativeSort";
 
 import { formatYen } from "../core/domain/amounts";
+import { useWindowViewState } from "./windowView";
 const amountText = (amount: number | null | undefined) => amount === undefined ? "" : amount === null ? "属性未設定" : formatYen(amount);
 
 type InitiativeListPageProps = {
@@ -32,7 +33,7 @@ type InitiativeListPageProps = {
 
 export function InitiativeListPage({ selection, selectedKind, initiatives, accounts, expansions, periodTypes, fiscalYear, onAddInitiative, onOpenInitiative, navigationBlocked }: InitiativeListPageProps) {
   const readOnly = useHistoryReadOnly();
-  const [sort, setSort] = useState<InitiativeSort | null>(null);
+  const [sort, setSort] = useWindowViewState<InitiativeSort | null>("initiative-list:sort", null);
   const [focusedId, setFocusedId] = useState<number | null>(null);
   const container = useRef<HTMLDivElement>(null);
   const expansionNames = useMemo(() => new Map(expansions.map(item => [item.id, item.expansionName])), [expansions]);

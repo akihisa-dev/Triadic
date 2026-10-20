@@ -132,7 +132,7 @@ test("画面・計算・接続・対応説明の変更と画面の追加漏れ�
     assert.ok(staleScreens(review, calculation, screenData).includes("initiative-list"), "間接的に使う計算規則の変更も検出する");
     const wiring = await screenImplementations(async file => {
       const text = await read(file);
-      return file.endsWith("/WorkspacePage.tsx") ? text.replace("contents.kindSelections[", "currentContents.kindSelections[") : text;
+      return file.endsWith("/WorkspacePage.tsx") ? text.replace("workspace.localKinds[", "contents.kindSelections[") : text;
     });
     assert.ok(staleScreens(review, wiring, screenData).includes("initiative-list"), "親画面から渡す表示元の変更も検出する");
     for (const source of ["HomePage.tsx", "WorkspacePage.tsx", "useHomeWorkspace.tsx", "planProcessing.worker.ts", "planProcessingTasks.ts"]) {

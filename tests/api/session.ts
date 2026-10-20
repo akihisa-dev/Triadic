@@ -22,9 +22,11 @@ export * from "../../Triadichrome-extension/src/extension/triadicFile";
 export * from "../../Triadichrome-extension/src/extension/planFile";
 export * from "../../Triadichrome-extension/src/extension/recentFile";
 export { processingTasks } from '../../Triadichrome-extension/src/extension/planProcessingTasks';
-export { scheduleHistoryCheckpoint } from "../../Triadichrome-extension/src/extension/usePlanSession";
+export { scheduleHistoryCheckpoint } from "../../Triadichrome-extension/src/extension/historyCheckpoint";
 export * from "../../Triadichrome-extension/src/extension/fileConflict";
 export { preparePlanCommand } from "../../Triadichrome-extension/src/extension/preparePlanCommand";
 
 export { createNewPlanFile } from "../../Triadichrome-extension/src/extension/newPlanFile";
 export { readTriadicFile } from "../../Triadichrome-extension/src/extension/readTriadicFile";
+export { WindowSessionHub } from "../../Triadichrome-extension/src/extension/WindowSessionHub";
+export { registerAutoSave, flushAutoSaves } from "../../Triadichrome-extension/src/extension/flushAutoSaves";

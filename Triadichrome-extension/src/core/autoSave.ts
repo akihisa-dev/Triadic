@@ -16,6 +16,7 @@ export class AutoSave<T> {
   private composing = false;
   constructor(private save: (draft: T) => Promise<void>, private delay = 600) {}
   getSnapshot = () => this.state;
+  isComposing = () => this.composing;
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
   private publish(state: AutoSaveState<T>) { this.state = state; this.listeners.forEach(listener => listener()); }
   private equal(a: T | null, b: T | null) { return JSON.stringify(a) === JSON.stringify(b); }

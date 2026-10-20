@@ -23,7 +23,7 @@ async function blocked(app: FrameLocator) {
 }
 async function reopen(app: FrameLocator) {
   await expect(app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true })).toBeEnabled();
-  await app.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
+  await app.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "施策一覧", exact: true }).click();

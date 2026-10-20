@@ -7,7 +7,8 @@ import type { useScreenHistory } from "../useScreenHistory";
 import type { Page, Screen } from "./types";
 export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHistory<Screen>>, contents: PlanContents,
   preview: boolean, navigationBlocked: boolean, saving: RefObject<boolean>,
-  draft: Pick<ReturnType<typeof useRetainedInitiativeDraft>, "initiativeDraft" | "setInitiativeDraft">, dismissNotice: () => void) {
+  draft: Pick<ReturnType<typeof useRetainedInitiativeDraft>, "initiativeDraft" | "setInitiativeDraft">, dismissNotice: () => void,
+  beforeNavigate: (next: Screen) => Promise<void> = async () => {}, onError: (error: unknown) => void = () => {}) {
   const screen = screens.current;
   const { page } = screen;
   const navigate = screens.navigate;
@@ -21,9 +22,9 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
       { page: "home", selectedInitiative: null, detailOrigin: "initiative-list" });
   }, [initiatives, screens.prune]);
   const openInitiative = (initiative: Initiative, kind?: KindId) => {
-    if (navigationState.current.blocked || navigationState.current.page !== page || saving.current) return;
+    if (navigationState.current.blocked || navigationState.current.page !== page) return;
     dismissNotice();
-    navigate({
+    requestNavigation({
       page: "initiative-detail",
       detailKind: kind ?? 1,
       detailOrigin: page === "cost-table" ? "cost-table" : page === "home" ? "home" : page === "expansion-table" ? "expansion-table" : "initiative-list",
@@ -31,16 +32,16 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
     });
   };
   const requestNavigation = (next: Screen, perform = () => navigate(next)) => {
-    if (navigationBlocked || saving.current || discardRequest) return;
+    if (navigationBlocked || discardRequest) return;
     if (next.page === "initiative-list" && !preview && hasInitiativeDraftInput(initiativeDraft)) {
       setDiscardRequest({ perform });
       return;
     }
-    perform();
+    void beforeNavigate(next).then(perform).catch(onError);
   };
   const setPage = (next: Page) => requestNavigation({ ...screen, page: next });
   const startInitiative = () => {
-    if (preview || navigationBlocked || saving.current) return;
+    if (preview || navigationBlocked) return;
     setInitiativeDraft(createInitiativeDraft(String(contents.fiscalYear)));
     dismissNotice();
     setPage("initiative-entry");

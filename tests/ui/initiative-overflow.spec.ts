@@ -42,7 +42,7 @@ for (const kindName of ['一次予算', '確定予算']) {
     await expect(nav.getByRole('button', { name: 'Home', exact: true })).toBeEnabled();
     await nav.getByRole('button', { name: 'Home', exact: true }).click();
     await expect(app.getByRole('main', { name: 'ホーム', exact: true })).toBeVisible();
-    await app.getByRole('button', { name: 'ファイルを閉じる', exact: true }).click();
+    await app.getByRole('button', { name: '閉じる', exact: true }).click();
     await app.getByRole('alertdialog').getByRole('button', { name: '閉じる', exact: true }).click();
     await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
     await expect(app.getByRole('main', { name: 'ホーム', exact: true })).toBeVisible();

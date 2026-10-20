@@ -28,8 +28,8 @@ test("加減のボタンと左右キーで選択を保存し、背景が選択�
   await minus.press("ArrowLeft");await expect(plus).toHaveAttribute("aria-pressed","true");await expect(plus).toBeFocused();await expect(plus).toBeEnabled();await aligned(group);
   await page.emulateMedia({reducedMotion:"reduce"});
   await plus.press("ArrowRight");await expect(minus).toHaveAttribute("aria-pressed","true");await expect(minus).toBeEnabled();await aligned(group);
-  await app.getByRole("button",{name:"ファイルを閉じる",exact:true}).click();
-  await app.getByRole("alertdialog",{name:"ファイルを閉じる",exact:true}).getByRole("button",{name:"閉じる",exact:true}).click();
+  await app.getByRole("button",{name:"閉じる",exact:true}).click();
+  await app.getByRole("alertdialog",{name:"閉じる",exact:true}).getByRole("button",{name:"閉じる",exact:true}).click();
   await app.getByRole("button",{name:"ファイルを開く",exact:true}).click();await app.getByRole("button",{name:"マスタ",exact:true}).click();await app.getByRole("button",{name:/^勘定科目マスタ/}).click();
   await expect(minus).toHaveAttribute("aria-pressed","true");await aligned(group);
 });

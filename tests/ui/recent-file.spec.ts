@@ -18,8 +18,8 @@ async function filePicker(page: Page, name = "再開テスト.triadic", bytes = 
 }
 
 async function closeFile(page: Page) {
-  await page.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
-  await page.getByRole("alertdialog", { name: "ファイルを閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
+  await page.getByRole("button", { name: "閉じる", exact: true }).click();
+  await page.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Triadichrome", exact: true })).toBeVisible();
 }
 
@@ -96,6 +96,7 @@ test("不正ファイルと選択キャンセルでは前回の記憶を置き�
 });
 
 test("削除・破損・許可拒否の案内を出し、通常の選択で復帰できる", async ({ page }) => {
+  test.setTimeout(60_000); // Several native file opens and failure recoveries run in one scenario.
   await filePicker(page);
   await page.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await closeFile(page);
@@ -186,15 +187,15 @@ for (const action of ["preview", "close"] as const) {
     });
     if (action === "preview") {
       await page.getByRole("button", { name: "履歴", exact: true }).click();
-      await page.locator(".history-date").last().click();
     } else {
-      await page.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
-      await page.getByRole("alertdialog", { name: "ファイルを閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
+      await page.getByRole("button", { name: "閉じる", exact: true }).click();
+      await page.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
     }
     const recovery = page.getByRole("alertdialog", { name: "入力を保持しています", exact: true });
     await expect(recovery).toBeVisible();
     await recovery.getByRole("button", { name: "別のファイルに保存して続ける", exact: true }).click();
     if (action === "preview") {
+      await page.locator(".history-date").last().click();
       await expect(page.getByLabel("過去のデータを閲覧中")).toBeVisible();
       await expect(page.locator(".home-file-name")).toHaveText("保存成功先.triadic");
       await page.getByRole("button", { name: "現在に戻る", exact: true }).click();
@@ -257,14 +258,21 @@ test.describe("複数タブの再開先", () => {
       await filePicker(other, "B.triadic");
       await other.getByRole("button", { name: "ファイルを開く", exact: true }).click();
       await expect(other.locator(".home-file-name")).toHaveText("B.triadic");
-      await page.evaluate(outcome => {
+      await page.evaluate(async outcome => {
         if (outcome === "記憶失敗") {
           IDBObjectStore.prototype.put = () => { throw new DOMException("storage failure", "QuotaExceededError"); };
-        } else if (outcome !== "変更なし") {
-          FileSystemFileHandle.prototype.createWritable = async () => {
-            if (outcome === "取消") throw new DOMException("cancel", "AbortError");
-            throw new Error("保存失敗の確認");
-          };
+        } else if (outcome === "保存失敗") {
+          const handle = await (await navigator.storage.getDirectory()).getFileHandle("A.triadic");
+          // A native exclusive writer also blocks the shared worker; patching this window's prototype does not.
+          Reflect.set(window, "testWriter", await handle.createWritable({ mode: "exclusive" } as FileSystemCreateWritableOptions));
+        } else if (outcome === "取消") {
+          const path = "/Triadichrome-extension/src/core/storage/accountMaster.ts";
+          const { readAccountMaster, changeAccountMaster } = await import(path);
+          const handle = await (await navigator.storage.getDirectory()).getFileHandle("A.triadic");
+          const bytes = new Uint8Array(await (await handle.getFile()).arrayBuffer());
+          const account = (await readAccountMaster(bytes)).find((item: { accountName: string }) => item.accountName === "売上高");
+          const changed = await changeAccountMaster(bytes, { ...account, type: "update", accountName: "外部から変更した売上" });
+          const writer = await handle.createWritable(); await writer.write(changed.bytes); await writer.close();
         }
       }, outcome);
       await page.getByRole("button", { name: "マスタ", exact: true }).click();
@@ -272,6 +280,7 @@ test.describe("複数タブの再開先", () => {
       await page.getByRole("button", { name: "売上高を編集", exact: true }).click();
       const input = page.getByRole("textbox", { name: "売上高の名称", exact: true });
       if (outcome !== "変更なし") await input.fill("保持する売上");
+      if (outcome === "取消") await page.getByRole("alertdialog", { name: "入力を保持しています", exact: true }).getByRole("button", { name: "キャンセル", exact: true }).click();
       if (outcome === "保存失敗" || outcome === "取消") {
         await expect(page.getByRole("alert")).toBeVisible();
         await expect(input).toHaveValue("保持する売上");

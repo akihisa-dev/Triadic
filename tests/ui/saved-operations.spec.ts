@@ -11,9 +11,9 @@ test("保存済み施策の編集・登録を取り消してやり直し、新�
   const menu = app.getByRole("navigation", { name: "メインナビゲーション" });
   await menu.getByRole("button", { name: "施策一覧", exact: true }).click();
   await app.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
   const amount = app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).first();
   await amount.fill("130.001");
-  await expect(undo).toBeDisabled();
   await expect(undo).toBeEnabled();
   await undo.click();
   await expect(amount).toHaveValue("120");
@@ -54,7 +54,7 @@ test("保存済み施策の編集・登録を取り消してやり直し、新�
   await expect(app.getByRole("button", { name: "取消確認施策", exact: true })).toBeVisible();
   await settleMotion(app.locator("body"));
   await page.screenshot({ path: `/tmp/triadichrome-saved-operations-${testInfo.project.name}.png` });
-  await app.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
+  await app.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await expect(undo).toBeDisabled();

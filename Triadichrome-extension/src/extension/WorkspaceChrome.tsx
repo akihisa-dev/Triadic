@@ -4,8 +4,9 @@ import { SidebarIcon } from "./SidebarIcon";
 import { InitiativeSearch } from "./InitiativeSearch";
 import { historyDate } from "./DataHistoryPage";
 import type { HomeWorkspace } from "./useHomeWorkspace";
+import type { useWindowWorkspace } from "./useWindowWorkspace";
 
-export function WorkspaceHeader({ workspace }: { workspace: HomeWorkspace }) {
+export function WorkspaceHeader({ workspace, windows }: { workspace: HomeWorkspace; windows: ReturnType<typeof useWindowWorkspace> }) {
   const {
     menuButton, isSidebarOpen, closeSidebar, sidebar, contents, navigationBlocked,
     screens, dismissNotice, requestNavigation, operationBlocked, canUndo, canRedo,
@@ -63,7 +64,12 @@ export function WorkspaceHeader({ workspace }: { workspace: HomeWorkspace }) {
             </button>;
           })}
         </nav>
-        <InitiativeSearch initiatives={contents.initiatives} disabled={navigationBlocked || workspace.discardRequest !== null || workspace.restoreRequested} onOpen={workspace.openInitiative} />
+        <InitiativeSearch initiatives={contents.initiatives} disabled={workspace.searchBlocked || workspace.discardRequest !== null || workspace.restoreRequested} onOpen={workspace.openInitiative} />
+        <button className="home-icon-button" type="button" aria-label="ウィンドウを複製" title="ウィンドウを複製"
+          disabled={navigationBlocked || preview !== null || workspace.screen.page === "data-history"} onClick={windows.duplicate}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="1" /><path d="M16 8V4H4v12h4" /></svg>
+        </button>
+        <span className="home-window-label" title={windows.label}>{windows.label}</span>
         <strong className="home-file-name" title={fileName}>{fileName}</strong>
         {preview ? <div className="history-preview-controls" aria-label="過去のデータを閲覧中">
           <span className="history-preview-label">{historyDate(preview.entry.recordedAt)} · 閲覧専用</span>
@@ -128,9 +134,9 @@ export function WorkspaceSidebar({ workspace }: { workspace: HomeWorkspace }) {
             <button className="sidebar-item" type="button" aria-label="別名で保存" disabled={workspace.operationBlocked} onClick={() => { void workspace.saveAs(); }}>
               <SidebarIcon name="save-as" /><span className="sidebar-label">別名で保存</span>
             </button>
-            <button className="sidebar-item" type="button" aria-label="ファイルを閉じる" disabled={navigationBlocked} onClick={onCloseFile}>
+            <button className="sidebar-item" type="button" aria-label="閉じる" disabled={navigationBlocked} onClick={onCloseFile}>
               <SidebarIcon name="close-file" />
-              <span className="sidebar-label">ファイルを閉じる</span>
+              <span className="sidebar-label">閉じる</span>
             </button>
           </footer>
           </div>

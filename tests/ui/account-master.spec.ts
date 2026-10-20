@@ -136,8 +136,8 @@ test("マスタから科目を管理し、施策で選択して再読込でき�
   await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
   await expect(app.getByRole("spinbutton", { name: "売上 4月の金額", exact: true })).toHaveValue("123.5");
   await expect(select.locator("option:checked")).toHaveText("売上");
-  await app.getByRole("button", { name: "ファイルを閉じる" }).click();
-  await app.getByRole("alertdialog", { name: "ファイルを閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
+  await app.getByRole("button", { name: "閉じる" }).click();
+  await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("button", { name: "サイドバーを開く" }).click();
   await master.click();

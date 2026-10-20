@@ -52,7 +52,7 @@ test("更新を自動保存して再読込でき、失敗・入力不備で入�
   await expect(note).toBeFocused();
   expect(await note.boundingBox()).toEqual(inputBounds);
   await expect(app.locator(".status-notice").getByRole("button", { name: "保存を再試行", exact: true })).toBeEnabled();
-  await expect(app.getByRole("button", { name: "ファイルを閉じる", exact: true })).toBeDisabled();
+  await expect(app.getByRole("button", { name: "閉じる", exact: true })).toBeDisabled();
   await app.getByRole("button", { name: "保存を再試行", exact: true }).click();
   await expect(app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true })).toBeEnabled();
   await expect(app.getByRole("alert")).toHaveCount(0);
@@ -61,8 +61,8 @@ test("更新を自動保存して再読込でき、失敗・入力不備で入�
   await expect(app.getByRole("alert")).toContainText("施策名を入力");
   await app.getByRole("button", { name: "入力を取り消す", exact: true }).click();
   await expect(app.getByRole("textbox", { name: "施策名", exact: true })).toHaveValue("保存する施策");
-  await app.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
-  await app.getByRole("alertdialog", { name: "ファイルを閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
+  await app.getByRole("button", { name: "閉じる", exact: true }).click();
+  await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("button", { name: "サイドバーを開く", exact: true }).click();
   await app.getByRole("complementary", { name: "メニュー" }).getByRole("button", { name: "施策一覧", exact: true }).click();

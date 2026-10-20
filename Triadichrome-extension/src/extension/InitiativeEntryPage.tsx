@@ -4,7 +4,7 @@ import { InitiativeAmountGrid } from "./InitiativeAmountGrid";
 import { ClassificationSelect } from "./ClassificationSelect";
 import { INITIAL_KINDS } from "../core/domain/kinds";
 import { type KindId } from "../core/domain/kinds";
-import { useState } from "react";
+import { useWindowViewState } from "./windowView";
 import { type Industry } from "../core/domain/industryMaster";
 import { type PeriodType } from "../core/domain/periodMaster";
 import { type Department } from "../core/domain/departmentMaster";
@@ -33,7 +33,7 @@ type InitiativeEntryPageProps = {
 
 export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions, expansionCategories, departments, periodTypes, industries, onOpenMaster, isSaving, onRegister, onBack, editing, initialKind = 1 }: InitiativeEntryPageProps) {
   const readOnly = useHistoryReadOnly();
-  const [kind, setKind] = useState<KindId>(initialKind);
+  const [kind, setKind] = useWindowViewState<KindId>("initiative:kind", initialKind);
   const allowedCategories = expansions.find(item => item.id === draft.expansionId)?.categoryIds ?? [];
   const allowedIndustries = departments.find(item => item.id === draft.departmentId)?.industryIds ?? [];
   return (

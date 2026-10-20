@@ -88,7 +88,7 @@ test("小窓は必須名・取消・Esc・変換中Enterを扱い、保存せず
 test("カードはファイルを閉じて開き直すと破棄される", async ({ app }) => {
   await openDetails(app);
   await addDetail(app, "画面内だけの明細", "保存対象外");
-  await app.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
+  await app.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "閉じる", exact: true }).click();
   await openDetails(app);
   await expect(app.locator(".details-card")).toHaveCount(0);

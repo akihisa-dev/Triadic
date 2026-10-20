@@ -19,7 +19,7 @@ test("別名保存後も同じ画面と操作取消を保ち、新しいファ�
   await expect(undo).toBeEnabled();
   await undo.click();
   await expect(app.getByRole("spinbutton", { name: "比較対象1", exact: true })).toContainText("一次予算");
-  await menu.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
+  await menu.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "閉じる", exact: true }).click();
   await expect(app.getByRole("button", { name: "続きから", exact: true })).toBeEnabled();
   await app.getByRole("button", { name: "続きから", exact: true }).click();

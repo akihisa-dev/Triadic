@@ -5,8 +5,8 @@ test("ファイル終了は確認を挟み、キャンセルとEscで入力を�
   await openInitiativeEntry(app);
   const name = app.getByRole("textbox", { name: "施策名", exact: true });
   await name.fill("登録前の入力を保持");
-  const close = app.getByRole("button", { name: "ファイルを閉じる", exact: true });
-  const dialog = app.getByRole("alertdialog", { name: "ファイルを閉じる", exact: true });
+  const close = app.getByRole("button", { name: "閉じる", exact: true });
+  const dialog = app.getByRole("alertdialog", { name: "閉じる", exact: true });
   await close.click();
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText("画面テスト.triadic");

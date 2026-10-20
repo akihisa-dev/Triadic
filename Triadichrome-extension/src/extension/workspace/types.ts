@@ -10,6 +10,7 @@ import { type AccountChange } from "../../core/domain/accountMaster";
 import { type AggregationChange } from "../../core/domain/aggregationMaster";
 
 import type { DataHistoryStatus, HistoryDeletion } from "../../core/domain/dataHistory";
+import type { WindowPlanSession } from "../WindowPlanSession";
 
 
 export type Page = "spreadsheet-io" | "data-history" | "previous-input" | "home" | "initiative-entry" | "initiative-list" | "initiative-detail" | "cost-table" | "expansion-table" | "details" | "detail-editor" | "master" | "aggregation-master" | "account-master" | "expansion-master" | "expansion-category-master" | "industry-master" | "department-master" | "period-master" | "kind-master" | "account-type-master" | "amount-item-master";
@@ -23,6 +24,7 @@ export type Screen = {
 };
 
 export type HomePageProps = {
+  windows?: WindowPlanSession | undefined;
   onChangePlan: (change: PlanChange) => Promise<PlanContents>;
   fileName: string;
   initialContents: PlanContents;

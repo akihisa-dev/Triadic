@@ -115,8 +115,8 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
       await expect(app.getByRole("main", { name: "施策一覧", exact: true })).toBeVisible();
       await expect(app.getByRole("button", { name: "施策一覧", exact: true })).toHaveAttribute("aria-current", "page");
 
-      await app.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
-      await expect(app.getByRole("alertdialog", { name: "ファイルを閉じる", exact: true })).toBeVisible();
+      await app.getByRole("button", { name: "閉じる", exact: true }).click();
+      await expect(app.getByRole("alertdialog", { name: "閉じる", exact: true })).toBeVisible();
       const closing = await app.locator("body").evaluate(sampleChange, {
         observe: ".app-switch",
         actions: [{ frame: 0, selector: ".confirmation-dialog[open] .primary-button" }],

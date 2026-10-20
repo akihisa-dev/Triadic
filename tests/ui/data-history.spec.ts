@@ -88,7 +88,7 @@ test("復元確認の取消、復元成功、復元前へ戻す操作と再読�
   await app.getByLabel("過去のデータを閲覧中").getByRole("button", { name: "この時点に戻す", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "この時点に戻す", exact: true }).click();
   await expect(app.locator(".history-date")).toHaveCount(7);
-  await app.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
+  await app.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "履歴", exact: true }).click();
@@ -185,7 +185,7 @@ test("5分期限は追加保存で延びず、閉じる際も未記録分を残�
   await menu.getByRole("button", { name: "総原価表", exact: true }).click();
   await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "確定予算");
   await expect(app.getByRole("spinbutton", { name: "比較対象2", exact: true })).toBeEnabled();
-  await app.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
+  await app.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await menu.getByRole("button", { name: "履歴", exact: true }).click();
@@ -223,7 +223,7 @@ test("閲覧前に未記録分を保存し、終了時の記録失敗では閉�
   await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "未選択");
   await expect(app.getByRole("spinbutton", { name: "比較対象2", exact: true })).toBeEnabled();
   await menu.getByRole("button", { name: "履歴", exact: true }).click();
-  await app.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
+  await app.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "閉じる", exact: true }).click();
   await expect(app.getByRole("alertdialog")).toContainText("終了記録失敗");
   await expect(app.locator(".history-date")).toHaveCount(4);

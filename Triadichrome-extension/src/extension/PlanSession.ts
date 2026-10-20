@@ -63,7 +63,8 @@ export class PlanSession {
       const handle = current.handle ?? await destination();
       if (!handle.name.toLowerCase().endsWith(".triadic")) throw new Error("拡張子は.triadicにしてください。");
       const permission = handle as FileSystemFileHandle & { requestPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState> };
-      if (permission.requestPermission && await permission.requestPermission({ mode: "readwrite" }) !== "granted") throw new Error("ファイルへの保存を許可してください。");
+      const query = handle as FileSystemFileHandle & { queryPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState> };
+      if (permission.requestPermission && (!query.queryPermission || await query.queryPermission({ mode: "readwrite" }) !== "granted") && await permission.requestPermission({ mode: "readwrite" }) !== "granted") throw new Error("ファイルへの保存を許可してください。");
       return { handle, ...(!current.handle ? { destinationBytes: new Uint8Array(await (await handle.getFile()).arrayBuffer()) } : {}) };
     };
     const prepared = prepare();
@@ -82,7 +83,8 @@ export class PlanSession {
         throw new Error("元のファイルとは別の保存先を選択してください。元のファイルと入力は保持しています。");
       }
       const permission = handle as FileSystemFileHandle & { requestPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState> };
-      if (permission.requestPermission && await permission.requestPermission({ mode: "readwrite" }) !== "granted") throw new Error("ファイルへの保存を許可してください。");
+      const query = handle as FileSystemFileHandle & { queryPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState> };
+      if (permission.requestPermission && (!query.queryPermission || await query.queryPermission({ mode: "readwrite" }) !== "granted") && await permission.requestPermission({ mode: "readwrite" }) !== "granted") throw new Error("ファイルへの保存を許可してください。");
       return { handle, expected };
     });
     void selected.catch(() => {});

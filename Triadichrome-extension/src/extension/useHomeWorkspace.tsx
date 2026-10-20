@@ -7,33 +7,39 @@ import { useScreenHistory } from "./useScreenHistory";
 import { KindSelectionSlots } from "./KindSelectionSlots";
 import { type KindId, type KindScreen, type PlanChange } from "../core/domain/kinds";
 import { type RelationView } from "./HomeRelationsPage";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createInitiativeDraft, hasInitiativeDraftInput } from "../core/domain/initiativeRules";
 import { useSidebar } from "./useSidebar";
 import type { Screen } from "./workspace/types";
 import { useRetainedInitiativeDraft } from "./workspace/useRetainedInitiativeDraft";
 import { useWorkspaceCommands } from "./workspace/useWorkspaceCommands";
 import { useWorkspaceOperations } from "./workspace/useWorkspaceOperations";
+import { useWindowViewState } from "./windowView";
+import { flushAutoSaves, subscribeAutoSaveFailures, hasAutoSaveFailure } from "./flushAutoSaves";
 export type { Page, Screen, HomePageProps } from "./workspace/types";
 import type { HomePageProps } from "./workspace/types";
 
-export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onChangeMaster, onChangeAggregations, onChangeExpansions, onChangeExpansionCategories, onChangeIndustries, onChangeDepartments, onChangePeriodTypes, onRegisterInitiative, onUpdateInitiative, onPrepareSave, onCloseFile, onSaveAs, dataHistory, historyError, historyBusy, onCompareHistory, onPreviewHistory, onRestoreHistory, onDeleteHistory, onRetryHistory, canUndo, canRedo, operationRevision, onTravelOperation }: HomePageProps) {
+export function useHomeWorkspace({ windows, onChangePlan, fileName, initialContents, onChangeMaster, onChangeAggregations, onChangeExpansions, onChangeExpansionCategories, onChangeIndustries, onChangeDepartments, onChangePeriodTypes, onRegisterInitiative, onUpdateInitiative, onPrepareSave, onCloseFile, onSaveAs, dataHistory, historyError, historyBusy, onCompareHistory, onPreviewHistory, onRestoreHistory, onDeleteHistory, onRetryHistory, canUndo, canRedo, operationRevision, onTravelOperation }: HomePageProps) {
+  const initialView = windows?.getWindowSnapshot().initialView;
   const menuButton = useRef<HTMLButtonElement>(null);
-  const costTableView = useRef<CostTableView>({ industries: [], departments: [], top: 0, left: 0 });
-  const relationView = useRef<RelationView | null>(null);
+  const costTableView = useRef<CostTableView>(initialView?.costTable ?? { industries: [], departments: [], top: 0, left: 0 });
+  const relationView = useRef<RelationView | null>(initialView?.relation ?? null);
   const sidebar = useSidebar();
   const isSidebarOpen = sidebar.expanded;
   const collapseSidebar = sidebar.collapse;
-  const screens = useScreenHistory<Screen>({ page: "home", selectedInitiative: null, detailOrigin: "initiative-list" },
+  const screens = useScreenHistory<Screen>(initialView?.screen ?? { page: "home", selectedInitiative: null, detailOrigin: "initiative-list" },
     (left, right) => left.page === right.page && left.selectedInitiative?.id === right.selectedInitiative?.id && left.detailOrigin === right.detailOrigin && left.detailKind === right.detailKind && left.selectedDetailId === right.selectedDetailId);
-  const [detailDocuments, setDetailDocuments] = useState<DetailDocument[]>([]);
-  const nextDetailId = useRef(1);
+  const [detailDocuments, setDetailDocuments] = useWindowViewState<DetailDocument[]>("details:documents", []);
+  const nextDetailId = useRef(Math.max(0, ...detailDocuments.map(item => item.id)) + 1);
   const screen = screens.current;
   const { selectedInitiative } = screen;
   const navigate = screens.navigate;
   const currentContents = initialContents;
   const [notice, setNotice] = useState({ message: "", error: false });
   const dismissNotice = useCallback(() => setNotice({ message: "", error: false }), []);
+  const showError = (failure: unknown) => {
+    if (!(failure instanceof DOMException && failure.name === "AbortError")) setNotice({ message: failure instanceof Error ? failure.message : "処理できませんでした。入力は保持しています。", error: true });
+  };
   const { initiativeDraft, setInitiativeDraft, saveReferencedMaster, usedAccountIds } = useRetainedInitiativeDraft(currentContents, setNotice);
   const { preview, setPreview, restoreRequested, setRestoreRequested, restoreError, setRestoreError, restoreMutation,
     resetScreens, previewEntry, returnToCurrent, restorePreview } = useWorkspaceHistory(screens,
@@ -47,9 +53,15 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
   const [editPending, setEditPending] = useState(false);
   const operationMutation = useMutation(assertWritable);
   const saveAsMutation = useMutation(assertWritable);
-  const navigationBlocked = saveAsMutation.busy || isSaving || restoreMutation.busy || operationMutation.busy || editPending || historyBusy;
+  const saveFailed = useSyncExternalStore(subscribeAutoSaveFailures, hasAutoSaveFailure);
+  const navigationBlocked = saveAsMutation.busy || restoreMutation.busy || operationMutation.busy || saveFailed;
+  const searchBlocked = navigationBlocked || editPending || isSaving || historyBusy;
   const { discardRequest, setDiscardRequest, openInitiative, requestNavigation, setPage, startInitiative, duplicateInitiative } = useWorkspaceNavigation(
-    screens, contents, preview !== null, navigationBlocked, saving, { initiativeDraft, setInitiativeDraft }, dismissNotice);
+    screens, contents, preview !== null, navigationBlocked, saving, { initiativeDraft, setInitiativeDraft }, dismissNotice, async next => {
+      await flushAutoSaves();
+      if (next.page === "data-history" && screen.page !== "data-history") await windows?.enterHistory();
+      else if (next.page !== "data-history" && !preview) windows?.leaveHistory();
+    }, showError);
   const openDetail = (id: number) => {
     if (navigationBlocked || saving.current || preview || discardRequest || !detailDocuments.some(item => item.id === id)) return;
     dismissNotice();
@@ -73,15 +85,23 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
       if (!(error instanceof DOMException && error.name === "AbortError")) setNotice({ message: error instanceof Error ? error.message : "別名で保存できませんでした。元のファイルと入力は保持しています。", error: true });
     }
   };
-  const travelOperation = useWorkspaceOperations(operationBlocked, saving, operationMutation, canUndo, canRedo, onPrepareSave, onTravelOperation, dismissNotice, setNotice);
+  const availableUndo = canUndo || editPending || isSaving;
+  const travelOperation = useWorkspaceOperations(operationBlocked, saving, operationMutation, availableUndo, canRedo, onPrepareSave, onTravelOperation, dismissNotice, setNotice);
   const changePlan = (change: PlanChange) => mutation.run(async () => { await onChangePlan(change); });
-  const kindSelection = (screen: KindScreen) => <KindSelectionSlots screen={screen} selected={contents.kindSelections[screen]} disabled={navigationBlocked}
+  const [localKinds, setLocalKinds] = useWindowViewState("table:kinds", contents.kindSelections);
+  const previousRevision = useRef(operationRevision);
+  useEffect(() => {
+    if (previousRevision.current !== operationRevision && (!windows || windows.getWindowSnapshot().peers === 1)) setLocalKinds(contents.kindSelections);
+    previousRevision.current = operationRevision;
+  }, [operationRevision, contents.kindSelections, windows]);
+  const kindSelection = (screen: KindScreen) => <KindSelectionSlots screen={screen} selected={localKinds[screen]} disabled={navigationBlocked || isSaving}
     onChange={(selected: KindId[]) => {
       if (preview) {
+        setLocalKinds(previous => ({ ...previous, [screen]: selected }));
         setPreview({ ...preview, contents: { ...contents, kindSelections: { ...contents.kindSelections, [screen]: selected } } });
         return;
       }
-      void changePlan({ type: "selection", screen, selected }).catch(error => setNotice({ message: error instanceof Error ? error.message : "種別の選択を保存できませんでした。", error: true }));
+      void changePlan({ type: "selection", screen, selected }).then(() => setLocalKinds(previous => ({ ...previous, [screen]: selected }))).catch(error => setNotice({ message: error instanceof Error ? error.message : "種別の選択を保存できませんでした。", error: true }));
     }} />;
   const { changeMaster, changePeriodTypes, changeDepartments, changeIndustries, changeExpansions, changeExpansionCategories, changeAggregations, update } = useWorkspaceCommands(
     { onChangeMaster, onChangePeriodTypes, onChangeDepartments, onChangeIndustries, onChangeExpansions, onChangeExpansionCategories, onChangeAggregations, onUpdateInitiative }, mutation, currentContents,
@@ -118,17 +138,17 @@ export function useHomeWorkspace({ onChangePlan, fileName, initialContents, onCh
   }, [isSidebarOpen, closeSidebar]);
 
   return {
-    restoreMutation, saveAsMutation, saveAs, setEditPending, openInitiative, menuButton, relationView, costTableView, sidebar,
+    restoreMutation, saveAsMutation, saveAs, setEditPending, openInitiative, menuButton, relationView, costTableView, sidebar, showError, localKinds,
     detailDocuments, setDetailDocuments, openDetail, createDetail,
     isSidebarOpen, screen, initiativeDraft, setInitiativeDraft, preview, setPreview,
     restoreRequested, setRestoreRequested, restoreError, setRestoreError, contents, currentContents,
-    notice, dismissNotice, isSaving, operationMutation, navigationBlocked, discardRequest,
+    notice, dismissNotice, isSaving, operationMutation, navigationBlocked, searchBlocked, discardRequest,
     setDiscardRequest, operationBlocked, travelOperation, requestNavigation, setPage, startInitiative, duplicateInitiative,
     usedAccountIds, changePlan, kindSelection, changeMaster, changePeriodTypes, changeDepartments,
     changeIndustries, changeExpansions, changeExpansionCategories, changeAggregations, update, register,
     resetScreens, previewEntry, returnToCurrent, restorePreview, closeSidebar, screens, fileName,
     dataHistory, historyError, historyBusy, onCompareHistory, onDeleteHistory, onRetryHistory, onPrepareSave,
-    onCloseFile, canUndo, canRedo, operationRevision
+    onCloseFile, canUndo: availableUndo, canRedo, operationRevision
   };
 }
 

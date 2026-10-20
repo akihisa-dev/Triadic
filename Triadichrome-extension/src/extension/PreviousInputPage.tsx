@@ -1,5 +1,6 @@
 import { useHistoryReadOnly } from "./HistoryReadOnly";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
+import { useWindowViewState } from "./windowView";
 import { createPreviousInput } from "../core/domain/previousAmounts";
 import { type PlanContents } from "../core/domain/plan";
 import { filterPlan } from "../core/tables/planTables";
@@ -12,8 +13,8 @@ import { AutoSaveStatus } from "./AutoSaveStatus";
 type Props = AutoSaveProps & { contents: PlanContents; onSave: (input: PreviousInput) => Promise<void> };
 export function PreviousInputPage({ contents, onSave, onPendingChange, onPrepareSave }: Props) {
   const readOnly = useHistoryReadOnly();
-  const [industryIds, setIndustries] = useState<number[]>([]);
-  const [departmentIds, setDepartments] = useState<number[]>([]);
+  const [industryIds, setIndustries] = useWindowViewState<number[]>("previous:industries", []);
+  const [departmentIds, setDepartments] = useWindowViewState<number[]>("previous:departments", []);
   const industryId = industryIds.length === 1 ? industryIds[0]! : null;
   const departmentId = departmentIds.length === 1 ? departmentIds[0]! : null;
   const validPair = industryId !== null && departmentId !== null && contents.departments.some(item => item.id === departmentId && item.industryIds.includes(industryId));

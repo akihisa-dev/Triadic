@@ -37,7 +37,7 @@ test("戻る・進むの端点、別画面への分岐、施策入力の保持�
   await back.click();
   await expect(app.getByRole("main", { name: "ホーム", exact: true })).toBeVisible();
   await expect(back).toBeDisabled();
-  await app.getByRole("button", { name: "ファイルを閉じる", exact: true }).click();
+  await app.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await expect(back).toBeDisabled();

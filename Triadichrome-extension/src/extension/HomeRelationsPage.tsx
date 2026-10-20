@@ -1,4 +1,5 @@
-import { useState, type RefObject } from "react";
+import { type RefObject } from "react";
+import { useWindowViewState } from "./windowView";
 import "./HomeRelations.css";
 import { SidebarIcon } from "./SidebarIcon";
 import { ScreenDataMap } from "./ScreenDataMap";
@@ -15,7 +16,7 @@ type Props = {
   view: RefObject<RelationView | null>;
 };
 export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
-  const [mode, setMode] = useState("relations");
+  const [mode, setMode] = useWindowViewState("home:mode", "relations");
   const { viewport, selected, setSelected, setActive, setFocused, active, camera, dragging, graph, focusNode, fit, zoomCenter, handlers } = useRelationGestures(view, disabled);
   const isRelated = (edge: typeof edges[number], index: number) => edge.from === active || edge.to === active || subNodes[index]!.page === active;
   const related = new Set(edges.flatMap((edge, index) => isRelated(edge, index) ? [edge.from, edge.to] : []));

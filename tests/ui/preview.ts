@@ -7,8 +7,10 @@ import { createTriadicDatabase } from "../../Triadichrome-extension/src/core/sto
 import { installMemoryFiles, type FileScenario } from "./memory-files";
 import { createRecreatedInitiativeFixture, createConcurrentInitiativeFixture, createCostUnassignedIndustryPlan, createSamplePlan, createSignedCategoryPlan } from "./sample-plan";
 import { createPreviousExportPlan } from "./previous-export-plan";
+import { installInPageSession } from "./in-page-session";
 
 if (!import.meta.env.DEV) throw new Error("画面テストは開発サーバー専用です。");
+installInPageSession();
 
 const frame = document.querySelector<HTMLIFrameElement>("#app-preview")!;
 const scenario = document.querySelector<HTMLSelectElement>("#scenario")!;
@@ -47,7 +49,7 @@ async function reload() {
     value === "legacy" ? legacyBytes : value === "empty" ? emptyBytes : value === "defaults" ? defaultBytes : sampleBytes;
   if (version !== reloadVersion) return;
   fixtureBytes = bytes;
-  frame.src = "/";
+  frame.src = "/?local-session";
 }
 
 scenario.addEventListener("change", reload);

@@ -1,15 +1,17 @@
 import { useEffect, type Dispatch, type SetStateAction, type RefObject } from "react";
 import type { HomePageProps } from "./types";
 import type { useMutation } from "../useMutation";
-export function useWorkspaceOperations(operationBlocked: boolean, saving: RefObject<boolean>,
+import { flushAutoSaves } from "../flushAutoSaves";
+export function useWorkspaceOperations(operationBlocked: boolean, _saving: RefObject<boolean>,
   operationMutation: ReturnType<typeof useMutation>, canUndo: boolean, canRedo: boolean,
   onPrepareSave: HomePageProps["onPrepareSave"], onTravelOperation: HomePageProps["onTravelOperation"],
   dismissNotice: () => void, setNotice: Dispatch<SetStateAction<{ message: string; error: boolean }>>) {
   const travelOperation = async (direction: -1 | 1) => {
-    if (operationBlocked || saving.current || operationMutation.running.current || document.querySelector("dialog[open]") || !(direction === -1 ? canUndo : canRedo)) return;
+    if (operationBlocked || operationMutation.running.current || document.querySelector("dialog[open]") || !(direction === -1 ? canUndo : canRedo)) return;
     dismissNotice();
     try {
       await operationMutation.run(async () => {
+        await flushAutoSaves();
         await onPrepareSave();
         return onTravelOperation(direction);
       });

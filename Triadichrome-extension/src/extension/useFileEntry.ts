@@ -5,10 +5,10 @@ import { TRIADIC_FILE_EXTENSION } from "../core/storage/triadicSchema";
 import { currentFiscalYear } from "../core/domain/calendar";
 import { loadRecentFile, readRecentFile, rememberRecentFile } from "./recentFile";
 import { fileTypes, type PickerWindow } from "./filePicker";
-import type { PlanSession } from "./PlanSession";
+import type { SessionAccess } from "./windowProtocol";
 
 /** File access begins in the input event; only validated files enter the session. */
-export function useFileEntry(session: PlanSession, savedName: string, clearCloseError: () => void) {
+export function useFileEntry(session: SessionAccess, savedName: string, clearCloseError: () => void) {
   const busy = useRef(false);
   const [isBusy, setIsBusy] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -49,7 +49,8 @@ export function useFileEntry(session: PlanSession, savedName: string, clearClose
   rememberSavedFile.current = remember;
   useEffect(() => session.subscribeFileSave(handle => rememberSavedFile.current(handle)), [session]);
   useEffect(() => {
-    if (savedName) setDisplayName(savedName);
+    if (savedName) { setDisplayName(savedName); setFileName(previous => previous ?? savedName); }
+    else setFileName(null);
   }, [savedName]);
   const run = async (operation: () => Promise<void>) => {
     if (busy.current) return;

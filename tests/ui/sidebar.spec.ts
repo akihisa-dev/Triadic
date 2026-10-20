@@ -29,7 +29,7 @@ test("アイコンのレールはホバーで展開し、移動後もカーソ�
   expect((await sidebar.boundingBox())!.width).toBe(64);
   expect(await entry.locator("svg").boundingBox()).toEqual(icon);
   await expect(entry).toHaveAttribute("aria-current", "page");
-  await expect(sidebar.getByRole("button", { name: "ファイルを閉じる", exact: true })).toBeEnabled();
+  await expect(sidebar.getByRole("button", { name: "閉じる", exact: true })).toBeEnabled();
 });
 
 test("ボタンで開けば維持し、Esc後は再びホバーで展開できる", async ({ page, app }) => {
@@ -97,8 +97,8 @@ test.describe("タッチ操作", () => {
     await expect(trigger).toHaveAttribute("aria-expanded", "true");
     await trigger.tap();
     await expect(trigger).toHaveAttribute("aria-expanded", "false");
-    await sidebar.getByRole("button", { name: "ファイルを閉じる", exact: true }).tap();
-    await app.getByRole("alertdialog", { name: "ファイルを閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).tap();
+    await sidebar.getByRole("button", { name: "閉じる", exact: true }).tap();
+    await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).tap();
     await expect(app.getByRole("heading", { name: "Triadichrome", exact: true })).toBeVisible();
   });
 });

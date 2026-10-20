@@ -1,5 +1,5 @@
 import { openInitiativeEntry, test, expect, settleMotion, attachImage, selectClassification } from "./fixtures";
-import { installMemoryFiles } from "./memory-files";
+import { installCloneableFiles } from "./cloneable-files";
 import type { FrameLocator, Locator } from "@playwright/test";
 
 const blue = "rgb(0, 51, 255)";
@@ -179,7 +179,7 @@ test("全マスタの登録・編集欄と集計編集にも青を適用する",
 });
 
 test("入口の年度以外のボタンと確認ダイアログのフォーカスはモノクロ", async ({ page, app }) => {
-  const close = app.getByRole("button", { name: "ファイルを閉じる", exact: true });
+  const close = app.getByRole("button", { name: "閉じる", exact: true });
   await page.keyboard.press("Tab");
   await close.focus();
   await expect(close).toHaveCSS("outline-color", ink);
@@ -208,7 +208,7 @@ test("配布用ビルドでも選択アイコンと編集枠が同じ青にな�
   production.on("pageerror", error => errors.push(error.message));
   try {
     await production.goto("/Triadichrome-extension/index.html");
-    await production.evaluate(installMemoryFiles, { bytes, scenario: "normal" as const });
+    await production.evaluate(installCloneableFiles, { bytes, name: "画面テスト.triadic" });
     await production.getByRole("button", { name: "ファイルを開く", exact: true }).click();
     await openInitiativeEntry(production);
     await expectEditingColor(production.getByRole("textbox", { name: "施策名", exact: true }));
