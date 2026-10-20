@@ -6,40 +6,42 @@ async function openDetails(app: FrameLocator) {
   await app.getByRole("button", { name: "サイドバーを開く", exact: true }).click();
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "明細", exact: true }).click();
 }
-async function addDetail(app: FrameLocator, name: string, description = "") {
+async function addDetail(app: FrameLocator, name: string) {
   await app.getByRole("button", { name: "＋ 明細を追加", exact: true }).click();
   const dialog = app.getByRole("dialog", { name: "明細を追加", exact: true });
   await dialog.getByRole("textbox", { name: "明細名", exact: true }).fill(name);
-  await dialog.getByRole("textbox", { name: "短い説明", exact: true }).fill(description);
+  await expect(dialog.getByRole("textbox")).toHaveCount(1);
   await dialog.getByRole("button", { name: "次へ", exact: true }).click();
   await expect(app.getByRole("heading", { name: name.trim(), exact: true })).toBeVisible();
 }
 
-test("明細は展開表の直下にあり、カードから各編集画面を開き履歴でも復元する", async ({ app, page }, testInfo) => {
+test("明細は展開表の直下にあり、明細から各編集画面を開き履歴でも復元する", async ({ app, page }, testInfo) => {
   await openDetails(app);
   const menu = app.getByRole("navigation", { name: "メインナビゲーション" });
   const labels = await menu.getByRole("button").allTextContents();
   const expansion = labels.indexOf("展開表");
   expect(expansion).toBeGreaterThan(-1);
   expect(labels.slice(expansion, expansion + 3)).toEqual(["展開表", "明細", "前年入力"]);
-  await expect(app.locator(".details-card")).toHaveCount(0);
+  await expect(app.locator(".details-table tbody tr")).toHaveCount(0);
   for (const name of ["人件費", "設備費", "外注費", "広告費", "旅費", "賃借料"]) {
-    await addDetail(app, `${name}の算定`, `${name}の根拠を確認`);
+    await addDetail(app, `${name}の算定`);
     await expect(app.getByRole("main").locator("input, textarea, table")).toHaveCount(0);
     await app.getByRole("button", { name: "一覧に戻る", exact: true }).click();
   }
-  await expect(app.locator(".details-card")).toHaveCount(6);
-  await expect(app.locator(".details-card").first()).toContainText("人件費の根拠を確認");
+  await expect(app.getByRole("table", { name: "明細一覧", exact: true })).toBeVisible();
+  await expect(app.getByRole("columnheader", { name: "明細名", exact: true })).toBeVisible();
+  await expect(app.locator(".details-table tbody tr")).toHaveCount(6);
+  await expect(app.locator(".details-table tbody tr").first()).toContainText("人件費の算定");
   await settleMotion(app.locator("body"));
   expect(await app.locator(".home-content").evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
-  await page.screenshot({ path: `/tmp/triadichrome-details-cards-${testInfo.project.name}.png` });
+  await page.screenshot({ path: `/tmp/triadichrome-details-table-${testInfo.project.name}.png` });
   await app.getByRole("button", { name: "人件費の算定を開く", exact: true }).click();
   await expect(app.getByRole("heading", { name: "人件費の算定", exact: true })).toBeVisible();
   await expect(menu.getByRole("button", { name: "明細", exact: true })).toHaveAttribute("aria-current", "page");
   const back = app.getByRole("button", { name: "前の画面に戻る", exact: true });
   const forward = app.getByRole("button", { name: "次の画面に進む", exact: true });
   await back.click();
-  await expect(app.locator(".details-card")).toHaveCount(6);
+  await expect(app.locator(".details-table tbody tr")).toHaveCount(6);
   await forward.click();
   await expect(app.getByRole("heading", { name: "人件費の算定", exact: true })).toBeVisible();
   await back.click();
@@ -48,10 +50,10 @@ test("明細は展開表の直下にあり、カードから各編集画面を�
   await menu.getByRole("button", { name: "前年入力", exact: true }).click();
   await expect(app.getByRole("heading", { name: "前年入力", exact: true })).toBeVisible();
   await menu.getByRole("button", { name: "明細", exact: true }).click();
-  await expect(app.locator(".details-card")).toHaveCount(6);
+  await expect(app.locator(".details-table tbody tr")).toHaveCount(6);
 });
 
-test("小窓は必須名・取消・Esc・変換中Enterを扱い、保存せずカードを追加する", async ({ app, page }, testInfo) => {
+test("小窓は必須名・取消・Esc・変換中Enterを扱い、保存せず明細を追加する", async ({ app, page }, testInfo) => {
   await page.goto("/tests/ui/preview.html?data=empty&scenario=save-failure");
   await openDetails(app);
   const add = app.getByRole("button", { name: "＋ 明細を追加", exact: true });
@@ -66,7 +68,7 @@ test("小窓は必須名・取消・Esc・変換中Enterを扱い、保存せず
   await name.fill("取り消す明細");
   await dialog.getByRole("button", { name: "キャンセル", exact: true }).click();
   await expect(add).toBeFocused();
-  await expect(app.locator(".details-card")).toHaveCount(0);
+  await expect(app.locator(".details-table tbody tr")).toHaveCount(0);
   await add.click();
   await expect(name).toHaveValue("");
   await name.press("Escape");
@@ -85,11 +87,11 @@ test("小窓は必須名・取消・Esc・変換中Enterを扱い、保存せず
   await expect(app.getByRole("button", { name: "名称のみを開く", exact: true })).toBeVisible();
 });
 
-test("カードはファイルを閉じて開き直すと破棄される", async ({ app }) => {
+test("明細はファイルを閉じて開き直すと破棄される", async ({ app }) => {
   await openDetails(app);
-  await addDetail(app, "画面内だけの明細", "保存対象外");
+  await addDetail(app, "画面内だけの明細");
   await app.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "閉じる", exact: true }).click();
   await openDetails(app);
-  await expect(app.locator(".details-card")).toHaveCount(0);
+  await expect(app.locator(".details-table tbody tr")).toHaveCount(0);
 });

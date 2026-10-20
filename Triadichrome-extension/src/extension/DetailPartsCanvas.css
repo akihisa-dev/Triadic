@@ -1,7 +1,7 @@
 .home-content:has(.detail-workspace) { overflow: hidden; }
 .page-switch:has(> .detail-editor-page) { height: 100%; min-height: 0; }
 .detail-editor-page { display: flex; flex-direction: column; height: 100%; min-height: 0; }
-.detail-editor-page .details-heading, .detail-editor-description { flex-shrink: 0; }
+.detail-editor-page .details-heading { flex-shrink: 0; }
 .detail-workspace { display: flex; flex: 1; min-width: 0; min-height: 120px; margin-top: 20px; border-top: 1px solid var(--line); }
 .detail-canvas-viewport { flex: 1; min-width: 0; min-height: 0; overflow: auto; position: relative; overscroll-behavior: contain; scrollbar-gutter: stable; background: var(--canvas); }
 .detail-canvas { position: relative; isolation: isolate; background-image: radial-gradient(circle, color-mix(in srgb, var(--muted) 25%, transparent) .75px, transparent 1px); background-size: 16px 16px; background-position: -8px -8px; }

@@ -67,9 +67,9 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
     dismissNotice();
     requestNavigation({ ...screen, page: "detail-editor", selectedDetailId: id });
   };
-  const createDetail = (name: string, description: string) => {
+  const createDetail = (name: string) => {
     if (navigationBlocked || saving.current || preview || discardRequest || !name.trim()) return;
-    const document: DetailDocument = { id: nextDetailId.current++, name: name.trim(), description: description.trim() };
+    const document: DetailDocument = { id: nextDetailId.current++, name: name.trim() };
     setDetailDocuments(previous => [...previous, document]);
     dismissNotice();
     requestNavigation({ ...screen, page: "detail-editor", selectedDetailId: document.id });
