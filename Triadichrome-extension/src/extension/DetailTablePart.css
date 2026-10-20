@@ -1,0 +1,13 @@
+.detail-table-part { display: flex; flex-direction: column; height: 100%; min-height: 0; border-radius: inherit; outline: none; }
+.detail-table-part:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.detail-table-part.is-editing { outline: 2px solid var(--accent); outline-offset: -2px; }
+.detail-table-toolbar { display: flex; flex-shrink: 0; overflow-x: auto; gap: 4px; padding: 6px 8px; border-bottom: 1px solid var(--line); background: var(--soft); border-radius: 8px 8px 0 0; }
+.detail-table-toolbar button { flex: 0 0 auto; padding: 3px 6px; border: 1px solid var(--control-line); border-radius: 4px; font: inherit; font-size: 12px; color: var(--ink); background: var(--surface); cursor: pointer; }
+.detail-table-toolbar button:disabled { opacity: .45; cursor: default; }
+.detail-table-scroll { flex: 1; min-height: 0; overflow: auto; border-radius: inherit; overscroll-behavior: contain; }
+.detail-part-table { table-layout: fixed; width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.6; }
+.detail-part-table td { border: 1px solid var(--table-line); padding: 0; vertical-align: top; }
+.detail-part-table textarea, .detail-table-value { display: block; width: 100%; min-width: 0; min-height: 28px; padding: 3px 6px; font: inherit; color: var(--ink); background: transparent; white-space: pre-wrap; overflow-wrap: anywhere; }
+.detail-part-table textarea { field-sizing: content; resize: none; border: 0; outline: none; overflow: hidden; user-select: text; touch-action: auto; }
+.detail-part-table textarea:focus { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--surface); }
+.detail-part.is-editing > .detail-part-grip, .detail-part.is-editing > .detail-part-delete { opacity: 0; pointer-events: none; }

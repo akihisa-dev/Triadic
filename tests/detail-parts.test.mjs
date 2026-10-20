@@ -74,3 +74,36 @@ test('右下の斜め伸縮は左上を固定し、最小64pxと幅・高さの1
     assert.equal(minimum.x, part.x); assert.equal(minimum.y, part.y);
   });
 });
+
+test('テーブルの行列操作と貼り付けは元データを保ち、矩形と最低1行1列を維持する', async () => {
+  await withNodeBundle('Triadichrome-extension/src/core/tables/detailTable.ts', async ({ emptyDetailTable, setTableCell, changeTableAxis, parseTableClipboard, pasteTableCells }) => {
+    const cells = emptyDetailTable();
+    assert.equal(cells.length, 3); assert.ok(cells.every(row => row.length === 3 && row.every(cell => cell === '')));
+    const filled = setTableCell(cells, 1, 1, '説明\n改行');
+    assert.equal(cells[1][1], ''); assert.equal(filled[1][1], '説明\n改行');
+    const addedRow = changeTableAxis(filled, 'row', 0, false);
+    assert.equal(addedRow[2][1], '説明\n改行'); assert.equal(addedRow.length, 4);
+    const addedColumn = changeTableAxis(addedRow, 'column', 0, false);
+    assert.equal(addedColumn[2][2], '説明\n改行');
+    assert.deepEqual(changeTableAxis(changeTableAxis(addedColumn, 'column', 1, true), 'row', 1, true), filled);
+    assert.deepEqual(changeTableAxis([['保持']], 'row', 0, true), [['保持']]);
+    assert.deepEqual(changeTableAxis([['保持']], 'column', 0, true), [['保持']]);
+    const parsed = parseTableClipboard('項目\t"複数\n行"\r\n"a""b"\t001\r\n');
+    assert.deepEqual(parsed, [['項目', '複数\n行'], ['a"b', '001']]);
+    assert.deepEqual(parseTableClipboard('a\t\n\t\n'), [['a', ''], ['', '']]);
+    const pasted = pasteTableCells(filled, 2, 2, parsed);
+    assert.equal(pasted.length, 4); assert.ok(pasted.every(row => row.length === 4));
+    assert.equal(pasted[1][1], '説明\n改行'); assert.equal(pasted[2][3], '複数\n行');
+    assert.equal(pasted[3][3], '001'); assert.equal(filled.length, 3);
+  });
+});
+
+test('テーブルのセルは移動・伸縮・衝突解消でも保持する', async () => {
+  await withNodeBundle('Triadichrome-extension/src/core/tables/detailParts.ts', async ({ arrangeParts, resizePart }) => {
+    const table = { id: 'table', kind: 'table', cells: [['項目', '001'], ['説明\n改行', '=1+1']], x: 0, y: 0, width: 320, height: 192 };
+    const text = { id: 'text', kind: 'text', text: '説明', x: 0, y: 0, width: 160, height: 96 };
+    const result = arrangeParts([table, text], resizePart(table, 21, 21), true);
+    assert.deepEqual(result.find(part => part.id === 'table').cells, table.cells);
+    assert.equal(result.find(part => part.id === 'text').text, '説明');
+  });
+});

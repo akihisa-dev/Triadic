@@ -1,3 +1,4 @@
+// 明細テーブルは tests/detail-parts.test.mjs と tests/ui/detail-parts.spec.ts で初期3×3・行列操作と削除確認・セル入力・改行・表の貼り付け・幅追従・スクロール・一時保持を確認する。保存データは追加しない。
 // 明細の名前だけの新規作成・表形式一覧・画面往復・取消・終了時の破棄は tests/ui/details-page.spec.ts で確認する。保存データは追加しない。
 // 明細のテキストパーツは tests/detail-parts.test.mjs と tests/ui/detail-parts.spec.ts で文章入力・改行・編集終了・長文スクロール・文章の一時保持・衝突・移動中の吸着・ドット格子・青い移動先表示と境界での揺れ抑制・右下の斜め伸縮・追加取消・削除・一時保持・自動スクロールを確認する。保存データ項目は追加しない。
 // 複数ウィンドウの同期・表示条件/位置の複製・共有取消・全保存先切替・履歴集約は既存の施策/月額/3時点履歴を使い、tests/window-session.mjs と tests/ui/multi-window.spec.ts で確認する。保存データは追加しない。

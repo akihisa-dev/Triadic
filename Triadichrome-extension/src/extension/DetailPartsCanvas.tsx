@@ -3,6 +3,14 @@ import { createPortal } from "react-dom";
 import { arrangeParts, magnetPosition, PART_INITIAL, PART_STEP, resizePart, settlePart, stableSnapPosition, type DetailPart } from "../core/tables/detailParts";
 import "./DetailPartsCanvas.css";
 import { DetailTextPart } from "./DetailTextPart";
+import { DetailTablePart } from "./DetailTablePart";
+import { emptyDetailTable } from "../core/tables/detailTable";
+
+function newPart(kind: DetailPart["kind"]): DetailPart {
+  const base = { id: crypto.randomUUID(), x: 0, y: 0 };
+  return kind === "text" ? { ...base, ...PART_INITIAL, kind, text: "" }
+    : { ...base, width: 320, height: 192, kind, cells: emptyDetailTable() };
+}
 
 type Props = { parts: DetailPart[]; disabled: boolean; onChange: (parts: DetailPart[]) => void };
 type Gesture = {
@@ -22,7 +30,7 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
   const [dragging, setDragging] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [destination, setDestination] = useState<DetailPart | null>(null);
-  const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
+  const [ghost, setGhost] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
 
   useLayoutEffect(() => {
@@ -51,8 +59,8 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
       element.scrollTop += velocity(g.clientY, rect.top, rect.bottom) * elapsed;
     }
     let active: DetailPart;
-    if (g.pool) active = { ...g.origin, x: Math.max(0, g.clientX - rect.left + element.scrollLeft - PART_INITIAL.width / 2),
-      y: Math.max(0, g.clientY - rect.top + element.scrollTop - PART_INITIAL.height / 2) };
+    if (g.pool) active = { ...g.origin, x: Math.max(0, g.clientX - rect.left + element.scrollLeft - g.origin.width / 2),
+      y: Math.max(0, g.clientY - rect.top + element.scrollTop - g.origin.height / 2) };
     else {
       const dx = g.clientX - g.startX + element.scrollLeft - g.scrollX;
       const dy = g.clientY - g.startY + element.scrollTop - g.scrollY;
@@ -81,7 +89,7 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
     setGhost(previous => {
       if (!g.pool || inside) return previous === null ? previous : null;
       if (previous?.x === g.clientX && previous.y === g.clientY) return previous;
-      return { x: g.clientX, y: g.clientY };
+      return { x: g.clientX, y: g.clientY, width: g.origin.width, height: g.origin.height };
     });
   }
 
@@ -123,11 +131,11 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
   }, []);
   useEffect(() => { if (disabled) { endRef.current(false); setEditingId(null); } }, [disabled]);
 
-  function start(event: ReactPointerEvent<HTMLElement>, part?: DetailPart, resizing = false) {
+  function start(event: ReactPointerEvent<HTMLElement>, part?: DetailPart, resizing = false, kind: DetailPart["kind"] = "text") {
     if (disabled || gesture.current || (part && editingId === part.id) || event.button !== 0 || !event.isPrimary) return;
     event.preventDefault(); event.stopPropagation(); event.currentTarget.focus({ preventScroll: true });
     const element = viewport.current!;
-    const origin = part ?? { id: crypto.randomUUID(), x: 0, y: 0, text: "", ...PART_INITIAL };
+    const origin = part ?? newPart(kind);
     gesture.current = { pointerId: event.pointerId, source: event.currentTarget, origin, base: latest.current.parts,
       resizing, pool: !part, startX: event.clientX, startY: event.clientY,
       scrollX: element.scrollLeft, scrollY: element.scrollTop, clientX: event.clientX, clientY: event.clientY,
@@ -143,8 +151,8 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
   function remove(id: string) {
     if (!disabled && !gesture.current) latest.current.onChange(parts.filter(part => part.id !== id));
   }
-  function editText(id: string, text: string) {
-    if (!latest.current.disabled && !gesture.current) latest.current.onChange(latest.current.parts.map(part => part.id === id ? { ...part, text } : part));
+  function editPart(id: string, update: (part: DetailPart) => DetailPart) {
+    if (!latest.current.disabled && !gesture.current) latest.current.onChange(latest.current.parts.map(part => part.id === id ? update(part) : part));
   }
   const width = Math.max(size.width * 2, 1200, ...display.map(part => part.x + part.width + size.width));
   const height = Math.max(size.height * 2, 900, ...display.map(part => part.y + part.height + size.height));
@@ -153,7 +161,7 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
       <div className="detail-canvas" style={{ width, height }}>
         {destination && <div className="detail-part-destination" aria-hidden="true"
           style={{ width: destination.width, height: destination.height, transform: `translate3d(${destination.x}px, ${destination.y}px, 0)` }} />}
-        {display.map((part, index) => <div key={part.id} className={`detail-part${dragging === part.id ? " is-dragging" : ""}`}
+        {display.map((part, index) => <div key={part.id} className={`detail-part${dragging === part.id ? " is-dragging" : ""}${editingId === part.id ? " is-editing" : ""}`}
           style={{ width: part.width, height: part.height, transform: `translate3d(${part.x}px, ${part.y}px, 0)` }}
           role="group" aria-label={`パーツ ${index + 1}`} tabIndex={disabled ? -1 : 0} aria-disabled={disabled}
           onPointerDown={event => start(event, part)}
@@ -168,8 +176,12 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
             const dy = event.key === "ArrowDown" ? PART_STEP : event.key === "ArrowUp" ? -PART_STEP : 0;
             if (dx || dy) { event.preventDefault(); change({ ...part, x: Math.max(0, part.x + dx), y: Math.max(0, part.y + dy) }); }
           }}>
-          <DetailTextPart text={part.text} disabled={disabled} index={index} editing={editingId === part.id}
-            onEditingChange={editing => setEditingId(editing ? part.id : null)} onChange={text => editText(part.id, text)} />
+          {part.kind === "table" ? <DetailTablePart cells={part.cells} disabled={disabled} index={index} editing={editingId === part.id}
+            onEditingChange={editing => setEditingId(editing ? part.id : null)}
+            onChange={cells => editPart(part.id, current => current.kind === "table" ? { ...current, cells } : current)} />
+            : <DetailTextPart text={part.text} disabled={disabled} index={index} editing={editingId === part.id}
+              onEditingChange={editing => setEditingId(editing ? part.id : null)}
+              onChange={text => editPart(part.id, current => current.kind === "text" ? { ...current, text } : current)} />}
           <button type="button" className="detail-part-grip" disabled={disabled}
             aria-label={`パーツ ${index + 1}の右下でサイズ変更`} onPointerDown={event => start(event, part, true)}
             onKeyDown={event => {
@@ -184,13 +196,13 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
     </div>
     <aside className="detail-part-pool" aria-label="パーツプール">
       <h2>パーツプール</h2>
-      <button type="button" className="detail-pool-source" aria-label="テキストパーツを追加" disabled={disabled} onPointerDown={event => start(event)}
+      {(["text", "table"] as const).map(kind => <button key={kind} type="button" className="detail-pool-source" aria-label={`${kind === "text" ? "テキスト" : "テーブル"}パーツを追加`} disabled={disabled} onPointerDown={event => start(event, undefined, false, kind)}
         onKeyDown={event => {
           if (disabled || (event.key !== "Enter" && event.key !== " ")) return;
           event.preventDefault();
-          change({ id: crypto.randomUUID(), x: viewport.current!.scrollLeft + 16, y: viewport.current!.scrollTop + 16, text: "", ...PART_INITIAL });
-        }}>テキスト</button>
+          change({ ...newPart(kind), x: viewport.current!.scrollLeft + 16, y: viewport.current!.scrollTop + 16 });
+        }}>{kind === "text" ? "テキスト" : "テーブル"}</button>)}
     </aside>
-    {ghost && createPortal(<div className="detail-part-ghost" style={{ left: ghost.x - 80, top: ghost.y - 48, ...PART_INITIAL }} />, document.body)}
+    {ghost && createPortal(<div className="detail-part-ghost" style={{ left: ghost.x - ghost.width / 2, top: ghost.y - ghost.height / 2, width: ghost.width, height: ghost.height }} />, document.body)}
   </div>;
 }
