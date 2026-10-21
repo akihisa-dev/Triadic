@@ -1,5 +1,6 @@
 import { PreviousKindSelection } from "./PreviousKindSelection";
 import { MeasuredTableBody } from "./MeasuredTableBody";
+import { processWorkbookExport, type WorkbookExport } from "./workbookExportProcessing";
 import { previousKindName, type PreviousKind, type PreviousSelections } from "../core/domain/kinds";
 import { processPreviousWorkbook } from "./previousWorkbookProcessing";
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
@@ -10,8 +11,8 @@ import { KindSelectionSlots } from "./KindSelectionSlots";
 import { ChoiceChips } from "./ChoiceChips";
 import { StatusNotice } from "./StatusNotice";
 import { useSavedOperationRevision } from "./SavedOperationRevision";
-import { createReportWorkbook, createPreviousWorkbookBytes, serializeWorkbook, type ExportTable } from "../core/spreadsheets/workbook";
-import { previousWorkbookLimits } from "../core/spreadsheets/previousWorkbookBoundary";
+import type { ExportTable } from "../core/spreadsheets/workbook";
+import { previousWorkbookLimits } from "../core/spreadsheets/previousWorkbookLimits";
 import { normalizeExportClassificationSelection, type ExportClassificationSelection } from "../core/spreadsheets/exportSelection";
 import { previousPatchPresentation } from "../core/spreadsheets/previousPatchPresentation";
 import "./SpreadsheetIOPage.css";
@@ -41,6 +42,9 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
   const { industries, departments, pairs } = currentSelection;
   const [working, setWorking] = useState(false);
   const running = useRef(false);
+  const exporting = useRef<AbortController | null>(null);
+  const [exportType, setExportType] = useState<WorkbookExport["type"] | null>(null);
+  useEffect(() => () => exporting.current?.abort(), []);
   const previewPending = useRef(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState(false);
@@ -58,9 +62,19 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
   const operation = async (action: () => Promise<void>) => {
     if (running.current) return;
     running.current = true; setWorking(true); onPendingChange(true); setNotice(""); setError(false);
-    try { await action(); } catch (failure) { setNotice(failure instanceof Error ? failure.message : "処理できませんでした。"); setError(true); }
+    try { await action(); } catch (failure) {
+      const cancelled = failure instanceof DOMException && failure.name === "AbortError";
+      setNotice(cancelled ? "出力を中止しました。" : failure instanceof Error ? failure.message : "処理できませんでした。"); setError(!cancelled);
+    }
     finally { running.current = false; setWorking(false); onPendingChange(previewPending.current); }
   };
+  const exportFile = (request: WorkbookExport, name: string, message: string) => operation(async () => {
+    const controller = new AbortController(); exporting.current = controller; setExportType(request.type);
+    try {
+      const bytes = await processWorkbookExport(request, controller.signal);
+      if (!controller.signal.aborted) { download(bytes, name); setNotice(message); }
+    } finally { exporting.current = null; setExportType(null); }
+  });
   const importFiles = async (files: File[]) => {
     if (!files.length || disabled || readOnly) return;
     await operation(async () => {
@@ -93,10 +107,9 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
           </div>}
         </div>}
       </div>)}
-      <button type="button" className="primary-button" disabled={disabled || !tables.length} onClick={() => { void operation(async () => {
-        const wb = createReportWorkbook(contents, { tables, selections, previousSelections, costFilter: { industries: industries.length ? industries : null, departments: departments.length ? departments : null } });
-        download(await serializeWorkbook(wb), `${contents.fiscalYear}年度予算.xlsx`); setNotice("表を出力しました。");
-      }); }}>選んだ表を出力</button>
+      <div className="form-actions"><button type="button" className="primary-button" disabled={disabled || !tables.length} onClick={() => { void exportFile({ type: "report", contents,
+        options: { tables, selections, previousSelections, costFilter: { industries: industries.length ? industries : null, departments: departments.length ? departments : null } } }, `${contents.fiscalYear}年度予算.xlsx`, "表を出力しました。"); }}>選んだ表を出力</button>
+        {exportType === "report" && <button type="button" className="secondary-button" onClick={() => exporting.current?.abort()}>中止</button>}</div>
     </section>
     <section className={`io-panel io-previous-panel${dragging && !disabled && !readOnly ? " is-drag-active" : ""}`} aria-labelledby="io-previous-title"
       onDragEnter={drag} onDragOver={drag}
@@ -116,9 +129,8 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
         })}</fieldset>)}
       </div>
       <div className="form-actions">
-        <button type="button" className="secondary-button" disabled={disabled || !pairs.length} onClick={() => { void operation(async () => {
-          download(await createPreviousWorkbookBytes(contents, pairs, previousKind), `${contents.fiscalYear}年度_${previousKindName(previousKind)}入力.xlsx`); setNotice("前年入力フォーマットを出力しました。");
-        }); }}>フォーマットを出力</button>
+        <button type="button" className="secondary-button" disabled={disabled || !pairs.length} onClick={() => { void exportFile({ type: "previous", contents, pairs, previousKind }, `${contents.fiscalYear}年度_${previousKindName(previousKind)}入力.xlsx`, "前年入力フォーマットを出力しました。"); }}>フォーマットを出力</button>
+        {exportType === "previous" && <button type="button" className="secondary-button" onClick={() => exporting.current?.abort()}>中止</button>}
         <button type="button" className="primary-button" disabled={disabled || readOnly} onClick={() => input.current?.click()}>フォーマットを取り込む</button>
         <input ref={input} type="file" accept=".xlsx" hidden onChange={event => { const files = Array.from(event.target.files ?? []); event.target.value = ""; void importFiles(files); }} />
       </div>

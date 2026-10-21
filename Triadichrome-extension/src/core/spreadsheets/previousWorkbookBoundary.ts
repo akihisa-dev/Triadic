@@ -1,7 +1,7 @@
 import JSZip from "jszip";
 import { SaxesParser } from "saxes";
-const MiB = 1024 * 1024;
-export const previousWorkbookLimits = { compressedBytes: 20 * MiB, entries: 2048, entryBytes: 8 * MiB, expandedBytes: 32 * MiB, rows: 100000, columns: 20, cells: 200000, tags: 1000000 };
+import { previousWorkbookLimits } from "./previousWorkbookLimits";
+export { previousWorkbookLimits } from "./previousWorkbookLimits";
 const refuse = () => { throw new Error("前年入力フォーマットの処理量が上限を超えているか、不要な結合・構成が含まれています。フォーマットを出力し直してください。"); };
 /** Bound the central directory before JSZip creates one object per archive entry. */
 function inspectDirectory(bytes: Uint8Array): void {

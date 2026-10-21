@@ -38,3 +38,4 @@ export { processPreviousWorkbook } from "../../Triadichrome-extension/src/extens
 export { diffPlanContents, applyPlanContentsPatch } from "../../Triadichrome-extension/src/core/domain/planContentsPatch";
 export { bindPlanProcessing, processPlan } from "../../Triadichrome-extension/src/extension/planProcessing";
 export { latestNavigation } from "../../Triadichrome-extension/src/extension/workspace/latestNavigation";
+export { processWorkbookExport } from "../../Triadichrome-extension/src/extension/workbookExportProcessing";

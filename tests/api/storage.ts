@@ -23,6 +23,7 @@ export * from "../../Triadichrome-extension/src/core/storage/triadicDatabase";
 export * from "../../Triadichrome-extension/src/core/storage/triadicSchema";
 export * from "../../Triadichrome-extension/src/core/storage/planCommands";
 export * from "../../Triadichrome-extension/src/core/spreadsheets/workbook";
+export { exportWorkbookBytes } from "../../Triadichrome-extension/src/extension/workbookExportTask";
 export * from "../../Triadichrome-extension/src/core/spreadsheets/exportSelection";
 export * from "../../Triadichrome-extension/src/core/spreadsheets/previousPatchPresentation";
 export * from "../../Triadichrome-extension/src/core/storage/rebasePlan";

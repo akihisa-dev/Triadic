@@ -29,6 +29,8 @@ test("通常・push・releaseの検証からExcel実行を分離する", async (
   const prePush = await readFile(new URL("../.githooks/pre-push", import.meta.url), "utf8");
   assert.doesNotMatch(prePush, /--excel|test:excel|report-parity/);
   const config = await readFile(new URL("../playwright.config.ts", import.meta.url), "utf8");
-  assert.match(config, /testIgnore: \["\*\*\/spreadsheet-io\.spec\.ts", "\*\*\/report-parity\.spec\.ts"\]/);
+  const ignored = config.match(/testIgnore:\s*\[([^\]]*)\]/)?.[1];
+  assert.ok(ignored);
+  for (const file of ['spreadsheet-io.spec.ts', 'report-parity.spec.ts', 'workbook-export.spec.ts']) assert.ok(ignored.includes(`"**/${file}"`));
   assert.match(scripts["test:ui:excel"], /--config playwright\.excel\.config\.ts/);
 });

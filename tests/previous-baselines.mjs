@@ -13,6 +13,10 @@ export async function verifyPreviousBaselines(api, { excel = false } = {}) {
     rows: [{ accountId, amounts: { 4: '20' }, overrides: { 2: { 4: '15' } } }] });
   const contents = await api.readPlanContents(bytes);
   if (excel) {
+    const { verifyWorkbookExportProcessing } = await import('./workbook-export-processing.mjs');
+    await verifyWorkbookExportProcessing(api);
+    const { verifyWorkbookExportBytes } = await import('./workbook-export-bytes.mjs');
+    await verifyWorkbookExportBytes(api, contents);
     // Inspect the actual posted payload; parsing tests below exercise the same narrowed contract.
     const savedWorker = globalThis.Worker;
     let posted, terminated;
