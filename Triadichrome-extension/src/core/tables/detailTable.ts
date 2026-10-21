@@ -5,7 +5,11 @@ export const detailTableMonths = tablePeriods.filter(period => period.months.len
 export const emptyDetailTable = () => Array.from({ length: 3 }, () => Array<string>(detailTableMonths.length + 1).fill(""));
 
 export function setTableCell(cells: string[][], row: number, column: number, value: string) {
-  return cells.map((values, r) => r === row ? values.map((cell, c) => c === column ? value : cell) : values);
+  const values = cells[row];
+  if (!values || column < 0 || column >= values.length || values[column] === value) return cells;
+  const result = cells.slice();
+  result[row] = values.slice(); result[row]![column] = value;
+  return result;
 }
 
 export function changeTableItem(cells: string[][], index: number, remove: boolean) {
@@ -39,9 +43,13 @@ export function pasteTableCells(cells: string[][], item: number, column: number,
   for (const row of pasted) sourceWidth = Math.max(sourceWidth, row.length);
   if (column + (horizontal ? sourceWidth : pasted.length) > detailTableMonths.length + 1) return null;
   const count = Math.max(cells.length, item + (horizontal ? pasted.length : sourceWidth));
-  const result = Array.from({ length: count }, (_, r) => [...(cells[r] ?? Array<string>(detailTableMonths.length + 1).fill(""))]);
+  const result = Array.from({ length: count }, (_, r) => cells[r] ?? Array<string>(detailTableMonths.length + 1).fill(""));
+  const touched = new Set<number>();
   pasted.forEach((row, r) => row.forEach((value, c) => {
-    result[item + (horizontal ? r : c)]![column + (horizontal ? c : r)] = value;
+    const targetRow = item + (horizontal ? r : c), targetColumn = column + (horizontal ? c : r);
+    if (result[targetRow]![targetColumn] === value) return;
+    if (!touched.has(targetRow)) { result[targetRow] = result[targetRow]!.slice(); touched.add(targetRow); }
+    result[targetRow]![targetColumn] = value;
   }));
-  return result;
+  return touched.size || count !== cells.length ? result : cells;
 }

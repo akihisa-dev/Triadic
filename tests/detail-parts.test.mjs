@@ -185,3 +185,23 @@ test('少数・高密度・大量パーツを旧配置規則と照合し、移�
     assert.deepEqual(arrangeParts(huge, active), referenceArrangement(huge, active, false, { partsOverlap, settlePart }), '巨大な矩形でも区画数を増やさず同じ配置にする');
   });
 });
+
+test('2000項目の1セル更新と両方向の貼り付けで、変更した項目だけを作り直す', async () => {
+  await withNodeBundle('Triadichrome-extension/src/core/tables/detailTable.ts', async ({ setTableCell, pasteTableCells }) => {
+    const cells = Array.from({ length: 2000 }, (_, i) => Array.from({ length: 13 }, (_, c) => `${i}:${c}`));
+    const before = JSON.stringify(cells);
+    const changed = setTableCell(cells, 1000, 4, '変更');
+    assert.equal(changed[1000][4], '変更'); assert.notEqual(changed[1000], cells[1000]);
+    assert.ok(changed.every((row, i) => i === 1000 || row === cells[i]), '他の項目は再描画を必要としない');
+    assert.equal(setTableCell(changed, 1000, 4, '変更'), changed, '同じ値では作り直さない');
+    for (const horizontal of [true, false]) {
+      const pasted = horizontal ? [['A', '001'], ['B', '002']] : [['A', 'B'], ['001', '002']];
+      const result = pasteTableCells(cells, 1000, 1, pasted, horizontal);
+      assert.deepEqual(result[1000].slice(1, 3), ['A', '001']);
+      assert.deepEqual(result[1001].slice(1, 3), ['B', '002']);
+      assert.ok(result.every((row, i) => i === 1000 || i === 1001 || row === cells[i]));
+      assert.equal(pasteTableCells(result, 1000, 1, pasted, horizontal), result);
+    }
+    assert.equal(JSON.stringify(cells), before);
+  });
+});
