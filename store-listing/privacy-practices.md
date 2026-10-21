@@ -36,7 +36,11 @@ Manifestに`permissions`、`optional_permissions`、`host_permissions`の指定�
 
 ## プライバシーポリシーURL
 
-[privacy-policy.md](privacy-policy.md)が掲載用本文です。公開して閲覧可能になったURLを入力します。ローカルのパスは入力できません。未公開のURLを公開済みとして入力しないでください。
+ストアへ入力する公開URL：
+
+https://gist.github.com/akihisa-dev/a97db44fddd4ff38f8c0f21bde35be18
+
+[privacy-policy.md](privacy-policy.md)と同一の本文をGitHub Gistで公開しています。[privacy-policy-url.txt](privacy-policy-url.txt)からURLだけをコピーできます。
 
 ## 根拠
 

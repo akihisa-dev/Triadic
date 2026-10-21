@@ -17,6 +17,7 @@ Chromeウェブストアの掲載欄へ使う文章と画像をこのフォル�
 | スクリーンショット5 | [入口](screenshots/05-entry-1280x800.png) |
 | 単一用途・権限・データ利用の申告 | [privacy-practices.md](privacy-practices.md) |
 | 公開するプライバシーポリシー本文 | [privacy-policy.md](privacy-policy.md) |
+| ストアへ入力する公開URL | [privacy-policy-url.txt](privacy-policy-url.txt) |
 | 審査担当者向けのテスト手順 | [reviewer-instructions.txt](reviewer-instructions.txt) |
 | 撮影時の版・画像の照合値 | [assets.json](assets.json)（提出不要） |
 
@@ -28,10 +29,12 @@ Chromeウェブストアの掲載欄へ使う文章と画像をこのフォル�
 2. `listing-ja.txt`の詳細説明を貼り付け、表にある画像を登録します。スクリーンショットは番号順です。動画は用意していません。名前と短い説明は提出パッケージのManifestから取得されます。現在のManifestの名前は`Triadichrome`、説明は`Triadichrome Chrome Extension`です。このフォルダには内容を伝える短い説明の原稿も用意していますが、アプリのManifestは変更していません。
 3. ホームページには `https://github.com/akihisa-dev/Triadichrome`、サポートURLには `https://github.com/akihisa-dev/Triadichrome/issues`を使えます。
 4. プライバシー欄には`privacy-practices.md`の内容を反映します。
-5. `privacy-policy.md`を、ログイン不要で閲覧できる場所に掲載し、その公開URLをポリシー欄へ設定します。
+5. ポリシー欄には、公開済みのURL `https://gist.github.com/akihisa-dev/a97db44fddd4ff38f8c0f21bde35be18` を入力します。[privacy-policy-url.txt](privacy-policy-url.txt)からコピーできます。
 6. 審査用説明欄がある場合は`reviewer-instructions.txt`を貼り付けます。
 
-公開者名・連絡先メールの確認、開発者アカウントの登録と認証、ポリシーの公開先URLの設定は提出者がストア上で行う項目です。このフォルダ作成では、アカウント変更・アップロード・審査提出・公開は行っていません。ポリシー原稿もまだウェブへ公開していません。
+プライバシーポリシーはGitHub Gistで公開済みです。公開者名・連絡先メールの確認、開発者アカウントの登録と認証、ポリシーURLの入力は提出者がストア上で行う項目です。拡張機能のアップロード・審査提出・公開は行っていません。
+
+ポリシーを改訂する場合は、このフォルダの本文と同じGistの本文を更新し、公開URLを維持してください。
 
 ## 画面の出典と確認
 
