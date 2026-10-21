@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Triadichrome",
-  "version": "29.0.3",
+  "version": "29.0.14",
   "description": "施策ごとの月別増減を積み上げて年間予算を作成。施策一覧・総原価表・展開表を同じデータから確認できます。",
   "icons": {
     "16": "icons/icon-16.png",
