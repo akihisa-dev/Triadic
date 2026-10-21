@@ -6,7 +6,7 @@ import { AGGREGATION_SQL } from "./aggregationSchema";
 export const TRIADIC_FILE_EXTENSION = ".triadic";
 export const TRIADIC_MIME_TYPE = "application/vnd.triadichrome+sqlite";
 export const TRIADIC_FORMAT_ID = "triadichrome";
-export const TRIADIC_FORMAT_VERSION = 26;
+export const TRIADIC_FORMAT_VERSION = 27;
 const revision = "INTEGER NOT NULL DEFAULT 0 CHECK (typeof(revision) = 'integer' AND revision >= 0)";
 const amount = "INTEGER NOT NULL DEFAULT 0 CHECK (typeof(amount_yen) = 'integer' AND amount_yen BETWEEN -9007199254740991 AND 9007199254740991)";
 const month = "INTEGER NOT NULL CHECK (typeof(month) = 'integer' AND month BETWEEN 1 AND 12)";
@@ -87,13 +87,14 @@ CREATE TABLE initiative_amounts (
 CREATE TABLE previous_amounts (
  id INTEGER PRIMARY KEY AUTOINCREMENT,
  account_id INTEGER NOT NULL REFERENCES accounts(id), industry_id INTEGER NOT NULL REFERENCES industries(id), department_id INTEGER NOT NULL REFERENCES departments(id),
- month ${month}, amount_yen ${amount}, revision ${revision}, UNIQUE(account_id, industry_id, department_id, month),
+ month ${month}, amount_yen ${amount}, revision ${revision}, previous_kind INTEGER NOT NULL DEFAULT 1 CHECK (typeof(previous_kind) = 'integer' AND previous_kind IN (1,2)), UNIQUE(account_id, industry_id, department_id, month, previous_kind),
  FOREIGN KEY (department_id, industry_id) REFERENCES department_industries(department_id, industry_id)
 );
 CREATE TABLE kind_selections (
  screen TEXT PRIMARY KEY CHECK (screen IN ('initiative-list', 'cost-table', 'expansion-table')),
+ previous_kind INTEGER NOT NULL DEFAULT 1 CHECK (typeof(previous_kind) = 'integer' AND previous_kind IN (1,2)),
  first_kind INTEGER NOT NULL CHECK (first_kind IN (1,2)), second_kind INTEGER CHECK (second_kind IN (1,2)),
  CHECK (first_kind != second_kind), CHECK (screen != 'initiative-list' OR second_kind IS NULL)
 );
-INSERT INTO kind_selections VALUES ('initiative-list', 2, NULL), ('cost-table', 1, NULL), ('expansion-table', 1, NULL);
+INSERT INTO kind_selections (screen, first_kind, second_kind) VALUES ('initiative-list', 2, NULL), ('cost-table', 1, NULL), ('expansion-table', 1, NULL);
 `;

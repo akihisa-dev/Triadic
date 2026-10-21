@@ -10,9 +10,9 @@ const differences: HistoryDifference[] = Array.from({ length: 125 }, (_, index) 
 }));
 function Preview() {
   const [open, setOpen] = useState(true);
-  const impact: HistoryIncomeImpact[] = [{ kind: 1, period: "year", metric: "sales", before: { error: "範囲超過" }, after: { yen: 1000 }, difference: { error: "範囲超過" } },
-    { kind: 1, period: "year", metric: "expense", before: { yen: 1 }, after: { yen: 2 }, difference: { yen: 1 } },
-    { kind: 1, period: "year", metric: "profit", before: { yen: 0 }, after: { yen: -1 }, difference: { yen: -1 } }];
+  const impact: HistoryIncomeImpact[] = [{ previousKind: 1, kind: 1, period: "year", metric: "sales", before: { error: "範囲超過" }, after: { yen: 1000 }, difference: { error: "範囲超過" } },
+    { previousKind: 1, kind: 1, period: "year", metric: "expense", before: { yen: 1 }, after: { yen: 2 }, difference: { yen: 1 } },
+    { previousKind: 1, kind: 1, period: "year", metric: "profit", before: { yen: 0 }, after: { yen: -1 }, difference: { yen: -1 } }];
   return <><button type="button" onClick={() => setOpen(true)}>差分を開く</button>{open && <HistoryDifferenceDialog date="2026/05/01 09:00:00.000" impact={impact} differences={differences} onClose={() => setOpen(false)} />}</>;
 }
 createRoot(document.getElementById("root")!).render(<Preview />);

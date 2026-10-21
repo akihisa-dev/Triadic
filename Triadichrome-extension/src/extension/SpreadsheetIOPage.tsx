@@ -1,3 +1,5 @@
+import { PreviousKindSelection } from "./PreviousKindSelection";
+import { previousKindName, type PreviousKind, type PreviousSelections } from "../core/domain/kinds";
 import { processPreviousWorkbook } from "./previousWorkbookProcessing";
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import type { PlanContents } from "../core/domain/plan";
@@ -25,6 +27,8 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
   const readOnly = useHistoryReadOnly();
   const [tables, setTables] = useState<ExportTable[]>(["cost-table", "expansion-table", "initiative-list"]);
   const [selections, setSelections] = useState<KindSelections>(() => ({ "cost-table": [1], "expansion-table": [1], "initiative-list": [2] }));
+  const [previousSelections, setPreviousSelections] = useState<PreviousSelections>({ "cost-table": 1, "expansion-table": 1 });
+  const [previousKind, setPreviousKind] = useState<PreviousKind>(1);
   const [classificationSelection, setClassificationSelection] = useState<ExportClassificationSelection>({ industries: [], departments: [], pairs: [] });
   const [classificationSources, setClassificationSources] = useState(() => ({ industries: contents.industries, departments: contents.departments }));
   let currentSelection = classificationSelection;
@@ -80,7 +84,7 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
       {(Object.keys(tableNames) as ExportTable[]).map(table => <div className="io-table-option" key={table}>
         <label className="io-check"><input type="checkbox" checked={tables.includes(table)} disabled={disabled} onChange={event => setTables(current => event.target.checked ? [...current, table] : current.filter(t => t !== table))} />{tableNames[table]}</label>
         {tables.includes(table) && <div className="io-table-conditions">
-          <KindSelectionSlots screen={table} selected={selections[table]} disabled={disabled} onChange={selected => setSelections(current => ({ ...current, [table]: selected }))} />
+          <KindSelectionSlots {...(table === "initiative-list" ? {} : { previousKind: previousSelections[table], onPreviousChange: (value: PreviousKind) => setPreviousSelections(current => ({ ...current, [table]: value })) })} screen={table} selected={selections[table]} disabled={disabled} onChange={selected => setSelections(current => ({ ...current, [table]: selected }))} />
           {table === "cost-table" && <div className="io-classifications">
             <ChoiceChips id="export-industry" label="業種名" value={industries} emptyLabel="全業種の合計" options={contents.industries.map(i => ({ id: i.id, name: i.industryName }))} disabled={disabled} onChange={industries => setClassificationSelection(current => ({ ...current, industries }))} />
             <ChoiceChips id="export-department" label="部署名" value={departments} emptyLabel="全部署の合計" options={contents.departments.map(d => ({ id: d.id, name: d.departmentName }))} disabled={disabled} onChange={departments => setClassificationSelection(current => ({ ...current, departments }))} />
@@ -88,7 +92,7 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
         </div>}
       </div>)}
       <button type="button" className="primary-button" disabled={disabled || !tables.length} onClick={() => { void operation(async () => {
-        const wb = createReportWorkbook(contents, { tables, selections, costFilter: { industries: industries.length ? industries : null, departments: departments.length ? departments : null } });
+        const wb = createReportWorkbook(contents, { tables, selections, previousSelections, costFilter: { industries: industries.length ? industries : null, departments: departments.length ? departments : null } });
         download(await serializeWorkbook(wb), `${contents.fiscalYear}年度予算.xlsx`); setNotice("表を出力しました。");
       }); }}>選んだ表を出力</button>
     </section>
@@ -102,7 +106,7 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
         event.preventDefault(); setDragging(false);
         void importFiles(Array.from(event.dataTransfer.files));
       }}>
-      <div className="io-heading"><h2 id="io-previous-title">{dragging && !disabled && !readOnly ? "ここにドロップして取り込む" : "前年入力"}</h2><span className="field-hint">千円 · 小数点以下3桁まで</span></div>
+      <div className="io-heading"><h2 id="io-previous-title">{dragging && !disabled && !readOnly ? "ここにドロップして取り込む" : "前年入力"}</h2><PreviousKindSelection id="export-previous-kind" label="前年" value={previousKind} disabled={disabled} onChange={setPreviousKind} /><span className="field-hint">千円 · 小数点以下3桁まで</span></div>
       <div className="io-pair-list" role="group" aria-label="フォーマットに含める業種・部署">
         {contents.industries.map(i => <fieldset key={i.id}><legend>{i.industryName}</legend>{contents.departments.filter(d => d.industryIds.includes(i.id)).map(d => {
           const checked = pairs.some(p => p.industryId === i.id && p.departmentId === d.id);
@@ -111,15 +115,15 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
       </div>
       <div className="form-actions">
         <button type="button" className="secondary-button" disabled={disabled || !pairs.length} onClick={() => { void operation(async () => {
-          download(await createPreviousWorkbookBytes(contents, pairs), `${contents.fiscalYear}年度_前年入力.xlsx`); setNotice("前年入力フォーマットを出力しました。");
+          download(await createPreviousWorkbookBytes(contents, pairs, previousKind), `${contents.fiscalYear}年度_${previousKindName(previousKind)}入力.xlsx`); setNotice("前年入力フォーマットを出力しました。");
         }); }}>フォーマットを出力</button>
         <button type="button" className="primary-button" disabled={disabled || readOnly} onClick={() => input.current?.click()}>フォーマットを取り込む</button>
         <input ref={input} type="file" accept=".xlsx" hidden onChange={event => { const files = Array.from(event.target.files ?? []); event.target.value = ""; void importFiles(files); }} />
       </div>
       {patches && <div className="io-import-preview" role="region" aria-label="前年金額の変更確認">
-        <h3>変更内容 · {patches.length}件</h3>
+        <h3>変更内容 · {previousKindName(patches[0]!.previousKind)} · {patches.length}件</h3>
         <div className="io-preview-table"><table><thead><tr>{["業種", "部署", "科目", "月", "変更前", "変更後"].map(label => <th key={label}>{label}</th>)}</tr></thead>
-          <tbody>{previewRows.map(({ patch: p, industryName, departmentName, accountName }) => <tr key={`${p.industryId}:${p.departmentId}:${p.accountId}:${p.month}`}>
+          <tbody>{previewRows.map(({ patch: p, industryName, departmentName, accountName }) => <tr key={`${p.previousKind}:${p.industryId}:${p.departmentId}:${p.accountId}:${p.month}`}>
             <td>{industryName}</td><td>{departmentName}</td><td>{accountName}</td><td>{p.month}月</td><td>{p.before}</td><td>{p.after}</td>
           </tr>)}</tbody></table></div>
         <div className="form-actions"><button type="button" className="secondary-button" disabled={working || busy} onClick={() => { previewPending.current = false; onPendingChange(false); setPatches(null); setRetry(false); setNotice(""); }}>キャンセル</button>

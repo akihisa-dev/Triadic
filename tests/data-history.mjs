@@ -54,7 +54,7 @@ export async function verifyDataHistory(api) {
   assert.equal((await readDataHistory(bytes)).entries.length, 2);
   assert.equal(await recordDataHistory(bytes, t(15)), bytes, "変更のない期間に履歴を増やさない");
 
-  bytes = await trackHistoryChange(bytes, await savePreviousAmounts(bytes, { industryId: 1, departmentId: 1,
+  bytes = await trackHistoryChange(bytes, await savePreviousAmounts(bytes, { previousKind: 1, industryId: 1, departmentId: 1,
     rows: [{ accountId: expected.accounts[0].id, amounts: { 4: "123.456" } }] }), t(16));
   const department = await changeDepartmentMaster(bytes, { type: "update", id: 1, departmentName: "変更後の部署" });
   bytes = await trackHistoryChange(bytes, department, t(17));

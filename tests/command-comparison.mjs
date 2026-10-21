@@ -27,7 +27,7 @@ export async function verifyCommandComparison(api) {
     { type: "expansion", change: { type: "update", ...contents.expansions[0], expansionName: "比較の展開" } },
     { type: "industry", change: { type: "update", ...contents.industries[0], industryName: "比較の業種" } },
     { type: "period", change: { type: "update", ...contents.periodTypes[0], periodName: "比較の期間" } },
-    { type: "settings", change: { type: "previous", input: { industryId: 1, departmentId: 1, rows: [{ accountId: account.id, amounts: { 4: "0.001" } }] } } },
+    { type: "settings", change: { type: "previous", input: { previousKind: 1, industryId: 1, departmentId: 1, rows: [{ accountId: account.id, amounts: { 4: "0.001" } }] } } },
   ];
   const meaningful = value => JSON.stringify(value, (key,value) => ["details","revision","initiativeRevision","rowRevision","amountRevisions","overrideRevisions"].includes(key) ? undefined : value);
   for (const command of cases) {

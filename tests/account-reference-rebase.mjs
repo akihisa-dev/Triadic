@@ -4,7 +4,7 @@ export async function verifyAccountReferenceRebase(api) {
   const added = await api.changeAccountMaster(initial, {type:'add',accountCode:'901',accountName:'旧科目A',accountType:'sales'});
   const base = added.bytes, account = added.accounts.find(a=>a.accountCode==='901'), contents = await api.readPlanContents(base);
   const draft = {name:'旧科目への入力',note:'',fiscalYear:'2026',expansionId:1,industryId:1,departmentId:1,rows:[{id:'old-account-reference',accountId:account.id,amounts:{4:'1.001'}}]};
-  const locals = [await api.registerInitiative(base,draft), await api.savePreviousAmounts(base,{industryId:1,departmentId:1,rows:[{accountId:account.id,amounts:{4:'1.001'}}]}), await api.changeAggregationMaster(base,{type:'move',member:{kind:'account',id:account.id},parentId:contents.aggregations[0].id,sign:1})];
+  const locals = [await api.registerInitiative(base,draft), await api.savePreviousAmounts(base,{ previousKind: 1,industryId:1,departmentId:1,rows:[{accountId:account.id,amounts:{4:'1.001'}}]}), await api.changeAggregationMaster(base,{type:'move',member:{kind:'account',id:account.id},parentId:contents.aggregations[0].id,sign:1})];
   const undo = await api.applyOperationSnapshot(base,await api.createBusinessSnapshot(initial));
   const history = await api.recordDataHistory(await api.trackHistoryChange(initial,base),new Date().toISOString(),true);
   const restored = await api.restoreDataHistory(history,(await api.readDataHistory(history)).entries.at(-1).id);

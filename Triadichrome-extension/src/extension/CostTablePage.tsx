@@ -47,7 +47,7 @@ export function CostTablePage({ contents, selected, selection, view, onOpenIniti
       departments: departments.length ? departments : null,
     });
   }, [contents.accounts, contents.aggregations, contents.initiatives, contents.previousAmounts, contents.fiscalYear,
-    contents.kinds, contents.industries, contents.departments, industryIds, departmentIds]);
+    contents.kinds, contents.previousKind, contents.industries, contents.departments, industryIds, departmentIds]);
   return <main className="initiative-list-page cost-table-page" aria-labelledby="cost-table-title">
     <div className="initiative-list-heading">
       <h1 id="cost-table-title">総原価表</h1>
@@ -89,7 +89,7 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
     if (container.current) { container.current.scrollTop = view.current.top; container.current.scrollLeft = view.current.left; }
   }, [view]);
   const comparisons = useMemo(() => new Map<string, ReturnType<typeof buildPeriodCostComparison>>(), [contents]);
-  const key = [...selected].sort().join(",");
+  const key = `${contents.previousKind ?? 1}:${[...selected].sort().join(",")}`;
   let table = comparisons.get(key);
   if (!table) {
     table = buildPeriodCostComparison(contents, selected);

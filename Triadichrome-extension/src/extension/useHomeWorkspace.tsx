@@ -5,7 +5,7 @@ import { useWorkspaceHistory } from "./workspace/useWorkspaceHistory";
 import { useMutation } from "./useMutation";
 import { useScreenHistory } from "./useScreenHistory";
 import { KindSelectionSlots } from "./KindSelectionSlots";
-import { type KindId, type KindScreen, type PlanChange } from "../core/domain/kinds";
+import { type PreviousKind, type KindId, type KindScreen, type PlanChange } from "../core/domain/kinds";
 import { type RelationView } from "./HomeRelationsPage";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createInitiativeDraft, hasInitiativeDraftInput } from "../core/domain/initiativeRules";
@@ -54,7 +54,7 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   const operationMutation = useMutation(assertWritable);
   const saveAsMutation = useMutation(assertWritable);
   const saveFailed = useSyncExternalStore(subscribeAutoSaveFailures, hasAutoSaveFailure);
-  const navigationBlocked = saveAsMutation.busy || restoreMutation.busy || operationMutation.busy || saveFailed;
+  const navigationBlocked = saveAsMutation.busy || restoreMutation.busy || operationMutation.busy || saveFailed || (screen.page === "spreadsheet-io" && editPending);
   const searchBlocked = navigationBlocked || editPending || isSaving || historyBusy;
   const { discardRequest, setDiscardRequest, openInitiative, requestNavigation, setPage, startInitiative, duplicateInitiative } = useWorkspaceNavigation(
     screens, contents, preview !== null, navigationBlocked, saving, { initiativeDraft, setInitiativeDraft }, dismissNotice, async next => {
@@ -89,12 +89,27 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   const travelOperation = useWorkspaceOperations(operationBlocked, saving, operationMutation, availableUndo, canRedo, onPrepareSave, onTravelOperation, dismissNotice, setNotice);
   const changePlan = (change: PlanChange) => mutation.run(async () => { await onChangePlan(change); });
   const [localKinds, setLocalKinds] = useWindowViewState("table:kinds", contents.kindSelections);
+  const [localPrevious, setLocalPrevious] = useWindowViewState("table:previous", contents.previousSelections);
+  const previousPreview = useRef<number | null>(null);
+  useEffect(() => {
+    const id = preview?.entry.id ?? null;
+    if (previousPreview.current !== id) setLocalPrevious(contents.previousSelections);
+    previousPreview.current = id;
+  }, [preview?.entry.id, contents.previousSelections]);
   const previousRevision = useRef(operationRevision);
   useEffect(() => {
-    if (previousRevision.current !== operationRevision && (!windows || windows.getWindowSnapshot().peers === 1)) setLocalKinds(contents.kindSelections);
+    if (previousRevision.current !== operationRevision && (!windows || windows.getWindowSnapshot().peers === 1)) { setLocalKinds(contents.kindSelections); setLocalPrevious(contents.previousSelections); }
     previousRevision.current = operationRevision;
-  }, [operationRevision, contents.kindSelections, windows]);
+  }, [operationRevision, contents.kindSelections, contents.previousSelections, windows]);
   const kindSelection = (screen: KindScreen) => <KindSelectionSlots screen={screen} selected={localKinds[screen]} disabled={navigationBlocked || isSaving}
+    {...(screen === "initiative-list" ? {} : { previousKind: localPrevious[screen], onPreviousChange: (previousKind: PreviousKind) => {
+      if (preview) {
+        setLocalPrevious(previous => ({ ...previous, [screen]: previousKind }));
+        setPreview({ ...preview, contents: { ...contents, previousSelections: { ...contents.previousSelections, [screen]: previousKind } } });
+        return;
+      }
+      void changePlan({ type: "previous-selection", screen, previousKind }).then(() => setLocalPrevious(previous => ({ ...previous, [screen]: previousKind }))).catch(error => setNotice({ message: error instanceof Error ? error.message : "基準前年を保存できませんでした。", error: true }));
+    } })}
     onChange={(selected: KindId[]) => {
       if (preview) {
         setLocalKinds(previous => ({ ...previous, [screen]: selected }));
@@ -138,7 +153,7 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   }, [isSidebarOpen, closeSidebar]);
 
   return {
-    restoreMutation, saveAsMutation, saveAs, setEditPending, openInitiative, menuButton, relationView, costTableView, sidebar, showError, localKinds,
+    restoreMutation, saveAsMutation, saveAs, setEditPending, openInitiative, menuButton, relationView, costTableView, sidebar, showError, localKinds, localPrevious,
     detailDocuments, setDetailDocuments, openDetail, createDetail,
     isSidebarOpen, screen, initiativeDraft, setInitiativeDraft, preview, setPreview,
     restoreRequested, setRestoreRequested, restoreError, setRestoreError, contents, currentContents,

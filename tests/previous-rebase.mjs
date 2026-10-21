@@ -3,7 +3,7 @@ export async function verifyPreviousRebase(api) {
   const empty = await api.createTriadicDatabase(2026);
   const contents = await api.readPlanContents(empty);
   const accountId = contents.accounts[0].id;
-  const cell = (month, value, rest={}) => ({industryId:1,departmentId:1,rows:[{accountId,amounts:{[month]:value}}],...rest});
+  const cell = (month, value, rest={}) => ({previousKind:1,industryId:1,departmentId:1,rows:[{accountId,amounts:{[month]:value}}],...rest});
   const rows = async bytes => {
     const db=await api.openTriadicDatabase(bytes);
     try { return db.exec('SELECT * FROM previous_amounts ORDER BY account_id,industry_id,department_id,month')[0]?.values ?? []; }

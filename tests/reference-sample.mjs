@@ -163,7 +163,7 @@ export async function verifyReferenceSample(api, bytes, plan, { excel = false } 
   }
   const expansion=api.buildKindExpansionTable(plan,[1,2],"registered");
   const costs=api.buildKindCostTable(plan,[1,2]);
-  const prior=month=>{const result=empty();for(const row of plan.previousAmounts.filter(row=>row.month===month))effect(result,row.accountId,yen(row.amount));return result;};
+  const prior=month=>{const result=empty();for(const row of plan.previousAmounts.filter(row=>row.previousKind===(plan.previousKind??1)&&row.month===month))effect(result,row.accountId,yen(row.amount));return result;};
   const expectations={};
   for(const [index,kind] of [1,2].entries()) for(const month of api.initiativeMonths) {
     const expected=prior(month); for(const item of plan.initiatives) {const amount=monthly(item,kind,month);for(const field of Object.keys(expected))expected[field]+=amount[field];}

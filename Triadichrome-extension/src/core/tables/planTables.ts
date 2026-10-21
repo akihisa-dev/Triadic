@@ -21,6 +21,7 @@ export function previousByAccount(contents: PlanContents) {
   for (const account of contents.accounts) result.set(account.id, Object.fromEntries(initiativeMonths.map(month => [month, 0])));
   const exact = new Map(contents.accounts.map(account => [account.id, {} as Partial<Record<typeof initiativeMonths[number], bigint>>]));
   for (const record of contents.previousAmounts) {
+    if (record.previousKind !== (contents.previousKind ?? 1)) continue;
     const row = exact.get(record.accountId)!;
     const month = record.month as typeof initiativeMonths[number];
     row[month] = (row[month] ?? 0n) + BigInt(amountToYen(record.amount));
@@ -40,6 +41,7 @@ export function previousTotals(contents: PlanContents): ExpansionTotals {
   const accounts = new Map(contents.accounts.map(account => [account.id, account]));
   const exact = new Map(initiativeMonths.map(month => [month, { sales: 0n, profit: 0n }]));
   for (const record of contents.previousAmounts) {
+    if (record.previousKind !== (contents.previousKind ?? 1)) continue;
     const effects = accountEffectsYen(amountToYen(record.amount), accounts.get(record.accountId)!.accountType);
     const totals = exact.get(record.month as typeof initiativeMonths[number])!;
     totals.sales += BigInt(effects.sales); totals.profit += BigInt(effects.profit);

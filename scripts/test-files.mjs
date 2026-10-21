@@ -1,3 +1,4 @@
+import { verifyPreviousBaselines } from "../tests/previous-baselines.mjs";
 import { verifyAggregationLayout } from "../tests/aggregation-layout.mjs";
 import { verifyClassificationIndirectRebase } from '../tests/classification-indirect-rebase.mjs';
 import { verifySelectionTotal } from "../tests/selection-total.mjs";
@@ -85,6 +86,7 @@ const excel = testScope(process.argv.slice(2));
 await withNodeBundle("tests/core-api.ts", async production => {
   const api = scopedTestApi({ ...production, createTriadicDatabase: (year = 2026) => production.createTriadicDatabase(year) }, excel);
   if (excel) {
+    await verifyPreviousBaselines(api, { excel });
     await verifySpreadsheetIO(api);
     await verifyCostCancellation(api, { excel });
     await verifyExpansionExpenseOverflow(api, { excel });
@@ -92,6 +94,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
     await verifySamplePlan(api, { excel });
     return;
   }
+  await verifyPreviousBaselines(api);
   await verifyInitiativeDraftReferences(api);
   await verifyWindowSession(api);
   await verifyDuplicateInitiative(api);

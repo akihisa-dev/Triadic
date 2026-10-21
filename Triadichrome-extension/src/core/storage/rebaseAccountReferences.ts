@@ -6,7 +6,7 @@ export function canMergeAccountReferences(base: Database, local: Database, exter
   const databases = [base, local, external];
   const accounts = databases.map(db => new Map((db.exec("SELECT * FROM accounts")[0]?.values ?? []).map(row => [row[0], JSON.stringify(row)])));
   const queries = [
-    "SELECT account_id || ':' || industry_id || ':' || department_id || ':' || month, account_id, amount_yen FROM previous_amounts",
+    "SELECT previous_kind || ':' || account_id || ':' || industry_id || ':' || department_id || ':' || month, account_id, amount_yen FROM previous_amounts",
     "SELECT account_id, account_id, parent_id, sign, position FROM aggregation_members WHERE account_id IS NOT NULL",
   ];
   const references = [...initiativeReferences(databases), ...queries.flatMap(query =>

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 export async function verifyHistoryIncomeImpact(api) {
   const template = await api.readPlanContents(await api.createTriadicDatabase(2026), false);
   const base = { ...template, accounts: ["sales", "cost", "expense", "profit"].map((accountType, index) => ({ id: index + 1, accountType })),
-    previousAmounts: ["100", "20", "10", "5"].map((amount, index) => ({ month: 4, accountId: index + 1, amount })),
+    previousAmounts: ["100", "20", "10", "5"].map((amount, index) => ({ previousKind: 1, month: 4, accountId: index + 1, amount })),
     initiatives: [{ fiscalYear: 2026, rows: [
       { accountId: 1, amounts: { 4: "10" }, overrides: { 2: { 4: "0" } } },
       { accountId: 2, amounts: { 4: "2" } },
@@ -17,8 +17,8 @@ export async function verifyHistoryIncomeImpact(api) {
   after.initiatives[0].rows[2].amounts[4] = "2";
   const impact = api.compareHistoryIncome(base, after);
   const cell = (kind, period, metric) => impact.find(item => item.kind === kind && item.period === period && item.metric === metric);
-  assert.equal(impact.length, 78);
-  assert.deepEqual(cell(1, 4, "sales"), { kind: 1, period: 4, metric: "sales", before: { yen: 88000 }, after: { yen: 90001 }, difference: { yen: 2001 } });
+  assert.equal(impact.length, 156);
+  assert.deepEqual(cell(1, 4, "sales"), { previousKind: 1, kind: 1, period: 4, metric: "sales", before: { yen: 88000 }, after: { yen: 90001 }, difference: { yen: 2001 } });
   assert.equal(cell(1, 4, "expense").difference.yen, -1000);
   assert.equal(cell(1, 4, "profit").before.yen, 81000);
   assert.equal(cell(1, 4, "profit").difference.yen, 3001);

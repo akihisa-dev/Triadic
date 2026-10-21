@@ -286,6 +286,9 @@ export const dataMapSchema = [
         "name": "screen"
       },
       {
+        "name": "previous_kind"
+      },
+      {
         "name": "first_kind"
       },
       {
@@ -349,6 +352,9 @@ export const dataMapSchema = [
       },
       {
         "name": "revision"
+      },
+      {
+        "name": "previous_kind"
       }
     ]
   },

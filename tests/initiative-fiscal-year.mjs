@@ -9,7 +9,7 @@ export async function verifyInitiativeFiscalYear(api) {
     const result = originalExec.call(this, statement, params);
     if (observation) {
       if (statement === "SELECT fiscal_year FROM document_info WHERE id = 1") observation.years++;
-      if (/^SELECT account_id, industry_id, department_id, month, amount_yen, revision, id FROM previous_amounts ORDER BY/.test(statement)) {
+      if (/^SELECT account_id, industry_id, department_id, month, amount_yen, revision, id, previous_kind FROM previous_amounts ORDER BY/.test(statement)) {
         observation.previousReads++;
         observation.previousRows += result[0]?.values.length ?? 0;
       }

@@ -17,7 +17,7 @@ test("予算選択の列構成・重複防止・比較の符号と画面別の�
   const cost = app.getByRole("table", { name: "総原価表", exact: true });
   await expect(first).toHaveAttribute("aria-valuetext", "一次予算");
   await expect(second).toHaveAttribute("aria-valuetext", "未選択");
-  await expect(cost.getByRole("columnheader", { name: "前年", exact: true })).toHaveCount(19);
+  await expect(cost.getByRole("columnheader", { name: "前年見込", exact: true })).toHaveCount(19);
   await expect(cost.getByRole("columnheader", { name: "確定予算", exact: true })).toHaveCount(0);
   await selectClassification(second, "確定予算");
   await expect(cost.getByRole("columnheader", { name: "確定予算", exact: true })).toHaveCount(19);
@@ -30,7 +30,7 @@ test("予算選択の列構成・重複防止・比較の符号と画面別の�
   const expansion = app.getByRole("table", { name: "展開表", exact: true });
   await expect(first).toHaveAttribute("aria-valuetext", "一次予算");
   await expect(second).toHaveAttribute("aria-valuetext", "未選択");
-  await expect(expansion.getByRole("columnheader", { name: "前年", exact: true })).toHaveCount(0);
+  await expect(expansion.getByRole("columnheader", { name: "前年見込", exact: true })).toHaveCount(0);
   await expect(expansion.getByRole("columnheader", { name: "比較", exact: true })).toHaveCount(0);
   await selectClassification(second, "確定予算");
   await expect(expansion.getByRole("columnheader", { name: "比較", exact: true })).toHaveCount(19);
@@ -100,6 +100,8 @@ test("一次予算の引き継ぎ・手修正0と前年入力を操作できる"
   await expect(april).toHaveValue("0");
   await expect(app.getByRole("button", { name: /^(一次予算を反映する|年間金額を配分|実施月をまとめて移動)$/ })).toHaveCount(0);
   await menu.getByRole("button", { name: "前年入力", exact: true }).click();
+  await expect(app.getByRole("heading", { name: "前年入力", exact: true })).toBeVisible();
+  await settleMotion(app.locator("body"));
   await selectClassification(app.getByRole("combobox", { name: "部署名", exact: true }), "部署A");
   await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
   const previous = app.getByRole("textbox", { name: "売上高 4月の前年金額", exact: true });
@@ -107,7 +109,11 @@ test("一次予算の引き継ぎ・手修正0と前年入力を操作できる"
   await previous.press("Enter");
   await expect(app.getByRole("combobox", { name: "部署名", exact: true })).toBeEnabled();
   await menu.getByRole("button", { name: "総原価表", exact: true }).click();
+  await expect(app.getByRole("heading", { name: "総原価表", exact: true })).toBeVisible();
+  await settleMotion(app.locator("body"));
   await menu.getByRole("button", { name: "前年入力", exact: true }).click();
+  await expect(app.getByRole("heading", { name: "前年入力", exact: true })).toBeVisible();
+  await settleMotion(app.locator("body"));
   await selectClassification(app.getByRole("combobox", { name: "部署名", exact: true }), "部署A");
   await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
   await expect(previous).toHaveValue("1001");

@@ -2,7 +2,7 @@ import type { Database, SqlValue } from "./sqliteRuntime";
 
 const layouts = new WeakMap<Database, Map<string, ReturnType<typeof describeLayout>>>();
 const businessKeys: Record<string, readonly string[]> = {
-  previous_amounts: ["account_id", "industry_id", "department_id", "month"],
+  previous_amounts: ["previous_kind", "account_id", "industry_id", "department_id", "month"],
 };
 const ignored: Record<string, readonly string[]> = {
   previous_amounts: ["id", "revision"], initiative_rows: ["sort_order", "revision"],

@@ -67,7 +67,7 @@ export async function verifyPreviousWorkbookExport(api) {
   const zip = await JSZip.loadAsync(boundary);
   let cells = 0;
   for (const entry of Object.values(zip.files).filter(f => /^xl\/worksheets\/[^/]+\.xml$/.test(f.name))) cells += ((await entry.async("string")).match(/<c\b/g) ?? []).length;
-  assert.equal(cells, 199642, "見出しと書式付き空欄を含む実際のセル数");
+  assert.equal(cells, 199643, "見出しと書式付き空欄を含む実際のセル数");
   assert.deepEqual(await api.parsePreviousWorkbook(boundary, below), [], "上限直前の出力を無編集で読み戻せる");
   const output = await api.createPreviousWorkbookBytes(plan, pairs.slice(0, 17));
   assert.deepEqual(await api.parsePreviousWorkbook(output, plan), [], "選択を減らした330科目の出力を読み戻せる");

@@ -19,7 +19,7 @@ export async function createOverflowPlan(scenario: OverflowScenario) {
   const accountId = plan.accounts.find(account => account.accountType === "sales")!.id;
   const huge = "5000000000000";
   if (scenario === "previous-input") {
-    for (const departmentId of [1, 2]) bytes = await savePreviousAmounts(bytes, { industryId: 1, departmentId,
+    for (const departmentId of [1, 2]) bytes = await savePreviousAmounts(bytes, { previousKind: 1, industryId: 1, departmentId,
       rows: [{ accountId, amounts: { 4: huge } }] });
     return bytes;
   }
@@ -29,7 +29,7 @@ export async function createOverflowPlan(scenario: OverflowScenario) {
       ...(scenario === "difference" ? { overrides: { 2: { 4: huge } } } : {}) }] };
   bytes = await registerInitiative(bytes, draft);
   if (scenario === "monthly") bytes = await registerInitiative(bytes, { ...draft, name: "上限確認B", industryId: 2 });
-  if (scenario === "previous") bytes = await savePreviousAmounts(bytes, { industryId: 1, departmentId: 1, rows: [{ accountId, amounts: { 4: huge } }] });
+  if (scenario === "previous") bytes = await savePreviousAmounts(bytes, { previousKind: 1, industryId: 1, departmentId: 1, rows: [{ accountId, amounts: { 4: huge } }] });
   if (scenario === "difference") {
     bytes = await saveKindSelection(bytes, "cost-table", [1, 2]);
     bytes = await saveKindSelection(bytes, "expansion-table", [1, 2]);

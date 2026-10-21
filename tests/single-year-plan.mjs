@@ -32,10 +32,10 @@ export async function verifySingleYearPlan(api) {
   assert.equal(api.canChangeAccountRow({ amounts: { 4: "0.0001" } }), false, "編集中の不正値で画面を落とさず科目操作を止める");
   assert.equal(api.canChangeAccountRow({ amounts: {}, overrides: { 2: { 10: "0.001" } } }), false, "確定予算だけ非0でも使用中");
   assert.equal(api.canChangeAccountRow({ amounts: {}, overrides: { 2: { 4: "0" } } }), true);
-  bytes = await api.savePreviousAmounts(bytes, { industryId: draft.industryId, departmentId: draft.departmentId, rows: [{ accountId: account.id, amounts: { 4: "1000.001" } }] });
+  bytes = await api.savePreviousAmounts(bytes, { previousKind: 1, industryId: draft.industryId, departmentId: draft.departmentId, rows: [{ accountId: account.id, amounts: { 4: "1000.001" } }] });
   contents = await readDerivedPlan(api, bytes);
   assert.equal(contents.previousAmounts[0].amount, "1000.001");
-  bytes = await api.savePreviousAmounts(bytes, { industryId: draft.industryId, departmentId: draft.departmentId, rows: [{ accountId: account.id, amounts: { 4: "1001" } }] });
+  bytes = await api.savePreviousAmounts(bytes, { previousKind: 1, industryId: draft.industryId, departmentId: draft.departmentId, rows: [{ accountId: account.id, amounts: { 4: "1001" } }] });
   contents = await readDerivedPlan(api, bytes);
   assert.equal(contents.previousAmounts.length, 1, "同じ組み合わせは更新する");
   assert.equal(contents.previousAmounts[0].amount, "1001");
@@ -68,7 +68,7 @@ export async function verifySingleYearPlan(api) {
   assert.equal(single.groups[0].values.length, 1);
   assert.equal(single.groups[0].initiatives[0].values.length, 1);
   assert.deepEqual(expansion.total.map(months => months[4].sales), [1121000, 1121000, 0]);
-  bytes = await api.savePreviousAmounts(bytes, { industryId: contents.industries[1].id, departmentId: contents.departments[1].id, rows: [{ accountId: account.id, amounts: { 4: "20" } }] });
+  bytes = await api.savePreviousAmounts(bytes, { previousKind: 1, industryId: contents.industries[1].id, departmentId: contents.departments[1].id, rows: [{ accountId: account.id, amounts: { 4: "20" } }] });
   contents = await readDerivedPlan(api, bytes);
   const filtered = api.filterPlan(contents, { industries: [draft.industryId], departments: [draft.departmentId] });
   assert.equal(api.previousTotals(contents)[4].sales, 1021000);
@@ -87,7 +87,7 @@ export async function verifySingleYearPlan(api) {
   const conflicting=await api.applyPlanCommand(amountBase,command('91'),2027);
   assert.equal(await api.rebasePlan(amountBase,bytes,conflicting),null,'同じ月への異なる更新を拒否');
   await assert.rejects(api.applyPlanCommand(bytes,{...command('90'),draft:{...current,fiscalYear:'2028'}},2027),/基準年度/);
-  bytes=await api.applyPlanCommand(bytes,{type:'settings',change:{type:'previous',input:{industryId:draft.industryId,departmentId:draft.departmentId,rows:[{accountId:account.id,amounts:{4:'1002'}}]}}},2027);
+  bytes=await api.applyPlanCommand(bytes,{type:'settings',change:{type:'previous',input:{previousKind:1,industryId:draft.industryId,departmentId:draft.departmentId,rows:[{accountId:account.id,amounts:{4:'1002'}}]}}},2027);
   contents=await readDerivedPlan(api,bytes);
   assert.equal(api.previousTotals(contents)[4].sales,1022000);
   for (const [change, id] of [[api.changeAccountMaster, account.id], [api.changeIndustryMaster, draft.industryId], [api.changeDepartmentMaster, draft.departmentId]]) {

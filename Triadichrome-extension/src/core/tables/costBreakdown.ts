@@ -1,3 +1,4 @@
+import { previousKindName } from "../domain/kinds";
 import { amountToYen, checkedYen } from "../domain/amounts";
 import { resolvedAmount, type KindId } from "../domain/kinds";
 import type { PlanContents } from "../domain/plan";
@@ -35,12 +36,13 @@ export function buildCostBreakdown(contents: PlanContents, target: CostBreakdown
   if (prior || budget) {
     const previous = new Map<string, { line: Omit<CostBreakdownLine, "amount">; amount: bigint }>();
     for (const record of contents.previousAmounts) {
+      if (record.previousKind !== (contents.previousKind ?? 1)) continue;
       const sign = signs.get(record.accountId);
       if (sign === undefined || !months.has(record.month)) continue;
       const amount = BigInt(amountToYen(record.amount)) * BigInt(sign);
       if (amount === 0n) continue;
       const key = `previous:${record.accountId}:${record.departmentId}:${record.industryId}`;
-      const entry = previous.get(key) ?? { line: { key, initiativeId: null, name: "前年", accountId: record.accountId,
+      const entry = previous.get(key) ?? { line: { key, initiativeId: null, name: previousKindName(contents.previousKind ?? 1), accountId: record.accountId,
         departmentId: record.departmentId, industryId: record.industryId, sign }, amount: 0n };
       entry.amount += amount;
       previous.set(key, entry);

@@ -26,7 +26,7 @@ test("金額と期間計・差額の内訳を開き、閉じると元の金額�
   await settleMotion(app.locator("body"));
   await expect(dialog.getByRole("row").last()).toContainText("25,640");
   await page.screenshot({ path: `/tmp/triadichrome-cost-breakdown-${testInfo.project.name}.png` });
-  await expect(dialog.getByRole("rowheader", { name: "前年", exact: true }).first()).toBeVisible();
+  await expect(dialog.getByRole("rowheader", { name: "前年見込", exact: true }).first()).toBeVisible();
   await expect(dialog.getByRole("button", { name: "既存商品の販売拡大（1行目）", exact: true })).toBeVisible();
   await dialog.getByRole("button", { name: "閉じる", exact: true }).press("Escape");
   await expect(dialog).toHaveCount(0);
@@ -34,7 +34,7 @@ test("金額と期間計・差額の内訳を開き、閉じると元の金額�
   const annual = app.getByRole("button", { name: "売上高 年間計 前年差の内訳", exact: true });
   await revealAmount(annual);
   await annual.click();
-  await expect(dialog.getByRole("rowheader", { name: "前年", exact: true })).toHaveCount(0);
+  await expect(dialog.getByRole("rowheader", { name: "前年見込", exact: true })).toHaveCount(0);
   await expect(dialog.getByRole("heading")).toHaveText("売上高 年間計 前年差の内訳");
   await dialog.getByRole("button", { name: "閉じる", exact: true }).click();
   await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "確定予算");
@@ -65,7 +65,7 @@ test("分類を絞った内訳から確定予算を編集し、元の分類と�
   await cell.click();
   const dialog = app.getByRole("dialog");
   await expect(dialog.getByRole("row").last()).toContainText(await cell.textContent() ?? "");
-  const previous = dialog.getByRole("rowheader", { name: "前年", exact: true });
+  const previous = dialog.getByRole("rowheader", { name: "前年見込", exact: true });
   await expect(previous).toHaveCount(0); // This expense has no previous-year amount.
   const contribution = dialog.getByRole("row").filter({ has: app.getByRole("button", { name: "既存商品の販売拡大（4行目）", exact: true }) });
   await expect(contribution).toContainText("部署A");
@@ -92,13 +92,18 @@ test("分類を絞った内訳から確定予算を編集し、元の分類と�
   await expect(dialog.getByRole("row").last()).toContainText(expected);
 });
 
-test("過去の内訳から開いた施策は同じ時点の参照専用になる", async ({ page, app }) => {
+test("過去の内訳から開いた施策は同じ時点の参照専用になる", async ({ page, app }, info) => {
+  // The preview toolbar and past-state header need vertical room above the table.
+  // Keep narrow-width coverage, as in the existing tall-header table tests.
+  if (info.project.name === "narrow") await page.setViewportSize({ width: 375, height: 1000 });
   await page.goto("/tests/ui/preview.html?data=full");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("button", { name: "サイドバーを開く", exact: true }).click();
   const menu = app.getByRole("navigation", { name: "メインナビゲーション" });
   await menu.getByRole("button", { name: "履歴", exact: true }).click();
   await app.locator(".history-date").last().click();
+  await expect(app.getByRole("button", { name: "現在に戻る", exact: true })).toBeVisible();
+  await settleMotion(app.locator("body"));
   await menu.getByRole("button", { name: "総原価表", exact: true }).click();
   await closeMenu(app);
   await app.getByRole("button", { name: "売上高 4月 一次予算の内訳", exact: true }).click();

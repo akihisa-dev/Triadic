@@ -41,7 +41,7 @@ export async function verifySpreadsheetIO(api) {
     { industries: [1], departments: [1, 2], pairs: [{ industryId: 1, departmentId: 1 }] }, '業種の取消で絞り込みと組み合わせを補正');
   assert.deepEqual(api.normalizeExportClassificationSelection({ industries: classification.industries.map(i => ({ ...i, industryName: '改名' })), departments: classification.departments }, selected), selected, '改名で出力選択を失わない');
   const pairsForIndex = plan.industries.slice(0, 2).flatMap(i => plan.departments.map(d => ({ industryId: i.id, departmentId: d.id })));
-  const sparse = { ...plan, previousAmounts: pairsForIndex.flatMap((pair, i) => plan.accounts.slice(0, 2).map((a, n) => ({ ...pair, accountId: a.id, month: 4, amount: String(i * 10 + n) + ".001", id: i * 2 + n, revision: 0 }))) };
+  const sparse = { ...plan, previousAmounts: pairsForIndex.flatMap((pair, i) => plan.accounts.slice(0, 2).map((a, n) => ({ ...pair, previousKind: 1, accountId: a.id, month: 4, amount: String(i * 10 + n) + ".001", id: i * 2 + n, revision: 0 }))) };
   sparse.previousAmounts.find = () => { throw new Error("前年金額の繰り返し全件検索は禁止"); };
   const indexed = api.createPreviousWorkbook(sparse, pairsForIndex);
   indexed.worksheets.filter(ws => ws.state === "visible").forEach((ws, i) => {
@@ -77,7 +77,7 @@ export async function verifySpreadsheetIO(api) {
   const pairs = [{ industryId: plan.industries[0].id, departmentId: plan.departments[0].id }, { industryId: plan.industries[1].id, departmentId: plan.departments[1].id }];
   // #15: real XLSX round trips must preserve every yen, including Excel's 15-digit boundary.
   const boundaryAmounts = ["9007199254740.991", "-9007199254740.991", "9007199254740.99", "-9007199254740.99", "1000000000000.001", "-1000000000000.001", "999999999999.999", "123.456", "-123.456", "0", "9007199254740", "0.001"];
-  const precise = { ...plan, previousAmounts: boundaryAmounts.map((amount, index) => ({ ...pairs[0], accountId: plan.accounts[0].id, month: [4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3][index], amount })) };
+  const precise = { ...plan, previousAmounts: boundaryAmounts.map((amount, index) => ({ ...pairs[0], previousKind: 1, accountId: plan.accounts[0].id, month: [4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3][index], amount })) };
   const preciseBefore = structuredClone(precise);
   const output = await api.serializeWorkbook(api.createPreviousWorkbook(precise, [pairs[0]]));
   const loaded = new ExcelJS.Workbook(); await loaded.xlsx.load(output);

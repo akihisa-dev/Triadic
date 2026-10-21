@@ -27,7 +27,7 @@ export async function verifyPreviousInputRebase(api) {
   const restored=await api.savePreviousAmounts(zero,change(zeros,account,4,'0.001'));
   const independent=await api.savePreviousAmounts(left,change(sameInput,account,5,'4'));
   assert.ok(await api.rebasePlan(left,restored,independent),'元の額へ戻したrevisionだけの差は競合にしない');
-  for(const month of [0,13,4.5])await assert.rejects(api.savePreviousAmounts(empty,{...input,rows:[{accountId:account,amounts:{[month]:'0'}}]}));
+  for(const month of [0,13,4.5])await assert.rejects(api.savePreviousAmounts(empty,{ previousKind: 1,...input,rows:[{accountId:account,amounts:{[month]:'0'}}]}));
   let stored=right;
   const handle={name:'前年入力.triadic',async getFile(){return new File([stored],this.name);},async createWritable(){let value;return {async write(bytes){value=new Uint8Array(bytes).slice();},async close(){stored=value;},async abort(){}};}};
   const session=new api.PlanSession();await session.open({...contents,bytes:empty,name:handle.name,handle});

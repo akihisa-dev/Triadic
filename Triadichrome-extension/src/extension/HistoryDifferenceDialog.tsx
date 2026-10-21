@@ -8,6 +8,7 @@ export function HistoryDifferenceDialog({ date, differences, impact, onClose, re
   const dialog = useRef<HTMLDialogElement>(null), title = useId();
   const [section, setSection] = useState(""), [query, setQuery] = useState(""), [page, setPage] = useState(0);
   const [mode, setMode] = useState("income");
+  const [previousKind, setPreviousKind] = useState(1);
   const [incomeKind, setIncomeKind] = useState(1), [incomePeriod, setIncomePeriod] = useState("year");
   const sections = useMemo(() => [...new Set(differences.map(item => item.section))], [differences]);
   const filtered = useMemo(() => {
@@ -27,7 +28,7 @@ export function HistoryDifferenceDialog({ date, differences, impact, onClose, re
       <button type="button" className="secondary-button" aria-pressed={mode === "income"} onClick={() => setMode("income")}>収支への影響</button>
       <button type="button" className="secondary-button" aria-pressed={mode === "fields"} onClick={() => setMode("fields")}>変更項目</button>
     </div>
-    {mode === "income" ? <><HistoryIncomeImpactTable impact={impact} kind={incomeKind} period={incomePeriod} onKindChange={setIncomeKind} onPeriodChange={setIncomePeriod} />{differences.length === 0 && <p>変更項目の差分はありません。</p>}</> : <>
+    {mode === "income" ? <><HistoryIncomeImpactTable impact={impact} previousKind={previousKind} onPreviousChange={setPreviousKind} kind={incomeKind} period={incomePeriod} onKindChange={setIncomeKind} onPeriodChange={setIncomePeriod} />{differences.length === 0 && <p>変更項目の差分はありません。</p>}</> : <>
     <div className="history-difference-controls">
       <label>対象<select value={section} onChange={event => { setSection(event.target.value); setPage(0); }}><option value="">すべて</option>{sections.map(name => <option key={name}>{name}</option>)}</select></label>
       <label>検索<input type="search" value={query} onChange={event => { setQuery(event.target.value); setPage(0); }} /></label>

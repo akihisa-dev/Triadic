@@ -10,6 +10,7 @@ export function buildDetails(contents: PlanContents): DetailRecord[] {
   const result: DetailRecord[] = [];
   const { fiscalYear } = contents;
   for (const item of contents.previousAmounts) {
+    if (item.previousKind !== (contents.previousKind ?? 1)) continue;
     const account = accounts.get(item.accountId)!;
     const target: DetailTarget = { source: "previous", previousId: item.id, revision: item.revision };
     result.push({ ...target, id: detailKey(target), rowId: `previous:${item.id}`, initiativeId: 0, kindId: 0, month: item.month, initiativeRevision: 0, rowRevision: 0,

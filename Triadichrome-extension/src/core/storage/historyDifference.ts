@@ -14,7 +14,7 @@ type Item = { section: string; subject: string; fields: Record<string, Value> };
 const labels: Record<string, string> = {
   fiscal_year: "基準年度", name: "名称", note: "備考", code: "コード", attribute: "科目属性", display_name: "表示名",
   expansion_id: "展開", expansion_category_id: "展開区分", department_id: "部署", industry_id: "業種", period_type_id: "期間",
-  account_id: "勘定科目", parent_id: "所属先の集計", sign: "集計の加減", position: "表示順", sort_order: "表示順",
+  previous_kind: "基準前年", account_id: "勘定科目", parent_id: "所属先の集計", sign: "集計の加減", position: "表示順", sort_order: "表示順",
   required_key: "必須集計", start_month_rule: "開始年月の規則", first_kind: "比較対象1", second_kind: "比較対象2",
 };
 const sections: Record<string, string> = { document_info: "基本情報", accounts: "勘定科目マスタ", expansions: "展開マスタ",
@@ -44,6 +44,7 @@ function items(db: Database): Map<string, Item> {
     if (raw === null) return value(null, "未設定");
     const table = references[field];
     if (table) return value(identity(table, raw), name(table, raw));
+    if (field === "previous_kind") return value(raw, raw === 1 ? "前年見込" : "前年実績");
     if (field === "first_kind" || field === "second_kind") return value(raw, raw === 1 ? "一次予算" : "確定予算");
     if (field === "position" || field === "sort_order") return value(raw, String(Number(raw) + 1));
     if (field === "sign") return value(raw, raw === 1 ? "＋" : "−");
@@ -76,8 +77,8 @@ function items(db: Database): Map<string, Item> {
   }
   for (const row of tables.get("previous_amounts")!) {
     if (row.amount_yen === 0) continue; // An absent previous-year cell is also zero.
-    put(["previous_amounts", row.account_id, identity("departments", row.department_id!), identity("industries", row.industry_id!), row.month],
-      "前年実額", `${name("departments", row.department_id!)} / ${name("industries", row.industry_id!)} / ${name("accounts", row.account_id!)}`,
+    put(["previous_amounts", row.previous_kind, row.account_id, identity("departments", row.department_id!), identity("industries", row.industry_id!), row.month],
+      row.previous_kind === 1 ? "前年見込" : "前年実績", `${name("departments", row.department_id!)} / ${name("industries", row.industry_id!)} / ${name("accounts", row.account_id!)}`,
       { [`${row.month}月`]: value(row.amount_yen, yenToAmount(Number(row.amount_yen))) });
   }
   const amounts = new Map(tables.get("initiative_amounts")!.map(row => [JSON.stringify([row.row_id, row.kind_id, row.month]), row.amount_yen!]));
@@ -111,7 +112,7 @@ export async function compareSavedHistory(bytes: Uint8Array, id: number): Promis
         const old = before.get(key), next = after.get(key), item = next ?? old!;
         const change = !old ? "追加" : !next ? "削除" : "変更";
         if (!old || !next) {
-          if (item.section === "前年実額") {
+          if ((item.section === "前年見込" || item.section === "前年実績")) {
             const [field, amount] = Object.entries(item.fields)[0]!;
             differences.push({ section: item.section, subject: item.subject, change: "変更", field,
               before: old ? amount.text : "0", after: next ? amount.text : "0" });

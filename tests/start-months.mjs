@@ -101,7 +101,7 @@ export async function verifyStartMonths(api) {
   bytes = await update(bytes,current=>({...current,periodTypeId:1}));
   assert.deepEqual((await readDerivedPlan(api, bytes)).initiatives[0].startYearMonths, { 1: null, 2: null }, "再利用IDを期間差と誤認しない");
 
-  const previous = await api.savePreviousAmounts(restored, { industryId: draft.industryId, departmentId: draft.departmentId, rows: [{ accountId, amounts: { 4: "1" } }] });
+  const previous = await api.savePreviousAmounts(restored, { previousKind: 1, industryId: draft.industryId, departmentId: draft.departmentId, rows: [{ accountId, amounts: { 4: "1" } }] });
   assert.ok((await readDerivedPlan(api, previous)).details.filter(detail => detail.kindId === 0).every(detail => detail.startYearMonth === null));
   const plan = { ...await readDerivedPlan(api, restored), bytes: restored, name: "開始年月.triadic", handle: {
     name: "開始年月.triadic", async getFile() { return new File([restored], this.name); }, async createWritable() {

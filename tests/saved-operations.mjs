@@ -40,7 +40,7 @@ export async function verifySavedOperations(api) {
   await add({ type: "industry", change: { type: "update", ...contents().industries[0], industryName: "編集済み業種" } });
   await add({ type: "period", change: { type: "update", ...contents().periodTypes[0], periodName: "編集済み期間" } });
   await add({ type: "settings", change: { type: "selection", screen: "cost-table", selected: [2] } });
-  await add({ type: "settings", change: { type: "previous", input: { industryId: 1, departmentId: 1, rows: [{ accountId, amounts: { 4: "0.001", 5: "-1.251" } }] } } });
+  await add({ type: "settings", change: { type: "previous", input: { previousKind: 1, industryId: 1, departmentId: 1, rows: [{ accountId, amounts: { 4: "0.001", 5: "-1.251" } }] } } });
   await add({ type: "initiative.register", draft: { name: "操作用施策", note: "登録時", fiscalYear: "2026", expansionId: 1, industryId: 1, departmentId: 1, periodTypeId: 1,
     rows: [{ id: "operation-row", accountId, amounts: { 4: "120.125", 5: "-0.001" }, overrides: { 2: { 4: "0" } } }] } });
   const initiative = contents().initiatives[0];

@@ -12,7 +12,7 @@ export async function verifyAccountAddRebase(api){
   const enrich=async(item,row,amount)=>{
     let bytes=await api.updateInitiative(item.bytes,initiative.id,2026,{...initiative,fiscalYear:'2026',rows:[...initiative.rows,{id:row,accountId:item.account.id,amounts:{4:amount}}]});
     bytes=await api.changeAggregationMaster(bytes,{type:'move',member:{kind:'account',id:item.account.id},parentId:initial.aggregations[0].id,sign:1});
-    return api.savePreviousAmounts(bytes,{industryId:1,departmentId:1,rows:[{accountId:item.account.id,amounts:{5:amount}}]});
+    return api.savePreviousAmounts(bytes,{ previousKind: 1,industryId:1,departmentId:1,rows:[{accountId:item.account.id,amounts:{5:amount}}]});
   };
   const l=await enrich(left,'new-row-a','0.001'),r=await enrich(right,'new-row-b','-0.001');
   for(const [a,b] of [[left.bytes,right.bytes],[right.bytes,left.bytes],[l,r],[r,l]]){

@@ -7,7 +7,7 @@ export async function verifyYenPrecision(api) {
   const original = await api.createTriadicDatabase(2026);
   const defaults = await readDerivedPlan(api, original);
   const accountId = defaults.accounts.find(account => account.accountType === "sales").id;
-  const priorInput = amount => ({ industryId: 1, departmentId: 1, rows: [{ accountId, amounts: { 4: amount } }] });
+  const priorInput = amount => ({ previousKind: 1, industryId: 1, departmentId: 1, rows: [{ accountId, amounts: { 4: amount } }] });
   const draft = amount => ({ ...api.createInitiativeDraft("2026"), name: "境界の精度確認", expansionId: 1, industryId: 1, departmentId: 1, rows: [{ accountId, amounts: { 4: amount } }] });
   const costAccount = contents => api.buildCostComparison(contents, [1, 2]).rows.find(row => row.kind === "account" && row.id === accountId);
   for (const sign of [1, -1]) {

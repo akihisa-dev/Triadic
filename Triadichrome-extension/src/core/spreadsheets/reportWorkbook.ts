@@ -3,7 +3,7 @@ import ExcelJS from "exceljs";
 import { excelAmount } from "./excelAmounts";
 import { installPreciseCalculations, type MonetaryCell } from "./reportPrecision";
 import { initiativeMonths } from "../domain/calendar";
-import { resolvedAmount, type KindSelections } from "../domain/kinds";
+import { resolvedAmount, previousKindName, type PreviousSelections, type KindSelections } from "../domain/kinds";
 import type { PlanContents } from "../domain/plan";
 import { buildPeriodCostComparison, tablePeriods, expansionPeriodAmount } from "../tables/periodTables";
 import { buildKindExpansionTable, filterPlan, type ClassificationFilter } from "../tables/planTables";
@@ -14,7 +14,7 @@ import { amountItems } from "../domain/amountItems";
 import { accountEffectsYen } from "../domain/accountEffects";
 
 export type ExportTable = "cost-table" | "expansion-table" | "initiative-list";
-export type ExportOptions = { tables: ExportTable[]; selections: KindSelections; costFilter: ClassificationFilter };
+export type ExportOptions = { tables: ExportTable[]; selections: KindSelections; costFilter: ClassificationFilter; previousSelections?: PreviousSelections };
 function periodStyles(ws: ExcelJS.Worksheet, start: number, width: number) {
   tablePeriods.forEach((period, index) => {
     if (period.months.length === 1) return;
@@ -51,17 +51,17 @@ function sources(wb: ExcelJS.Workbook, contents: PlanContents, filter: Classific
     (filter.departments === null || (department !== null && filter.departments.includes(department)));
   const classified = new Map<string, typeof contents.previousAmounts>();
   for (const value of contents.previousAmounts) {
-    const key = `${value.industryId}:${value.departmentId}:${value.accountId}`;
+    const key = `${value.previousKind}:${value.industryId}:${value.departmentId}:${value.accountId}`;
     classified.set(key, [...classified.get(key) ?? [], value]);
   }
   for (const records of classified.values()) {
     const value = records[0]!;
     const account = masters.accounts.get(value.accountId);
     ws.addRow(["前年", masters.industries.get(value.industryId)?.industryName,
-      masters.departments.get(value.departmentId)?.departmentName, "", "前年",
+      masters.departments.get(value.departmentId)?.departmentName, "", previousKindName(value.previousKind),
       account?.accountCode, account?.accountName, account?.accountType,
       ...initiativeMonths.map(m => excelAmount(records.find(v => v.month === m)?.amount ?? "0")),
-      value.accountId, 0, 0, included(value.industryId, value.departmentId) ? 1 : 0]);
+      value.accountId, 0, -value.previousKind, included(value.industryId, value.departmentId) ? 1 : 0]);
   }
   for (const item of contents.initiatives.filter(i => i.fiscalYear === contents.fiscalYear)) {
     const industryName = lookup(masters.industries, item.industryId)?.industryName;
@@ -117,6 +117,8 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
   for (const [name, selected] of Object.entries(options.selections)) {
     if (!selected.length || selected.length > (name === "initiative-list" ? 1 : 2) || new Set(selected).size !== selected.length || selected.some(k => k !== 1 && k !== 2)) throw new Error("出力する種別が正しくありません。");
   }
+  const previousSelections = options.previousSelections ?? { "cost-table": 1, "expansion-table": 1 };
+  if ((["cost-table", "expansion-table"] as const).some(screen => previousSelections[screen] !== 1 && previousSelections[screen] !== 2)) throw new Error("基準前年が正しくありません。");
   const wb = workbook();
   const masters = indexReportMasters(contents);
   const monetary: MonetaryCell[] = [];
@@ -125,8 +127,8 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
     cell.value = { formula: expression, result: result ?? "属性未設定" };
     if (money) monetary.push({ cell, expression, yen: result as number | null });
   };
-  const filtered = filterPlan(contents, options.costFilter);
-  const expansionTable = options.tables.includes("expansion-table") ? buildKindExpansionTable(contents, options.selections["expansion-table"], "registered") : null;
+  const filtered = filterPlan({ ...contents, previousKind: previousSelections["cost-table"] }, options.costFilter);
+  const expansionTable = options.tables.includes("expansion-table") ? buildKindExpansionTable({ ...contents, previousKind: previousSelections["expansion-table"] }, options.selections["expansion-table"], "registered") : null;
   const unfiltered = sources(wb, contents, options.costFilter, masters);
   const range = (col: number) => `'計算元'!$${unfiltered.ws.getColumn(col).letter}:$${unfiltered.ws.getColumn(col).letter}`;
   const conditionalSum = (month: number, criteria: [number, number | string][]) =>
@@ -173,7 +175,7 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
           const definition = masters.aggregations.get(row.id)!;
           expression = `${sum(definition.members.filter(m => m.sign === 1).map(m => at(rowMap.get(`${m.kind}:${m.id}`)!)))}-${sum(definition.members.filter(m => m.sign === -1).map(m => at(rowMap.get(`${m.kind}:${m.id}`)!)))}`;
         } else {
-          const prior = conditionalSum(period.months[0]!, [[21, row.id], [23, 0], [24, 1]]);
+          const prior = conditionalSum(period.months[0]!, [[21, row.id], [23, -previousSelections["cost-table"]], [24, 1]]);
           expression = vi === 0 ? prior : `${prior}+${conditionalSum(period.months[0]!, [[21, row.id], [23, selected[vi - 1]!], [24, 1]])}`;
         }
         if (row.kind === "ratio" && vi > selected.length) expression = `IF(OR(${at(r, selected.length)}="",${at(r, vi === selected.length + 1 ? 0 : 1)}=""),"",${expression})`;
@@ -284,8 +286,8 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
       ws.getCell(r, 2).value = `${group.expansion.expansionName}計`;
       amountRow(r, group.values, (_, __, ___, col) => sum(members.map(ri => ws.getCell(ri, col).address)));
     }
-    ["前年", "合計", "展開計"].forEach((label, i) => { ws.mergeCells(6 + i, 1, 6 + i, 4); ws.getCell(6 + i, 1).value = label; });
-    amountRow(6, table.previous, (_, metric, m) => effectFormula(null, 0, m, metric));
+    [previousKindName(previousSelections["expansion-table"]), "合計", "展開計"].forEach((label, i) => { ws.mergeCells(6 + i, 1, 6 + i, 4); ws.getCell(6 + i, 1).value = label; });
+    amountRow(6, table.previous, (_, metric, m) => effectFormula(null, -previousSelections["expansion-table"], m, metric));
     amountRow(8, table.changes, (_, __, ___, col) => sum(subtotals.map(ri => ws.getCell(ri, col).address)));
     amountRow(7, table.total, (_, __, ___, col) => `${ws.getCell(6, col).address}+${ws.getCell(8, col).address}`);
     finish(ws, 5, shaded);

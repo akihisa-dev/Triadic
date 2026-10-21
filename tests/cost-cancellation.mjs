@@ -36,7 +36,7 @@ export async function verifyCostCancellation(api, { excel = false } = {}) {
       assert.equal(table.groups[0].values[0][4].profit, target);
     }
     assert.deepEqual(api.buildCostComparison(separate, [1, 2]), api.buildCostComparison(plan, [1, 2]), "施策を分けても同じ科目合計になる");
-    const prior = { ...defaults, previousAmounts: signs.map((sign, index) => ({ accountId: sales.id, industryId: index + 1, departmentId: 1, month: 4, amount: api.yenToAmount(sign * maximum) })) };
+    const prior = { ...defaults, previousAmounts: signs.map((sign, index) => ({ previousKind: 1, accountId: sales.id, industryId: index + 1, departmentId: 1, month: 4, amount: api.yenToAmount(sign * maximum) })) };
     assert.equal(api.previousByAccount(prior).get(sales.id)[4], expected);
     assert.equal(api.previousTotals(prior)[4].sales, expected);
     // Distribute each signed term over different months: quarterly, half-year and annual sums must cancel.
@@ -55,7 +55,7 @@ export async function verifyCostCancellation(api, { excel = false } = {}) {
     const salesGroup = groups.find(group => group.required === "sales");
     const nested = accounts.map((account, index) => ({ id: 100 + index, name: `境界集計${index}`, required: null, members: [{ kind: "account", id: account.id, sign: 1 }] }));
     salesGroup.members = nested.map((group, index) => ({ kind: "group", id: group.id, sign: signs[index] }));
-    const multiAccountPrior = { ...defaults, accounts, previousAmounts: accounts.map((account, index) => ({ accountId: account.id, industryId: 1, departmentId: 1, month: 4, amount: api.yenToAmount(signs[index] * maximum) })) };
+    const multiAccountPrior = { ...defaults, accounts, previousAmounts: accounts.map((account, index) => ({ previousKind: 1, accountId: account.id, industryId: 1, departmentId: 1, month: 4, amount: api.yenToAmount(signs[index] * maximum) })) };
     assert.equal(api.previousTotals(multiAccountPrior)[4].sales, expected);
     const source = new Map(accounts.map(account => [account.id, { 4: maximum }]));
     const table = api.buildCostTable(accounts, [...groups, ...nested], [], 2026, source);
@@ -90,7 +90,7 @@ export async function verifyCostCancellation(api, { excel = false } = {}) {
   // Expansion has no account subtotal: apply each source record's sign before the final limit check.
   for (const attribute of ["sales", "cost", "expense", "profit"]) {
     const accounts = [1, 2].map(id => ({ ...sales, id, accountType: attribute }));
-    const previousAmounts = [1, 1, -1, -1].map((sign, index) => ({ accountId: index < 2 ? 1 : 2,
+    const previousAmounts = [1, 1, -1, -1].map((sign, index) => ({ previousKind: 1, accountId: index < 2 ? 1 : 2,
       industryId: 1, departmentId: index + 1, month: 4, amount: String(sign * 5000000000000) }));
     const plan = { ...defaults, accounts, initiatives: [], previousAmounts };
     const before = structuredClone(plan);

@@ -7,7 +7,7 @@ test("展開名ごとの集計・並び順・編集からの移動と再読込�
   await app.getByRole("complementary", { name: "メニュー" }).getByRole("button", { name: "展開表", exact: true }).click();
   const table = app.getByRole("table", { name: "展開表", exact: true });
   await expect(table).toBeVisible();
-  await expect(table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "前年", exact: true }) }).getByRole("cell").first()).toHaveText("20,342");
+  await expect(table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "前年見込", exact: true }) }).getByRole("cell").first()).toHaveText("20,342");
   await expect(table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "合計", exact: true }) }).getByRole("cell").first()).toHaveText("20,757");
   await expect(table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "展開計", exact: true }) }).getByRole("cell").first()).toHaveText("415");
   await expect(table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "荷主撤退計", exact: true }) }).getByRole("cell").first()).toHaveText("");
@@ -43,9 +43,9 @@ test("展開名ごとの集計・並び順・編集からの移動と再読込�
   await settleMotion(app.locator("body"));
   const region = app.getByRole("region", { name: "展開表の月別種別・比較", exact: true });
   expect(await region.evaluate(node => node.scrollWidth > node.clientWidth)).toBe(true);
-  await table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "前年", exact: true }) }).getByRole("cell").last().scrollIntoViewIfNeeded();
+  await table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "前年見込", exact: true }) }).getByRole("cell").last().scrollIntoViewIfNeeded();
   await region.evaluate(node => { node.scrollLeft = node.scrollWidth; });
-  await expect(table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "前年", exact: true }) }).getByRole("cell").last()).toBeInViewport();
+  await expect(table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "前年見込", exact: true }) }).getByRole("cell").last()).toBeInViewport();
   await region.evaluate(node => { node.scrollLeft = 0; });
   await attachImage(testInfo, "展開表", await page.locator("#app-preview").screenshot());
 });

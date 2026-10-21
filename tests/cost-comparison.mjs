@@ -6,13 +6,13 @@ export async function verifyCostComparison(api) {
   const filtered = api.buildCostComparison(api.filterPlan(contents, { industries: [1, 2], departments: [1] }), [1, 2]);
   assert.equal(values(filtered, "売上高", 4)[0], 2100);
   const primary = api.buildCostComparison(contents, [1]);
-  assert.deepEqual(primary.labels, ["前年", "一次予算", "前年差"]);
+  assert.deepEqual(primary.labels, ["前年見込", "一次予算", "前年差"]);
   assert.deepEqual(values(primary, "売上高", 4), [25290, 25640, 350]);
   const confirmed = api.buildCostComparison(contents, [2]);
-  assert.deepEqual(confirmed.labels, ["前年", "確定予算", "前年差"]);
+  assert.deepEqual(confirmed.labels, ["前年見込", "確定予算", "前年差"]);
   assert.deepEqual(values(confirmed, "売上高", 4), [25290, 25670, 380]);
   const both = api.buildCostComparison(contents, [1, 2]);
-  assert.deepEqual(both.labels, ["前年", "一次予算", "確定予算", "前年差", "一次予算差"]);
+  assert.deepEqual(both.labels, ["前年見込", "一次予算", "確定予算", "前年差", "一次予算差"]);
   assert.deepEqual(values(both, "売上高", 4), [25290, 25640, 25670, 380, 30]);
   assert.deepEqual(values(both, "売上高", 5), [25290, 25646, 25546, 256, -100]);
   assert.deepEqual(api.buildCostComparison(contents, [2, 1]), both, "選択順を入れ替えても列と差の基準を維持する");

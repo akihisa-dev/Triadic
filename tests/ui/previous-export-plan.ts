@@ -17,5 +17,5 @@ export async function createPreviousExportPlan(): Promise<Uint8Array> {
     db.exec("COMMIT");
     bytes = db.export();
   } finally { db.close(); }
-  return savePreviousAmounts(bytes, { industryId: 1, departmentId: 1, rows: [{ accountId: 1, amounts: { 4: "123.456" } }] });
+  return savePreviousAmounts(bytes, { previousKind: 1, industryId: 1, departmentId: 1, rows: [{ accountId: 1, amounts: { 4: "123.456" } }] });
 }

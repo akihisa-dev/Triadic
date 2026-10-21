@@ -47,8 +47,8 @@ export async function verifyHistoryDifference(api) {
   has("施策の月別金額", "一次予算・4月", "0.001", "0.002");
   has("施策の月別金額", "確定予算・4月", "0.001（引き継ぎ）", "0（手修正）");
   has("施策の月別金額", "確定予算・5月", "1（引き継ぎ）", "1（手修正）");
-  has("前年実額", "4月", "0", "0.001");
-  assert.equal(differences.filter(item => item.section === "前年実額").length, 1, "未入力と保存済み0は同じ値");
+  has("前年見込", "4月", "0", "0.001");
+  assert.equal(differences.filter(item => item.section === "前年見込").length, 1, "未入力と保存済み0は同じ値");
   assert.ok(differences.some(item => item.section === "集計の所属" && item.field === "集計の加減"));
   assert.equal(differences.filter(item => item.section === "科目・集計の表示順").length, 2);
   has("表示設定", "比較対象1", "一次予算", "確定予算");

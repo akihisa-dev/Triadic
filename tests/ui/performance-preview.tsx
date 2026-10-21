@@ -25,7 +25,7 @@ const traceAccounts = (source: Account[]) => source.map(account => {
 });
 const initialDraft = { ...base.initiatives[0]!, fiscalYear: "2026", rows: Array.from({length: Math.min(count,Number(params.get("rows") ?? 200))}, (_, i)=>({id:String(i+1),accountId:accounts[i]!.id, amounts: Object.fromEntries(initiativeMonths.map(m=>[m,"0"]))})) };
 function Preview() {
- const [previous, setPrevious] = useState<PreviousInput>({industryId: 1, departmentId: 1, rows: accounts.map(a => ({accountId: a.id, amounts: Object.fromEntries(initiativeMonths.map(m=>[m,"0"]))}))});
+ const [previous, setPrevious] = useState<PreviousInput>({ previousKind: 1,industryId: 1, departmentId: 1, rows: accounts.map(a => ({accountId: a.id, amounts: Object.fromEntries(initiativeMonths.map(m=>[m,"0"]))}))});
  const [draft, setDraft] = useState<InitiativeEntryDraft>(initialDraft);
  const [kind, setKind] = useState<KindId>(1);
  const [gridAccounts, setGridAccounts] = useState(() => params.has("traceTotals") ? traceAccounts(accounts) : accounts);

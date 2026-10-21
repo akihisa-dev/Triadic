@@ -8,11 +8,15 @@
 
 <a id="english"></a>
 
+## Previous-year forecast and actuals
+
+Previous-year forecast (前年見込) and actuals (前年実績) are independent inputs. Select the shared previous-year baseline (基準前年) before comparison targets in the cost and breakdown tables. Both budgets use that baseline without changing stored amounts. The initial baseline is forecast; each table saves its selection. Copy forecast to actuals for the selected industry/department only, with overwrite confirmation. Import/export identifies each baseline; imported templates update their recorded target. History income comparison also selects a baseline. Storage format 27 rejects older files without migration or rewriting; no new permissions or external transmission are introduced.
+
 ## English
 
 **A Chrome extension for building budgets from initiatives and checking them in three tables.**
 
-Enter what each initiative will do, which accounts will change, in which months, and by how much compared with the previous year to build a company's annual budget. The initiative list, cost summary, and breakdown table all use the same previous-year actuals and initiative adjustments, so you do not need to copy figures between tables.
+Enter what each initiative will do, which accounts will change, in which months, and by how much compared with the previous year to build a company's annual budget. The initiative list, cost summary, and breakdown table all use the same previous-year forecast/actuals and initiative adjustments, so you do not need to copy figures between tables.
 
 This app is for people who want to prepare budgets currently handled in Excel in the order they think through initiatives. Plans are managed in local `.triadic` files; calculations and saving take place on your device. Plan data is not sent to external servers.
 
@@ -20,7 +24,7 @@ This app is for people who want to prepare budgets currently handled in Excel in
 
 ## One plan, three perspectives
 
-The budget formula is **previous-year actuals + total initiative adjustments = budget**. Enter changes from the previous year for each initiative, rather than the total budget. We call these three views of the same plan “three-way equivalence” (三面等価).
+The budget formula is **previous-year forecast/actuals + total initiative adjustments = budget**. Enter changes from the previous year for each initiative, rather than the total budget. We call these three views of the same plan “three-way equivalence” (三面等価).
 
 | Table | What it shows | When to use it |
 |---|---|---|
@@ -30,7 +34,7 @@ The budget formula is **previous-year actuals + total initiative adjustments = b
 
 ```mermaid
 flowchart TD
-  previous[Previous-year actuals] --> plan[Calculate budget from previous year plus initiative adjustments]
+  previous[Previous-year forecast/actuals] --> plan[Calculate budget from previous year plus initiative adjustments]
   initiatives[Monthly adjustments for each initiative] --> plan
   initiatives --> list[Initiative list: adjustments by activity]
   plan --> cost[Cost summary: income and expenses by account]
@@ -48,7 +52,7 @@ For example, if an expense was 1,000 thousand yen in a month last year, entering
 | Select, copy, and paste table ranges | Enter multiple months, paste from Excel, and fill a range with one value |
 | Configure accounts, aggregations, and classifications per file | Adapt account order, aggregation signs, industries, departments, breakdown categories, and periods to your plan |
 | Compare months, quarters, half-years, and the full year | Check period amounts and budget differences in the cost summary and breakdown table |
-| Export the three tables to Excel and import a previous-year template | Work with plan tables in Excel and update previous-year actuals in bulk from a dedicated template |
+| Export the three tables to Excel and import a previous-year template | Work with plan tables in Excel and update previous-year forecast/actuals in bulk from a dedicated template |
 | Autosave and undo/redo the latest 100 operations | Save edits to registered data and undo successful changes one at a time |
 | Record, view, and restore past states | Keep snapshots in the same plan file and restore the entire plan to a selected point |
 | Inspect data and calculation rules in the app | Check the basis of displayed values through “Screens and data,” “How calculations work,” and “Processing flow” on Home |
@@ -61,7 +65,7 @@ See [Load in Chrome](#load-in-chrome) for installation steps. The repository's `
 
 1. **Create or open a file.** Open the entry screen through the extension icon and choose a fiscal year and save location with “New” (新規作成). Open existing plans with “Open file” (ファイルを開く) or drag and drop, and reopen the last file with “Continue” (続きから). Each file has one fiscal year, which cannot be changed after creation.
 2. **Prepare accounts and classifications.** New files include 57 accounts and 15 aggregations. Review accounts, aggregations, breakdown categories, departments, and industries under “Masters” (マスタ), adding or editing as needed. Set the industries assigned to each department.
-3. **Enter previous-year actuals.** In “Previous-year input” (前年入力), select one industry and one department and enter 12 months of amounts by account. You can also view totals for all departments and industries. To use Excel, export the previous-year template from “Import/export” (入出力), edit amounts, and import it.
+3. **Enter previous-year forecast/actuals.** In “Previous-year input” (前年入力), select one industry and one department and enter 12 months of amounts by account. You can also view totals for all departments and industries. To use Excel, export the previous-year template from “Import/export” (入出力), edit amounts, and import it.
 4. **Build up initiatives.** Choose “Add initiative” (施策を追加) in the initiative list, enter its name, breakdown category, department, industry, and monthly adjustments, then register it. Period is optional. Open registered initiatives by name to edit them; changes save automatically.
 5. **Review the three tables and export to Excel if needed.** Choose the initial or final budget and review income and expenses in the cost summary, category changes in the breakdown table, and individual activities in the initiative list. Select tables to export under “Import/export.”
 6. **Finish work.** Use “Close file” (ファイルを閉じる) in the sidebar. Unrecorded changes are added to snapshot history. If saving fails, retry while the input remains on screen. Forcibly closing or reloading a tab may lose unsaved input.
@@ -72,7 +76,7 @@ To try the app before editing a real file, generate and open the [test .triadic 
 
 Entering initiative adjustments in the initial budget also supplies the final budget. Overriding a month in the final budget makes that month use the override while other months continue to follow the initial budget. **An explicit override of 0 is also an override.**
 
-Previous-year actuals are shared by both budgets and managed on the separate previous-year input screen.
+Previous-year forecast and actuals are separate inputs. Each table selects one shared baseline for its displayed budgets.
 
 ### Saving and history essentials
 
@@ -83,7 +87,7 @@ Plans, masters, and snapshots are saved in the same `.triadic` file. Text and nu
 ### Current scope and limitations
 
 - The app runs as a Chrome extension and handles local files for which you grant read/write permission. It does not transmit plans externally or synchronize across browsers.
-- The storage format is 26. Formats 25 and earlier, and unknown formats, are rejected without migration or overwriting. When a file changes externally, independent changes to other rows are automatically merged with your edits. Overlapping row changes or inconsistent changes are not overwritten; you can save the entire entered plan to another file and continue. Cancellation or failure preserves input and the original file. Applying external changes clears earlier undo history, leaving only your current edit undoable. Save As copies the saved plan, masters, and history to another .triadic file and continues editing there. It preserves undo/redo and switches the filename and Continue reference only after a successful write. Category assignments and initiative category references also compare the category contents when merging. An ID reused after undo or history restoration cannot silently receive old references. Concurrent renaming and a new assignment/reference are rejected; ordinary renaming preserves existing references.
+- The storage format is 27. Formats 26 and earlier, and unknown formats, are rejected without migration or overwriting. When a file changes externally, independent changes to other rows are automatically merged with your edits. Overlapping row changes or inconsistent changes are not overwritten; you can save the entire entered plan to another file and continue. Cancellation or failure preserves input and the original file. Applying external changes clears earlier undo history, leaving only your current edit undoable. Save As copies the saved plan, masters, and history to another .triadic file and continues editing there. It preserves undo/redo and switches the filename and Continue reference only after a successful write. Category assignments and initiative category references also compare the category contents when merging. An ID reused after undo or history restoration cannot silently receive old references. Concurrent renaming and a new assignment/reference are rejected; ordinary renaming preserves existing references.
 - After successfully saving a conflict to another file, the displayed filename and “Continue” reference point to that file for normal editing, undo, history, and recording on closure. Cancellation or write failure leaves references unchanged. Failure to remember the reference on the device is reported; the current screen can still resume from the successful destination.
 - Excel export covers the three tables and calculation inputs; import accepts the previous-year template exported by the app. Arbitrary Excel workbooks and edits to exported three-table workbooks cannot be imported into the plan. Recalculation in an actual Excel installation has not been verified.
 - Input that fails to save remains on screen, but recovery after tab closure, reload, or forced termination is not guaranteed. Changes to the same file from multiple screens or external apps are detected to stop overwriting.
@@ -154,13 +158,13 @@ Initiative input and details place Back, the heading, and Duplicate on one row, 
 
 Monthly initiative input uses shaded month headers and light row/column borders. Account selection and deletion share each row, with compact amount padding. Initiative input and detail show account names without codes in both the field and its choices. All account dropdowns and deletion buttons align within the column, which retains enough width for complete names on narrow screens; monthly amounts scroll horizontally within the table. Three monthly total rows—revenue, expenses, profit—always appear at the bottom in the order and composition defined by the amount-item master. Rows without accounts or attributes are excluded, and no rows still displays 0. Effective amounts for the selected budget are added/subtracted in yen according to the composition signs and rounded to whole thousands only for display. Totals follow input, account changes, row addition/deletion, kind changes, and applying the initial budget; totals themselves are not saved. Invalid amounts or out-of-range totals leave affected totals blank and report why. Input the browser cannot interpret numerically leaves totals blank.
 
-### Entering previous-year actuals
+### Entering previous-year forecast/actuals
 
 Previous-year input places heading, department, and industry in that order, with the industry dropdown directly beside department. Narrow screens wrap controls and the table uses remaining height. Initially it shows totals for all departments/industries. Selecting a department restricts industries to its memberships and auto-selects a sole candidate. Valid selections remain; an invalid selection returns to all-industry totals. If either selection is “all,” totals are read-only; selecting both individually enables monthly entry. Selections are not saved to the plan. Read-only first-half (April–September), second-half (October–March), and full-year totals follow April–March. Unrounded monthly yen amounts are summed; period profit margin is ordinary profit divided by revenue aggregation. Period columns are excluded from editing, range paste, and saving; overflow leaves affected period cells blank with a notification and preserves monthly input. During vertical scrolling, account/aggregation and month headers through the revenue aggregation row (initial display name “社内控除後売上”) stay at the top; account/aggregation names stay left during horizontal scrolling. If the frozen section plus one data row cannot fit, only column headers stay fixed and all data rows scroll; resizing restores full freezing when space permits. Account cells are editable; subtotals, totals, and profit margins calculate automatically. Drag/Shift+arrows selects ranges; copy, multirow/column Excel paste, Delete/Backspace to 0, and Ctrl/Command+Enter filling are supported. Single-value paste also fills selected account cells. Arrows/Enter/Tab move among account cells; F2/double-click edits text; Esc restores the value at edit start. Paste containing invalid values, cells outside the table, or aggregation rows is rejected entirely with a notification. Classification-total overflow leaves amount/aggregation cells blank and reports it; narrow classifications to inspect and correct source amounts. Save failure preserves input with “Retry saving” (保存を再試行) and “Discard input” (入力を取り消す) in the notification.
 
 ### Cost summary and breakdown comparisons and period totals
 
-The cost summary shows previous year and one or two budget kinds saved in file display settings for each month. Budget amounts equal previous-year actuals plus that kind's initiative adjustments. With only initial budget, columns are previous year, initial budget, year-on-year difference; with only final budget, previous year, final budget, year-on-year difference; with both, previous year, initial budget, final budget, year-on-year difference, initial-budget difference, regardless of selection order. Year-on-year difference is displayed budget minus previous year (final minus previous with both); initial-budget difference is final minus initial. Differences use unrounded amounts; profit-margin differences use percentage points (pt). Unconfigured aggregations and incalculable margin differences are blank. Missing previous-year and initiative input means 0. Both tables leave displayed amounts/differences blank when rounded to 0; the cost summary does so for zero margins and margin differences too. Storage and calculations are unchanged. Names stay left while months scroll horizontally. Heading and comparison targets 1/2 share a row, labels beside selectors, wrapping narrowly. Rows, columns, and padding are compact; only the table scrolls both ways, with its horizontal scrollbar at the visible bottom. Vertical scrolling fixes month/kind headers through the revenue aggregation row (initially “社内控除後売上”), scrolling expense rows below. If the frozen section plus one data row cannot fit, only column headers stay fixed and all data rows scroll; resizing restores full freezing when space permits.
+The cost summary shows previous year and one or two budget kinds saved in file display settings for each month. Budget amounts equal previous-year forecast/actuals plus that kind's initiative adjustments. With only initial budget, columns are previous year, initial budget, year-on-year difference; with only final budget, previous year, final budget, year-on-year difference; with both, previous year, initial budget, final budget, year-on-year difference, initial-budget difference, regardless of selection order. Year-on-year difference is displayed budget minus previous year (final minus previous with both); initial-budget difference is final minus initial. Differences use unrounded amounts; profit-margin differences use percentage points (pt). Unconfigured aggregations and incalculable margin differences are blank. Missing previous-year and initiative input means 0. Both tables leave displayed amounts/differences blank when rounded to 0; the cost summary does so for zero margins and margin differences too. Storage and calculations are unchanged. Names stay left while months scroll horizontally. Heading and comparison targets 1/2 share a row, labels beside selectors, wrapping narrowly. Rows, columns, and padding are compact; only the table scrolls both ways, with its horizontal scrollbar at the visible bottom. Vertical scrolling fixes month/kind headers through the revenue aggregation row (initially “社内控除後売上”), scrolling expense rows below. If the frozen section plus one data row cannot fit, only column headers stay fixed and all data rows scroll; resizing restores full freezing when space permits.
 
 Both tables add quarters 1–4 after June, September, December, and March; first-half total follows September's quarter, and second-half/full-year totals follow March's. First half is April–September, second half October–following March, full year April–following March. Each period uses the same kind/difference columns as months and sums unrounded whole-yen monthly amounts. Cost-summary margins are recalculated as period ordinary profit / period revenue aggregation ×100, with differences in points. Existing rules for unconfigured values/attributes and zero revenue remain; period totals are not saved. Period-column backgrounds extend from headers through amounts: light gray and a left border for quarters, darker gray and bold for halves, darkest gray and stronger bold for annual totals.
 
@@ -216,7 +220,7 @@ In Import/export, the breakdown table and initiative list place the table name a
 
 In sidebar “Import/export,” select the cost summary, breakdown table, and/or initiative list. Only selected tables and “Calculation inputs” (計算元) are exported to `yyyy年度予算.xlsx` using the plan's fiscal year (for example, `2026年度予算.xlsx`). Original headers, borders, backgrounds, column widths, and body merges of category names remain. The breakdown table exports the same period and subcategory columns, ordering, vertical merges, and four fixed left columns. The initiative list fixes category, period, initiative name, and start year/month at the left, as on screen.
 
-Calculation inputs arrange source classifications, initiatives, kinds, accounts, and monthly amounts. They include the whole plan's previous-year actuals and initial/final amounts; table display conditions retain export-time choices. Editing source amounts recalculates and keeps up to three decimal places. Initial/final amounts are independent inputs. There are no master or override-only sheets; displayed rows/names/start dates/memberships remain as exported.
+Calculation inputs arrange source classifications, initiatives, kinds, accounts, and monthly amounts. They include the whole plan's previous-year forecast/actuals and initial/final amounts; table display conditions retain export-time choices. Editing source amounts recalculates and keeps up to three decimal places. Initial/final amounts are independent inputs. There are no master or override-only sheets; displayed rows/names/start dates/memberships remain as exported.
 
 Account/initiative sums use `SUMIFS`, period totals use `SUMIF` over contiguous ranges and `SUM` of existing subtotals, and differences/margins use arithmetic and `IF`. Account signs use addition/subtraction groups of `SUM`. Even with many nonadjacent subtotals, each `SUM` has at most 255 arguments and sums only the intended subtotals. There are no Microsoft 365-only functions, named functions, array formulas, macros, or external links. Hidden identification columns distinguish identically named initiatives/accounts. Amounts in existing calculation-input rows copied to the end are included in calculations. Display rows for new initiatives/accounts are not added automatically.
 
@@ -268,9 +272,9 @@ Chrome file selection, creation, and drops yielding file references are supporte
 
 The history heading and deletion controls share one row and wrap on narrow screens, preserving text sizes and the deletion confirmation flow.
 
-Use “View differences” beside a timestamp to compare that checkpoint with the currently saved plan. The read-only comparison includes initiatives, classifications, monthly amounts, previous-year actuals, masters, memberships, aggregation signs, ordering, and saved display settings. Search, category filters, and 50-item pages help inspect additions, deletions, and changes. Monetary differences retain one-yen precision, and final-budget inheritance is distinguished from explicit overrides, including zero and same-value overrides. The comparison does not save checkpoints or modify the file, undo history, selection, permissions, or storage format. Unsaved input and unseen external file updates are excluded. Failed comparisons can be retried.
+Use “View differences” beside a timestamp to compare that checkpoint with the currently saved plan. The read-only comparison includes initiatives, classifications, monthly amounts, previous-year forecast/actuals, masters, memberships, aggregation signs, ordering, and saved display settings. Search, category filters, and 50-item pages help inspect additions, deletions, and changes. Monetary differences retain one-yen precision, and final-budget inheritance is distinguished from explicit overrides, including zero and same-value overrides. The comparison does not save checkpoints or modify the file, undo history, selection, permissions, or storage format. Unsaved input and unseen external file updates are excluded. Failed comparisons can be retried.
 
-“History” below Masters in the sidebar lets you select a recorded time and view past state. Screens become read-only; “Return to present” (現在に戻る) restores the current plan and its pre-preview screen navigation history, allowing retained unregistered input to be resumed with Back. Past viewing has separate navigation history; canceling or failing restoration preserves current drafts, while successful restoration clears drafts and resets navigation. Confirming “Restore this point” (この時点に戻す) restores initiatives, all-kind amounts, previous-year actuals, masters, aggregations, and saved settings together. The pre-restore state and a new snapshot remain, allowing another selection to reverse restoration.
+“History” below Masters in the sidebar lets you select a recorded time and view past state. Screens become read-only; “Return to present” (現在に戻る) restores the current plan and its pre-preview screen navigation history, allowing retained unregistered input to be resumed with Back. Past viewing has separate navigation history; canceling or failing restoration preserves current drafts, while successful restoration clears drafts and resets navigation. Confirming “Restore this point” (この時点に戻す) restores initiatives, all-kind amounts, previous-year forecast/actuals, masters, aggregations, and saved settings together. The pre-restore state and a new snapshot remain, allowing another selection to reverse restoration.
 
 History stays in the same `.triadic`. It records five minutes after the first successful save of an unrecorded change; further saves do not extend the deadline. Normal closure and entering past viewing also record unrecorded changes. Unregistered or failed-save input is excluded. New format-25 files include history-management state and record the state before the first change on first saving. Viewing alone never rewrites files.
 
@@ -292,9 +296,9 @@ Plans use dedicated `.triadic` files, initially named `Untitled.triadic`. Each f
 
 Initiatives, accounts, months, and plan amounts are shared data represented differently in the three tables. Aggregation results are not duplicated as a separate authority. Implemented features include creation, validated loading, viewing account/aggregation/category/industry/department/period/fixed-kind/fixed-attribute masters, and saving initiatives/previous-year input.
 
-Storage format is 26. Compatibility with 25 and earlier has been removed; start from new files. Unsupported old or unknown formats are rejected without migration/overwriting. New-format files cannot open in older apps.
+Storage format is 27. Compatibility with 26 and earlier has been removed; start from new files. Unsupported old or unknown formats are rejected without migration/overwriting. New-format files cannot open in older apps.
 
-“Basic information” (`document_info`) stores fiscal year and creation/update timestamps, covering the entire saved document. Format metadata uses `triadic_metadata`. Initial/final budgets are fixed business definitions; kind tables and per-initiative years are not stored. Start year/month derives on loading from fiscal year, period rules, and effective monthly amounts by kind/account row, with no saved column. Common attributes use `initiatives`, common account rows `initiative_rows`, using the same string identifiers from addition onward. `initiative_amounts` stores whole-yen integers by row/kind ID/month. Kind 1 (initial) retains 12 months; kind 2 (final) only overridden months. Explicit 0 and overrides equal to initial values remain records; only unspecified months inherit. Shared resolution computes inheritance without duplicating stored values. Previous-year actuals use `previous_amounts` by account/industry/department/month. Screen-specific ordered kind choices use `kind_selections`. See [Monthly amounts and storage](DATA_MODEL.md) and [Implementation design](docs/single-year-plan-design.md). Nothing is transmitted externally.
+“Basic information” (`document_info`) stores fiscal year and creation/update timestamps, covering the entire saved document. Format metadata uses `triadic_metadata`. Initial/final budgets are fixed business definitions; kind tables and per-initiative years are not stored. Start year/month derives on loading from fiscal year, period rules, and effective monthly amounts by kind/account row, with no saved column. Common attributes use `initiatives`, common account rows `initiative_rows`, using the same string identifiers from addition onward. `initiative_amounts` stores whole-yen integers by row/kind ID/month. Kind 1 (initial) retains 12 months; kind 2 (final) only overridden months. Explicit 0 and overrides equal to initial values remain records; only unspecified months inherit. Shared resolution computes inheritance without duplicating stored values. Previous-year forecast/actuals use `previous_amounts` by account/industry/department/month. Screen-specific ordered kind choices use `kind_selections`. See [Monthly amounts and storage](DATA_MODEL.md) and [Implementation design](docs/single-year-plan-design.md). Nothing is transmitted externally.
 
 Master IDs are separate from names, preserving references across name/code changes. Unique constraints apply to accounts/child aggregations; required aggregations, references, duplicates, and cycles are checked on load/save. Changes and format validation complete on a copy before writing. The destination is exclusively locked against concurrent writes, latest content compared, and the lock held through commit. Concurrent saves/external updates preserve input and stop writing.
 
@@ -377,7 +381,7 @@ Generate `samples/全機能確認用.triadic` with `npm run samples:generate` an
 
 For screen-impacting changes, run `npm run dev:ui` and open the [screen-test entry](http://127.0.0.1:4173/tests/ui/preview.html) in the Codex browser to check modified display/operations. Open file loads the all-feature test plan; New creates an in-memory plan with default accounts/aggregations and no initiatives. No real file selection/writing occurs. Top selectors switch to default new plans or old-format empty plans and reproduce cancellation, invalid files, save failures, and save conflicts from external updates. “Reset to entry” (入口に戻す) or reload resets test data.
 
-Regular screen data has 59 accounts, 16 aggregations, 14 initiatives, two fixed budget kinds, and previous-year actuals for nine industries × two departments. The delivered baseline has 57 default accounts, 15 aggregations, and two business departments. Unused departments for filtering/autoselection are created only in private tests. It includes initial-budget 12 months, final overrides/explicit 0/second-half adjustments, and all-kinds-zero rows eligible for changes/deletion. It also covers positive/negative amounts, yen precision, multiple rows of the same account, unassigned accounts, and empty optional aggregations. To test the same 154 initiatives as the real sample, choose “業務計画サンプル（154施策）” in Test data or specify `?data=large`. The additional 144 initiatives each have nonzero effects, so initial/final totals differ from the regular 14-initiative screen tests. See [Test-data coverage](samples/README.md) for operations/expected results. `?data=overflow-monthly`, `overflow-period`, `overflow-previous`, and `overflow-difference` test aggregation overflow with savable artificial data; `overflow-previous-input` tests classification-total overflow and return to one combination; `overflow-initiative` tests final-only within-initiative overflow and edit access; `overflow-normal` is a normal-amount control.
+Regular screen data has 59 accounts, 16 aggregations, 14 initiatives, two fixed budget kinds, and previous-year forecast/actuals for nine industries × two departments. The delivered baseline has 57 default accounts, 15 aggregations, and two business departments. Unused departments for filtering/autoselection are created only in private tests. It includes initial-budget 12 months, final overrides/explicit 0/second-half adjustments, and all-kinds-zero rows eligible for changes/deletion. It also covers positive/negative amounts, yen precision, multiple rows of the same account, unassigned accounts, and empty optional aggregations. To test the same 154 initiatives as the real sample, choose “業務計画サンプル（154施策）” in Test data or specify `?data=large`. The additional 144 initiatives each have nonzero effects, so initial/final totals differ from the regular 14-initiative screen tests. See [Test-data coverage](samples/README.md) for operations/expected results. `?data=overflow-monthly`, `overflow-period`, `overflow-previous`, and `overflow-difference` test aggregation overflow with savable artificial data; `overflow-previous-input` tests classification-total overflow and return to one combination; `overflow-initiative` tests final-only within-initiative overflow and edit access; `overflow-normal` is a normal-amount control.
 
 `?data=legacy` tests old-format rejection, `?data=empty` empty masters, and `?data=defaults` new defaults.
 
@@ -485,7 +489,7 @@ If a save command produces unchanged saved business content, it leaves update ti
 
 Kind selection/aggregation settings validate input/current values; confirmed no-ops return original bytes without creating undo copies or starting updates. Invalid input/storage is rejected even for equal values; real changes prepare before/after undo data and snapshots.
 
-External merging identifies previous-year actuals by account/industry/department/month. New amounts in different cells both remain; local new rows receive unique IDs above existing numbering ranges. Different changes to the same cell and invalid merged references are rejected.
+External merging identifies previous-year forecast/actuals by account/industry/department/month. New amounts in different cells both remain; local new rows receive unique IDs above existing numbering ranges. Different changes to the same cell and invalid merged references are rejected.
 
 Independent simultaneous additions of initiative rows/aggregation memberships keep previously saved order and append local additions in input order. One-sided existing-row reorder merges with additions; opposing reorders reject. Legal membership gaps remain; numbering overflow or ambiguous existing equal ranks falls back to separate-file saving. Existing load rules/storage structure remain.
 
@@ -501,7 +505,7 @@ External merging does not simultaneously accept account changes/deletion of an i
 
 Saved results incorporating external initiative updates become current editing values and the autosave baseline. Input added during saving is layered as changes since submission, so later unrelated edits do not revert imported external amounts.
 
-External merging compares creation identities of departments/industries referenced by initiatives, previous-year actuals, and memberships. Input is not transferred to deleted/recreated classifications with the same number; renaming with the same identity and independent additions can merge. Categories, periods, and aggregations have no creation identities, so overlapping master/reference-side changes fall back to separate-file saving instead of automatic merging. Storage format remains.
+External merging compares creation identities of departments/industries referenced by initiatives, previous-year forecast/actuals, and memberships. Input is not transferred to deleted/recreated classifications with the same number; renaming with the same identity and independent additions can merge. Categories, periods, and aggregations have no creation identities, so overlapping master/reference-side changes fall back to separate-file saving instead of automatic merging. Storage format remains.
 
 Previous-year input updates only cells whose amounts actually changed among all account/12-month drafts. Unentered zero does not create a row; existing zero/unchanged rows keep IDs/revisions. Conflict comparison uses cell amounts, not revision-only differences. Merged save results apply to previous-year input and retain input added during saving.
 
@@ -543,7 +547,7 @@ Excelで行っている予算作成を、施策を考える順序に沿って進
 
 ## 一つの計画を、三つの視点で
 
-予算の基本は、**前年実額 ＋ 施策の増減合計 ＝ 予算**です。施策に入力するのは予算総額ではなく、前年からの増減です。同じ計画を三つの切り口から確認する関係を「三面等価」と呼んでいます。
+予算の基本は、**基準前年の金額 ＋ 施策の増減合計 ＝ 予算**です。施策に入力するのは予算総額ではなく、前年からの増減です。同じ計画を三つの切り口から確認する関係を「三面等価」と呼んでいます。
 
 | 表 | 確認できること | 使う場面 |
 |---|---|---|
@@ -553,7 +557,7 @@ Excelで行っている予算作成を、施策を考える順序に沿って進
 
 ```mermaid
 flowchart TD
-  previous[前年の実額] --> plan[前年＋施策の増減で予算を計算]
+  previous[前年の金額] --> plan[前年＋施策の増減で予算を計算]
   initiatives[施策ごとの月別増減] --> plan
   initiatives --> list[施策一覧：取り組みごとの増減]
   plan --> cost[総原価表：科目ごとの収支]
@@ -571,7 +575,7 @@ flowchart TD
 | 表の範囲選択・コピー・貼り付け | 複数月の入力、Excelからの貼り付け、同じ値の一括入力を行えます |
 | 科目・集計・分類をファイルごとに設定 | 自社の科目順、集計の加減算、業種・部署・展開・期間を計画に合わせられます |
 | 月別・四半期・半期・年間の比較 | 総原価表と展開表で期間全体の金額と予算の違いを確認できます |
-| 三表のExcel出力と前年フォーマットの取り込み | 計画の表をExcelで扱い、前年実額を専用フォーマットから一括更新できます |
+| 三表のExcel出力と前年フォーマットの取り込み | 計画の表をExcelで扱い、基準前年の金額を専用フォーマットから一括更新できます |
 | 自動保存と直近100操作の取り消し・やり直し | 登録済みデータの編集を保存し、保存に成功した変更を一つずつ戻せます |
 | 過去の状態の記録・閲覧・復元 | 同じ計画ファイルに時点ごとの状態を残し、全体を選んだ時点へ戻せます |
 | アプリ内でデータと計算の根拠を閲覧 | ホームの「画面とデータ」「計算の仕組み」「処理の流れ」で表示の根拠を確かめられます |
@@ -584,18 +588,24 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 1. **ファイルを作る・開く。** 拡張機能のアイコンから入口を開き、「新規作成」で基準年度と保存先を選びます。既存の計画は「ファイルを開く」またはドロップで開き、前回のファイルは「続きから」で再開できます。一つのファイルが一つの基準年度を持ち、作成後に年度は変更できません。
 2. **科目と分類を整える。** 新規ファイルには57科目・15集計が入っています。「マスタ」で科目・集計と展開・部署・業種などを確認し、必要に応じて追加・編集します。部署には、対象となる業種を設定します。
-3. **前年の実額を入れる。** 「前年入力」で業種と部署を一つずつ選び、科目別に12か月の金額を入力します。全部署・全業種の合計も閲覧できます。Excelを使う場合は「入出力」から前年フォーマットを出力し、金額を編集して取り込みます。
+3. **前年の金額を入れる。** 「前年入力」で業種と部署を一つずつ選び、科目別に12か月の金額を入力します。全部署・全業種の合計も閲覧できます。Excelを使う場合は「入出力」から前年フォーマットを出力し、金額を編集して取り込みます。
 4. **施策を積み上げる。** 「施策一覧」の「施策を追加」から、名称・展開・部署・業種と月別の増減を入力して登録します。期間は任意です。登録した施策は施策名から開いて編集でき、変更は自動保存されます。
 5. **三表を確認し、必要ならExcelへ出力する。** 一次予算・確定予算を選び、総原価表で収支、展開表で分類ごとの変化、施策一覧で個々の取り組みを確認します。「入出力」で出力する表を選べます。
 6. **作業を終える。** サイドバーの「閉じる」で終了します。未記録の変更があれば時点履歴を記録します。保存エラーが出た場合は入力を保持している間に再試行してください。タブの強制終了や再読み込みで、未保存の入力が失われることがあります。
 
 実ファイルを編集する前に試す場合は、[確認用の.triadicファイル](#確認用のtriadicファイル)を生成して開けます。これは全機能と大規模データを確認する開発用サンプルで、配布物には含まれません。
 
+### 前年見込・前年実績の使い分け
+
+「前年入力」で前年見込／前年実績を切り替えて入力します。前年実績の表示中はコピーアイコンから、選択中の部署・業種の12か月分を前年見込からコピーできます。対象と上書きを確認して実行し、取消可能です。両者は独立し、未入力は0です。
+総原価表・展開表は「基準前年」を比較対象1・2の左で選択します。同じ基準で両予算を計算し、切り替えだけでは入力金額を書き換えません。入出力でも表ごとに基準前年を選び、Excelの前年見出しと計算元を区別します。前年フォーマットは見込／実績を選んで出力し、取り込み時はファイルに記録された側だけを確認・更新します。用途のない旧Excelは出力し直してください。履歴の収支比較でも基準前年を選択できます。
+保存場所・保持期間・削除・外部送信は変わりません。見込・実績・基準選択を同じファイルと履歴に保存し、旧保存形式26以前は移行せず拒否します。失敗・キャンセルでは入力と元ファイルを保持します。
+
 ### 一次予算と確定予算の使い分け
 
 一次予算に施策の増減を入力すると、確定予算にも同じ値が引き継がれます。確定予算である月を手修正すると、その月は手修正した値を使い、ほかの月は引き続き一次予算に追従します。**手修正した0も一つの修正**として扱います。
 
-前年の実額は両予算に共通する基準として、別の前年入力画面で管理します。
+前年見込と前年実績は「前年入力」で切り替え、独立して管理します。総原価表・展開表は「基準前年」で一つを選び、表示中の一次・確定の両方へ適用します。初期値は前年見込で、選択は画面ごとに保存します。
 
 ### 保存と履歴で知っておきたいこと
 
@@ -617,7 +627,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 ### 現在の対応範囲と制限
 
 - Chrome拡張機能として動作し、利用者が読み書きを許可したローカルファイルを扱います。計画の外部送信やブラウザ間の同期は行いません。
-- 保存形式は26です。25以前や未知の形式は読み込みを拒否し、移行・上書きは行いません。ファイル更新時は、今回の編集と別の行への変更を自動で合わせて保存します。同じ行の変更や整合しない変更は上書きせず、入力済みの計画全体を別ファイルへ保存して編集を続けられます。キャンセル・保存失敗では入力と元ファイルを保持します。外部変更の反映時には過去の操作取消を初期化し、今回の編集だけを取り消せます。「別名で保存」は保存済みの計画・マスタ・履歴を別の.triadicファイルへ保存し、新しい保存先で編集を続けます。操作取消・やり直しを維持し、ファイル名と「続きから」は書き込み成功後だけ切り替えます。
+- 保存形式は27です。26以前や未知の形式は読み込みを拒否し、移行・上書きは行いません。ファイル更新時は、今回の編集と別の行への変更を自動で合わせて保存します。同じ行の変更や整合しない変更は上書きせず、入力済みの計画全体を別ファイルへ保存して編集を続けられます。キャンセル・保存失敗では入力と元ファイルを保持します。外部変更の反映時には過去の操作取消を初期化し、今回の編集だけを取り消せます。「別名で保存」は保存済みの計画・マスタ・履歴を別の.triadicファイルへ保存し、新しい保存先で編集を続けます。操作取消・やり直しを維持し、ファイル名と「続きから」は書き込み成功後だけ切り替えます。
 - 競合から別ファイルへ保存できた場合は、通常の編集・操作取消・履歴操作・終了時の記録を含め、画面のファイル名と「続きから」の参照を保存成功先へ揃えます。キャンセルや書き込み失敗では参照を変更しません。端末内への参照の記憶に失敗した場合は通知し、同じ画面内では成功先から再開できます。
 - Excel出力は三表と計算元を扱い、取り込みはアプリから出力した前年入力フォーマットが対象です。任意のExcelブックや、出力した三表の編集内容を計画へ取り込む機能はありません。Excel実機での再計算は未確認です。
 - 保存に失敗した入力は画面内で保持しますが、タブ終了・再読み込み・強制終了後の復元は保証しません。複数の画面や外部アプリで同じファイルを変更した場合は、外部更新を検出して上書きを止めます。
@@ -653,7 +663,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 ホームは施策一覧を中心に、関係するマスタと表を周囲へ配置した関連図です。周囲の項目同士の関係は外側で結び、中心へ向かう線と交差しないように配置します。1回目のクリックまたはEnter・Spaceで項目を選択し、選択済みの同じ項目をもう一度操作すると画面を開きます。別の項目では選択を切り替え、背景のクリックまたはEscapeで解除します。選択中の項目はモノクロの枠で示します。選択・参照は破線、構成・所属は点線、金額・計算は実線、同じ内容の別表示は二重線とし、凡例で意味を示します。選択中も線種を保ちます。すべての関係の説明を常時表示し、選択・ホバー・フォーカス・ドラッグ中は直接つながる線を強調します。それ以外の線と説明も読み取れる濃さを保ちます。カードと関係の説明はドラッグでき、線も同時に追従します。離すと元の定位置へ滑らかに戻り、ほかの項目の配置を崩しません。ドラッグ終了では画面を開きません。OSの「動きを減らす」設定では戻る動きを短くします。背景のドラッグ、ホイール・ピンチ・ボタン・キーでの拡大縮小、全体表示に対応し、ホームへ戻った際も図の移動位置と倍率を保持します。計画ファイルへの書き込みはありません。キャンバスは見出しの下から画面下端まで広がり、操作説明文は常設しません。名称・背景・関係の説明はモノクロを保ち、操作対象のアイコンと線だけを青で示します。種別マスタは前年・一次予算・確定予算を表示し、前年は施策に含めない実額の基準です。
 
-ホームの「画面とデータ」では、画面を選ぶと保存テーブルと表示項目の対応を確認できます。テーブルを開くと全保存項目と参照先を表示し、同じ画面で使う参照先へ移動できます。前年入力では集計の表示名・所属・加減算の保存元も示し、小計・合計・利益率と保存する前年実額を区別します。計算で作る三表や種別の固定定義も区別します。構造の閲覧だけを行い、実データの表示・編集やSQL実行は行いません。「関連図」で元の画面移動用の図へ戻れます。
+ホームの「画面とデータ」では、画面を選ぶと保存テーブルと表示項目の対応を確認できます。テーブルを開くと全保存項目と参照先を表示し、同じ画面で使う参照先へ移動できます。前年入力では集計の表示名・所属・加減算の保存元も示し、小計・合計・利益率と保存する基準前年の金額を区別します。計算で作る三表や種別の固定定義も区別します。構造の閲覧だけを行い、実データの表示・編集やSQL実行は行いません。「関連図」で元の画面移動用の図へ戻れます。
 
 ホームの「計算の仕組み」「処理の流れ」では、対象を選び、元になる情報、処理順、条件・例外、結果、保存場所を確認できます。金額精度・引き継ぎ・三表の計算と、読込・自動保存・競合・履歴・取消・一時状態を扱います。実際の計画の値や処理ログは表示せず、閲覧で計画を変更しません。「説明に対応する実装」で根拠のファイル名も確認できます。
 
@@ -700,13 +710,13 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 保持中の施策入力の参照確認では、変更前後の科目を番号で一度索引化し、同じ科目の判定を一回の確認内で共有します。科目の業務項目と明示的なローカル更新の照合、参照解除時の金額・手修正・入力中の値の保持は維持します。確認結果は保存せず、次の保存内容との照合で作り直します。
 
-### 前年実額の入力
+### 基準前年の金額の入力
 
 前年入力は見出し・部署名・業種名をこの順に並べ、部署名のすぐ右に業種名のドロップダウンを置きます。狭い画面では折り返し、表は残りの高さを使います。初期状態は全部署・全業種の合計です。部署を選ぶと所属業種だけが候補になり、一つなら自動選択します。有効な業種選択は保持し、所属しない場合は全業種の合計へ戻します。どちらかが全件なら合計の閲覧、両方を個別に指定すると月別入力ができます。選択は計画ファイルへ保存しません。4月〜3月の右に参照専用の上期（4〜9月）・下期（10〜3月）・通期（12か月）を表示します。丸める前の月額を円単位で合算し、利益率は期間の経常利益÷売上集計で再計算します。期間列は編集・範囲貼り付け・保存の対象にせず、計算上限を超えた期間セルは空欄と通知にし、月別入力を保持します。縦スクロール中も科目・集計と月の列見出しから売上集計（初期表示名「社内控除後売上」）の行までを表の上端に固定し、科目・集計名は横スクロール中も左端に固定します。固定領域と後続1行が収まらない場合は列見出しだけを固定し、高さに余裕が戻ると売上集計までの固定へ戻します。科目セルは直接編集でき、小計・合計・利益率は自動計算します。ドラッグ／Shift＋矢印で範囲を選択し、コピー、Excelからの複数行・列の貼り付け、Delete／Backspaceでの0への消去、Ctrl／⌘＋Enterでの同値入力ができます。単一値の貼り付けも選択範囲の科目セルへ適用します。矢印・Enter・Tabで科目セル間を移動し、F2／ダブルクリックで文字編集、Escでそのセルの編集開始時の値に戻します。貼り付けに不正値・表外・集計行が含まれる場合は全体を反映せず通知します。分類合計が計算上限を超えた場合は金額・集計セルを空欄にして通知し、分類を絞って元の金額を確認・修正できます。保存失敗時は入力を保持し、通知内の「保存を再試行」「入力を取り消す」を利用できます。
 
 ### 総原価表・展開表の比較と期間計
 
-総原価表は各月の「前年」と、ファイルの表示設定に保存された1〜2種別を表示します。種別の金額は前年実額＋その種別の施策増減合計です。各月の列は、一次予算のみなら「前年・一次予算・前年差」、確定予算のみなら「前年・確定予算・前年差」、両方なら選択順にかかわらず「前年・一次予算・確定予算・前年差・一次予算差」です。前年差は表示する予算−前年（両方なら確定予算−前年）、一次予算差は確定予算−一次予算です。差は丸める前の値から計算し、利益率の差はポイント（pt）で表示します。未設定の集計や計算できない利益率の差は空欄です。前年未入力と施策未入力は計算上0として扱います。総原価表・展開表は、丸めた表示が0になる金額・差額を空白にします。総原価表の利益率とその差も表示上0なら空白にします。保存値や計算は変更しません。科目名・集計名を左端に固定し、月の列を横スクロールできます。総原価表は見出し・比較対象1・2を一行に並べ、比較対象のラベルも選択欄の横に置きます。狭い画面では折り返します。行高・列幅・余白を抑え、表の領域だけを縦横にスクロールします。横スクロールバーは画面内の表の下端に表示します。縦スクロールでは月・種別の見出しから売上集計（初期表示名「社内控除後売上」）の行までをまとめて固定し、その下の費用行をスクロールします。固定領域と後続1行が収まらない場合は列見出しだけを固定し、高さに余裕が戻ると売上集計までの固定へ戻します。
+総原価表は各月の「前年」と、ファイルの表示設定に保存された1〜2種別を表示します。種別の金額は基準前年の金額＋その種別の施策増減合計です。各月の列は、一次予算のみなら「前年・一次予算・前年差」、確定予算のみなら「前年・確定予算・前年差」、両方なら選択順にかかわらず「前年・一次予算・確定予算・前年差・一次予算差」です。前年差は表示する予算−前年（両方なら確定予算−前年）、一次予算差は確定予算−一次予算です。差は丸める前の値から計算し、利益率の差はポイント（pt）で表示します。未設定の集計や計算できない利益率の差は空欄です。前年未入力と施策未入力は計算上0として扱います。総原価表・展開表は、丸めた表示が0になる金額・差額を空白にします。総原価表の利益率とその差も表示上0なら空白にします。保存値や計算は変更しません。科目名・集計名を左端に固定し、月の列を横スクロールできます。総原価表は見出し・比較対象1・2を一行に並べ、比較対象のラベルも選択欄の横に置きます。狭い画面では折り返します。行高・列幅・余白を抑え、表の領域だけを縦横にスクロールします。横スクロールバーは画面内の表の下端に表示します。縦スクロールでは月・種別の見出しから売上集計（初期表示名「社内控除後売上」）の行までをまとめて固定し、その下の費用行をスクロールします。固定領域と後続1行が収まらない場合は列見出しだけを固定し、高さに余裕が戻ると売上集計までの固定へ戻します。
 
 総原価表と展開表は、6月・9月・12月・3月の直後に第1〜第4四半期計、9月の四半期計の後に上期計、3月の四半期計の後に下期計・年間計を表示する。上期は4〜9月、下期は10〜翌3月、年間は4〜翌3月とする。各期間にも月と同じ種別・差の列を設け、丸める前の月額を1円単位で合算する。総原価表の利益率は期間内の経常利益合計÷売上集計合計×100で再計算し、その差をポイントで求める。未設定・属性未設定・売上合計0は既存の表示規則を維持し、期間計は保存しない。期間計の列は見出しから金額欄まで背景を通し、四半期計は薄いグレーと左の区切り線、上期計・下期計はより濃いグレーと太字、年間計は最も濃いグレーと強い太字で区別する。
 
@@ -767,7 +777,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 所属・業種・部署の変更や取消では有効な出力選択を保ち、失効した分類・前年フォーマットの組み合わせを除きます。やり直しで除いた選択を復活させず、改名では選択を保持します。選択は入出力画面内だけの情報で、計画ファイルへ保存しません。
 
-「計算元」は元の分類・施策・種別・科目・月別金額の配置です。出力ごとにマスタをIDで一度索引化し、計算元・表示名・集計定義で共有します。施策の業種・部署名は施策ごとに取得し、科目行ごとの全件検索を行いません。計画全体の前年実額と一次・確定予算の金額を含み、三表の表示条件は出力時の指定を維持します。元金額の編集で再計算し、金額は小数点以下3桁まで保持します。一次・確定の金額はそれぞれ独立した入力値です。マスタや修正専用のシートは作らず、表示行・名称・開始年月・所属は出力時点の内容を維持します。
+「計算元」は元の分類・施策・種別・科目・月別金額の配置です。出力ごとにマスタをIDで一度索引化し、計算元・表示名・集計定義で共有します。施策の業種・部署名は施策ごとに取得し、科目行ごとの全件検索を行いません。計画全体の基準前年の金額と一次・確定予算の金額を含み、三表の表示条件は出力時の指定を維持します。元金額の編集で再計算し、金額は小数点以下3桁まで保持します。一次・確定の金額はそれぞれ独立した入力値です。マスタや修正専用のシートは作らず、表示行・名称・開始年月・所属は出力時点の内容を維持します。
 
 科目別・施策別の集計は`SUMIFS`、期間計は連続範囲の`SUMIF`と既存の小計の`SUM`、差額と利益率は四則演算と`IF`で求めます。科目の加減算は`SUM`の加算分・減算分で表現します。離れた小計が多数ある場合も、各`SUM`の引数を255個以内に分け、対象の小計だけを合計します。Microsoft 365専用の関数、名前付き関数、配列数式、マクロ、外部リンクは使いません。計算元には識別用の非表示列があり、同名の施策・科目も区別します。既存の計算元行をコピーして末尾へ追加した金額も集計対象になります。新しい施策・科目の表示行を自動追加する機能はありません。
 
@@ -817,13 +827,13 @@ Chromeのファイル選択、新規作成、ファイル参照を取得でき�
 
 履歴の見出しと削除操作欄は一行に並び、狭い画面では折り返します。文字の大きさと削除前の確認操作は維持しています。
 
-履歴比較の「収支への影響」で、前年実額＋施策の増減による売上・費用・利益を、履歴・現在・増減（現在−履歴）で確認できます。一次／確定予算と年間／月別を切り替え、初期表示は一次予算の年間です。全業種・全部署を対象に、各時点の科目属性と金額項目マスタの構成を使います。売上は売上−売上原価、費用は費用、利益は売上−売上原価−費用＋利益属性で、未設定属性は既存規則に従って除きます。確定の引き継ぎ・手修正0を反映し、年間は円精度の月額を合算します。1円の差も分かるよう小数点以下3桁まで表示し、上限超過は該当する値だけに示します。「変更項目」で従来の一覧へ切り替えられ、検索条件は収支計算を変えません。比較は参照専用で、計算結果・選択は画面内だけに保持します。
+履歴比較の「収支への影響」で、基準前年の金額＋施策の増減による売上・費用・利益を、履歴・現在・増減（現在−履歴）で確認できます。一次／確定予算と年間／月別を切り替え、初期表示は一次予算の年間です。全業種・全部署を対象に、各時点の科目属性と金額項目マスタの構成を使います。売上は売上−売上原価、費用は費用、利益は売上−売上原価−費用＋利益属性で、未設定属性は既存規則に従って除きます。確定の引き継ぎ・手修正0を反映し、年間は円精度の月額を合算します。1円の差も分かるよう小数点以下3桁まで表示し、上限超過は該当する値だけに示します。「変更項目」で従来の一覧へ切り替えられ、検索条件は収支計算を変えません。比較は参照専用で、計算結果・選択は画面内だけに保持します。
 
 各日時の「差分を見る」から、履歴と現在の保存済みデータの追加・削除・変更を確認できます。施策の名称・備考・分類・科目行・月額、前年、マスタ・所属・集計符号・並び順・表示設定が対象です。過去と現在の値を並べ、対象の絞り込み・検索と50件ごとの表示で確認します。金額差分は編集値と同じ千円単位・小数点以下3桁まで表示し、確定予算の引き継ぎ・手修正0・同額手修正も区別します。前年の未入力と0、更新日時・改訂番号だけの違いは差分にしません。施策・部署・業種の作成識別子が変わった場合は削除・追加として扱います。比較は専用Workerで行い、ファイルや履歴を保存せず、操作取消・画面・削除用の選択を保持します。外部更新や未保存の入力は含めません。失敗時は「比較を再試行」で再比較でき、保存形式・権限・外部送信に変更はありません。
 
 サイドバーの「マスタ」の下にある「履歴」から、記録日時を選んで過去の状態を閲覧できます。各画面は閲覧専用になり、ヘッダーの「現在に戻る」で現在の計画へ戻ります。「この時点に戻す」を確認すると、施策・全種別の金額・前年・マスタ・集計・保存済み設定をまとめて復元します。復元前の状態と新しい履歴も残るので、選び直して復元を取り消せます。
 
-履歴は同じ`.triadic`内に保存します。最初の未記録の変更の保存成功から5分後に記録し、追加の保存で期限を延ばしません。正常にファイルを閉じるときと過去閲覧に入るときも未記録分を残します。登録前・保存失敗中の入力は履歴に含みません。保存形式26の新規ファイルは履歴管理状態を備え、最初の変更前の状態を初回保存時に記録します。閲覧だけでは書き換えません。
+履歴は同じ`.triadic`内に保存します。最初の未記録の変更の保存成功から5分後に記録し、追加の保存で期限を延ばしません。正常にファイルを閉じるときと過去閲覧に入るときも未記録分を残します。登録前・保存失敗中の入力は履歴に含みません。保存形式27の新規ファイルは履歴管理状態を備え、最初の変更前の状態を初回保存時に記録します。閲覧だけでは書き換えません。
 
 自動削除や保持期限はありません。履歴一覧のチェックで複数件を選んで削除するか、端末時刻の日時を指定して、それより前を一括削除できます。確認後の削除は取り消せず、現在の計画は変わりません。削除確認では対象件数と範囲、取り消せない旨を常に表示し、削除失敗の理由を併記します。取り消して別の削除確認を開いた際は、前回の操作エラーを引き継ぎません。全体の状態を記録するため容量は増えます。削除後はファイル内の不要領域を詰めます。選択の照合と各行のチェックは共有するID集合で判定し、一覧・選択が同じ間は判定結果を再利用します。消えた履歴は削除対象から除き、新しい履歴は自動選択しません。選択状態は画面内だけで保持します。
 
@@ -842,9 +852,9 @@ Chromeのファイル選択、新規作成、ファイル参照を取得でき�
 
 施策・勘定科目・年月と計画金額を同じデータとして持ち、施策一覧・総原価表・展開表はそのデータを異なる視点で表します。集計結果を別の正本として重複保存しません。現在はファイルの新規作成、形式検証を伴う読込、勘定科目マスタ・集計マスタ・展開マスタ・業種マスタ・部署マスタ・期間マスタ・固定種別マスタ・固定科目属性マスタの閲覧、施策・前年入力の保存を実装しています。
 
-保存形式は26です。保存形式25以前の既存ファイルとの互換性は廃止し、新規ファイルから使用します。対応しない旧形式や未知の形式は読み込み時に拒否し、移行や上書きは行いません。新しい形式のファイルは旧アプリで開けません。
+保存形式は27です。保存形式26以前の既存ファイルとの互換性は廃止し、新規ファイルから使用します。対応しない旧形式や未知の形式は読み込み時に拒否し、移行や上書きは行いません。新しい形式のファイルは旧アプリで開けません。
 
-「基本情報」（`document_info`）に基準年度・作成日時・更新日時を保存します。保存データ全体に関する情報だけを扱い、保存形式などは`triadic_metadata`で管理します。一次予算・確定予算の2種別は業務定義で固定します。種別表や施策ごとの年度は保存しません。開始年月は基準年度・期間の算出規則・各科目行の種別別有効月額から読み込み時に導出し、保存列は持ちません。共通属性は`initiatives`、共通科目行は`initiative_rows`へ保存し、追加時から同じ文字列識別子を使います。施策金額は`initiative_amounts`へ科目行・種別ID・月で区別して円の整数を保存します。種別1（一次予算）は12か月、種別2（確定予算）は手修正月だけを保持します。明示した0と一次予算と同額の手修正もレコードとして保持し、未指定月だけ一次予算を引き継ぎます。引き継ぎ値は共通の解決処理から求め、別の保存値へ複製しません。前年実額は`previous_amounts`へ科目・業種・部署・月ごとに保存します。種別選択は`kind_selections`に画面別の順序として保存します。詳細は[月別金額と保存構造](DATA_MODEL.md)と[実装設計](docs/single-year-plan-design.md)を参照してください。外部送信はありません。
+「基本情報」（`document_info`）に基準年度・作成日時・更新日時を保存します。保存データ全体に関する情報だけを扱い、保存形式などは`triadic_metadata`で管理します。一次予算・確定予算の2種別は業務定義で固定します。種別表や施策ごとの年度は保存しません。開始年月は基準年度・期間の算出規則・各科目行の種別別有効月額から読み込み時に導出し、保存列は持ちません。共通属性は`initiatives`、共通科目行は`initiative_rows`へ保存し、追加時から同じ文字列識別子を使います。施策金額は`initiative_amounts`へ科目行・種別ID・月で区別して円の整数を保存します。種別1（一次予算）は12か月、種別2（確定予算）は手修正月だけを保持します。明示した0と一次予算と同額の手修正もレコードとして保持し、未指定月だけ一次予算を引き継ぎます。引き継ぎ値は共通の解決処理から求め、別の保存値へ複製しません。基準前年の金額は`previous_amounts`へ科目・業種・部署・月ごとに保存します。種別選択は`kind_selections`に画面別の順序として保存します。詳細は[月別金額と保存構造](DATA_MODEL.md)と[実装設計](docs/single-year-plan-design.md)を参照してください。外部送信はありません。
 
 マスタの識別子を名称から分離し、名称・コード変更でも対応を維持します。科目と子集計の参照に一意制約を設け、読込・保存時に必須集計・参照・重複・循環を検証します。実ファイルへ書く前にコピー上の処理と形式検証を完了し、保存先の同時書き込みを排他的に確保してから最新内容を照合し、確定まで保持します。同時保存や外部の更新があれば入力を保持して書き込みを止めます。
 
@@ -946,7 +956,7 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 
 画面に影響する変更では`npm run dev:ui`で起動し、Codex内のブラウザで[画面テスト用の入口](http://127.0.0.1:4173/tests/ui/preview.html)を開いて、変更した表示・操作を確認します。「ファイルを開く」は全機能確認用のテスト計画を読み込み、「新規作成」はメモリ内にデフォルトの科目・集計を備えた施策未登録の計画を作ります。実ファイルの選択や書き込みは行いません。上部の選択欄でデフォルトの新規計画・旧形式の空の計画への切り替え、キャンセル・不正ファイル・保存失敗・ファイル更新による保存時の競合を再現でき、「入口に戻す」または再読み込みでテストデータを初期化します。
 
-通常の画面確認用データは59科目・16集計・14施策、固定2種別、業種9件×部署2件の前年実額です。配布する基準サンプルはデフォルト57科目・15集計と業務上の2部署だけを持ちます。部署による候補の絞り込みと自動選択は専用テストのメモリ上のデータで確認します。一次予算の12か月、確定予算の手修正・手修正0・下期調整、全種別0の変更・削除可能行を含みます。既存の正負・1円精度・同一科目の複数行・未所属科目・空の任意集計も試せます。実ファイルと同じ154施策を試すには「テストデータ」で「業務計画サンプル（154施策）」を選ぶか、`?data=large`を指定します。追加144施策は各々非0の効果を持ち、一次と確定の全体集計は14施策だけの通常画面テストと異なります。操作と期待結果は[確認用データの対応表](samples/README.md)を参照してください。`?data=overflow-monthly`・`overflow-period`・`overflow-previous`・`overflow-difference`は保存可能な人工データによる集計上限超過、`overflow-previous-input`は前年入力の分類合計超過から単一組み合わせへの復帰、`overflow-initiative`は確定予算だけの施策内合計超過と編集導線、`overflow-normal`は通常額の対照を確認します。
+通常の画面確認用データは59科目・16集計・14施策、固定2種別、業種9件×部署2件の基準前年の金額です。配布する基準サンプルはデフォルト57科目・15集計と業務上の2部署だけを持ちます。部署による候補の絞り込みと自動選択は専用テストのメモリ上のデータで確認します。一次予算の12か月、確定予算の手修正・手修正0・下期調整、全種別0の変更・削除可能行を含みます。既存の正負・1円精度・同一科目の複数行・未所属科目・空の任意集計も試せます。実ファイルと同じ154施策を試すには「テストデータ」で「業務計画サンプル（154施策）」を選ぶか、`?data=large`を指定します。追加144施策は各々非0の効果を持ち、一次と確定の全体集計は14施策だけの通常画面テストと異なります。操作と期待結果は[確認用データの対応表](samples/README.md)を参照してください。`?data=overflow-monthly`・`overflow-period`・`overflow-previous`・`overflow-difference`は保存可能な人工データによる集計上限超過、`overflow-previous-input`は前年入力の分類合計超過から単一組み合わせへの復帰、`overflow-initiative`は確定予算だけの施策内合計超過と編集導線、`overflow-normal`は通常額の対照を確認します。
 
 `?data=legacy`は旧形式の拒否、`?data=empty`は空のマスタ、`?data=defaults`は新規デフォルトを確認します。
 
@@ -1056,7 +1066,7 @@ Chrome Web Store用のアイコン・販促画像2種類・スクリーンショ
 
 種別選択と集計設定は入力と現在値を検証し、変更なしと確定できれば取消用コピーや更新処理を開始せず元のbytesを返します。不正な入力や保存構造は同値でも拒否し、実際の変更には変更前後の取消用データと時点履歴を準備します。
 
-外部更新との統合では、前年実額を科目・業種・部署・月で識別します。異なるセルの新規金額は双方を保持し、今回側の新規行には既存の採番範囲を超える一意なIDを割り当てます。同じセルの異なる変更と、統合後の参照不整合は拒否します。
+外部更新との統合では、基準前年の金額を科目・業種・部署・月で識別します。異なるセルの新規金額は双方を保持し、今回側の新規行には既存の採番範囲を超える一意なIDを割り当てます。同じセルの異なる変更と、統合後の参照不整合は拒否します。
 
 施策行と集計所属の独立した同時追加は、先に保存された順序を保ち、今回側の追加をその末尾へ入力順に続けます。既存行の並べ替えが一方だけなら追加と統合し、双方の相反する並べ替えは拒否します。集計所属の合法な欠番は保持し、採番上限や既存の同順位で順序を決められない場合は別ファイル保存へ戻します。既存ファイルの読込条件と保存構造は変更しません。
 
@@ -1072,7 +1082,7 @@ Excel入出力画面とExcelJS・JSZip・Saxesの処理は、入出力を初め�
 
 施策の外部更新を統合した保存結果は、編集中の値と自動保存の基準へ反映します。保存中の追加入力は提出時点からの変更として重ね、取り込んだ外部金額を次の無関係な編集で戻しません。
 
-外部更新との統合では、施策・前年実額・所属が参照する部署と業種の作成識別子を照合します。施策の科目行・月額だけを変更した場合も、所有する施策から分類をたどって同じ検査を行います。同じ番号で削除・再作成された分類へ入力を移さず、同じ識別子の改名や独立追加は統合できます。展開・期間・集計には作成識別子がないため、そのマスタ変更と参照側の変更が重なる場合は自動統合せず、別ファイル保存へ戻します。保存形式は変更しません。
+外部更新との統合では、施策・基準前年の金額・所属が参照する部署と業種の作成識別子を照合します。施策の科目行・月額だけを変更した場合も、所有する施策から分類をたどって同じ検査を行います。同じ番号で削除・再作成された分類へ入力を移さず、同じ識別子の改名や独立追加は統合できます。展開・期間・集計には作成識別子がないため、そのマスタ変更と参照側の変更が重なる場合は自動統合せず、別ファイル保存へ戻します。保存形式は変更しません。
 
 前年入力では全科目・12か月の編集値のうち、実際に額が変わったセルだけを更新します。未入力の0は新規行にせず、既存の0行と変更のない行の識別子・改訂番号を保持します。競合照合はセルの額を比べ、改訂番号だけの違いでは拒否しません。外部更新を統合した保存結果を前年入力へ反映し、保存中の追加入力も保持します。
 
@@ -1086,7 +1096,7 @@ Excel入出力画面とExcelJS・JSZip・Saxesの処理は、入出力を初め�
 
 総原価表の施策増減は、対象月が確定した金額をその月の円整数へ直接加算します。複数月の集計は従来どおり扱い、途中の相殺をBigIntで保持し、意味のある最終合計で範囲を検査します。
 
-ファイルを開く・続きから・ドロップ・新規作成後の読込では、同じ接続の一度の完全検査から計画と履歴をまとめて取得します。両方の取得が成功してから画面へ公開し、失敗時は元のセッションと前回の参照を保持します。開くだけではファイルを更新しません。標準の計画読込は実行環境によらず施策行と前年実額を返し、全明細を生成しません。サンプル検査・分析用の派生明細はテスト側で明示的に生成します。
+ファイルを開く・続きから・ドロップ・新規作成後の読込では、同じ接続の一度の完全検査から計画と履歴をまとめて取得します。両方の取得が成功してから画面へ公開し、失敗時は元のセッションと前回の参照を保持します。開くだけではファイルを更新しません。標準の計画読込は実行環境によらず施策行と基準前年の金額を返し、全明細を生成しません。サンプル検査・分析用の派生明細はテスト側で明示的に生成します。
 
 復元時に維持する履歴は識別子順に一件ずつ読み出して転記し、全履歴の保存内容をJavaScript側にまとめて保持しません。既存履歴・復元前後の記録・識別子の非再利用を維持します。
 
@@ -1098,7 +1108,7 @@ Excel入出力画面とExcelJS・JSZip・Saxesの処理は、入出力を初め�
 
 部署・展開など共通マスタの編集中は、外部更新を統合した保存結果を名称・コード・所属の入力と保存基準へ反映します。保存中に変更した所属だけを重ね、次の改名で外部の所属を戻しません。取消・失敗時は保存済みデータと入力を保持します。
 
-外部更新の統合では、科目内容の変更と、その科目への施策行・月額・前年実額・集計所属の変更が重なる場合に拒否します。取消・履歴復元で同じ番号が別科目へ再利用されても、旧入力を別科目へ移しません。作成識別子がないため、通常のコード・名称・表示名・属性変更と参照編集の同時発生も安全側で拒否します。通常の科目編集と既存参照、無関係な変更、新規科目の安全な再採番は維持し、保存形式は変えません。
+外部更新の統合では、科目内容の変更と、その科目への施策行・月額・基準前年の金額・集計所属の変更が重なる場合に拒否します。取消・履歴復元で同じ番号が別科目へ再利用されても、旧入力を別科目へ移しません。作成識別子がないため、通常のコード・名称・表示名・属性変更と参照編集の同時発生も安全側で拒否します。通常の科目編集と既存参照、無関係な変更、新規科目の安全な再採番は維持し、保存形式は変えません。
 
 施策の番号が取消・履歴復元で再利用された場合も、科目行・月額の変更に対して所有先の施策内容と元の行の残存を照合します。内容変更や元の行の削除が重なる場合は自動統合を拒否し、入力を保持して別ファイル保存へ戻します。通常の改名・備考・分類変更と行編集、行削除と別行の追加の重なりも区別できないため拒否します。同じ施策への独立行追加は統合し、単独の改名は既存行の所属を保ちます。保存形式は変えません。
 

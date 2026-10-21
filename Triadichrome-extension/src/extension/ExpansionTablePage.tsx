@@ -7,6 +7,7 @@ import { Fragment, memo, useMemo, useRef, useState } from "react";
 import { expansionPeriodAmount, tablePeriods } from "../core/tables/periodTables";
 import { type Initiative, type PlanContents } from "../core/domain/plan";
 import { createExpansionTableView } from "../core/tables/expansionTableView";
+import { previousKindName } from "../core/domain/kinds";
 import type { KindId } from "../core/domain/kinds";
 import { formatTableYen } from "./tableNumberFormat";
 
@@ -58,7 +59,7 @@ export function ExpansionTablePage({ contents, selected, selection, onOpenInitia
 
 function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<Props, "selection">) {
   const viewForSelection = useMemo(() => createExpansionTableView(contents),
-    [contents.initiatives, contents.accounts, contents.previousAmounts, contents.expansions, contents.periodTypes, contents.expansionCategories, contents.fiscalYear]);
+    [contents.initiatives, contents.accounts, contents.previousAmounts, contents.previousKind, contents.expansions, contents.periodTypes, contents.expansionCategories, contents.fiscalYear]);
   const { table, groups, flat } = viewForSelection(selected);
   const categoryNames = useMemo(() => new Map(contents.expansionCategories.map(category => [category.id, category.categoryName])), [contents.expansionCategories]);
   const sourceInitiatives = useMemo(() => new Map(contents.initiatives.map(item => [item.id, item])), [contents.initiatives]);
@@ -113,7 +114,7 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
         </tr>
         <tr>{tablePeriods.map(period => <Fragment key={period.id}>{labels.map((label, index) => <th key={index} scope="colgroup" colSpan={2} className={periodCellClass(period, index === 0)}>{label}</th>)}</Fragment>)}</tr>
         <tr>{tablePeriods.map(period => <Fragment key={period.id}>{labels.flatMap((_, index) => (["sales", "profit"] as const).map(key => <th key={`${index}-${key}`} scope="col" className={periodCellClass(period, key === "sales" && index === 0)}>{key === "sales" ? "売上" : "利益"}</th>))}</Fragment>)}</tr>
-        <tr className="expansion-previous"><th colSpan={4} scope="row" className="expansion-summary">前年</th><AmountCells values={table.previous} /></tr>
+        <tr className="expansion-previous"><th colSpan={4} scope="row" className="expansion-summary">{previousKindName(contents.previousKind ?? 1)}</th><AmountCells values={table.previous} /></tr>
         <tr className="expansion-total"><th colSpan={4} scope="row" className="expansion-summary">合計</th><AmountCells values={table.total} /></tr>
         <tr className="expansion-total"><th colSpan={4} scope="row" className="expansion-summary">展開計</th><AmountCells values={table.changes} /></tr>
       </thead>

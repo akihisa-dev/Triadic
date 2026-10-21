@@ -58,6 +58,6 @@ export async function verifyPeriodTables(api) {
     { id: 3, name: "営業利益", required: "operating", members: [{ kind: "group", id: 1, sign: 1 }, { kind: "group", id: 2, sign: -1 }] },
     { id: 4, name: "経常利益", required: "ordinary", members: [{ kind: "group", id: 3, sign: 1 }] },
   ];
-  synthetic.previousAmounts = [[salesId, 4, "100"], [salesId, 5, "300"], [expenseId, 4, "50"], [expenseId, 5, "60"]].map(([accountId, month, amount]) => ({ accountId, month, amount, industryId: 1, departmentId: 1 }));
+  synthetic.previousAmounts = [[salesId, 4, "100"], [salesId, 5, "300"], [expenseId, 4, "50"], [expenseId, 5, "60"]].map(([accountId, month, amount]) => ({ previousKind: 1, accountId, month, amount, industryId: 1, departmentId: 1 }));
   assert.equal(api.buildPeriodCostComparison(synthetic, [1]).rows.find(row => row.kind === "ratio").values[0][quarter.id], 72.5);
 }

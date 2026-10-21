@@ -9,8 +9,11 @@ export type KindInvalidAmounts = Partial<Record<KindId, Partial<Record<number, I
 export type AmountSource = { amounts: MonthAmounts; overrides?: KindOverrides; invalidAmounts?: KindInvalidAmounts };
 export type KindScreen = "initiative-list" | "cost-table" | "expansion-table";
 export type KindSelections = Record<KindScreen, KindId[]>;
-export type PreviousAmount = { accountId: number; industryId: number; departmentId: number; month: number; amount: string; revision: number; id: number };
-export type PlanSettings = { fiscalYear: number; kindSelections: KindSelections; previousAmounts: PreviousAmount[] };
+export type PreviousKind = 1 | 2;
+export const previousKindName = (kind: PreviousKind) => kind === 1 ? "前年見込" : "前年実績";
+export type PreviousSelections = Record<"cost-table" | "expansion-table", PreviousKind>;
+export type PreviousAmount = { previousKind: PreviousKind; accountId: number; industryId: number; departmentId: number; month: number; amount: string; revision: number; id: number };
+export type PlanSettings = { fiscalYear: number; kindSelections: KindSelections; previousAmounts: PreviousAmount[]; previousSelections: PreviousSelections; /** Calculation context only; never persisted. */ previousKind?: PreviousKind };
 
 export function isKindId(value: number): value is KindId { return kindIds.some(id => id === value); }
 export function resolvedAmount(source: AmountSource, kind: KindId, month: number): string {
@@ -32,6 +35,6 @@ export function hasInvalidAmountInput(source: AmountSource): boolean {
 
 export const INITIAL_KINDS = [{ id: 1, kindName: "一次予算" }, { id: 2, kindName: "確定予算" }] as const;
 export type Kind = { id: number; kindName: string };
-export type PreviousInput = { invalidNumbers?: boolean; industryId: number; departmentId: number; rows: { accountId: number; amounts: MonthAmounts }[] };
-export type PreviousPatch = { industryIdentity: string; departmentIdentity: string; industryId: number; departmentId: number; accountId: number; month: number; before: string; after: string };
-export type PlanChange = { type: "previous"; input: PreviousInput } | { type: "previous-import"; patches: PreviousPatch[] } | { type: "selection"; screen: KindScreen; selected: KindId[] };
+export type PreviousInput = { previousKind: PreviousKind; invalidNumbers?: boolean; industryId: number; departmentId: number; rows: { accountId: number; amounts: MonthAmounts }[] };
+export type PreviousPatch = { previousKind: PreviousKind; industryIdentity: string; departmentIdentity: string; industryId: number; departmentId: number; accountId: number; month: number; before: string; after: string };
+export type PlanChange = { type: "previous-selection"; screen: "cost-table" | "expansion-table"; previousKind: PreviousKind } | { type: "previous"; input: PreviousInput } | { type: "previous-import"; patches: PreviousPatch[] } | { type: "selection"; screen: KindScreen; selected: KindId[] };

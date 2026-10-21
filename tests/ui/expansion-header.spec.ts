@@ -11,7 +11,7 @@ for (const data of ["full", "large"] as const) {
       const region = app.getByRole("region", { name: "展開表の月別種別・比較", exact: true });
       const header = region.locator("thead");
       await expect(header.locator("tr")).toHaveCount(6);
-      await expect(header.locator(".expansion-summary")).toHaveText(["前年", "合計", "展開計"]);
+      await expect(header.locator(".expansion-summary")).toHaveText(["前年見込", "合計", "展開計"]);
       await app.getByRole("heading", { name: "展開表", exact: true }).click();
       await settleMotion(app.locator("body"));
       const top = (await region.boundingBox())!.y;

@@ -4,7 +4,7 @@ export async function verifyClassificationRebase(api) {
   const department=contents.departments.at(-1),industry=contents.industries.at(-1),account=contents.accounts[0].id;
   const draft={name:'旧分類を参照する施策',note:'',fiscalYear:'2026',expansionId:1,industryId:1,departmentId:department.id,rows:[{id:'classification-row',accountId:account,amounts:{4:'0.001'}}]};
   const initiative=await api.registerInitiative(base,draft);
-  const previous=await api.savePreviousAmounts(base,{industryId:1,departmentId:department.id,rows:[{accountId:account,amounts:{4:'-0.001'}}]});
+  const previous=await api.savePreviousAmounts(base,{ previousKind: 1,industryId:1,departmentId:department.id,rows:[{accountId:account,amounts:{4:'-0.001'}}]});
   const deleted=await api.changeDepartmentMaster(base,{type:'delete',id:department.id});
   const recreated=await api.changeDepartmentMaster(deleted,{type:'add',departmentName:'作り直した部署',industryIds:department.industryIds});
   const replacement=(await api.readPlanContents(recreated)).departments.at(-1);
@@ -48,7 +48,7 @@ export async function verifyClassificationRebase(api) {
   replacedIndustry=await api.changeDepartmentMaster(replacedIndustry,{type:'update',id:department.id,departmentName:department.departmentName,industryIds:department.industryIds});
   assert.equal((await api.readPlanContents(replacedIndustry)).industries.at(-1).id,industry.id);
   const oldIndustryInitiative=await api.registerInitiative(base,{...draft,industryId:industry.id});
-  const oldIndustryPrevious=await api.savePreviousAmounts(base,{industryId:industry.id,departmentId:department.id,rows:[{accountId:account,amounts:{4:'1'}}]});
+  const oldIndustryPrevious=await api.savePreviousAmounts(base,{ previousKind: 1,industryId:industry.id,departmentId:department.id,rows:[{accountId:account,amounts:{4:'1'}}]});
   for(const local of [oldIndustryInitiative,oldIndustryPrevious])for(const [a,b] of [[local,replacedIndustry],[replacedIndustry,local]])assert.equal((await api.rebasePlan(base,a,b))===null,true,'業種の同番号・別個体を拒否');
   let stored=recreated,writes=0,aborts=0;
   const handle={name:'分類競合.triadic',async getFile(){return new File([stored],this.name);},async createWritable(){return {async write(){writes++;},async close(){},async abort(){aborts++;}};}};

@@ -58,13 +58,13 @@ export async function verifyDepartmentData(api, { excel = false } = {}) {
   linked = await registerInitiative(linked, { ...draft, industryId: 2 });
   await assert.rejects(changeDepartmentMaster(linked, { type: "update", id: 1, departmentName: "部署A", industryIds: [1] }), /使用中/);
   await assert.rejects(api.changeIndustryMaster(linked, { type: "delete", id: 1 }), /部署に設定/);
-  const previousInput = { industryId: 2, departmentId: 2, rows: [{ accountId: initial.accounts[0].id, amounts: { 4: "1.001" } }] };
-  await assert.rejects(api.savePreviousAmounts(linked, { ...previousInput, industryId: 1 }), /部署に設定/);
+  const previousInput = { previousKind: 1, industryId: 2, departmentId: 2, rows: [{ accountId: initial.accounts[0].id, amounts: { 4: "1.001" } }] };
+  await assert.rejects(api.savePreviousAmounts(linked, { previousKind: 1, ...previousInput, industryId: 1 }), /部署に設定/);
   const withPrevious = await api.savePreviousAmounts(linked, previousInput);
   await assert.rejects(changeDepartmentMaster(withPrevious, { type: "update", id: 2, departmentName: "部署B", industryIds: [1] }), /使用中/);
   const exportContents = await readPlanContents(linked);
   let excelBytes;
-  let patches = [{ industryId: 1, departmentId: 1, accountId: exportContents.accounts[0].id, month: 4,
+  let patches = [{ previousKind: 1, industryId: 1, departmentId: 1, accountId: exportContents.accounts[0].id, month: 4,
     industryIdentity: exportContents.industries.find(item => item.id === 1).identity,
     departmentIdentity: exportContents.departments.find(item => item.id === 1).identity, before: "0", after: "1" }];
   if (excel) {

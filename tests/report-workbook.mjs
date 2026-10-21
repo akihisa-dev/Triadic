@@ -125,7 +125,7 @@ export async function verifyReportWorkbooks(api, sample) {
     const rows = [large, opposite].map((amount, index) => ({ ...sample.initiatives[0].rows[0], accountId: sample.accounts.find(a => a.accountType === 'sales').id,
       amounts: Object.fromEntries([4, 5, 6].map(month => [month, `${(index === 0 ? sign : -sign) < 0 ? '-' : ''}${amount}`])),
       overrides: index === 1 ? { 2: Object.fromEntries([4, 5, 6].map(month => [month, api.yenToAmount(-sign * (api.amountToYen(amount) - 1))])) } : {} }));
-    const precise = { ...sample, previousAmounts: [large, opposite].map((amount, index) => ({ industryId: 1, departmentId: index + 1,
+    const precise = { ...sample, previousAmounts: [large, opposite].map((amount, index) => ({ previousKind: 1, industryId: 1, departmentId: index + 1,
       accountId: rows[0].accountId, month: 4, amount: `${(index === 0 ? sign : -sign) < 0 ? '-' : ''}${amount}` })), initiatives: [{ ...sample.initiatives[0], rows }] };
     for (const kind of [1, 2]) {
       const options = settings(tables, [1, 2]); options.selections['initiative-list'] = [kind];

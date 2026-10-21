@@ -65,7 +65,7 @@ export async function verifySamplePlan(api, { excel = false } = {}) {
   assert.ok(plan.expansions.filter(item => item.expansionCode !== "1").every(item => item.categoryIds.length === 0), "コスト以外に区分を割り当てない");
   assert.equal(plan.initiatives.find(item => item.name === "既存商品の販売拡大").expansionCategoryId, null);
   assert.ok(plan.initiatives.some(item => item.expansionCategoryId === null));
-  assert.equal(plan.previousAmounts.length, 9 * 2 * (4 * 12 + 3));
+  assert.equal(plan.previousAmounts.length, 2 * 9 * 2 * (4 * 12 + 3));
   const groupSales = plan.accounts.find(item => item.accountName === "グループ売上高");
   assert.ok(!plan.previousAmounts.some(item => item.accountId === groupSales.id && item.month === 6), "未入力の0行を保存しない");
   assert.equal(api.createPreviousInput(plan, 1, 1).rows.find(item => item.accountId === groupSales.id).amounts[6], "0", "未入力も表示は0");

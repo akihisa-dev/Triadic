@@ -4,7 +4,7 @@ export type HistoryDifference = {
 };
 export type HistoryIncomeValue = { yen: number; error?: never } | { yen?: never; error: string };
 export type HistoryIncomeImpact = {
-  kind: 1 | 2; period: number | "year"; metric: "sales" | "expense" | "profit";
+  previousKind: 1 | 2; kind: 1 | 2; period: number | "year"; metric: "sales" | "expense" | "profit";
   before: HistoryIncomeValue; after: HistoryIncomeValue; difference: HistoryIncomeValue;
 };
 export type HistoryComparison = { differences: HistoryDifference[]; impact: HistoryIncomeImpact[] };

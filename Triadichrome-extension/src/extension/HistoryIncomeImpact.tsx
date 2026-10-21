@@ -3,12 +3,13 @@ import { yenToAmount } from "../core/domain/amounts";
 import type { HistoryIncomeImpact, HistoryIncomeValue } from "../core/domain/historyDifference";
 
 const text = (value: HistoryIncomeValue, signed = false) => value.error ?? `${signed && value.yen! > 0 ? "+" : ""}${yenToAmount(value.yen!)}`;
-export function HistoryIncomeImpactTable({ impact, kind, period, onKindChange, onPeriodChange }: {
-  impact: HistoryIncomeImpact[]; kind: number; period: string; onKindChange: (kind: number) => void; onPeriodChange: (period: string) => void;
+export function HistoryIncomeImpactTable({ impact, previousKind, onPreviousChange, kind, period, onKindChange, onPeriodChange }: {
+  previousKind: number; onPreviousChange: (kind: number) => void; impact: HistoryIncomeImpact[]; kind: number; period: string; onKindChange: (kind: number) => void; onPeriodChange: (period: string) => void;
 }) {
-  const rows = impact.filter(item => item.kind === kind && (period === "year" ? item.period === "year" : item.period !== "year"));
+  const rows = impact.filter(item => item.previousKind === previousKind && item.kind === kind && (period === "year" ? item.period === "year" : item.period !== "year"));
   return <>
     <div className="history-difference-controls">
+      <label>基準前年<select value={previousKind} onChange={event => onPreviousChange(Number(event.target.value))}><option value={1}>前年見込</option><option value={2}>前年実績</option></select></label>
       <label>予算種別<select value={kind} onChange={event => onKindChange(Number(event.target.value))}><option value={1}>一次予算</option><option value={2}>確定予算</option></select></label>
       <label>表示期間<select value={period} onChange={event => onPeriodChange(event.target.value)}><option value="year">年間</option><option value="months">月別</option></select></label>
     </div>

@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 export function verifyPreviousGrid(api) {
   const source = { accounts: [{ id: 7, accountName: "同名" }, { id: 2, accountName: "同名" }], previousAmounts: [
-    { industryId: 1, departmentId: 1, accountId: 7, month: 4, amount: "-0.001" },
-    { industryId: 2, departmentId: 1, accountId: 7, month: 4, amount: "999" },
-    { industryId: 1, departmentId: 2, accountId: 2, month: 5, amount: "123.456" },
+    { previousKind: 1, industryId: 1, departmentId: 1, accountId: 7, month: 4, amount: "-0.001" },
+    { previousKind: 1, industryId: 2, departmentId: 1, accountId: 7, month: 4, amount: "999" },
+    { previousKind: 1, industryId: 1, departmentId: 2, accountId: 2, month: 5, amount: "123.456" },
   ] };
   source.previousAmounts.find = () => { throw new Error("全件検索を繰り返さない"); };
   const indexed = api.createPreviousInput(source, 1, 1);
@@ -38,9 +38,9 @@ export function verifyPreviousGrid(api) {
   assert.throws(() => api.fillPreviousGrid(draft, ids, selection, "NaN"));
   assert.equal(api.fillPreviousGrid(draft, ids, selection, "").rows[0].amounts[4], "0");
   const contents = { accounts: [{ id: 1 }, { id: 2 }], initiatives: [], previousAmounts: [
-    { accountId: 1, industryId: 1, departmentId: 1, month: 4, amount: "0.1" },
-    { accountId: 1, industryId: 1, departmentId: 2, month: 4, amount: "0.2" },
-    { accountId: 1, industryId: 2, departmentId: 1, month: 4, amount: "-0.001" },
+    { previousKind: 1, accountId: 1, industryId: 1, departmentId: 1, month: 4, amount: "0.1" },
+    { previousKind: 1, accountId: 1, industryId: 1, departmentId: 2, month: 4, amount: "0.2" },
+    { previousKind: 1, accountId: 1, industryId: 2, departmentId: 1, month: 4, amount: "-0.001" },
   ] };
   const total = (industries, departments) => api.previousByAccount(api.filterPlan(contents, { industries, departments }));
   assert.equal(total(null, null).get(1)[4], 299);

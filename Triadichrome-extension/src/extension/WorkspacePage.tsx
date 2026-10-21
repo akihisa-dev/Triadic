@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { DetailsPage, DetailEditorPage } from "./DetailsPage";
 import { ExpansionCategoryMasterPage } from "./ExpansionCategoryMasterPage";
 import { DeferredSpreadsheetIOPage } from "./DeferredSpreadsheetIOPage";
@@ -32,6 +33,8 @@ export function WorkspacePage({ displayed, workspace }: { displayed: Screen; wor
     changeMaster
   } = workspace;
   const { accounts, initiatives } = contents;
+  const costContents = useMemo(() => ({ ...contents, previousKind: workspace.localPrevious["cost-table"] }), [contents, workspace.localPrevious["cost-table"]]);
+  const expansionContents = useMemo(() => ({ ...contents, previousKind: workspace.localPrevious["expansion-table"] }), [contents, workspace.localPrevious["expansion-table"]]);
 
   const { selectedInitiative, detailOrigin } = displayed;
   const currentInitiative = initiatives.find(item => item.id === selectedInitiative?.id && item.fiscalYear === selectedInitiative?.fiscalYear);
@@ -43,8 +46,8 @@ export function WorkspacePage({ displayed, workspace }: { displayed: Screen; wor
     case "initiative-entry": return <InitiativeEntryPage onBack={() => setPage("initiative-list")} draft={initiativeDraft} onDraftChange={setInitiativeDraft} accounts={accounts} expansions={contents.expansions} expansionCategories={contents.expansionCategories} departments={contents.departments} periodTypes={contents.periodTypes} industries={contents.industries} onOpenMaster={() => setPage("account-master")} isSaving={isSaving} onRegister={() => { void register(); }} />;
     case "initiative-detail": return currentInitiative && <InitiativeDetailPage onDuplicate={() => workspace.duplicateInitiative(currentInitiative)} duplicationBlocked={navigationBlocked} key={`${currentInitiative.id}:${displayed.detailKind ?? 1}`} initialKind={displayed.detailKind ?? 1} initiative={currentInitiative} accounts={accounts} expansions={contents.expansions} expansionCategories={contents.expansionCategories} departments={contents.departments} periodTypes={contents.periodTypes} industries={contents.industries} onOpenMaster={() => setPage("account-master")} onUpdate={update} onPendingChange={setEditPending} onPrepareSave={onPrepareSave} backLabel={detailOrigin === "cost-table" ? "総原価表" : detailOrigin === "home" ? "Home" : detailOrigin === "expansion-table" ? "展開表" : "施策一覧"} onBack={() => setPage(detailOrigin)} />;
     case "initiative-list": return <InitiativeListPage expansions={contents.expansions} periodTypes={contents.periodTypes} onAddInitiative={startInitiative} selectedKind={workspace.localKinds["initiative-list"][0]!} selection={kindSelection("initiative-list")} initiatives={initiatives} accounts={accounts} fiscalYear={String(contents.fiscalYear)} onOpenInitiative={openInitiative} navigationBlocked={navigationBlocked} />;
-    case "cost-table": return <CostTablePage view={workspace.costTableView} navigationBlocked={navigationBlocked} onOpenInitiative={openInitiative} selection={kindSelection("cost-table")} contents={contents} selected={workspace.localKinds["cost-table"]} />;
-    case "expansion-table": return <ExpansionTablePage selection={kindSelection("expansion-table")} contents={contents} selected={workspace.localKinds["expansion-table"]} onOpenInitiative={openInitiative} />;
+    case "cost-table": return <CostTablePage view={workspace.costTableView} navigationBlocked={navigationBlocked} onOpenInitiative={openInitiative} selection={kindSelection("cost-table")} contents={costContents} selected={workspace.localKinds["cost-table"]} />;
+    case "expansion-table": return <ExpansionTablePage selection={kindSelection("expansion-table")} contents={expansionContents} selected={workspace.localKinds["expansion-table"]} onOpenInitiative={openInitiative} />;
     case "details": return <DetailsPage documents={workspace.preview ? [] : workspace.detailDocuments} disabled={navigationBlocked || workspace.preview !== null} onCreate={workspace.createDetail} onOpen={workspace.openDetail} />;
     case "detail-editor": return <DetailEditorPage document={workspace.detailDocuments.find(item => item.id === displayed.selectedDetailId)} disabled={navigationBlocked || workspace.preview !== null} onBack={() => setPage("details")} onPartsChange={parts => workspace.setDetailDocuments(items => items.map(item => item.id === displayed.selectedDetailId ? { ...item, parts } : item))} />;
     case "master": return <MasterPage onOpenAggregations={() => setPage("aggregation-master")} onOpenAmountItems={() => setPage("amount-item-master")} onOpenAccountTypes={() => setPage("account-type-master")} onOpenAccounts={() => setPage("account-master")} onOpenExpansions={() => setPage("expansion-master")} onOpenExpansionCategories={() => setPage("expansion-category-master")} onOpenIndustries={() => setPage("industry-master")} onOpenDepartments={() => setPage("department-master")} onOpenPeriods={() => setPage("period-master")} onOpenKinds={() => setPage("kind-master")} />;

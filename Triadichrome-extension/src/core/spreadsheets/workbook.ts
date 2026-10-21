@@ -7,6 +7,7 @@ import { excelAmount } from "./excelAmounts";
 import { initiativeMonths } from "../domain/calendar";
 import { amountToYen, yenToAmount } from "../domain/amounts";
 export type { PreviousPatch } from "../domain/kinds";
+import { isKindId, previousKindName, type PreviousKind } from "../domain/kinds";
 import type { PreviousPatch } from "../domain/kinds";
 import type { PlanContents } from "../domain/plan";
 
@@ -16,19 +17,20 @@ export type PreviousPair = { industryId: number; departmentId: number };
 
 const metaName = "_triadichrome";
 const previousExportLimit = () => new Error("前年入力フォーマットが取り込み上限を超えるため、出力できません。業種・部署の組み合わせを減らし、別ファイルに分けて出力してください。");
-export function createPreviousWorkbook(contents: PlanContents, pairs: PreviousPair[]): ExcelJS.Workbook {
+export function createPreviousWorkbook(contents: PlanContents, pairs: PreviousPair[], previousKind: PreviousKind = 1): ExcelJS.Workbook {
+  if (!isKindId(previousKind)) throw new Error("前年の種類が正しくありません。");
   if (!pairs.length || new Set(pairs.map(p => `${p.industryId}:${p.departmentId}`)).size !== pairs.length) throw new Error("業種・部署の組み合わせを選択してください。");
   const accounts = contents.accounts.length;
   if (!accounts) throw new Error("前年入力フォーマットには勘定科目が必要です。マスタで勘定科目を登録してください。");
   // Each pair has 14 visible and 20 metadata cells per account, plus 40 styled header cells.
-  // ExcelJS also writes 22 metadata header cells and 16 archive entries outside the pair sheets.
-  if (22 + pairs.length * (34 * accounts + 40) > previousWorkbookLimits.cells ||
+  // ExcelJS also writes 23 metadata header cells and 16 archive entries outside the pair sheets.
+  if (23 + pairs.length * (34 * accounts + 40) > previousWorkbookLimits.cells ||
     accounts + 3 > previousWorkbookLimits.rows || 2 + accounts * pairs.length > previousWorkbookLimits.rows ||
     20 > previousWorkbookLimits.columns || pairs.length + 16 > previousWorkbookLimits.entries) throw previousExportLimit();
-  const amountsByKey = indexPreviousAmounts(contents.previousAmounts);
+  const amountsByKey = indexPreviousAmounts(contents.previousAmounts, previousKind);
   const wb = workbook();
   const meta = wb.addWorksheet(metaName, { state: "veryHidden" });
-  meta.addRow(["Triadichrome previous v2", contents.fiscalYear]);
+  meta.addRow(["Triadichrome previous v3", contents.fiscalYear, previousKind]);
   meta.addRow(["シート", "業種ID", "部署ID", "科目ID", "科目コード", "科目名", ...initiativeMonths, "業種の作成識別子", "部署の作成識別子"]);
   pairs.forEach((pair, index) => {
     const industry = contents.industries.find(i => i.id === pair.industryId);
@@ -39,7 +41,7 @@ export function createPreviousWorkbook(contents: PlanContents, pairs: PreviousPa
     // ExcelJS decodes these literal entity strings a second time in sheet names on load.
     const name = `${index + 1}_${industry.industryName}_${department.departmentName}`.replace(/&(lt|amp|quot|apos|gt);/g, "_").replace(/[\\/*?:\[\]\t\r\n]/g, "_").slice(0, 31).replace(/^'|'$/g, "_");
     const ws = sheet(wb, name, [14, 30, ...initiativeMonths.map(() => 14)], 1, 2);
-    ws.getCell("A1").value = "前年入力";
+    ws.getCell("A1").value = previousKindName(previousKind);
     ws.getCell("A2").value = `${contents.fiscalYear}年度 · ${industry.industryName} · ${department.departmentName} · 単位：千円`;
     ws.addRow(["科目コード", "科目名", ...initiativeMonths.map(m => `${m}月`)]);
     contents.accounts.forEach(account => {
@@ -66,9 +68,11 @@ export function createPreviousWorkbook(contents: PlanContents, pairs: PreviousPa
 
 export function readPreviousWorkbook(wb: ExcelJS.Workbook, contents: PlanContents): PreviousPatch[] {
   const meta = wb.getWorksheet(metaName);
-  if (!meta || meta.getCell("A1").value !== "Triadichrome previous v2" || meta.getCell("B1").value !== contents.fiscalYear) throw new Error("この年度の最新の前年入力フォーマットを出力し直してください。");
+  if (!meta || meta.getCell("A1").value !== "Triadichrome previous v3" || meta.getCell("B1").value !== contents.fiscalYear) throw new Error("この年度の最新の前年入力フォーマットを出力し直してください。");
+  const previousKind = meta.getCell("C1").value;
+  if (typeof previousKind !== "number" || !isKindId(previousKind)) throw new Error("前年の種類が正しくありません。フォーマットを出力し直してください。");
   if (meta.rowCount > 100000) throw new Error("取り込み件数が多すぎます。");
-  const amountsByKey = indexPreviousAmounts(contents.previousAmounts);
+  const amountsByKey = indexPreviousAmounts(contents.previousAmounts, previousKind);
   const accountsById = new Map(contents.accounts.map(account => [account.id, account]));
   const industriesById = new Map(contents.industries.map(industry => [industry.id, industry]));
   const departmentsById = new Map(contents.departments.map(department => [department.id, department]));
@@ -96,7 +100,7 @@ export function readPreviousWorkbook(wb: ExcelJS.Workbook, contents: PlanContent
     if (!account || account.accountCode !== meta.getCell(r, 5).value || account.accountName !== meta.getCell(r, 6).value || !industry || !department) fail("出力後にマスタが変更されています。フォーマットを出力し直してください。");
     const ws = wb.getWorksheet(name as string);
     if (!ws) fail("前年入力シートが見つかりません。");
-    if (ws!.getCell("A1").value !== "前年入力" || ws!.getCell("A3").value !== "科目コード" || ws!.getCell("B3").value !== "科目名") fail("フォーマットの見出しを変更しないでください。");
+    if (ws!.getCell("A1").value !== previousKindName(previousKind) || ws!.getCell("A3").value !== "科目コード" || ws!.getCell("B3").value !== "科目名") fail("フォーマットの見出しを変更しないでください。");
     const existing = sheets.get(name as string);
     if (existing && (existing.pair.industryId !== industryId || existing.pair.departmentId !== departmentId)) fail("シートの組み合わせが正しくありません。");
     const count = (existing?.count ?? 0) + 1;
@@ -115,7 +119,7 @@ export function readPreviousWorkbook(wb: ExcelJS.Workbook, contents: PlanContent
       const original = String(meta.getCell(r, mi + 7).value);
       const before = amountsByKey.get(key) ?? "0";
       if (amountToYen(before) !== amountToYen(original)) fail("出力後に前年金額が変更されています。最新のフォーマットを出力し直してください。");
-      if (amountToYen(before) !== amountToYen(after)) patches.push({ ...pair, industryIdentity: industryIdentity as string, departmentIdentity: departmentIdentity as string, accountId: accountId as number, month, before, after });
+      if (amountToYen(before) !== amountToYen(after)) patches.push({ ...pair, previousKind, industryIdentity: industryIdentity as string, departmentIdentity: departmentIdentity as string, accountId: accountId as number, month, before, after });
     });
   }
   if (!sheets.size || wb.worksheets.some(s => s.name !== metaName && !sheets.has(s.name))) fail("前年入力フォーマットのシート構成が正しくありません。");
@@ -138,8 +142,8 @@ export async function serializeWorkbook(wb: ExcelJS.Workbook): Promise<Uint8Arra
   zip.file("xl/sharedStrings.xml", protectedXml);
   return zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });
 }
-export async function createPreviousWorkbookBytes(contents: PlanContents, pairs: PreviousPair[]): Promise<Uint8Array> {
-  const bytes = await serializeWorkbook(createPreviousWorkbook(contents, pairs));
+export async function createPreviousWorkbookBytes(contents: PlanContents, pairs: PreviousPair[], previousKind: PreviousKind = 1): Promise<Uint8Array> {
+  const bytes = await serializeWorkbook(createPreviousWorkbook(contents, pairs, previousKind));
   // Verify actual XML and compressed/expanded sizes before offering the file for download.
   try { await inspectPreviousWorkbook(bytes); } catch { throw previousExportLimit(); }
   return bytes;

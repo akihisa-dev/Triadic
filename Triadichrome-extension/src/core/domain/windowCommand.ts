@@ -23,7 +23,7 @@ export function reconcileWindowCommand(command: PlanCommand, base: PlanContents,
       const before = base[key].find(item => item.id === id), after = current[key].find(item => item.id === id);
       if (!before || !after || before.identity !== after.identity) throw new Error("前年入力の分類が変更されています。入力は保持しています。");
     }
-    return { type: "settings", change: { type: "previous", input: reconcileSavedDraft(createPreviousInput(base, input.industryId, input.departmentId), input, createPreviousInput(current, input.industryId, input.departmentId)) } };
+    return { type: "settings", change: { type: "previous", input: reconcileSavedDraft(createPreviousInput(base, input.industryId, input.departmentId, input.previousKind), input, createPreviousInput(current, input.industryId, input.departmentId, input.previousKind)) } };
   }
   if (command.type !== "initiative.register" && command.type !== "settings" && command.change.type === "update") {
     const collections = { account: "accounts", aggregation: "aggregations", expansion: "expansions", "expansion-category": "expansionCategories", department: "departments", industry: "industries", period: "periodTypes" } as const;

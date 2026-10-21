@@ -97,7 +97,7 @@ export async function verifyReportParity(api) {
     rows: [{ ...sample.initiatives[0].rows[0], accountId: sample.accounts.find(a => a.accountType === 'sales').id,
       amounts: Object.fromEntries(api.initiativeMonths.map((month, i) => [month, ['0.499', '0.5', '-0.499', '-0.5', '0', '1.499', '-1.5', '1234.567', '-1234.567', '0.001', '-0.001', '0'][i]])),
       overrides: { 2: { 4: '0.5', 5: '0.499', 6: '-0.5', 7: '-0.499' } } }] }] };
-  for (const [scenario, plan] of [['全機能', sample], ['施策なし', empty],
+  for (const [scenario, plan] of [['全機能', sample], ['前年実績', { ...sample, previousKind: 2 }], ['施策なし', empty],
     ['丸め境界', boundaries], ['未設定', { ...sample, accounts: sample.accounts.map(a => ({ ...a, accountType: null })) }],
     ['分類絞り込み', sample]]) {
     for (const selected of [[1], [2], [1, 2], [2, 1]]) for (const kind of [1, 2]) {
@@ -107,6 +107,7 @@ export async function verifyReportParity(api) {
       const wb = new ExcelJS.Workbook();
       await wb.xlsx.load(await api.serializeWorkbook(api.createReportWorkbook(plan, {
         tables: ['cost-table', 'expansion-table', 'initiative-list'], costFilter: filter,
+        previousSelections: { 'cost-table': plan.previousKind ?? 1, 'expansion-table': plan.previousKind ?? 1 },
         selections: { 'cost-table': selected, 'expansion-table': selected, 'initiative-list': [kind] },
       })));
       const markup = api.renderReportTables(plan, selected, kind, api.filterPlan(plan, filter));

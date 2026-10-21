@@ -26,7 +26,7 @@ test("330科目17組の前年変更確認で全名称・値・保存失敗後の
   const started = performance.now();
   await app.locator('input[type="file"]').setInputFiles({ name: "大量前年.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: Buffer.from(await wb.xlsx.writeBuffer()) });
   const preview = app.getByRole("region", { name: "前年金額の変更確認" });
-  await expect(preview.getByRole("heading")).toHaveText("変更内容 · 67320件", { timeout: 60_000 });
+  await expect(preview.getByRole("heading")).toHaveText("変更内容 · 前年見込 · 67320件", { timeout: 60_000 });
   await expect(preview.locator("tbody tr")).toHaveCount(67320);
   await expect(preview.locator("tbody tr").first().locator("td")).toContainText(["直営自動車", "部署A", "確認科目1"]);
   const shown = performance.now();
@@ -144,7 +144,7 @@ test("表と前年フォーマットの出力、確認・取消・一括取り�
   await expect(app.getByRole("button", { name: "前の画面に戻る", exact: true })).toBeEnabled();
   await app.locator('input[type="file"]').setInputFiles(file);
   const preview = app.getByRole("region", { name: "前年金額の変更確認" });
-  await expect(preview.getByRole("heading")).toHaveText("変更内容 · 2件");
+  await expect(preview.getByRole("heading")).toHaveText("変更内容 · 前年見込 · 2件");
   await expect(preview.getByText("-123.456", { exact: true })).toBeVisible();
   await expect(app.getByRole("button", { name: "前の画面に戻る", exact: true })).toBeDisabled();
   await preview.getByRole("button", { name: "キャンセル", exact: true }).click();
@@ -171,14 +171,14 @@ test("表と前年フォーマットの出力、確認・取消・一括取り�
   await zone.dispatchEvent("dragover", { dataTransfer: transfer });
   await zone.dispatchEvent("drop", { dataTransfer: transfer });
   await expect(zone).not.toHaveClass(/is-drag-active/);
-  await expect(preview.getByRole("heading")).toHaveText("変更内容 · 2件");
+  await expect(preview.getByRole("heading")).toHaveText("変更内容 · 前年見込 · 2件");
   const multiple = await frame.evaluateHandle(() => {
     const data = new DataTransfer();
     data.items.add(new File(["invalid"], "a.xlsx")); data.items.add(new File(["invalid"], "b.xlsx"));
     return data;
   });
   await zone.dispatchEvent("drop", { dataTransfer: multiple });
-  await expect(preview.getByRole("heading")).toHaveText("変更内容 · 2件");
+  await expect(preview.getByRole("heading")).toHaveText("変更内容 · 前年見込 · 2件");
   await expect(app.getByRole("alert")).toHaveCount(0);
   await preview.getByRole("button", { name: "キャンセル", exact: true }).click();
   await zone.dispatchEvent("drop", { dataTransfer: multiple });
@@ -197,7 +197,7 @@ test("表と前年フォーマットの出力、確認・取消・一括取り�
   await app.getByRole("button", { name: "操作を取り消す", exact: true }).click();
   await expect(app.getByText("操作を取り消しました。", { exact: true })).toBeVisible();
   await app.locator('input[type="file"]').setInputFiles(file);
-  await expect(preview.getByRole("heading")).toHaveText("変更内容 · 2件");
+  await expect(preview.getByRole("heading")).toHaveText("変更内容 · 前年見込 · 2件");
   await preview.getByRole("button", { name: "キャンセル", exact: true }).click();
   template.worksheets[0]!.getCell("E4").value = "不正な金額";
   await app.locator('input[type="file"]').setInputFiles({ ...file, buffer: Buffer.from(await template.xlsx.writeBuffer()) });
@@ -258,7 +258,7 @@ test("前年フォーマットの上限超過で出力せず、選択を減ら�
   wb.worksheets[0]!.getCell("C4").value = 0;
   await app.locator('input[type="file"]').setInputFiles({ name: "前年.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: Buffer.from(await wb.xlsx.writeBuffer()) });
   const preview = app.getByRole("region", { name: "前年金額の変更確認" });
-  await expect(preview.getByRole("heading")).toHaveText("変更内容 · 1件");
+  await expect(preview.getByRole("heading")).toHaveText("変更内容 · 前年見込 · 1件");
   await expect(preview.getByText("123.456", { exact: true })).toBeVisible();
   await preview.getByRole("button", { name: "確認した内容を取り込む", exact: true }).click();
   await expect(app.getByText("前年金額を取り込みました。", { exact: true })).toBeVisible();

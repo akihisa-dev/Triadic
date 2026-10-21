@@ -1,3 +1,4 @@
+import { previousKindName } from "../domain/kinds";
 import { addYen } from "../domain/amounts";
 import { initiativeMonths } from "../domain/calendar";
 import type { KindId } from "../domain/kinds";
@@ -8,7 +9,7 @@ import { buildKindCostTable } from "./planTables";
 export function buildCostComparison(contents: PlanContents, selected: KindId[]) {
   const kinds = [...selected].sort((left, right) => left - right);
   const rows = buildKindCostTable(contents, kinds);
-  const labels = ["前年", ...kinds.map(id => contents.kinds.find(kind => kind.id === id)!.kindName), "前年差", ...(kinds.length === 2 ? ["一次予算差"] : [])];
+  const labels = [previousKindName(contents.previousKind ?? 1), ...kinds.map(id => contents.kinds.find(kind => kind.id === id)!.kindName), "前年差", ...(kinds.length === 2 ? ["一次予算差"] : [])];
   return { labels, rows: rows.map(row => {
     const difference = (left: typeof row.previous, right: typeof row.previous) => Object.fromEntries(
       initiativeMonths.flatMap(month => left[month] === undefined || right[month] === undefined ? [] :

@@ -170,12 +170,20 @@ export async function createSamplePlan(fiscalYear = currentFiscalYear(), large =
   })), periodTypes.find(item => item.periodName === "期間差")!.id);
   for (const [index, industry] of industries.entries()) {
     for (const [departmentIndex, department] of departments.entries()) {
-      bytes = await savePreviousAmounts(bytes, { industryId: industry.id, departmentId: department.id, rows: [
+      bytes = await savePreviousAmounts(bytes, { previousKind: 1, industryId: industry.id, departmentId: department.id, rows: [
         annual("売上高", 1000 + index * 100 + departmentIndex * 10),
         // 未入力の6月は保存行を作らず、入力欄と集計では0として確認する。
         row("グループ売上高", { 4: "125.125", 5: "-20.001", 3: "0.001" }), annual("本支店売上原価", 400), annual("給料手当", 200), annual("営業外収益", 10),
       ].map(row => ({ accountId: row.accountId!, amounts: row.amounts })) });
     }
+  }
+  const forecast = await readPlanContents(bytes);
+  for (const industry of industries) for (const department of departments) {
+    bytes = await savePreviousAmounts(bytes, { previousKind: 2, industryId: industry.id, departmentId: department.id,
+      rows: forecast.accounts.map(account => ({ accountId: account.id, amounts: Object.fromEntries(initiativeMonths.map(month => {
+        const amount = forecast.previousAmounts.find(value => value.previousKind === 1 && value.industryId === industry.id && value.departmentId === department.id && value.accountId === account.id && value.month === month)?.amount ?? "0";
+        return [month, month === 2 && account.accountName === "売上高" ? String(Number(amount) + 10) : amount];
+      })) })) });
   }
   if (large) {
     // Insert the finite scenario catalog in one production transaction, with final schema/data validation.
@@ -321,7 +329,7 @@ export async function createCostInitiativeCancellationPlan(kind: KindId = 1) {
 export async function createPreviousExpansionCancellationPlan() {
   let bytes = await createTriadicDatabase(2026);
   const accounts = (await readPlanContents(bytes)).accounts.filter(account => account.accountType === "sales").slice(0, 2);
-  for (const departmentId of [1, 2]) bytes = await savePreviousAmounts(bytes, { industryId: 1, departmentId,
+  for (const departmentId of [1, 2]) bytes = await savePreviousAmounts(bytes, { previousKind: 1, industryId: 1, departmentId,
     rows: accounts.map((account, index) => ({ accountId: account.id, amounts: { 4: index === 0 ? "5000000000000" : "-5000000000000" } })) });
   return bytes;
 }
