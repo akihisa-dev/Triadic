@@ -376,3 +376,30 @@ test("再生成した両配布物と送信コミットの一致を確認し、�
   assert.equal(repo.git("rev-parse", "HEAD"), head, "勝手にコミットしない");
   assert.equal(await readFile(path.join(repo.root, extra), "utf8"), "new");
 });
+
+
+test("ストア原稿の名前・説明・ポリシーURLの不一致と欠落を拒否する", async t => {
+  const { checkStoreListingText } = await import('../scripts/store-listing-text.mjs');
+  const root = await mkdtemp(path.join(tmpdir(), 'triadichrome-listing-text-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const directory = path.join(root, 'store-listing');
+  await cp(path.join(projectRoot, 'store-listing'), directory, { recursive: true });
+  await mkdir(path.join(root, 'Triadichrome-extension'));
+  await cp(path.join(projectRoot, 'Triadichrome-extension/manifest.template.json'), path.join(root, 'Triadichrome-extension/manifest.template.json'));
+  await checkStoreListingText(root);
+  for (const [name, change] of [
+    ['listing-ja.txt', text => text.replace('【名前】\nTriadichrome', '【名前】\n別の名前')],
+    ['listing-ja.txt', text => text.replace('【短い説明】\n', '【短い説明】\n不一致')],
+    ['privacy-policy-url.txt', () => 'https://example.invalid/other'],
+    ['privacy-practices.md', text => text.replaceAll('https://gist.github.com/', 'https://example.invalid/')],
+    ['README.md', text => text.replaceAll('https://gist.github.com/', 'https://example.invalid/')],
+  ]) {
+    const file = path.join(directory, name), original = await readFile(file, 'utf8');
+    await writeFile(file, change(original));
+    await assert.rejects(checkStoreListingText(root), /一致しません/);
+    await writeFile(file, original);
+  }
+  await rm(path.join(directory, 'privacy-policy-url.txt'));
+  await assert.rejects(checkStoreListingText(root), /ENOENT/);
+  await checkStoreListingText(projectRoot);
+});

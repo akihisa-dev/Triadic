@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import { checkStoreListingText } from "./store-listing-text.mjs";
 import path from "node:path";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -15,11 +16,10 @@ const images = [
   ["images/promo-marquee-1400x560.png", 1400, 560, false],
   ...screenshotNames.map(name => [`screenshots/${name}-1280x800.png`, 1280, 800, false]),
 ];
-const textFiles = ["README.md", "listing-ja.txt", "privacy-practices.md", "privacy-policy.md", "reviewer-instructions.txt"];
 const version = JSON.parse(await fs.readFile(path.join(root, "package.json"))).version;
 
 async function check() {
-  for (const name of textFiles) assert.ok((await fs.readFile(path.join(output, name), "utf8")).trim(), name);
+  await checkStoreListingText(root);
   const receipt = JSON.parse(await fs.readFile(path.join(output, "assets.json")));
   assert.equal(receipt.version, version, "画面の版が現在の版と一致しません。撮影し直してください。");
   for (const [name, width, height, alpha] of images) {

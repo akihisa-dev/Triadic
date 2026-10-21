@@ -64,7 +64,7 @@ node scripts/prepare-store-listing.mjs
 node scripts/prepare-store-listing.mjs --check
 ```
 
-撮影先は環境変数`TRIADICHROME_CAPTURE_URL`で変更できます。再生成はこのフォルダの画像と`assets.json`だけを更新し、文章は変更しません。検証では文章の存在、画像の寸法・透過の有無、撮影時の版、照合値、ZIP・計画ファイルの混入がないことを確認します。
+撮影先は環境変数`TRIADICHROME_CAPTURE_URL`で変更できます。再生成はこのフォルダの画像と`assets.json`だけを更新し、文章は変更しません。検証では文章とポリシーURL専用ファイルの存在、掲載名・短い説明とManifestの一致、README・プライバシー入力原稿と専用ファイルのポリシーURL一致、画像の寸法・透過の有無、撮影時の版、照合値、ZIP・計画ファイルの混入がないことを確認します。
 
 ## 公式の提出要件
 
