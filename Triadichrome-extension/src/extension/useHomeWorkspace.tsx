@@ -93,9 +93,12 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   const previousPreview = useRef<number | null>(null);
   useEffect(() => {
     const id = preview?.entry.id ?? null;
-    if (previousPreview.current !== id) setLocalPrevious(contents.previousSelections);
+    if (previousPreview.current !== id) {
+      setLocalPrevious(contents.previousSelections);
+      setLocalKinds(contents.kindSelections);
+    }
     previousPreview.current = id;
-  }, [preview?.entry.id, contents.previousSelections]);
+  }, [preview?.entry.id, contents.previousSelections, contents.kindSelections]);
   const previousRevision = useRef(operationRevision);
   useEffect(() => {
     if (previousRevision.current !== operationRevision && (!windows || windows.getWindowSnapshot().peers === 1)) { setLocalKinds(contents.kindSelections); setLocalPrevious(contents.previousSelections); }

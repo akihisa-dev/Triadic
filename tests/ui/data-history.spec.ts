@@ -9,6 +9,26 @@ async function openFull(page: Page, app: FrameLocator) {
   return app.getByRole("navigation", { name: "メインナビゲーション" });
 }
 
+test("過去の比較対象を使い、閲覧中の変更を現在へ持ち越さない", async ({ page, app }) => {
+  const menu = await openFull(page, app);
+  await menu.getByRole("button", { name: "総原価表", exact: true }).click();
+  const second = app.getByRole("spinbutton", { name: "比較対象2", exact: true });
+  await second.getByRole("button", { name: "確定予算", exact: true }).click();
+  await expect(second.getByRole("button", { name: "確定予算", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await menu.getByRole("button", { name: "履歴", exact: true }).click();
+  await expect(app.locator(".history-date").last()).toBeVisible();
+  await app.locator(".history-date").last().click();
+  await expect(app.getByLabel("過去のデータを閲覧中")).toBeVisible();
+  await menu.getByRole("button", { name: "総原価表", exact: true }).click();
+  await expect(second.getByRole("button", { name: "未選択", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await app.getByRole("spinbutton", { name: "比較対象1", exact: true }).getByRole("button", { name: "確定予算", exact: true }).click();
+  await app.getByRole("button", { name: "現在に戻る", exact: true }).click();
+  await expect(app.getByLabel("過去のデータを閲覧中")).toHaveCount(0);
+  await menu.getByRole("button", { name: "総原価表", exact: true }).click();
+  await expect(app.getByRole("spinbutton", { name: "比較対象1", exact: true }).getByRole("button", { name: "一次予算", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(second.getByRole("button", { name: "確定予算", exact: true })).toHaveAttribute("aria-pressed", "true");
+});
+
 test("マスタの直下の日時履歴から全画面を閲覧でき、編集・削除・並べ替えは禁止", async ({ page, app }) => {
   const menu = await openFull(page, app);
   const names = await menu.getByRole("button").allTextContents();
