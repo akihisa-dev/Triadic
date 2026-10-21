@@ -144,3 +144,44 @@ test('引数上限を超える20万行の貼り付けでも内容を保持し、
     assert.equal(JSON.stringify(cells), before);
   });
 });
+
+test('少数・高密度・大量パーツを旧配置規則と照合し、移動中の衝突探索を削減する', async () => {
+  const { referenceArrangement } = await import('./detail-parts-reference.mjs');
+  await withNodeBundle('Triadichrome-extension/src/core/tables/detailParts.ts', async ({ arrangeParts, partsOverlap, settlePart }) => {
+    const cases = [
+      ['少数', 10, 160, 96, 164, 100],
+      ['高密度', 150, 160, 96, 32, 32],
+      ['大量', 1000, 160, 96, 164, 100],
+      ['異なる寸法', 75, 1200, 448, 128, 96],
+    ];
+    for (const [name, count, width, height, dx, dy] of cases) {
+      const source = Array.from({ length: count }, (_, i) => ({ id: String(i), kind: 'text', text: `保持${i}`, x: (i % 20) * dx, y: Math.floor(i / 20) * dy, width, height }));
+      const before = JSON.stringify(source);
+      let oldChecks = 0, oldMs = 0, newMs = 0;
+      const metrics = { overlapChecks: 0 };
+      for (const settled of [false, true]) for (const offset of [0, 45, 160]) {
+        const active = { ...source[0], x: offset, width: width + 32 };
+        let start = performance.now();
+        const previous = referenceArrangement(source, active, settled, { settlePart, partsOverlap: (a, b) => { oldChecks++; return partsOverlap(a, b); } });
+        oldMs += performance.now() - start;
+        start = performance.now();
+        const current = arrangeParts(source, active, settled, metrics);
+        newMs += performance.now() - start;
+        assert.deepEqual(current, previous, `${name}: 配置順・近い位置・同距離の選択・内容を維持`);
+      }
+      assert.equal(JSON.stringify(source), before, '取消の元配置を変更しない');
+      assert.ok(metrics.overlapChecks < oldChecks, `${name}: 衝突検査 ${oldChecks} → ${metrics.overlapChecks}`);
+      console.log(`${name} ${count}パーツ・6回: 衝突検査 ${oldChecks} → ${metrics.overlapChecks}、旧 ${oldMs.toFixed(1)}ms、新 ${newMs.toFixed(1)}ms（端末内の合成計測）`);
+    }
+    let randomState = 42;
+    const random = max => { randomState = (Math.imul(randomState, 1664525) + 1013904223) >>> 0; return randomState % max; };
+    for (let run = 0; run < 40; run++) {
+      const source = Array.from({ length: 5 + random(25) }, (_, i) => ({ id: String(i), kind: 'text', text: `保持${i}`, x: random(1024) + .5, y: random(768) + .25, width: 64 + random(480), height: 64 + random(320) }));
+      const active = { ...source[random(source.length)], x: random(1280), y: random(960) };
+      for (const settled of [false, true]) assert.deepEqual(arrangeParts(source, active, settled), referenceArrangement(source, active, settled, { partsOverlap, settlePart }), '格子境界・異なる寸法・同距離を含む配置を維持');
+    }
+    const huge = [{ id: 'huge', kind: 'text', text: '大きい矩形', x: 0, y: 0, width: 10000000, height: 10000000 }];
+    const active = { id: 'new', kind: 'text', text: '保持', x: 0, y: 0, width: 160, height: 96 };
+    assert.deepEqual(arrangeParts(huge, active), referenceArrangement(huge, active, false, { partsOverlap, settlePart }), '巨大な矩形でも区画数を増やさず同じ配置にする');
+  });
+});

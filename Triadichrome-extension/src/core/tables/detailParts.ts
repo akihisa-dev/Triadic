@@ -50,27 +50,75 @@ export function settlePart(part: DetailPart): DetailPart {
     width: Math.max(minimum.width, snapPosition(part.width)), height: Math.max(minimum.height, snapPosition(part.height)) };
 }
 
+// Bucket only nearby rectangles for exact overlap checks. Very large rectangles
+// use the fallback list so their dimensions cannot create unbounded bucket work.
+class PartSpace {
+  private buckets = new Map<string, DetailPart[]>();
+  private large: DetailPart[] = [];
+  private all: DetailPart[] = [];
+  constructor(private metrics?: { overlapChecks: number }) {}
+  private keys(part: DetailPart): string[] | null {
+    const x0 = Math.floor(part.x / 256), y0 = Math.floor(part.y / 256);
+    const x1 = Math.floor((part.x + part.width + PART_GAP) / 256), y1 = Math.floor((part.y + part.height + PART_GAP) / 256);
+    if ((x1 - x0 + 1) * (y1 - y0 + 1) > 4096) return null;
+    const keys: string[] = [];
+    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) keys.push(`${x}:${y}`);
+    return keys;
+  }
+  add(part: DetailPart) {
+    this.all.push(part);
+    const keys = this.keys(part);
+    if (!keys) { this.large.push(part); return; }
+    for (const key of keys) {
+      let bucket = this.buckets.get(key);
+      if (!bucket) { bucket = []; this.buckets.set(key, bucket); }
+      bucket.push(part);
+    }
+  }
+  overlaps(part: DetailPart) {
+    const keys = this.keys(part);
+    const seen = new Set<DetailPart>();
+    const collides = (others: DetailPart[]) => {
+      for (const other of others) {
+        if (seen.has(other)) continue;
+        seen.add(other);
+        if (this.metrics) this.metrics.overlapChecks++;
+        if (partsOverlap(part, other)) return true;
+      }
+      return false;
+    };
+    if (!keys) return collides(this.all);
+    if (collides(this.large)) return true;
+    for (const key of keys) if (collides(this.buckets.get(key) ?? [])) return true;
+    return false;
+  }
+}
+
 /** The active rectangle stays under the pointer; neighbours choose the nearest free edge. */
-export function arrangeParts(original: readonly DetailPart[], active: DetailPart, settled = false): DetailPart[] {
+export function arrangeParts(original: readonly DetailPart[], active: DetailPart, settled = false, metrics?: { overlapChecks: number }): DetailPart[] {
   if (settled) { original = original.map(settlePart); active = settlePart(active); }
   const forward = (value: number) => Math.ceil(value / PART_STEP) * PART_STEP;
   const backward = (value: number) => Math.floor(value / PART_STEP) * PART_STEP;
-  const placed: DetailPart[] = [active];
+  const placed: DetailPart[] = [active], space = new PartSpace(metrics);
+  space.add(active);
   for (const part of original) {
     if (part.id === active.id) continue;
     let candidate = part;
-    if (placed.some(other => partsOverlap(part, other))) {
-      const candidates = placed.flatMap(other => [
-        { ...part, x: forward(other.x + other.width + PART_GAP) },
-        { ...part, x: backward(other.x - part.width - PART_GAP) },
-        { ...part, y: forward(other.y + other.height + PART_GAP) },
-        { ...part, y: backward(other.y - part.height - PART_GAP) },
-      ]).filter(item => item.x >= 0 && item.y >= 0 && !placed.some(other => partsOverlap(item, other)));
+    if (space.overlaps(part)) {
+      const candidates: DetailPart[] = [], xs = new Set<number>(), ys = new Set<number>();
+      for (const other of placed) {
+        for (const x of [forward(other.x + other.width + PART_GAP), backward(other.x - part.width - PART_GAP)]) {
+          if (x >= 0 && !xs.has(x)) { xs.add(x); candidates.push({ ...part, x }); }
+        }
+        for (const y of [forward(other.y + other.height + PART_GAP), backward(other.y - part.height - PART_GAP)]) {
+          if (y >= 0 && !ys.has(y)) { ys.add(y); candidates.push({ ...part, y }); }
+        }
+      }
       candidates.sort((a, b) => (a.x - part.x) ** 2 + (a.y - part.y) ** 2 - ((b.x - part.x) ** 2 + (b.y - part.y) ** 2));
-      // A candidate beyond the furthest right edge always exists; no iterative push limit.
-      candidate = candidates[0]!;
+      // The first free candidate in stable distance order is the old winner.
+      candidate = candidates.find(item => !space.overlaps(item))!;
     }
-    placed.push(candidate);
+    placed.push(candidate); space.add(candidate);
   }
   const byId = new Map(placed.map(part => [part.id, part]));
   const result = original.map(part => byId.get(part.id)!);
