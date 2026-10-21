@@ -1,3 +1,4 @@
+import { diffPlanContents, type PlanContentsPatch } from "../core/domain/planContentsPatch";
 import { cloneWindowView } from "./windowViewClone";
 import type { Recovery } from "./fileConflict";
 import { PlanSession } from "./PlanSession";
@@ -86,11 +87,17 @@ export class WindowSessionHub {
   private publish(group: Group) {
     const snapshot = group.session.getSnapshot();
     const handle = group.session.getHandle();
+    const patches = new Map<PlanContents, PlanContentsPatch | null>();
     for (const peer of group.peers) {
       const preserveContents = peer.publishedContents === snapshot.contents;
+      let contentsPatch: PlanContentsPatch | null = null;
+      if (!preserveContents && peer.publishedContents && snapshot.contents) {
+        if (!patches.has(peer.publishedContents)) patches.set(peer.publishedContents, diffPlanContents(peer.publishedContents, snapshot.contents));
+        contentsPatch = patches.get(peer.publishedContents)!;
+      }
       peer.publishedContents = snapshot.contents;
-      this.send(peer, { type: "state", snapshot: preserveContents ? { ...snapshot, contents: null } : snapshot,
-        preserveContents, info: this.info(peer), ...(handle ? { handle } : {}) });
+      this.send(peer, { type: "state", snapshot: preserveContents || contentsPatch ? { ...snapshot, contents: null } : snapshot,
+        preserveContents, ...(contentsPatch ? { contentsPatch } : {}), info: this.info(peer), ...(handle ? { handle } : {}) });
     }
     group.cancelCheckpoint?.();
     if (group.peers.size) group.cancelCheckpoint = scheduleHistoryCheckpoint({
@@ -129,7 +136,7 @@ export class WindowSessionHub {
       pending.reject(new Error(`ウィンドウ${peer.number}を閉じたため処理を中止しました。`));
     }
     if (!group) return;
-    group.peers.delete(peer); peer.group = null;
+    group.peers.delete(peer); peer.group = null; delete peer.publishedContents;
     if (group.historyOwner === peer) group.historyOwner = null;
     if (group.peers.size) this.publish(group);
     else if (!group.openingPeers) {

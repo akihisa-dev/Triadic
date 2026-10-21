@@ -1,3 +1,4 @@
+import { applyPlanContentsPatch } from "../core/domain/planContentsPatch";
 import { emptyDataHistory, type HistoryDeletion } from "../core/domain/dataHistory";
 import type { PlanCommand } from "../core/domain/planCommands";
 import type { PlanContents } from "../core/domain/plan";
@@ -101,7 +102,8 @@ export class WindowPlanSession implements SessionAccess {
       const sameGroup = message.info.group === this.info.group;
       this.updateInfo({ ...message.info, initialView: sameGroup ? this.info.initialView : message.info.initialView });
       this.handle = message.handle;
-      this.snapshot = message.preserveContents ? { ...message.snapshot, contents: this.snapshot.contents } : message.snapshot;
+      this.snapshot = message.contentsPatch ? { ...message.snapshot, contents: applyPlanContentsPatch(this.snapshot.contents!, message.contentsPatch) }
+        : message.preserveContents ? { ...message.snapshot, contents: this.snapshot.contents } : message.snapshot;
       this.listeners.forEach(listener => listener());
     } else if (message.type === "saved") {
       try {

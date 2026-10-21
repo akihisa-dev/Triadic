@@ -34,3 +34,5 @@ export { registerAutoSave, flushAutoSaves } from "../../Triadichrome-extension/s
 export { WindowPlanSession } from "../../Triadichrome-extension/src/extension/WindowPlanSession";
 
 export { processPreviousWorkbook } from "../../Triadichrome-extension/src/extension/previousWorkbookProcessing";
+
+export { diffPlanContents, applyPlanContentsPatch } from "../../Triadichrome-extension/src/core/domain/planContentsPatch";

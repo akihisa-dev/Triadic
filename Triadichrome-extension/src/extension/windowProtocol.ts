@@ -1,3 +1,4 @@
+import type { PlanContentsPatch } from "../core/domain/planContentsPatch";
 import type { PlanSession, SessionSnapshot } from "./PlanSession";
 import type { WindowView } from "./windowView";
 
@@ -7,7 +8,7 @@ export type WindowControl = "flush" | "flush-input" | "resume" | "draft" | "disc
 export type HubRequest = { type: "request"; id: number; method: string; args: unknown[] };
 export type ClientReply = { type: "reply"; id: number; value?: unknown; error?: string };
 export type HubMessage =
-  | { type: "state"; snapshot: SessionSnapshot; info: WindowInfo; handle?: FileSystemFileHandle; preserveContents?: boolean }
+  | { type: "state"; snapshot: SessionSnapshot; info: WindowInfo; handle?: FileSystemFileHandle; preserveContents?: boolean; contentsPatch?: PlanContentsPatch }
   | { type: "result"; id: number; value?: unknown; error?: string; errorName?: string }
   | { type: "control"; id: number; action: WindowControl; detail?: string; expiresAt?: number }
   | { type: "saved"; id: number; handle: FileSystemFileHandle };

@@ -1,8 +1,10 @@
+import { verifyPlanContentsPatch } from "./plan-contents-patch.mjs";
 import assert from "node:assert/strict";
 import { verifyWindowControlTimeout } from "./window-control-timeout.mjs";
 
 export async function verifyWindowSession(api) {
   const bytes = await api.createTriadicDatabase(2026);
+  verifyPlanContentsPatch(api, await api.readPlanContents(bytes));
   const original = file("共有.triadic", bytes);
   const hub = new api.WindowSessionHub();
   const peers = [];
@@ -11,7 +13,7 @@ export async function verifyWindowSession(api) {
     const pending = new Map();
     const client = { states: [], closed: false, hasDraft: false, hasDetails: false, discard: false, accept: true, flush: async () => {}, recoveryTarget: null, recovered: [] };
     const connection = hubInstance.connect({ postMessage(message) {
-      if (message.type === "state") client.states.push(message.preserveContents ? { ...message, snapshot: { ...message.snapshot, contents: client.states.at(-1)?.snapshot.contents ?? null } } : message);
+      if (message.type === "state") client.states.push(message.contentsPatch ? { ...message, snapshot: { ...message.snapshot, contents: api.applyPlanContentsPatch(client.states.at(-1)?.snapshot.contents, message.contentsPatch) } } : message.preserveContents ? { ...message, snapshot: { ...message.snapshot, contents: client.states.at(-1)?.snapshot.contents ?? null } } : message);
       if (message.type === "result") {
         const request = pending.get(message.id); pending.delete(message.id);
         if (message.error) request.reject(new Error(message.error)); else request.resolve(message.value);
@@ -134,6 +136,8 @@ export async function verifyWindowSession(api) {
     await d.request("close");
     assert.equal(b.latest().snapshot.contents.departments[0].departmentName, "コピー先の編集", "他の入力やファイルを閉じない");
     assert.equal(b.closed, false);
+    await d.request("open", { name: original.handle.name, handle: original.handle, bytes: original.bytes });
+    assert.ok(d.latest().snapshot.contents, "閉じた画面で別計画を開くと初回の全量を受け取る");
     console.log("PASS: 同一ファイルの共有・表示複製・共有取消・保存待ち・全保存先切替・履歴集約・失敗保護・個別終了");
   } finally { for (const item of peers) item.disconnect(); }
 

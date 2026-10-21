@@ -15,7 +15,7 @@ export async function verifyWindowControlTimeout(api, bytes) {
     const pending = new Map(), held = [], calls = [];
     const peer = { hold: new Set(), draft: true, discarded: false, closed: false, resumed: 0, latest: null };
     const connection = hub.connect({ postMessage(message) {
-      if (message.type === "state") peer.latest = message.preserveContents ? { ...message, snapshot: { ...message.snapshot, contents: peer.latest?.snapshot.contents ?? null } } : message;
+      if (message.type === "state") peer.latest = message.contentsPatch ? { ...message, snapshot: { ...message.snapshot, contents: api.applyPlanContentsPatch(peer.latest?.snapshot.contents, message.contentsPatch) } } : message.preserveContents ? { ...message, snapshot: { ...message.snapshot, contents: peer.latest?.snapshot.contents ?? null } } : message;
       if (message.type === "result") {
         const request = pending.get(message.id); pending.delete(message.id);
         if (message.error) request.reject(new Error(message.error)); else request.resolve(message.value);
