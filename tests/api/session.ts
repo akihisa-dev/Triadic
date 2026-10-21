@@ -32,3 +32,5 @@ export { WindowSessionHub } from "../../Triadichrome-extension/src/extension/Win
 export { registerAutoSave, flushAutoSaves } from "../../Triadichrome-extension/src/extension/flushAutoSaves";
 
 export { WindowPlanSession } from "../../Triadichrome-extension/src/extension/WindowPlanSession";
+
+export { processPreviousWorkbook } from "../../Triadichrome-extension/src/extension/previousWorkbookProcessing";

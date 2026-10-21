@@ -10,6 +10,7 @@ export type { PreviousPatch } from "../domain/kinds";
 import { isKindId, previousKindName, type PreviousKind } from "../domain/kinds";
 import type { PreviousPatch } from "../domain/kinds";
 import type { PlanContents } from "../domain/plan";
+import type { PreviousWorkbookContents } from "./previousWorkbookContents";
 
 export { createReportWorkbook } from "./reportWorkbook";
 export type { ExportTable, ExportOptions } from "./reportWorkbook";
@@ -66,7 +67,7 @@ export function createPreviousWorkbook(contents: PlanContents, pairs: PreviousPa
   return wb;
 }
 
-export function readPreviousWorkbook(wb: ExcelJS.Workbook, contents: PlanContents): PreviousPatch[] {
+export function readPreviousWorkbook(wb: ExcelJS.Workbook, contents: PreviousWorkbookContents): PreviousPatch[] {
   const meta = wb.getWorksheet(metaName);
   if (!meta || meta.getCell("A1").value !== "Triadichrome previous v3" || meta.getCell("B1").value !== contents.fiscalYear) throw new Error("この年度の最新の前年入力フォーマットを出力し直してください。");
   const previousKind = meta.getCell("C1").value;
@@ -148,7 +149,7 @@ export async function createPreviousWorkbookBytes(contents: PlanContents, pairs:
   try { await inspectPreviousWorkbook(bytes); } catch { throw previousExportLimit(); }
   return bytes;
 }
-export async function parsePreviousWorkbook(bytes: Uint8Array, contents: PlanContents): Promise<PreviousPatch[]> {
+export async function parsePreviousWorkbook(bytes: Uint8Array, contents: PreviousWorkbookContents): Promise<PreviousPatch[]> {
   await inspectPreviousWorkbook(bytes);
   const wb = workbook();
   try { await wb.xlsx.load(bytes as unknown as ExcelJS.Buffer); } catch { throw new Error("Excelファイルを読み込めません。前年入力フォーマットを選択してください。"); }

@@ -13,6 +13,31 @@ export async function verifyPreviousBaselines(api, { excel = false } = {}) {
     rows: [{ accountId, amounts: { 4: '20' }, overrides: { 2: { 4: '15' } } }] });
   const contents = await api.readPlanContents(bytes);
   if (excel) {
+    // Inspect the actual posted payload; parsing tests below exercise the same narrowed contract.
+    const savedWorker = globalThis.Worker;
+    let posted, terminated;
+    globalThis.Worker = class {
+      postMessage(message) { posted = structuredClone(message); queueMicrotask(() => this.onmessage({ data: { patches: [] } })); }
+      terminate() { terminated = true; }
+    };
+    try {
+      const payloadSizes = [];
+      for (const count of [0, 100, 5000]) {
+        const plan = { ...initial, initiatives: Array.from({ length: count }, (_, id) => ({ id, name: `施策${id}`, rows: Array.from({ length: 12 }, (_, month) => ({ month, amount: '100' })) })) };
+        terminated = false;
+        const start = performance.now();
+        assert.deepEqual(await api.processPreviousWorkbook(new Uint8Array([1, 2, 3]), plan), []);
+        const elapsedMs = performance.now() - start;
+        assert.deepEqual(Object.keys(posted.contents).sort(), ['accounts', 'departments', 'fiscalYear', 'industries', 'previousAmounts']);
+        assert.deepEqual(posted.contents.previousAmounts, initial.previousAmounts);
+        assert.equal(plan.initiatives.length, count);
+        assert.ok(terminated);
+        const payloadBytes = Buffer.byteLength(JSON.stringify(posted));
+        payloadSizes.push(payloadBytes);
+        console.log(`前年Excel転送: 施策${count}件、全体${Buffer.byteLength(JSON.stringify(plan))} bytes → ${payloadBytes} bytes、複製と返信${elapsedMs.toFixed(2)}ms`);
+      }
+      assert.equal(new Set(payloadSizes).size, 1, '施策数にかかわらず同じ最小データを転送');
+    } finally { if (savedWorker === undefined) delete globalThis.Worker; else globalThis.Worker = savedWorker; }
     const wb = api.createPreviousWorkbook(contents, [pair], 2);
     const ws = wb.worksheets.find(sheet => sheet.name !== '_triadichrome');
     assert.equal(ws.getCell('A1').value, '前年実績');
