@@ -1,10 +1,8 @@
 import { WindowSessionHub } from "../../Triadichrome-extension/src/extension/WindowSessionHub";
-import { registerFileConflictRecovery } from "../../Triadichrome-extension/src/extension/fileConflict";
 
 /** Only transport is replaced: existing memory handles contain methods and cannot be structured-cloned. */
 export function installInPageSession() {
   const hub = new WindowSessionHub();
-  registerFileConflictRecovery(name => hub.recover(name));
   Reflect.set(window, "__triadichromePreviewTransport", () => {
     let listener: ((event: MessageEvent) => void) | null = null;
     const connection = hub.connect({ postMessage: value => queueMicrotask(() => listener?.(new MessageEvent("message", { data: value }))) });

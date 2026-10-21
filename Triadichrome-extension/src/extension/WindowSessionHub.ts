@@ -1,3 +1,4 @@
+import type { Recovery } from "./fileConflict";
 import { PlanSession } from "./PlanSession";
 import type { OpenPlan } from "./planFile";
 import type { ClientReply, HubMessage, HubRequest, WindowControl, WindowInfo } from "./windowProtocol";
@@ -7,8 +8,8 @@ import { scheduleHistoryCheckpoint } from "./historyCheckpoint";
 import { reconcileWindowCommand } from "../core/domain/windowCommand";
 import type { PlanContents } from "../core/domain/plan";
 
-type Peer = { port: Pick<MessagePort, "postMessage">; group: Group | null; number: number; label: string; initialView: WindowView | null; publishedContents?: PlanContents | null };
-type Group = { id: string; session: PlanSession; peers: Set<Peer>; nextNumber: number; cancelCheckpoint?: () => void; actionTail: Promise<void>; historyOwner: Peer | null };
+type Peer = { port: Pick<MessagePort, "postMessage">; group: Group | null; number: number; label: string; initialView: WindowView | null; publishedContents?: PlanContents | null; opening?: boolean };
+type Group = { id: string; session: PlanSession; peers: Set<Peer>; nextNumber: number; cancelCheckpoint?: () => void; actionTail: Promise<void>; historyOwner: Peer | null; tail: Promise<unknown>; acting: Peer | null; openingHandle: FileSystemFileHandle | undefined; opened: Promise<void> };
 const destinationMissing = async (): Promise<FileSystemFileHandle> => { throw new Error("保存先を選択してください。入力は保持しています。"); };
 const errorText = (failure: unknown, field: "message" | "name", fallback: string) => failure && typeof failure === "object" && field in failure && typeof Reflect.get(failure, field) === "string" ? String(Reflect.get(failure, field)) : fallback;
 
@@ -19,9 +20,8 @@ export class WindowSessionHub {
   private tickets = new Map<string, { group: Group; view: WindowView }>();
   private controls = new Map<number, { peer: Peer; resolve: (value: unknown) => void; reject: (error: Error) => void }>();
   private sequence = 0;
-  private tail: Promise<unknown> = Promise.resolve();
-  private acting: Peer | null = null;
-  constructor(private makeSession = () => new PlanSession()) {}
+  private openingTail: Promise<unknown> = Promise.resolve();
+  constructor(private makeSession: (recovery: Recovery) => PlanSession = recovery => new PlanSession(recovery)) {}
 
   connect(port: Pick<MessagePort, "postMessage">) {
     const peer: Peer = { port, group: null, number: 1, label: "Home", initialView: null };
@@ -44,11 +44,12 @@ export class WindowSessionHub {
   }
   private send(peer: Peer, message: HubMessage) { peer.port.postMessage(message); }
   private enqueue<T>(peer: Peer, operation: () => Promise<T>) {
-    const task = this.tail.then(async () => {
-      this.acting = peer;
-      try { return await operation(); } finally { this.acting = null; }
+    const group = this.requireGroup(peer);
+    const task = group.tail.then(async () => {
+      group.acting = peer;
+      try { return await operation(); } finally { group.acting = null; }
     });
-    this.tail = task.catch(() => {});
+    group.tail = task.catch(() => {});
     return task;
   }
   private control(peer: Peer, action: WindowControl, detail?: string) {
@@ -58,10 +59,6 @@ export class WindowSessionHub {
       this.controls.set(id, { peer, resolve, reject });
       this.send(peer, { type: "control", id, action, ...(detail ? { detail } : {}) });
     });
-  }
-  recover(name: string) {
-    if (!this.acting) return Promise.resolve(null);
-    return this.control(this.acting, "recover", name) as Promise<FileSystemFileHandle | null>;
   }
   private info(peer: Peer): WindowInfo {
     return { group: peer.group?.id ?? null, number: peer.number, peers: peer.group?.peers.size ?? 1, initialView: peer.initialView };
@@ -85,18 +82,23 @@ export class WindowSessionHub {
     }, destinationMissing);
   }
 
-  private newGroup() {
-    const group: Group = { id: crypto.randomUUID(), session: this.makeSession(), peers: new Set(), nextNumber: 1, actionTail: Promise.resolve(), historyOwner: null };
+  private newGroup(plan: Pick<OpenPlan, "name" | "bytes" | "handle">) {
+    const group: Group = { id: crypto.randomUUID(), session: this.makeSession(name => group.acting ? this.control(group.acting, "recover", name) as Promise<FileSystemFileHandle | null> : Promise.resolve(null)),
+      peers: new Set(), nextNumber: 1, actionTail: Promise.resolve(), historyOwner: null, tail: Promise.resolve(), acting: null, opened: Promise.resolve(), openingHandle: plan.handle };
     this.groups.set(group.id, group);
     group.session.subscribe(() => this.publish(group));
     group.session.subscribeFileSave(async handle => {
-      const peer = this.acting;
+      const peer = group.acting;
       if (peer?.group === group) await new Promise<void>((resolve, reject) => {
         const id = ++this.sequence;
         this.controls.set(id, { peer, resolve: () => resolve(), reject });
         this.send(peer, { type: "saved", id, handle });
       }).catch(() => {}); // Remembering the reference must not reverse a committed file save.
     });
+    group.opened = group.session.open(plan).then(() => { group.openingHandle = undefined; }, failure => {
+      this.groups.delete(group.id); throw failure;
+    });
+    void group.opened.catch(() => {});
     return group;
   }
   private attach(peer: Peer, group: Group, view: WindowView | null = null) {
@@ -187,20 +189,30 @@ export class WindowSessionHub {
         return;
       }
       case "detach": this.detach(peer); return;
-      case "open": return this.enqueue(peer, async () => {
-        const plan = args[0] as Pick<OpenPlan, "name" | "bytes" | "handle">;
-        if (peer.group) throw new Error("現在のファイルを閉じてください。");
-        for (const group of this.groups.values()) {
-          const handle = group.session.getHandle();
-          if (handle && plan.handle && await handle.isSameEntry(plan.handle)) {
-            if (group.historyOwner) throw new Error("同じファイルの履歴を閲覧しています。通常画面に戻ってから開いてください。");
-            this.attach(peer, group); return;
-          }
-        }
-        const group = this.newGroup(); this.attach(peer, group);
-        try { await group.session.open(plan); }
-        catch (failure) { this.detach(peer, false); throw failure; }
-      });
+      case "open": {
+        if (peer.group || peer.opening) throw new Error("現在のファイルを閉じてください。");
+        peer.opening = true;
+        try {
+          const plan = args[0] as Pick<OpenPlan, "name" | "bytes" | "handle">;
+          // Only identity checks and group registration share a queue. Loading the
+          // selected document and all later operations proceed in its own group.
+          const selected = this.openingTail.then(async () => {
+            for (const group of this.groups.values()) {
+              const handle = group.openingHandle ?? group.session.getHandle();
+              if (handle && plan.handle && await handle.isSameEntry(plan.handle)) return group;
+            }
+            return this.newGroup(plan);
+          });
+          this.openingTail = selected.then(() => {}, () => {});
+          const group = await selected;
+          await group.opened;
+          if (!this.peers.has(peer)) return;
+          if (group.historyOwner) throw new Error("同じファイルの履歴を閲覧しています。通常画面に戻ってから開いてください。");
+          this.groups.set(group.id, group);
+          this.attach(peer, group);
+        } finally { peer.opening = false; }
+        return;
+      }
       case "history": return this.coordinate(peer, group => this.enqueue(peer, async () => { await group.session.checkpoint(true, destinationMissing); }), true);
       case "travelOperation": return this.coordinate(peer, group => this.enqueue(peer, () => group.session.travelOperation(args[0] as -1 | 1, destinationMissing)));
       case "saveAs": return this.coordinate(peer, group => this.enqueue(peer, () => group.session.saveAs(async () => args[0] as FileSystemFileHandle)));

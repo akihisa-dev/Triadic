@@ -1,4 +1,4 @@
-import { FileConflictError, recoverFileConflict } from "./fileConflict";
+import { FileConflictError, recoverFileConflict, type Recovery } from "./fileConflict";
 import { TRIADIC_FILE_EXTENSION } from "../core/storage/triadicSchema";
 import { processPlan } from "./planProcessing";
 import { type PlanContents } from "../core/domain/plan";
@@ -16,20 +16,20 @@ export function planContents(plan: OpenPlan): PlanContents {
   return contents;
 }
 
-export async function writePlanChange(plan: OpenPlan, handle: FileSystemFileHandle, bytes: Uint8Array, options: { historyPrepared?: boolean; now?: string; allowRebase?: boolean } = {}): Promise<OpenPlan> {
+export async function writePlanChange(plan: OpenPlan, handle: FileSystemFileHandle, bytes: Uint8Array, options: { historyPrepared?: boolean; now?: string; allowRebase?: boolean; recovery?: Recovery | undefined } = {}): Promise<OpenPlan> {
   if (!handle.name.toLowerCase().endsWith(TRIADIC_FILE_EXTENSION)) throw new Error("拡張子は.triadicにしてください。");
   if (!options.historyPrepared) bytes = await trackHistoryChange(plan.bytes, bytes, options.now);
   const { contents, savedHistory } = await processPlan("readSavedPlan", bytes);
-  return writeCheckedFile(plan, { ...contents, savedHistory, bytes, name: handle.name, handle }, options.allowRebase === true);
+  return writeCheckedFile(plan, { ...contents, savedHistory, bytes, name: handle.name, handle }, options.allowRebase === true, options.recovery);
 }
 
 /** The preparation task already validated the complete bytes and read their contents. */
-export async function writePreparedPlanChange(plan: OpenPlan, handle: FileSystemFileHandle, prepared: PreparedPlanChange, allowRebase = false): Promise<OpenPlan> {
+export async function writePreparedPlanChange(plan: OpenPlan, handle: FileSystemFileHandle, prepared: PreparedPlanChange, allowRebase = false, recovery?: Recovery): Promise<OpenPlan> {
   if (!handle.name.toLowerCase().endsWith(TRIADIC_FILE_EXTENSION)) throw new Error("拡張子は.triadicにしてください。");
-  return writeCheckedFile(plan, { ...prepared.contents, savedHistory: prepared.savedHistory, bytes: prepared.bytes, name: handle.name, handle }, allowRebase);
+  return writeCheckedFile(plan, { ...prepared.contents, savedHistory: prepared.savedHistory, bytes: prepared.bytes, name: handle.name, handle }, allowRebase, recovery);
 }
 
-async function writeCheckedFile(plan: OpenPlan, prepared: OpenPlan & { handle: FileSystemFileHandle }, allowRebase: boolean): Promise<OpenPlan> {
+async function writeCheckedFile(plan: OpenPlan, prepared: OpenPlan & { handle: FileSystemFileHandle }, allowRebase: boolean, recovery?: Recovery): Promise<OpenPlan> {
   let saved = prepared;
   try {
     await writeTriadicFile(prepared.handle, prepared.bytes, async () => {
@@ -50,7 +50,7 @@ async function writeCheckedFile(plan: OpenPlan, prepared: OpenPlan & { handle: F
   } catch (error) {
     if (!(error instanceof FileConflictError)) throw error;
     // The old writer has been aborted before showing a dialog or opening a picker.
-    const handle = await recoverFileConflict(prepared.handle);
+    const handle = await recoverFileConflict(prepared.handle, recovery);
     const expected = new Uint8Array(await (await handle.getFile()).arrayBuffer());
     await writeTriadicFile(handle, prepared.bytes, async () => {
       const current = new Uint8Array(await (await handle.getFile()).arrayBuffer());

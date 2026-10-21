@@ -5,11 +5,11 @@ export async function verifyWindowSession(api) {
   const original = file("共有.triadic", bytes);
   const hub = new api.WindowSessionHub();
   const peers = [];
-  function peer() {
+  function peer(hubInstance = hub) {
     let sequence = 0;
     const pending = new Map();
-    const client = { states: [], closed: false, hasDraft: false, discard: false, accept: true, flush: async () => {} };
-    const connection = hub.connect({ postMessage(message) {
+    const client = { states: [], closed: false, hasDraft: false, discard: false, accept: true, flush: async () => {}, recoveryTarget: null, recovered: [] };
+    const connection = hubInstance.connect({ postMessage(message) {
       if (message.type === "state") client.states.push(message.preserveContents ? { ...message, snapshot: { ...message.snapshot, contents: client.states.at(-1)?.snapshot.contents ?? null } } : message);
       if (message.type === "result") {
         const request = pending.get(message.id); pending.delete(message.id);
@@ -20,6 +20,7 @@ export async function verifyWindowSession(api) {
         try {
           let value;
           if (message.action === "flush") await client.flush();
+          if (message.action === "recover") { client.recovered.push(message.detail); value = client.recoveryTarget; }
           if (message.action === "draft") value = client.hasDraft;
           if (message.action === "confirm-discard") value = client.accept;
           if (message.action === "discard") { client.hasDraft = false; client.discard = true; }
@@ -124,6 +125,93 @@ export async function verifyWindowSession(api) {
     console.log("PASS: 同一ファイルの共有・表示複製・共有取消・保存待ち・全保存先切替・履歴集約・失敗保護・個別終了");
   } finally { for (const item of peers) item.disconnect(); }
 
+  // A blocked filesystem write must not reserve the hub for an unrelated file.
+  const slowFile = file("独立.triadic", bytes), fastFile = file("独立.triadic", bytes);
+  const slow = peer(), fast = peer(), same = peer();
+  let releaseWrite;
+  const writeGate = new Promise(resolve => { releaseWrite = resolve; });
+  let writing;
+  const writeStarted = new Promise(resolve => { writing = resolve; });
+  const within = promise => {
+    let timer;
+    return Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("別ファイルが停止中の処理を待っています")), 5000); })]).finally(() => clearTimeout(timer));
+  };
+  let slowSave, sameSave;
+  try {
+    await slow.request("open", { name: slowFile.handle.name, handle: slowFile.handle, bytes });
+    await same.request("open", { name: slowFile.handle.name, handle: slowFile.handle, bytes });
+    slowFile.gate = async () => { writing(); await writeGate; };
+    const id = slow.latest().snapshot.contents.departments[0].id;
+    const update = name => ({ type: "department", change: { type: "update", id, departmentName: name } });
+    slowSave = slow.request("dispatch", update("遅い保存"));
+    await writeStarted;
+    let sameComplete = false;
+    sameSave = same.request("dispatch", update("同じファイルの次の保存")).then(() => { sameComplete = true; });
+    await within(fast.request("open", { name: fastFile.handle.name, handle: fastFile.handle, bytes }));
+    assert.notEqual(fast.latest().info.group, slow.latest().info.group, "同名でも別実体なら共有しない");
+    await within(fast.request("dispatch", update("独立して完了")));
+    await within(fast.request("travelOperation", -1));
+    await within(fast.request("travelOperation", 1));
+    assert.equal(fast.latest().snapshot.contents.departments[0].departmentName, "独立して完了");
+    assert.equal(sameComplete, false, "同じファイルの次の保存は先行書き込みを待つ");
+    releaseWrite(); await slowSave; await sameSave;
+    assert.equal(slow.latest().snapshot.contents.departments[0].departmentName, "同じファイルの次の保存");
+    assert.equal((await api.readPlanContents(fastFile.bytes)).departments[0].departmentName, "独立して完了");
+  } finally {
+    releaseWrite(); await Promise.allSettled([slowSave, sameSave]);
+    for (const item of [slow, fast, same]) item.disconnect();
+  }
+  // Pending reads are registered by file identity before loading has finished.
+  let releaseRead;
+  const readGate = new Promise(resolve => { releaseRead = resolve; });
+  let readStarted;
+  const starting = new Promise(resolve => { readStarted = resolve; });
+  let count = 0;
+  const readingHub = new api.WindowSessionHub(recover => {
+    const session = new api.PlanSession(recover), open = session.open.bind(session), index = count++;
+    session.open = async plan => { if (index === 0) { readStarted(); await readGate; } await open(plan); };
+    return session;
+  });
+  const loading = peer(readingHub), other = peer(readingHub), joined = peer(readingHub);
+  let opening, joining;
+  try {
+    opening = loading.request("open", { name: slowFile.handle.name, handle: slowFile.handle, bytes });
+    await starting;
+    joining = joined.request("open", { name: slowFile.handle.name, handle: slowFile.handle, bytes });
+    await within(other.request("open", { name: fastFile.handle.name, handle: fastFile.handle, bytes }));
+    releaseRead(); await opening; await joining;
+    assert.equal(loading.latest().info.group, joined.latest().info.group);
+    assert.equal(count, 2, "同時に同じファイルを開いても担当を重複作成しない");
+  } finally {
+    releaseRead(); await Promise.allSettled([opening, joining]);
+    for (const item of [loading, other, joined]) item.disconnect();
+  }
+  let releaseRecovery;
+  const recoveryGate = new Promise(resolve => { releaseRecovery = resolve; });
+  let requested = 0;
+  const recoveries = [];
+  const recoveryHub = new api.WindowSessionHub(recover => {
+    const session = new api.PlanSession(recover);
+    session.dispatch = async () => {
+      if (++requested === 2) releaseRecovery();
+      await recoveryGate;
+      recoveries.push(await recover("同名.triadic"));
+      return session.getSnapshot().contents;
+    };
+    return session;
+  });
+  const recoveryA = peer(recoveryHub), recoveryB = peer(recoveryHub);
+  try {
+    recoveryA.recoveryTarget = slowFile.handle; recoveryB.recoveryTarget = fastFile.handle;
+    await recoveryA.request("open", { name: slowFile.handle.name, handle: slowFile.handle, bytes });
+    await recoveryB.request("open", { name: fastFile.handle.name, handle: fastFile.handle, bytes });
+    await within(Promise.all([recoveryA.request("dispatch", {}), recoveryB.request("dispatch", {})]));
+    assert.deepEqual(recoveryA.recovered, ["同名.triadic"]);
+    assert.deepEqual(recoveryB.recovered, ["同名.triadic"]);
+    assert.deepEqual(new Set(recoveries), new Set([slowFile.handle, fastFile.handle]), "並行回復要求をそれぞれの操作元へ返す");
+  } finally { releaseRecovery(); recoveryA.disconnect(); recoveryB.disconnect(); }
+  console.log("PASS: 別ファイルの保存・取消・読込は独立、同一ファイルの順序と読込中の実体判定は維持");
+
   const saved = [], controller = new api.AutoSave(async draft => { saved.push(draft); }, 60_000);
   const unregister = api.registerAutoSave(controller);
   try {
@@ -143,7 +231,7 @@ export async function verifyWindowSession(api) {
       getFile: async () => new File([stored], name),
       async createWritable() { let next; return {
         async write(value) { next = new Uint8Array(value).slice(); },
-        async close() { if (result.fail) throw new Error("確認用の保存失敗"); stored = next; }, async abort() {},
+        async close() { await result.gate?.(); if (result.fail) throw new Error("確認用の保存失敗"); stored = next; }, async abort() {},
       }; },
     };
     return result;

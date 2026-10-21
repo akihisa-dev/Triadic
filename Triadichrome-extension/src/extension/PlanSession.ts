@@ -3,6 +3,7 @@ import { deleteDataHistory, readDataHistory, readSavedPlan, readHistorySnapshot,
 import type { PlanContents } from "../core/domain/plan";
 import { writePlanChange, writePreparedPlanChange, planContents, type OpenPlan } from "./planFile";
 import { isAutomatic, validatePlanCommand, type PlanCommand } from "../core/domain/planCommands";
+import type { Recovery } from "./fileConflict";
 export const OPERATION_HISTORY_LIMIT = 100;
 import { preparePlanCommand, type SavedOperation } from "./preparePlanCommand";
 import { writePlanCopy } from "./savePlanAs";
@@ -11,6 +12,7 @@ export type SessionSnapshot = { contents: PlanContents | null; name: string; his
 type Destination = () => Promise<FileSystemFileHandle>;
 /** Owns the saved document. Drafts and navigation never enter this store. */
 export class PlanSession {
+  constructor(private recovery?: Recovery) {}
   private plan: OpenPlan | null = null;
   private snapshot: SessionSnapshot = { contents: null, name: "", history: emptyDataHistory, busy: false, historyError: "", canUndo: false, canRedo: false, operationRevision: 0 };
   private undoStack: SavedOperation[] = [];
@@ -114,7 +116,7 @@ export class PlanSession {
       const prepared = await preparePlanCommand(target, command);
       if (!prepared.operation) return plan;
       entry = prepared.operation ?? undefined;
-      return writePreparedPlanChange(target, target.handle!, prepared.prepared, true);
+      return writePreparedPlanChange(target, target.handle!, prepared.prepared, true, this.recovery);
     }, destination, isAutomatic(command), saved => {
       if (saved.rebasedOperation !== undefined) entry = saved.rebasedOperation ?? undefined;
       if (!entry) return;
@@ -147,7 +149,7 @@ export class PlanSession {
     if (!entry) return Promise.reject(new Error(direction === -1 ? "取り消せる操作はありません。" : "やり直せる操作はありません。"));
     return this.save(async current => {
       const bytes = await applyOperationSnapshot(current.bytes, direction === -1 ? entry.before : entry.after);
-      return writePlanChange(current, current.handle!, bytes);
+      return writePlanChange(current, current.handle!, bytes, { recovery: this.recovery });
     }, destination, true, () => {
       source.pop(); target.push(entry); this.operationRevision++;
     });
@@ -155,7 +157,7 @@ export class PlanSession {
   private historyChange(operation: (bytes: Uint8Array) => Promise<Uint8Array>, destination: Destination, committed?: (saved: OpenPlan) => void): Promise<PlanContents> {
     return this.save(async current => {
       const bytes = await operation(current.bytes);
-      return bytes === current.bytes ? current : writePlanChange(current, current.handle!, bytes, { historyPrepared: true });
+      return bytes === current.bytes ? current : writePlanChange(current, current.handle!, bytes, { historyPrepared: true, recovery: this.recovery });
     }, destination, true, committed);
   }
   async checkpoint(force: boolean, destination: Destination): Promise<void> {
@@ -178,7 +180,7 @@ export class PlanSession {
     const handle = current.handle as (FileSystemFileHandle & { queryPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState> }) | undefined;
     if (!handle || (handle.queryPermission && await handle.queryPermission({ mode: "readwrite" }) !== "granted")) throw new Error("「保存を再試行」からファイルへの保存を許可してください。");
     const bytes = await recordDataHistory(current.bytes, new Date().toISOString(), true);
-    const saved = await writePlanChange(current, handle, bytes, { historyPrepared: true });
+    const saved = await writePlanChange(current, handle, bytes, { historyPrepared: true, recovery: this.recovery });
     await this.acceptSaved(saved);
     return saved;
   }

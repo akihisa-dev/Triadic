@@ -1,8 +1,6 @@
 import { WindowSessionHub } from "./WindowSessionHub";
-import { registerFileConflictRecovery } from "./fileConflict";
 
 const hub = new WindowSessionHub();
-registerFileConflictRecovery(name => hub.recover(name));
 const scope = self as unknown as { onconnect: (event: MessageEvent) => void };
 scope.onconnect = event => {
   const port = event.ports[0]!;
