@@ -198,6 +198,41 @@ export async function verifyWindowSession(api) {
     releaseRead(); await Promise.allSettled([opening, joining]);
     for (const item of [loading, other, joined]) item.disconnect();
   }
+  // A loading document must outlive an opener only while another opener needs it.
+  for (const keepOther of [false, true]) {
+    let release, started;
+    const gate = new Promise(resolve => { release = resolve; });
+    const began = new Promise(resolve => { started = resolve; });
+    let creations = 0;
+    const cleanupHub = new api.WindowSessionHub(recover => {
+      const session = new api.PlanSession(recover), open = session.open.bind(session);
+      if (creations++ === 0) session.open = async plan => { started(); await gate; await open(plan); };
+      return session;
+    });
+    const opener = peer(cleanupHub), survivor = peer(cleanupHub);
+    let first, second;
+    try {
+      first = opener.request("open", { name: original.handle.name, handle: original.handle, bytes });
+      await began;
+      if (keepOther) {
+        second = survivor.request("open", { name: original.handle.name, handle: original.handle, bytes });
+        await new Promise(resolve => setImmediate(resolve));
+      }
+      opener.disconnect(); release(); await first; await second;
+      if (keepOther) {
+        assert.equal(cleanupHub.groups.size, 1, "別の読込待ちウィンドウがいる計画は保持");
+        assert.ok(survivor.latest().snapshot.contents);
+        assert.equal(creations, 1);
+      } else {
+        assert.equal(cleanupHub.groups.size, 0, "読込後に利用者のない計画を解放");
+        const latestBytes = await api.saveKindSelection(bytes, "cost-table", [2]);
+        await survivor.request("open", { name: original.handle.name, handle: original.handle, bytes: latestBytes });
+        assert.deepEqual(survivor.latest().snapshot.contents.kindSelections["cost-table"], [2], "再読込で新しいディスク内容を採用");
+        assert.equal(creations, 2);
+      }
+    } finally { release(); await Promise.allSettled([first, second]); opener.disconnect(); survivor.disconnect(); }
+    assert.equal(cleanupHub.groups.size, 0);
+  }
   let releaseRecovery;
   const recoveryGate = new Promise(resolve => { releaseRecovery = resolve; });
   let requested = 0;
