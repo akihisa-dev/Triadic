@@ -153,6 +153,7 @@ test("明細の文章と表を複製せず、複製先は空の明細一覧を�
   await page.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true }).dblclick();
   await page.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).fill("元画面だけの文章");
   await page.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).press("Escape");
+  await settleMotion(page.locator("body"));
   await page.getByRole("button", { name: "横向き12か月パーツを追加", exact: true }).press("Enter");
   await page.getByRole("table", { name: "パーツ 2の表", exact: true }).getByRole("columnheader", { name: "項目", exact: true }).dblclick();
   await page.getByRole("textbox", { name: "項目 1の名前", exact: true }).fill("元画面だけのセル");
@@ -182,6 +183,7 @@ test("別画面で保持する明細も履歴の破棄確認へ含め、取消�
   await detail.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true }).dblclick();
   await detail.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).fill("取消して保持する文章");
   await detail.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).press("Escape");
+  await settleMotion(detail.locator("body"));
   await detail.getByRole("button", { name: "横向き12か月パーツを追加", exact: true }).press("Enter");
   await detail.getByRole("table", { name: "パーツ 2の表", exact: true }).getByRole("columnheader", { name: "項目", exact: true }).dblclick();
   await detail.getByRole("textbox", { name: "項目 1の名前", exact: true }).fill("取消して保持するセル");
@@ -203,4 +205,48 @@ test("別画面で保持する明細も履歴の破棄確認へ含め、取消�
   await confirmation.getByRole("button", { name: "はい", exact: true }).click();
   await expect.poll(() => detail.isClosed()).toBe(true);
   await expect(copy.getByRole("heading", { name: "履歴", exact: true })).toBeVisible();
+});
+
+test("応答のない別画面を30秒で案内し、明細を保持して履歴操作を再試行できる", async ({ page, context }, info) => {
+  test.setTimeout(60_000);
+  // Keep the actual shared worker and withhold only a synthetic peer's flush reply.
+  await context.addInitScript(() => {
+    const Original = SharedWorker;
+    window.SharedWorker = new Proxy(Original, { construct(target, args) {
+      const worker = Reflect.construct(target, args) as SharedWorker;
+      const held = new Set<number>(), send = worker.port.postMessage.bind(worker.port);
+      worker.port.addEventListener("message", event => {
+        const message = event.data as { type: string; action: string; id: number };
+        if (Reflect.get(window, "holdWindowFlush") && message.type === "control" && message.action === "flush") held.add(message.id);
+      });
+      worker.port.postMessage = ((...args: Parameters<MessagePort["postMessage"]>) => {
+        const message = args[0] as { type: string; id: number };
+        if (message.type === "reply" && held.has(message.id)) return;
+        Reflect.apply(send, worker.port, args);
+      }) as MessagePort["postMessage"];
+      return worker;
+    } });
+  });
+  const copy = await duplicate(page);
+  await navigate(copy, "明細");
+  await copy.getByRole("button", { name: "＋ 明細を追加", exact: true }).click();
+  await copy.getByRole("textbox", { name: "明細名", exact: true }).fill("応答待ちでも保持");
+  await copy.getByRole("button", { name: "次へ", exact: true }).click();
+  await copy.getByRole("button", { name: "テキストパーツを追加", exact: true }).press("Enter");
+  await copy.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true }).dblclick();
+  await copy.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).fill("中止後も残る文章");
+  await copy.evaluate(() => { Reflect.set(window, "holdWindowFlush", true); });
+  await navigate(page, "履歴");
+  const notice = page.getByRole("alert");
+  await expect(notice).toContainText("ウィンドウ2 · 明細入力から30秒以内に応答", { timeout: 40_000 });
+  await expect(notice).toContainText("入力は保持しています");
+  expect(copy.isClosed()).toBe(false);
+  await expect(copy.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true })).toHaveText("中止後も残る文章");
+  await page.screenshot({ path: info.outputPath("window-timeout.png") });
+  await copy.evaluate(() => { Reflect.set(window, "holdWindowFlush", false); });
+  await navigate(page, "履歴");
+  const confirmation = page.getByRole("alertdialog", { name: "履歴を開きますか？", exact: true });
+  await expect(confirmation).toContainText("ウィンドウ2");
+  await confirmation.getByRole("button", { name: "キャンセル", exact: true }).click();
+  await expect(copy.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true })).toHaveText("中止後も残る文章");
 });

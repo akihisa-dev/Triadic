@@ -9,5 +9,5 @@ export type ClientReply = { type: "reply"; id: number; value?: unknown; error?: 
 export type HubMessage =
   | { type: "state"; snapshot: SessionSnapshot; info: WindowInfo; handle?: FileSystemFileHandle; preserveContents?: boolean }
   | { type: "result"; id: number; value?: unknown; error?: string; errorName?: string }
-  | { type: "control"; id: number; action: WindowControl; detail?: string }
+  | { type: "control"; id: number; action: WindowControl; detail?: string; expiresAt?: number }
   | { type: "saved"; id: number; handle: FileSystemFileHandle };

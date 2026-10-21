@@ -30,3 +30,5 @@ export { createNewPlanFile } from "../../Triadichrome-extension/src/extension/ne
 export { readTriadicFile } from "../../Triadichrome-extension/src/extension/readTriadicFile";
 export { WindowSessionHub } from "../../Triadichrome-extension/src/extension/WindowSessionHub";
 export { registerAutoSave, flushAutoSaves } from "../../Triadichrome-extension/src/extension/flushAutoSaves";
+
+export { WindowPlanSession } from "../../Triadichrome-extension/src/extension/WindowPlanSession";

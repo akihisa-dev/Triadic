@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { verifyWindowControlTimeout } from "./window-control-timeout.mjs";
 
 export async function verifyWindowSession(api) {
   const bytes = await api.createTriadicDatabase(2026);
@@ -222,6 +223,8 @@ export async function verifyWindowSession(api) {
     assert.deepEqual(new Set(recoveries), new Set([slowFile.handle, fastFile.handle]), "並行回復要求をそれぞれの操作元へ返す");
   } finally { releaseRecovery(); recoveryA.disconnect(); recoveryB.disconnect(); }
   console.log("PASS: 別ファイルの保存・取消・読込は独立、同一ファイルの順序と読込中の実体判定は維持");
+
+  await verifyWindowControlTimeout(api, bytes);
 
   const saved = [], controller = new api.AutoSave(async draft => { saved.push(draft); }, 60_000);
   const unregister = api.registerAutoSave(controller);

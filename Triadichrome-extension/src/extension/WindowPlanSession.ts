@@ -110,6 +110,9 @@ export class WindowPlanSession implements SessionAccess {
       } catch (failure) { this.port!.postMessage({ type: "reply", id: message.id, error: failure instanceof Error ? failure.message : "ファイルの参照を記憶できませんでした。" }); }
     } else {
       try {
+        if (message.expiresAt !== undefined && message.expiresAt <= Date.now()) {
+          throw new Error("要求の期限を過ぎたため処理を中止しました。入力は保持しています。");
+        }
         const value = await this.control(message.action, message.detail);
         this.port!.postMessage({ type: "reply", id: message.id, value });
       } catch (failure) {

@@ -13,6 +13,7 @@ type Peer = { port: Pick<MessagePort, "postMessage">; group: Group | null; numbe
 type Group = { id: string; session: PlanSession; peers: Set<Peer>; nextNumber: number; cancelCheckpoint?: () => void; actionTail: Promise<void>; historyOwner: Peer | null; tail: Promise<unknown>; acting: Peer | null; openingHandle: FileSystemFileHandle | undefined; opened: Promise<void> };
 const destinationMissing = async (): Promise<FileSystemFileHandle> => { throw new Error("保存先を選択してください。入力は保持しています。"); };
 const errorText = (failure: unknown, field: "message" | "name", fallback: string) => failure && typeof failure === "object" && field in failure && typeof Reflect.get(failure, field) === "string" ? String(Reflect.get(failure, field)) : fallback;
+class WindowControlTimeoutError extends Error {}
 
 /** One saved document and one operation queue survive any individual window. No plan is persisted here. */
 export class WindowSessionHub {
@@ -22,7 +23,7 @@ export class WindowSessionHub {
   private controls = new Map<number, { peer: Peer; resolve: (value: unknown) => void; reject: (error: Error) => void }>();
   private sequence = 0;
   private openingTail: Promise<unknown> = Promise.resolve();
-  constructor(private makeSession: (recovery: Recovery) => PlanSession = recovery => new PlanSession(recovery)) {}
+  constructor(private makeSession: (recovery: Recovery) => PlanSession = recovery => new PlanSession(recovery), private controlTimeoutMs = 30_000) {}
 
   connect(port: Pick<MessagePort, "postMessage">) {
     const peer: Peer = { port, group: null, number: 1, label: "Home", initialView: null };
@@ -32,7 +33,6 @@ export class WindowSessionHub {
         if (message.type === "reply") {
           const pending = this.controls.get(message.id);
           if (!pending || pending.peer !== peer) return;
-          this.controls.delete(message.id);
           if (message.error) pending.reject(new Error(message.error)); else pending.resolve(message.value);
           return;
         }
@@ -54,11 +54,25 @@ export class WindowSessionHub {
     return task;
   }
   private control(peer: Peer, action: WindowControl, detail?: string) {
+    return this.reply(peer, (id, expiresAt) => ({ type: "control", id, action, ...(detail ? { detail } : {}),
+      ...(expiresAt !== undefined && action !== "resume" ? { expiresAt } : {}) }), action !== "confirm-discard" && action !== "recover");
+  }
+  private reply(peer: Peer, message: (id: number, expiresAt: number | undefined) => HubMessage, bounded = true) {
     if (!this.peers.has(peer)) return Promise.reject(new Error(`ウィンドウ${peer.number}は既に閉じられています。`));
     return new Promise<unknown>((resolve, reject) => {
       const id = ++this.sequence;
-      this.controls.set(id, { peer, resolve, reject });
-      this.send(peer, { type: "control", id, action, ...(detail ? { detail } : {}) });
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const finish = (error?: Error, value?: unknown) => {
+        if (!this.controls.delete(id)) return;
+        if (timer !== undefined) clearTimeout(timer);
+        if (error) reject(error); else resolve(value);
+      };
+      this.controls.set(id, { peer, resolve: value => finish(undefined, value), reject: error => finish(error) });
+      if (bounded) timer = setTimeout(() => finish(new WindowControlTimeoutError(
+        `ウィンドウ${peer.number} · ${peer.label}から${Math.ceil(this.controlTimeoutMs / 1000)}秒以内に応答を確認できませんでした。操作を中止しました。入力は保持しています。応答を確認して同じ操作を再試行してください。`,
+      )), this.controlTimeoutMs);
+      try { this.send(peer, message(id, bounded ? Date.now() + this.controlTimeoutMs : undefined)); }
+      catch (failure) { finish(failure instanceof Error ? failure : new Error("ウィンドウへ要求を送れませんでした。入力は保持しています。")); }
     });
   }
   private info(peer: Peer): WindowInfo {
@@ -90,11 +104,8 @@ export class WindowSessionHub {
     group.session.subscribe(() => this.publish(group));
     group.session.subscribeFileSave(async handle => {
       const peer = group.acting;
-      if (peer?.group === group) await new Promise<void>((resolve, reject) => {
-        const id = ++this.sequence;
-        this.controls.set(id, { peer, resolve: () => resolve(), reject });
-        this.send(peer, { type: "saved", id, handle });
-      }).catch(() => {}); // Remembering the reference must not reverse a committed file save.
+      if (peer?.group === group) await this.reply(peer, id => ({ type: "saved", id, handle }))
+        .catch(() => {}); // Remembering the reference must not reverse a committed file save.
     });
     group.opened = group.session.open(plan).then(() => { group.openingHandle = undefined; }, failure => {
       this.groups.delete(group.id); throw failure;
@@ -109,8 +120,8 @@ export class WindowSessionHub {
   private detach(peer: Peer, disconnected = true) {
     const group = peer.group;
     if (disconnected) this.peers.delete(peer);
-    for (const [id, pending] of this.controls) if (pending.peer === peer) {
-      this.controls.delete(id); pending.reject(new Error(`ウィンドウ${peer.number}を閉じたため処理を中止しました。`));
+    for (const pending of this.controls.values()) if (pending.peer === peer) {
+      pending.reject(new Error(`ウィンドウ${peer.number}を閉じたため処理を中止しました。`));
     }
     if (!group) return;
     group.peers.delete(peer); peer.group = null;
@@ -134,7 +145,10 @@ export class WindowSessionHub {
         // Flush outside the document queue: each UI must be able to submit its pending save.
         await Promise.all(peers.map(async item => {
           try { await this.control(item, "flush"); }
-          catch (failure) { throw new Error(`ウィンドウ${item.number} · ${item.label}：${errorText(failure, "message", "保存できませんでした。")}`); }
+          catch (failure) {
+            if (failure instanceof WindowControlTimeoutError) throw failure;
+            throw new Error(`ウィンドウ${item.number} · ${item.label}：${errorText(failure, "message", "保存できませんでした。")}`);
+          }
         }));
         const drafts = (await Promise.all(peers.map(async item => await this.control(item, "draft", history ? "history" : undefined) ? item : null))).filter(item => item !== null);
         if (drafts.length) {
@@ -153,7 +167,8 @@ export class WindowSessionHub {
         }
         return result;
       } finally {
-        await Promise.all([...group.peers].map(item => this.control(item, "resume").catch(() => {})));
+        // Recovery must not add another response timeout to the failed action.
+        for (const item of group.peers) void this.control(item, "resume").catch(() => {});
       }
     });
     group.actionTail = task.then(() => {}, () => {});
@@ -219,12 +234,14 @@ export class WindowSessionHub {
       case "saveAs": return this.coordinate(peer, group => this.enqueue(peer, () => group.session.saveAs(async () => args[0] as FileSystemFileHandle)));
       case "close": {
         const group = this.requireGroup(peer);
-        await this.control(peer, "flush");
-        try { return await this.enqueue(peer, async () => {
-        if (group.peers.size === 1) await group.session.close(destinationMissing);
-        this.detach(peer, false);
-        this.send(peer, { type: "state", info: this.info(peer), snapshot: { contents: null, name: "", history: emptyDataHistory, busy: false, historyError: "", canUndo: false, canRedo: false, operationRevision: 0 } });
-        }); } finally { await this.control(peer, "resume").catch(() => {}); }
+        try {
+          await this.control(peer, "flush");
+          return await this.enqueue(peer, async () => {
+            if (group.peers.size === 1) await group.session.close(destinationMissing);
+            this.detach(peer, false);
+            this.send(peer, { type: "state", info: this.info(peer), snapshot: { contents: null, name: "", history: emptyDataHistory, busy: false, historyError: "", canUndo: false, canRedo: false, operationRevision: 0 } });
+          });
+        } finally { void this.control(peer, "resume").catch(() => {}); }
       }
       default: {
         const group = this.requireGroup(peer);
