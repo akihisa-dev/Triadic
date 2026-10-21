@@ -5,6 +5,16 @@ export const PART_STEP = 16;
 export const PART_MIN = 64;
 export const PART_GAP = 4;
 export const PART_INITIAL = { width: 160, height: 96 };
+// Space for twelve month headers and the initial items, including editing controls.
+export const TABLE_PART_MIN = {
+  "table-horizontal": { width: 1200, height: 192 },
+  "table-vertical": { width: 320, height: 448 },
+};
+
+function minimumSize(part: DetailPart) {
+  return part.kind === "table-horizontal" || part.kind === "table-vertical"
+    ? TABLE_PART_MIN[part.kind] : { width: PART_MIN, height: PART_MIN };
+}
 
 export function partsOverlap(a: DetailPart, b: DetailPart) {
   return a.x < b.x + b.width + PART_GAP && a.x + a.width + PART_GAP > b.x
@@ -30,12 +40,14 @@ export function magnetPosition(value: number) {
 }
 
 export function resizePart(part: DetailPart, dx: number, dy: number): DetailPart {
-  return { ...part, width: Math.max(PART_MIN, part.width + dx), height: Math.max(PART_MIN, part.height + dy) };
+  const minimum = minimumSize(part);
+  return { ...part, width: Math.max(minimum.width, part.width + dx), height: Math.max(minimum.height, part.height + dy) };
 }
 
 export function settlePart(part: DetailPart): DetailPart {
+  const minimum = minimumSize(part);
   return { ...part, x: snapPosition(part.x), y: snapPosition(part.y),
-    width: Math.max(PART_MIN, snapPosition(part.width)), height: Math.max(PART_MIN, snapPosition(part.height)) };
+    width: Math.max(minimum.width, snapPosition(part.width)), height: Math.max(minimum.height, snapPosition(part.height)) };
 }
 
 /** The active rectangle stays under the pointer; neighbours choose the nearest free edge. */

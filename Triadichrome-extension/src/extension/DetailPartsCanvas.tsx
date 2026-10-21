@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { createPortal } from "react-dom";
-import { arrangeParts, magnetPosition, PART_INITIAL, PART_STEP, resizePart, settlePart, stableSnapPosition, type DetailPart } from "../core/tables/detailParts";
+import { arrangeParts, magnetPosition, PART_INITIAL, PART_STEP, TABLE_PART_MIN, resizePart, settlePart, stableSnapPosition, type DetailPart } from "../core/tables/detailParts";
 import "./DetailPartsCanvas.css";
 import { DetailTextPart } from "./DetailTextPart";
 import { DetailTablePart } from "./DetailTablePart";
@@ -33,7 +33,7 @@ function PartPreview({ kind }: { kind: DetailPart["kind"] }) {
 function newPart(kind: DetailPart["kind"]): DetailPart {
   const base = { id: crypto.randomUUID(), x: 0, y: 0 };
   return kind === "text" ? { ...base, ...PART_INITIAL, kind, text: "" }
-    : { ...base, width: 320, height: 192, kind, cells: emptyDetailTable() };
+    : { ...base, ...TABLE_PART_MIN[kind], kind, cells: emptyDetailTable() };
 }
 
 type Props = { parts: DetailPart[]; disabled: boolean; onChange: (parts: DetailPart[]) => void };

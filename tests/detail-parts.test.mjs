@@ -75,6 +75,18 @@ test('右下の斜め伸縮は左上を固定し、最小64pxと幅・高さの1
   });
 });
 
+test('両方向の表は12か月分の最小寸法を保ち、拡大後も内容と左上を保持する', async () => {
+  await withNodeBundle('Triadichrome-extension/src/core/tables/detailParts.ts', async ({ TABLE_PART_MIN, resizePart, settlePart }) => {
+    for (const kind of ['table-horizontal', 'table-vertical']) {
+      const part = { id: kind, kind, x: 32, y: 48, ...TABLE_PART_MIN[kind], cells: [['保持']] };
+      const expanded = settlePart(resizePart(part, 32, 32));
+      assert.equal(expanded.width, part.width + 32); assert.equal(expanded.height, part.height + 32);
+      assert.deepEqual(settlePart(resizePart(expanded, -10000, -10000)), part);
+      assert.deepEqual(settlePart({ ...part, width: 1, height: 1 }), part);
+    }
+  });
+});
+
 test('月別表は共通の12か月と3項目で始まり、項目だけを増減する', async () => {
   await withNodeBundle('Triadichrome-extension/src/core/tables/detailTable.ts', async ({ detailTableMonths, emptyDetailTable, setTableCell, changeTableItem }) => {
     assert.deepEqual(detailTableMonths.map(month => month.label), ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月']);
