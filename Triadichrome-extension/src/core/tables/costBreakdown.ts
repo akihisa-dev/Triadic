@@ -10,8 +10,41 @@ export type CostBreakdownLine = {
   departmentId: number | null; industryId: number | null; sign: number; amount: number;
 };
 
+/** A display snapshot can reuse candidates across periods, columns and reopen. */
+export function indexCostBreakdown(contents: Pick<PlanContents, "previousAmounts" | "initiatives">) {
+  const { previousAmounts, initiatives: sourceInitiatives } = contents;
+  let previous: Map<string, { position: number; record: PlanContents["previousAmounts"][number] }[]> | undefined;
+  let initiatives: Map<number, { position: number; initiative: PlanContents["initiatives"][number]; row: PlanContents["initiatives"][number]["rows"][number]; index: number }[]> | undefined;
+  return {
+    previous(accounts: Iterable<number>, kind: number, months: readonly number[]) {
+      if (!previous) {
+        previous = new Map();
+        previousAmounts.forEach((record, position) => {
+          const key = `${record.previousKind}:${record.accountId}:${record.month}`;
+          if (!previous!.has(key)) previous!.set(key, []);
+          previous!.get(key)!.push({ position, record });
+        });
+      }
+      return [...accounts].flatMap(account => months.flatMap(month => previous!.get(`${kind}:${account}:${month}`) ?? []))
+        .sort((left, right) => left.position - right.position).map(item => item.record);
+    },
+    initiatives(accounts: Iterable<number>) {
+      if (!initiatives) {
+        initiatives = new Map(); let position = 0;
+        for (const initiative of sourceInitiatives) initiative.rows.forEach((row, index) => {
+          const order = position++;
+          if (row.accountId === null) return;
+          if (!initiatives!.has(row.accountId)) initiatives!.set(row.accountId, []);
+          initiatives!.get(row.accountId)!.push({ position: order, initiative, row, index });
+        });
+      }
+      return [...accounts].flatMap(account => initiatives!.get(account) ?? []).sort((left, right) => left.position - right.position);
+    },
+  };
+}
+
 /** Use the same membership signs as the cost table, never account-attribute signs. */
-export function buildCostBreakdown(contents: PlanContents, target: CostBreakdownTarget, selected: KindId[]) {
+export function buildCostBreakdown(contents: PlanContents, target: CostBreakdownTarget, selected: KindId[], candidates = indexCostBreakdown(contents)) {
   const kinds = [...selected].sort((a, b) => a - b);
   if (!kinds.length || target.column < 0 || target.column > kinds.length + (kinds.length === 2 ? 2 : 1)) throw new Error("比較対象が正しくありません。");
   const groups = new Map(contents.aggregations.map(group => [group.id, group]));
@@ -31,14 +64,12 @@ export function buildCostBreakdown(contents: PlanContents, target: CostBreakdown
   const budget = target.column > 0 && target.column <= kinds.length;
   const primaryDifference = target.column === kinds.length + 2;
   const kind = kinds[budget ? target.column - 1 : kinds.length - 1]!;
-  const months = new Set<number>(target.period.months);
   const lines: CostBreakdownLine[] = [];
   if (prior || budget) {
     const previous = new Map<string, { line: Omit<CostBreakdownLine, "amount">; amount: bigint }>();
-    for (const record of contents.previousAmounts) {
-      if (record.previousKind !== (contents.previousKind ?? 1)) continue;
+    for (const record of candidates.previous(signs.keys(), contents.previousKind ?? 1, target.period.months)) {
       const sign = signs.get(record.accountId);
-      if (sign === undefined || !months.has(record.month)) continue;
+      if (sign === undefined) continue;
       const amount = BigInt(amountToYen(record.amount)) * BigInt(sign);
       if (amount === 0n) continue;
       const key = `previous:${record.accountId}:${record.departmentId}:${record.industryId}`;
@@ -49,11 +80,10 @@ export function buildCostBreakdown(contents: PlanContents, target: CostBreakdown
     }
     for (const { line, amount } of previous.values()) lines.push({ ...line, amount: checkedYen(amount) });
   }
-  if (!prior) for (const initiative of contents.initiatives) {
+  if (!prior) for (const { initiative, row, index } of candidates.initiatives(signs.keys())) {
     if (initiative.fiscalYear !== contents.fiscalYear) continue;
-    initiative.rows.forEach((row, index) => {
       const sign = row.accountId === null ? undefined : signs.get(row.accountId);
-      if (sign === undefined) return;
+      if (sign === undefined) continue;
       let amount = 0n, active = false;
       for (const month of target.period.months) {
         const value = BigInt(amountToYen(resolvedAmount(row, kind, month)))
@@ -64,7 +94,6 @@ export function buildCostBreakdown(contents: PlanContents, target: CostBreakdown
       if (active) lines.push({ key: `initiative:${initiative.id}:${index}`, initiativeId: initiative.id,
         name: `${initiative.name}（${index + 1}行目）`, accountId: row.accountId!,
         departmentId: initiative.departmentId ?? null, industryId: initiative.industryId ?? null, sign, amount: checkedYen(amount) });
-    });
   }
   return { lines, total: checkedYen(lines.reduce((sum, line) => sum + BigInt(line.amount), 0n)) };
 }

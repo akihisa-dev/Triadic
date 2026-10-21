@@ -1,6 +1,6 @@
 {
   "amount": {
-    "implementation": "687c39a0e5fe9c048d01d2ae04810852bc071a30b7d0ffb1ffd77cc6890154db",
+    "implementation": "247166e7c8b296ae83b9f2dcbaecd69f6d31c0abc1f178fe662dab125eed7710",
     "description": "7f6ae5259415be09a32323fc544ef72d4df04a37e891d058a6c3da5e5b1d05ec"
   },
   "inheritance": {
@@ -28,11 +28,11 @@
     "description": "f31501022868e958d912039f86befb636656bdec1b68ad891ebfc9abba20d62c"
   },
   "classification": {
-    "implementation": "e4edc5fa76d54627df9cb3d2389ceb98abf6ebd721186292acc914044302688b",
+    "implementation": "ca0271884586886b6e4c3fa6ec76f0a3f5673aa2752eff25c11abf6c54188849",
     "description": "6ad5e38695f8cdaf6baf0d32ad061ad8a259535503342e4045125b530b96da6e"
   },
   "open": {
-    "implementation": "cc02c597fb13b3688c8570695a42d7400ed95fd2d99c59452975c21d10b8604b",
+    "implementation": "2d7c24a55e0261fa77c7c2a4204d66ee5444576558e0186215fb643966eed587",
     "description": "8d01fd68c18f9e4a3256e8dd401c5275fbc236bdfaf33c5bb55c01674f790a3e"
   },
   "save": {
@@ -52,7 +52,7 @@
     "description": "f1f427fce2212e6cf9fddf5308ef30794853f527f3f0daa42492a4629aefb1d4"
   },
   "storage": {
-    "implementation": "5f98e8e700cc300f7d3effbb1e430a647c822ec53d258a9d9b697b7915243664",
+    "implementation": "46fcd359e9440a16f7ef1fa06da4e03034f7e6523d1f18a4b9acf12a6e726a5f",
     "description": "c6dd159214f31c00d1851eba9a5efa1d8004b9cda5b385d13ac67d51d771355b"
   },
   "validation": {
@@ -80,15 +80,15 @@
     "description": "3905bd9e163d8e964824ab9a7a34d2e51c48fbcd64dbe7de200dc2bc75195f9a"
   },
   "department-industries": {
-    "implementation": "723aba663cd7fed0d964d21083f02ffd08f3e76daec860eef76ffd2128ff878e",
+    "implementation": "383bb20b60590644f15a82c8ff4cb2cf30686e8986768e38db58e07c54184b8b",
     "description": "d7bf89508107dee42b5ef476809121b0cb2e2aa5163f6c3b6a06f4ed2cff24cf"
   },
   "expansion-categories": {
-    "implementation": "d9f8ce829247409922f9ab0c8a1d95dce3463a1961d6cc43a0c4194fe25f7aa9",
+    "implementation": "f67126a82e16fe4d40a771ba7b9ffb8463a6c79cf13f58f15a26830e62ce519a",
     "description": "ceb6e6617047d5f2dd2526d70e9604f5b9d48ddf02312d4c0c297f6df9e4bb12"
   },
   "cost-breakdown": {
-    "implementation": "04884338e164cda94bb5f6d74f89924bf0e3e82ab86693685ef0196fbfa5d6cc",
+    "implementation": "0eb0390a18a31036a6c422ad2ced90d4e881f7ba609aad7f6e0f4cd339b1def9",
     "description": "1fa26e9098b628675e0ac7c21628219f9223d6250a946ca7471fa41b96c672b8"
   },
   "save-as": {
@@ -100,7 +100,7 @@
     "description": "7d25ee848ea3f0b60b0af9920d4d8929cc77aef713e42a6088bead96adc1d011"
   },
   "duplicate-initiative": {
-    "implementation": "9b5b1b5d088d99e418699c588090049d0f0516b6c9324f6f6f792dad6b9d1052",
+    "implementation": "d588247077fba42cf0d1d7fc3b80d3e54cbdc56e64f9af12bbb7170917f09b56",
     "description": "10525cc703a2eaff73ff4a6c469f163cad65e1e9c390f6eb5cf60a3c285ec1f4"
   },
   "initiative-search": {

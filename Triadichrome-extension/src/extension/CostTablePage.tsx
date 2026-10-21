@@ -3,7 +3,7 @@ import { TableCalculationBoundary } from "./TableCalculationBoundary";
 import { periodCellClass } from "./periodCellStyle";
 import type { ReactNode, RefObject } from "react";
 import { CostBreakdownDialog } from "./CostBreakdownDialog";
-import type { CostBreakdownTarget } from "../core/tables/costBreakdown";
+import { indexCostBreakdown, type CostBreakdownTarget } from "../core/tables/costBreakdown";
 import type { Initiative } from "../core/domain/plan";
 import "./CostBreakdown.css";
 import { Fragment, memo, useMemo, useState, useLayoutEffect, useRef } from "react";
@@ -81,6 +81,7 @@ export function CostTablePage({ contents, selected, selection, view, onOpenIniti
 }
 
 const CostTableContents = memo(function CostTableContents({ contents, selected, view, onOpenInitiative, navigationBlocked }: Omit<Props, "selection">) {
+  const breakdownCandidates = useMemo(() => indexCostBreakdown(contents), [contents.previousAmounts, contents.initiatives]);
   const [detail, setDetail] = useState<{ target: CostBreakdownTarget; title: string } | null>(null);
   const container = useRef<HTMLDivElement>(null);
   const tableElement = useRef<HTMLTableElement>(null);
@@ -132,6 +133,6 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
       </table>
     </div>
     {detail && <CostBreakdownDialog contents={contents} selected={selected} target={detail.target} title={detail.title}
-      navigationBlocked={navigationBlocked} onClose={() => setDetail(null)} onOpenInitiative={onOpenInitiative} />}
+      candidates={breakdownCandidates} navigationBlocked={navigationBlocked} onClose={() => setDetail(null)} onOpenInitiative={onOpenInitiative} />}
     </>;
 });

@@ -40,5 +40,19 @@ export async function verifyCostBreakdown(api) {
     { accountId: sales.id, amounts: { 4: "0.001" } },
   ];
   assert.throws(() => api.buildCostBreakdown(synthetic, { ...target, column: 1 }, [1]), /範囲/);
+  let rowReads = 0;
+  const unrelated = contents.accounts.find(item => item.id !== sales.id);
+  const many = { ...contents, previousAmounts: [], initiatives: Array.from({ length: 5000 }, (_, index) => {
+    const rows = [{ accountId: index === 0 ? sales.id : unrelated.id, amounts: { 4: '1', 5: '-1' } }];
+    return { ...contents.initiatives[0], id: 100000 + index, get rows() { rowReads++; return rows; } };
+  }) };
+  const candidates = api.indexCostBreakdown(many);
+  const first = api.buildCostBreakdown(many, { ...target, column: 1 }, [1], candidates);
+  assert.equal(first.lines.length, 1); assert.equal(rowReads, 5000);
+  rowReads = 0;
+  const repeated = api.buildCostBreakdown(many, { ...target, column: 1, period: api.tablePeriods.find(item => item.id === 'annual') }, [1], candidates);
+  assert.equal(repeated.lines.length, 1); assert.equal(repeated.lines[0].amount, 0);
+  assert.equal(rowReads, 0, '期間変更と再表示は無関係な施策行を再走査しない');
+  assert.deepEqual(repeated, api.buildCostBreakdown(many, { ...target, column: 1, period: api.tablePeriods.find(item => item.id === 'annual') }, [1]));
   console.log("総原価表の内訳: 全金額列・期間・分類・集計符号・1円精度・手修正0・相殺・範囲超過を確認しました。");
 }
