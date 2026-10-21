@@ -52,3 +52,5 @@ export const deleteDataHistory: Tasks["deleteDataHistory"] = (...args) => proces
 
 export const prepareKindSelectionSave: Tasks["prepareKindSelectionSave"] = (...args) => processPlan("prepareKindSelectionSave", ...args);
 export const prepareOrdinarySave: Tasks["prepareOrdinarySave"] = (bytes, command, year) => processPlan("prepareOrdinarySave", bytes, command, year);
+
+export const preparePreviousSelectionSave: Tasks["preparePreviousSelectionSave"] = (...args) => processPlan("preparePreviousSelectionSave", ...args);

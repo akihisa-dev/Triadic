@@ -1,5 +1,5 @@
 import type { PlanCommand } from "../core/domain/planCommands";
-import { prepareOrdinarySave, prepareAggregationSave, prepareKindSelectionSave } from "./planProcessing";
+import { prepareOrdinarySave, prepareAggregationSave, prepareKindSelectionSave, preparePreviousSelectionSave } from "./planProcessing";
 import { planContents, type OpenPlan, type PreparedPlanChange } from "./planFile";
 export type SavedOperation = { before: Uint8Array; after: Uint8Array };
 type CommandPreparation = { operation: null } | { prepared: PreparedPlanChange; operation: SavedOperation };
@@ -13,6 +13,13 @@ export async function preparePlanCommand(target: OpenPlan, command: PlanCommand)
     // These references remain valid: only kind_selections and timestamps changed.
     const contents = { ...planContents(target), kindSelections: { ...target.kindSelections, [screen]: [...selected] } };
     return { prepared: { ...prepared, contents }, operation };
+  }
+  if (command.type === "settings" && command.change.type === "previous-selection") {
+    const { screen, previousKind } = command.change;
+    const prepared = await preparePreviousSelectionSave(target.bytes, screen, previousKind);
+    if (!prepared.operation) return { operation: null };
+    const contents = { ...planContents(target), previousSelections: { ...target.previousSelections, [screen]: previousKind } };
+    return { prepared: { ...prepared, contents }, operation: prepared.operation };
   }
   if (command.type === "aggregation") {
     const prepared = await prepareAggregationSave(target.bytes, command.change);

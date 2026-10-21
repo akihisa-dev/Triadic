@@ -7,12 +7,13 @@ import { readSavedPlan } from "../core/storage/readSavedPlan";
 import { createTriadicDatabase } from "../core/storage/triadicDatabase";
 import { applyPlanCommand } from "../core/storage/planCommands";
 import { prepareAggregationSave } from "../core/storage/prepareAggregationSave";
-import { prepareKindSelectionSave } from "../core/storage/prepareKindSelectionSave";
+import { prepareKindSelectionSave, preparePreviousSelectionSave } from "../core/storage/prepareKindSelectionSave";
 import { prepareOrdinarySave } from "../core/storage/prepareOrdinarySave";
 export const processingTasks = {
   compareSavedHistory,
   rebasePlan,
   prepareKindSelectionSave,
+  preparePreviousSelectionSave,
   prepareAggregationSave,
   prepareOrdinarySave,
   bytesEqual: async (current: Uint8Array, expected: Uint8Array) => {

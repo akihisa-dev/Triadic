@@ -16,6 +16,28 @@ export async function verifyPlanSession(api) {
     };
     return { handle, get bytes() { return stored; }, get writes() { return writes; }, fail(value) { fail = value; }, replace(value) { stored = value; } };
   }
+  const baselineFile = file(), baselineSession = new api.PlanSession();
+  await baselineSession.open({ bytes, name: baselineFile.handle.name, handle: baselineFile.handle });
+  const baselineBefore = baselineSession.getSnapshot().contents;
+  const baselineCommand = previousKind => ({ type: "settings", change: { type: "previous-selection", screen: "cost-table", previousKind } });
+  baselineFile.fail(true);
+  await assert.rejects(baselineSession.dispatch(baselineCommand(2), noPicker), /確定失敗/);
+  assert.equal(baselineSession.getSnapshot().contents, baselineBefore);
+  assert.deepEqual(baselineFile.bytes, bytes);
+  baselineFile.fail(false);
+  await baselineSession.dispatch(baselineCommand(2), noPicker);
+  for (const key of ["accounts", "aggregations", "initiatives", "previousAmounts", "kindSelections"]) {
+    assert.equal(baselineSession.getSnapshot().contents[key], baselineBefore[key], "基準切替でも全業務データを再構築しない");
+  }
+  assert.equal(baselineSession.getSnapshot().contents.previousSelections["cost-table"], 2);
+  assert.equal((await api.readPlanContents(baselineFile.bytes)).previousSelections["cost-table"], 2);
+  await baselineSession.travelOperation(-1, noPicker);
+  assert.equal(baselineSession.getSnapshot().contents.previousSelections["cost-table"], 1);
+  await baselineSession.travelOperation(1, noPicker);
+  assert.equal(baselineSession.getSnapshot().contents.previousSelections["cost-table"], 2);
+  await baselineSession.close(noPicker);
+  await baselineSession.open({ bytes: baselineFile.bytes, name: baselineFile.handle.name, handle: baselineFile.handle });
+  assert.equal(baselineSession.getSnapshot().contents.previousSelections["cost-table"], 2);
   const original = { ...contents, bytes, name: "drop.triadic" };
   const session = new api.PlanSession();
   await session.open(original);
