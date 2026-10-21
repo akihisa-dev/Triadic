@@ -40,7 +40,20 @@ Chromeウェブストアの掲載欄へ使う文章と画像をこのフォル�
 
 同じリポジトリのローカル開発画面をデスクトップ版Chromeで撮影しています。架空データを専用のブラウザ保存領域で開き、施策一覧 → 施策詳細 → 総原価表 → 展開表の移動を確認しています。利用者の実ファイルは使いません。撮影は拡張機能としての読み込み試験とは別です。撮影時の版は`assets.json`に記録しています。製品の実装済み範囲と制限は[README](../README.md)を参照してください。
 
-従来の`store-assets/`に残る旧画面の画像ではなく、このフォルダの画像を掲載に使用してください。
+掲載用の文章と画像の保存先は、この`store-listing/`だけです。
+
+## ロゴ・販促画像の編集元
+
+ロゴの正本は`branding/logo.png`、販促画像のレイアウトは[source/layouts.html](source/layouts.html)です。販促画像と画面の画像は、下記の掲載画像の生成処理だけで更新します。
+
+ロゴとアイコンだけを書き出す場合は`node scripts/render-branding-icons.mjs`を使います。制作専用のsharpが必要です。通常のビルドと掲載画像の生成には不要です。
+
+```sh
+npm install --prefix /tmp/triadichrome-art-tools --no-save sharp@0.35.4
+TRIADICHROME_ART_MODULES=/tmp/triadichrome-art-tools/node_modules node scripts/render-branding-icons.mjs
+```
+
+ロゴ変更後は、掲載画像を再生成し、`npm run build`で拡張機能へアイコンを同期してください。
 
 ## 画像の再生成と検証
 

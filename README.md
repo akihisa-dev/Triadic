@@ -424,7 +424,7 @@ After changes, rebuild and reload on the extensions page. Distribute `dist/Triad
 
 ## Store images
 
-`store-assets/` contains Chrome Web Store icons, two promotional images, and five screenshots. See the [Store image guide](store-assets/README.md) for placement/regeneration and [Preview](store-assets/preview.png) for images. The authoritative logo is `branding/logo.png`: three white geometric shapes on a dark-gray rounded background, no text, transparent outside the corners. Extension PNGs synchronize from `branding/icons/` during build. Entry/Home headers show the same 512px logo and browser tabs have icons. `node scripts/render-store-assets.mjs --icons-only` exports logos/icons without changing promotional images/screenshots.
+`store-listing/` is the single folder for Chrome Web Store listing text, privacy disclosures, icons, two promotional images, and five current screenshots. See the [Store listing guide](store-listing/README.md) for placement and regeneration. The authoritative logo is `branding/logo.png`: three white geometric shapes on a dark-gray rounded background, no text, transparent outside the corners. Extension PNGs synchronize from `branding/icons/` during build. Entry/Home headers show the same 512px logo and browser tabs have icons. `node scripts/render-branding-icons.mjs` exports logos/icons without changing promotional images/screenshots.
 
 ## Structure
 
@@ -999,9 +999,9 @@ npm run test:ui:report
 
 ## ストア掲載画像
 
-Chrome Web Store用のアイコン・販促画像2種類・スクリーンショット5枚を`store-assets/`に用意しています。掲載先との対応と再生成手順は[掲載画像ガイド](store-assets/README.md)、画像の一覧は[プレビュー](store-assets/preview.png)を参照してください。
+Chrome Web Store用の説明文・プライバシー申告・アイコン・販促画像2種類・現行画面のスクリーンショット5枚は、`store-listing/`だけにまとめています。掲載先との対応と再生成手順は[掲載用ガイド](store-listing/README.md)を参照してください。
 ロゴの正本は`branding/logo.png`です。濃いグレーの角丸背景に三つの白い幾何学図形を配置し、文字を入れず、角丸の外側を透過しています。拡張機能用のPNGを`branding/icons/`からビルド時に同期します。
-入口とホームのヘッダーには同じロゴの512px版を表示し、ブラウザーのタブにもアイコンを設定しています。`node scripts/render-store-assets.mjs --icons-only`で、販促画像・スクリーンショットを変更せずにロゴとアイコンだけを書き出せます。
+入口とホームのヘッダーには同じロゴの512px版を表示し、ブラウザーのタブにもアイコンを設定しています。`node scripts/render-branding-icons.mjs`で、販促画像・スクリーンショットを変更せずにロゴとアイコンだけを書き出せます。
 
 ## 構成
 

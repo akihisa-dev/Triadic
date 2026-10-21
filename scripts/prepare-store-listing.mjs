@@ -94,7 +94,7 @@ if (process.argv.includes("--check")) {
     assert.deepEqual(errors, [], "ブラウザエラー");
 
     await fs.copyFile(path.join(root, "branding/icons/icon-128.png"), path.join(output, "images/icon-128.png"));
-    await page.goto(pathToFileURL(path.join(root, "store-assets/source/layouts.html")).href);
+    await page.goto(pathToFileURL(path.join(root, "store-listing/source/layouts.html")).href);
     await page.evaluate(() => document.fonts.ready);
     assert.ok(await page.locator("img").evaluateAll(nodes => nodes.every(node => node.complete && node.naturalWidth > 0)));
     for (const [id, filename] of [["promo-small", "promo-small-440x280.png"], ["promo-marquee", "promo-marquee-1400x560.png"]]) {
