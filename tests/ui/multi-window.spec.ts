@@ -42,6 +42,33 @@ test("同じ表の表示条件と位置を複製し、以後は独立して操�
   await expect(copy.getByRole("heading", { name: "展開表", exact: true })).toBeVisible();
 });
 
+test('開いている別計画への別名保存は両ファイルを変更する前に拒否する', async ({ page, context }, info) => {
+  const other = await context.newPage();
+  await other.goto('/tests/ui/multi-window.html?name=別計画.triadic');
+  await other.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
+  await openFirst(other);
+  await other.getByRole('textbox', { name: '施策名', exact: true }).fill('保存先で保持する施策名');
+  await expect(other.getByRole('button', { name: '操作を取り消す', exact: true })).toBeEnabled();
+  const hashes = () => page.evaluate(async () => {
+    const root = await navigator.storage.getDirectory();
+    return Promise.all(['ウィンドウ確認.triadic', '別計画.triadic'].map(async name => {
+      const bytes = await (await (await root.getFileHandle(name)).getFile()).arrayBuffer();
+      return [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].join(',');
+    }));
+  });
+  const before = await hashes();
+  await page.evaluate(async () => {
+    const root = await navigator.storage.getDirectory(), handle = await root.getFileHandle('別計画.triadic');
+    Object.defineProperty(window, 'showSaveFilePicker', { configurable: true, value: async () => handle });
+  });
+  await page.getByRole('button', { name: '別名で保存', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('別のウィンドウで使用している保存先');
+  expect(await hashes()).toEqual(before);
+  await expect(page.locator('.home-file-name')).toHaveText('ウィンドウ確認.triadic');
+  await expect(other.getByRole('textbox', { name: '施策名', exact: true })).toHaveValue('保存先で保持する施策名');
+  await page.screenshot({ path: info.outputPath('occupied-save-destination.png') });
+});
+
 test("施策の保存を三画面へ反映し、元のウィンドウを閉じても共有取消を続けられる", async ({ page }) => {
   await openFirst(page);
   await page.getByRole("tab", { name: "一次予算", exact: true }).click();

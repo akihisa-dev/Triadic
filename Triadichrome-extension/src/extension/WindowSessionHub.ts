@@ -24,6 +24,7 @@ export class WindowSessionHub {
   private controls = new Map<number, { peer: Peer; resolve: (value: unknown) => void; reject: (error: Error) => void }>();
   private sequence = 0;
   private openingTail: Promise<unknown> = Promise.resolve();
+  private saveTargets = new Map<Group, { handle: FileSystemFileHandle; settled: Promise<void>; release: () => void }>();
   constructor(private makeSession: (recovery: Recovery) => PlanSession = recovery => new PlanSession(recovery), private controlTimeoutMs = 30_000, private reservationTimeoutMs = 30_000) {}
 
   connect(port: Pick<MessagePort, "postMessage">) {
@@ -131,6 +132,48 @@ export class WindowSessionHub {
     void group.opened.catch(() => {});
     return group;
   }
+  private async selectGroup(initial: Pick<OpenPlan, "name" | "bytes" | "handle">): Promise<Group> {
+    let plan = initial;
+    for (;;) {
+      // Reserve identities only. Loading and writing never occupy this queue.
+      const selected = this.openingTail.then(async () => {
+        for (const target of this.saveTargets.values()) if (plan.handle && await target.handle.isSameEntry(plan.handle)) return { wait: target.settled };
+        for (const group of this.groups.values()) {
+          const handle = group.openingHandle ?? group.session.getHandle();
+          if (handle && plan.handle && await handle.isSameEntry(plan.handle)) { group.openingPeers++; return { group }; }
+        }
+        const group = this.newGroup(plan); group.openingPeers++; return { group };
+      });
+      this.openingTail = selected.then(() => {}, () => {});
+      const result = await selected;
+      if ("group" in result) return result.group;
+      await result.wait;
+      if (plan.handle) plan = { ...plan, bytes: new Uint8Array(await (await plan.handle.getFile()).arrayBuffer()) };
+    }
+  }
+  private async reserveSaveTarget(group: Group, handle: FileSystemFileHandle): Promise<() => void> {
+    for (;;) {
+      const selected = this.openingTail.then(async () => {
+        const own = this.saveTargets.get(group);
+        if (own) return { wait: own.settled };
+        const occupied = () => new Error("別のウィンドウで使用している保存先です。保存先を開いている画面を閉じるか、別の保存先を選択してください。元のファイルと入力は保持しています。");
+        for (const [other, target] of this.saveTargets) if (other !== group && await target.handle.isSameEntry(handle)) throw occupied();
+        for (const other of this.groups.values()) if (other !== group) {
+          const current = other.openingHandle ?? other.session.getHandle();
+          if (current && await current.isSameEntry(handle)) throw occupied();
+        }
+        let release!: () => void;
+        const settled = new Promise<void>(resolve => { release = resolve; });
+        const target = { handle, settled, release };
+        this.saveTargets.set(group, target);
+        return { release: () => { if (this.saveTargets.get(group) === target) this.saveTargets.delete(group); release(); } };
+      });
+      this.openingTail = selected.then(() => {}, () => {});
+      const result = await selected;
+      if ("release" in result) return result.release;
+      await result.wait;
+    }
+  }
   private attach(peer: Peer, group: Group, view: WindowView | null = null) {
     peer.group = group; peer.number = group.nextNumber++; peer.initialView = view;
     group.peers.add(peer); this.publish(group);
@@ -230,20 +273,7 @@ export class WindowSessionHub {
         let openingGroup: Group | undefined;
         try {
           const plan = args[0] as Pick<OpenPlan, "name" | "bytes" | "handle">;
-          // Only identity checks and group registration share a queue. Loading the
-          // selected document and all later operations proceed in its own group.
-          const selected = this.openingTail.then(async () => {
-            for (const group of this.groups.values()) {
-              const handle = group.openingHandle ?? group.session.getHandle();
-              if (handle && plan.handle && await handle.isSameEntry(plan.handle)) {
-                group.openingPeers++; return group;
-              }
-            }
-            const group = this.newGroup(plan);
-            group.openingPeers++; return group;
-          });
-          this.openingTail = selected.then(() => {}, () => {});
-          const group = await selected;
+          const group = await this.selectGroup(plan);
           openingGroup = group;
           await group.opened;
           if (!this.peers.has(peer)) return;
@@ -260,7 +290,12 @@ export class WindowSessionHub {
       }
       case "history": return this.coordinate(peer, group => this.enqueue(peer, async () => { await group.session.checkpoint(true, destinationMissing); }), true);
       case "travelOperation": return this.coordinate(peer, group => this.enqueue(peer, () => group.session.travelOperation(args[0] as -1 | 1, destinationMissing)));
-      case "saveAs": return this.coordinate(peer, group => this.enqueue(peer, () => group.session.saveAs(async () => args[0] as FileSystemFileHandle)));
+      case "saveAs": {
+        const group = this.requireGroup(peer), handle = args[0] as FileSystemFileHandle;
+        const release = await this.reserveSaveTarget(group, handle);
+        try { return await this.coordinate(peer, group => this.enqueue(peer, () => group.session.saveAs(async () => handle))); }
+        finally { release(); }
+      }
       case "close": {
         const group = this.requireGroup(peer);
         try {

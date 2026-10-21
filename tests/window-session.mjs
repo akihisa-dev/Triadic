@@ -115,7 +115,28 @@ export async function verifyWindowSession(api) {
     assert.equal(c.latest().snapshot.contents.departments[0].departmentName, "共有の編集");
 
     const copy = file("共有のコピー.triadic", new Uint8Array());
-    await b.request("saveAs", copy.handle);
+    const other = file('別計画.triadic', bytes), owner = peer();
+    await owner.request('open', { name: other.handle.name, handle: other.handle, bytes });
+    const sourceBefore = original.bytes.slice(), destinationBefore = other.bytes.slice();
+    a.hasDraft = true; owner.hasDraft = true;
+    await assert.rejects(b.request('saveAs', other.handle), /別のウィンドウで使用/);
+    assert.deepEqual(original.bytes, sourceBefore); assert.deepEqual(other.bytes, destinationBefore);
+    assert.equal(a.hasDraft, true); assert.equal(owner.hasDraft, true);
+    a.hasDraft = false; owner.hasDraft = false;
+    let releaseCopy;
+    const heldCopy = new Promise(resolve => { releaseCopy = resolve; });
+    a.flush = async () => heldCopy;
+    const copying = b.request('saveAs', copy.handle);
+    await new Promise(resolve => setImmediate(resolve));
+    await assert.rejects(owner.request('saveAs', copy.handle), /別のウィンドウで使用/);
+    const joining = peer(); let joined = false;
+    const openCopy = joining.request('open', { name: copy.handle.name, handle: copy.handle, bytes: new Uint8Array() }).then(() => { joined = true; });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(joined, false, '保存先の書き込み中は同じファイルの新しい担当を作らない');
+    releaseCopy(); await copying; await openCopy; a.flush = async () => {};
+    assert.equal(joining.latest().info.group, a.latest().info.group);
+    assert.equal(joining.latest().snapshot.name, copy.handle.name);
+    joining.disconnect(); owner.disconnect();
     for (const item of [a, b, c]) assert.equal(item.latest().snapshot.name, copy.handle.name);
     await c.request("dispatch", update("コピー先の編集"));
     assert.equal((await api.readPlanContents(original.bytes)).departments[0].departmentName, "共有の編集");
@@ -135,7 +156,7 @@ export async function verifyWindowSession(api) {
     await b.request("leave-history");
     await b.request("reserve", "resumed", view);
     const d = peer(); await d.request("join", group, "resumed");
-    assert.equal(d.latest().info.number, 5, "番号を使い回さない");
+    assert.equal(d.latest().info.number, joining.latest().info.number + 1, "番号を使い回さない");
     b.hasDraft = true;
     await d.request("close");
     assert.equal(b.latest().snapshot.contents.departments[0].departmentName, "コピー先の編集", "他の入力やファイルを閉じない");

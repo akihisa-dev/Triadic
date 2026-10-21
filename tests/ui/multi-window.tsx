@@ -6,6 +6,8 @@ import { installCloneableFiles } from "./cloneable-files";
 
 if (!import.meta.env.DEV) throw new Error("複数ウィンドウの確認は開発サーバー専用です。");
 if (!new URLSearchParams(location.hash.slice(1)).has("workspace")) {
-  await installCloneableFiles({ bytes: [...await createSamplePlan()] });
+  const name = new URLSearchParams(location.search).get("name");
+  const destination = new URLSearchParams(location.search).get("saveAs");
+  await installCloneableFiles({ bytes: [...await createSamplePlan()], ...(name ? { name } : {}), ...(destination ? { destination } : {}) });
 }
 createRoot(document.getElementById("root")!).render(<StrictMode><ExtensionPage /></StrictMode>);
