@@ -34,7 +34,7 @@ export function DetailTablePart({ cells, horizontal, disabled, index, editing, o
       onFocus={() => setSelected({ item: i, column: c })}
       onChange={event => onChange(setTableCell(cells, i, c, event.target.value))}
       onKeyDown={event => {
-        if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+        if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing && event.nativeEvent.keyCode !== 229) {
           event.preventDefault();
           setSelected(horizontal ? { item: Math.min(i + 1, cells.length - 1), column: c }
             : { item: i, column: Math.min(c + 1, detailTableMonths.length) });

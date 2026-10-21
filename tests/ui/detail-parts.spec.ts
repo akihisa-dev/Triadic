@@ -220,7 +220,16 @@ for (const horizontal of [true, false]) {
     await expect(name(1)).toBeFocused();
     expect(await fits()).toEqual({ x: true, y: true });
     await name(1).fill('人数'); await name(2).fill('単価');
-    await cell(1, '4月').fill('001'); await cell(1, '4月').press('Enter');
+    await cell(1, '4月').fill('001');
+    for (const boundary of [{ isComposing: true, keyCode: 13 }, { isComposing: false, keyCode: 229 }]) {
+      const accepted = await cell(1, '4月').evaluate((node, boundary) => node.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Enter', code: 'Enter', bubbles: true, cancelable: true, ...boundary,
+      })), boundary);
+      expect(accepted).toBe(true);
+      await expect(cell(1, '4月')).toBeFocused();
+      await expect(cell(1, '4月')).toHaveValue('001');
+    }
+    await cell(1, '4月').press('Enter');
     await expect(horizontal ? cell(2, '4月') : cell(1, '5月')).toBeFocused();
     await cell(1, '4月').press('End'); await cell(1, '4月').press('Shift+Enter');
     await cell(1, '4月').pressSequentially('説明'); await expect(cell(1, '4月')).toHaveValue('001\n説明');
