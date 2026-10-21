@@ -12,36 +12,27 @@ export function roundedThousands(yen: number): number {
 export function installPreciseCalculations(wb: ExcelJS.Workbook, money: MonetaryCell[]): void {
   const source = wb.getWorksheet("計算元")!;
   const sourceColumn = (column: number, component: number) => 25 + component * 12 + column - 9;
-  // Share the text normalization once per source amount rather than repeating it
-  // in each integer component (including copied source rows).
+  // Parse the integer part before converting text to numbers, preserving 1-yen
+  // precision beyond Excel's 15 significant digits. No normalization formula cell.
+  const height = source.rowCount;
   for (let column = 9; column <= 20; column++) {
-    const textColumn = column + 52;
-    source.getColumn(textColumn).hidden = true;
-    source.getCell(1, textColumn).value = `${source.getCell(1, column).text}：金額の文字列`;
-    for (let row = 2; row <= source.rowCount; row++) {
-      const input = source.getCell(row, column), address = input.address;
-      const signedText = `${address}&""`;
-      const text = source.getCell(row, textColumn);
-      text.value = { formula: `IF(ISNUMBER(${address}),TEXT(ABS(${address}),"0.000"),IF(LEFT(${signedText},1)="-",MID(${address},2,LEN(${address})),IF(LEFT(${signedText},1)="+",MID(${address},2,LEN(${address})),${signedText})))`,
-        result: typeof input.value === "number" ? Math.abs(input.value).toFixed(3) : String(input.value ?? "0").replace(/^[+-]/, "") };
-      const point = `FIND(".",${text.address}&".")`;
-      const integer = `VALUE("0"&LEFT(${text.address},${point}-1))`;
-      const sign = `IF(LEFT(${signedText},1)="-",-1,1)`;
-      const yen = BigInt(amountToYen(String(input.value ?? "0")));
-      for (let component = 0; component < 3; component++) {
-        const helper = sourceColumn(column, component);
-        source.getColumn(helper).hidden = true;
-        source.getCell(1, helper).value = `${source.getCell(1, column).text}：円整数の分割${component + 1}`;
-        const expression = component === 0 ? `INT(${integer}/1000000)` : component === 1 ? `MOD(${integer},1000000)` : `VALUE(LEFT(MID(${text.address},${point}+1,3)&"000",3))`;
-        const result = Number(component === 0 ? yen / 1000000000n : component === 1 ? yen / 1000n % 1000000n : yen % 1000n);
-        source.getCell(row, helper).value = { formula: `${sign}*${expression}`, result };
-      }
-    }
-    // Empty source sheets still expose and hide every calculation column.
+    const address = `${source.getColumn(column).letter}2`;
+    const signedText = `${address}&""`;
+    const sign = `IF(LEFT(${signedText},1)="-",-1,1)`;
+    const point = `FIND(".",${signedText}&".")`;
+    const integer = `IF(ISNUMBER(${address}),INT(ABS(${address})),ABS(VALUE(IF(${address}="","0",LEFT(${signedText},${point}-1)))))`;
+    const low = `IF(ISNUMBER(${address}),INT(MOD(ABS(${address})*1000,1000)+0.5),VALUE(LEFT(MID(${address},${point}+1,3)&"000",3)))`;
+    const values = Array.from({ length: Math.max(0, height - 1) }, (_, index) => BigInt(amountToYen(String(source.getCell(index + 2, column).value ?? "0"))));
     for (let component = 0; component < 3; component++) {
       const helper = sourceColumn(column, component);
       source.getColumn(helper).hidden = true;
       source.getCell(1, helper).value = `${source.getCell(1, column).text}：円整数の分割${component + 1}`;
+      if (height < 2) continue;
+      const expression = component === 0 ? `INT(${integer}/1000000)` : component === 1 ? `MOD(${integer},1000000)` : low;
+      const results = values.map(yen => Number(component === 0 ? yen / 1000000000n : component === 1 ? yen / 1000n % 1000000n : yen % 1000n));
+      // Standard shared formulas store one expression per column while retaining
+      // a normal, independently recalculated formula and cached result in every row.
+      source.fillFormula(`${source.getCell(2, helper).address}:${source.getCell(height, helper).address}`, `${sign}*${expression}`, results);
     }
   }
   for (const ws of wb.worksheets.filter(sheet => sheet !== source)) {

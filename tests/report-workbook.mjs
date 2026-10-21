@@ -43,8 +43,10 @@ export function evaluator(wb) {
 const rounded = yen => { const amount = BigInt(yen), absolute = amount < 0n ? -amount : amount; return Number((amount < 0n ? -1n : 1n) * ((absolute + 500n) / 1000n)); };
 // Excel adjusts relative row references when a source row is copied.
 function copySourceRow(source, row) {
+  const formulas = new Map();
+  row.eachCell((cell, column) => { if (cell.formula) formulas.set(column, cell.formula); });
   const copied = source.addRow(row.values);
-  copied.eachCell(cell => { if (cell.formula) cell.value = { formula: cell.formula.replace(/\b([A-Z]+)(\d+)\b/g, (_, column, number) => `${column}${Number(number) + copied.number - row.number}`) }; });
+  for (const [column, formula] of formulas) copied.getCell(column).value = { formula: formula.replace(/\b([A-Z]+)(\d+)\b/g, (_, name, number) => `${name}${Number(number) + copied.number - row.number}`) };
   return copied;
 }
 const settings = (tables, selected = [2, 1], filter = { industries: null, departments: null }) => ({ tables,
@@ -55,6 +57,12 @@ async function exported(api, plan, options) {
   const archive = await JSZip.loadAsync(bytes);
   assert.equal(archive.file('xl/metadata.xml'), null);
   assert.ok(!Object.keys(archive.files).some(name => /externalLinks|vbaProject/.test(name)));
+  const source = wb.getWorksheet('計算元');
+  let count = 0;
+  source.eachRow((row, index) => { if (index > 1) row.eachCell(cell => { if (cell.formula) count++; }); });
+  assert.equal(count, Math.max(0, source.rowCount - 1) * 36, '元金額ごとに3つの補助式だけを持つ');
+  assert.ok(!source.getRow(1).values.some(value => typeof value === 'string' && value.includes('金額の文字列')), '文字列正規化だけの補助列を作らない');
+
   return wb;
 }
 function reconcile(wb) {

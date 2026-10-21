@@ -455,7 +455,7 @@ See [AGENTS.md](AGENTS.md) for development, verification, and commit rules.
 
 The Excel initiative list includes monthly revenue/expense/profit total rows at the bottom. Totals cover all initiatives for the selected kind and recalculate from edits/copy-added input rows. Zero initiatives total 0.
 
-Excel recalculation uses hidden split-integer columns to preserve one-yen precision. Large source amounts are strings, split into upper integer thousands, lower six digits of integer thousands, and the yen remainder. Parts sum with SUMIFS/SUMIF/SUM; period totals, differences, and margins reference unrounded parts. Only display cells round to whole thousands. Edit source strings as thousands with up to three decimals, and copy whole rows including hidden columns when adding rows. Additional functions are IF, ISNUMBER, TEXT, ABS, LEFT, MID, LEN, FIND, VALUE, INT, and MOD. Do not enter scientific notation/invalid strings or edit hidden calculation columns.
+Excel recalculation uses hidden split-integer columns to preserve one-yen precision. Large source amounts are strings, split into upper integer thousands, lower six digits of integer thousands, and the yen remainder. Parts sum with SUMIFS/SUMIF/SUM; period totals, differences, and margins reference unrounded parts. Only display cells round to whole thousands. Edit source strings as thousands with up to three decimals, and copy whole rows including hidden columns when adding rows. Each source amount uses three component formulas; standard shared formulas reduce the stored expression size. Additional functions are IF, ISNUMBER, ABS, LEFT, MID, FIND, VALUE, INT, and MOD. Do not enter scientific notation/invalid strings or edit hidden calculation columns.
 
 Previous-year Excel export/import indexes amounts once by industry/department/account/month IDs. `node --expose-gc scripts/measure-previous-workbook.mjs` measures equal-condition construction/validation time and memory allocation for 100/300/600 accounts, excluding compression, parsing, and screen rendering.
 
@@ -1040,7 +1040,7 @@ Chrome Web Store用の説明文・プライバシー申告・アイコン・販�
 
 三表Excelの施策一覧は最下部に月別の売上・費用・利益の合計行を出力します。合計は選んだ種別の全施策を対象に、計算元の編集・行のコピー追加から再計算します。施策0件の合計は0です。
 
-三表Excelの金額再計算は1円精度を維持する非表示の整数分割列を使います。金額はExcelでも円精度を保つため、大きい元金額を文字列として保持し、非表示列で上位の千円整数・下位6桁の千円整数・1円部分へ分けます。各部分をSUMIFS・SUMIF・SUMで合算し、期間計・比較差・利益率は丸める前の部分を参照します。表示セルだけ整数千円へ丸めます。計算元の文字列金額は千円単位・小数点以下3桁までの文字列として編集し、行を追加する場合は非表示列を含む行全体をコピーしてください。使用する追加関数はIF・ISNUMBER・TEXT・ABS・LEFT・MID・LEN・FIND・VALUE・INT・MODです。各SUMは255引数以内とし、整数分割列への変換後に8,192文字を超える合計式は非表示の補助セルへ分割します。対象の小計・加減符号・円精度を保ち、表示行と印刷範囲は増やしません。元金額に科学表記や不正な文字列を入力せず、計算用の非表示列は編集しないでください。
+三表Excelの金額再計算は1円精度を維持する非表示の整数分割列を使います。金額はExcelでも円精度を保つため、大きい元金額を文字列として保持し、非表示列で上位の千円整数・下位6桁の千円整数・1円部分へ分けます。各部分をSUMIFS・SUMIF・SUMで合算し、期間計・比較差・利益率は丸める前の部分を参照します。表示セルだけ整数千円へ丸めます。計算元の文字列金額は千円単位・小数点以下3桁までの文字列として編集し、行を追加する場合は非表示列を含む行全体をコピーしてください。元金額ごとの補助式は3つとし、通常の共有数式で同じ列の式をまとめて保存します。文字列は整数部を切り出してから数値へ変換し、数値は1円部分を分離します。使用する追加関数はIF・ISNUMBER・ABS・LEFT・MID・FIND・VALUE・INT・MODです。各SUMは255引数以内とし、整数分割列への変換後に8,192文字を超える合計式は非表示の補助セルへ分割します。対象の小計・加減符号・円精度を保ち、表示行と印刷範囲は増やしません。元金額に科学表記や不正な文字列を入力せず、計算用の非表示列は編集しないでください。
 
 前年Excelの出力・取り込みは、業種・部署・科目・月のIDで前年金額を一度索引化して参照します。取り込み専用Workerへは基準年度・科目・業種・部署・前年金額だけを渡し、施策・予算・集計などの計画全体は複製しません。用途・分類の検証、競合判定と失敗時の入力保持は維持します。`node --expose-gc scripts/measure-previous-workbook.mjs`で100・300・600科目の同条件の構築・検証時間とメモリ割当を確認できます。圧縮・解析・画面描画は別の処理であり、この測定には含みません。
 
