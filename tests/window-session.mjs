@@ -1,9 +1,11 @@
 import { verifyPlanContentsPatch } from "./plan-contents-patch.mjs";
 import { verifyPlanProcessing } from "./plan-processing.mjs";
+import { verifyLatestNavigation } from "./latest-navigation.mjs";
 import assert from "node:assert/strict";
 import { verifyWindowControlTimeout } from "./window-control-timeout.mjs";
 
 export async function verifyWindowSession(api) {
+  await verifyLatestNavigation(api);
   await verifyPlanProcessing(api);
   const bytes = await api.createTriadicDatabase(2026);
   verifyPlanContentsPatch(api, await api.readPlanContents(bytes));

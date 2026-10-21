@@ -188,7 +188,7 @@ export class WindowPlanSession implements SessionAccess {
   async deleteHistory(deletion: HistoryDeletion, _destination: () => Promise<FileSystemFileHandle>) { await this.request("deleteHistory", deletion); }
   async close(_destination: () => Promise<FileSystemFileHandle>) { await this.request("close"); }
   async enterHistory() { await this.request("history"); }
-  leaveHistory() { void this.request("leave-history"); }
+  leaveHistory() { return this.request("leave-history"); }
   label(label: string) { if (this.info.group) void this.request("label", label); }
   duplicate(view: WindowView) {
     if (!this.info.group) return;

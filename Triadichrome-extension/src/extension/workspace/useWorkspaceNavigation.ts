@@ -5,6 +5,7 @@ import type { Initiative, PlanContents } from "../../core/domain/plan";
 import type { useRetainedInitiativeDraft } from "./useRetainedInitiativeDraft";
 import type { useScreenHistory } from "../useScreenHistory";
 import type { Page, Screen } from "./types";
+import { latestNavigation } from "./latestNavigation";
 export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHistory<Screen>>, contents: PlanContents,
   preview: boolean, navigationBlocked: boolean, saving: RefObject<boolean>,
   draft: Pick<ReturnType<typeof useRetainedInitiativeDraft>, "initiativeDraft" | "setInitiativeDraft">, dismissNotice: () => void,
@@ -14,6 +15,9 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
   const navigate = screens.navigate;
   const { initiativeDraft, setInitiativeDraft } = draft;
   const navigationState = useRef({ blocked: navigationBlocked, page });
+  const callbacks = useRef({ beforeNavigate, onError });
+  callbacks.current = { beforeNavigate, onError };
+  const [queueNavigation] = useState(() => latestNavigation<Screen>(next => callbacks.current.beforeNavigate(next), error => callbacks.current.onError(error)));
   navigationState.current = { blocked: navigationBlocked, page };
   const [discardRequest, setDiscardRequest] = useState<{ perform: () => void; duplicate?: boolean } | null>(null);
   const { initiatives } = contents;
@@ -34,10 +38,10 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
   const requestNavigation = (next: Screen, perform = () => navigate(next)) => {
     if (navigationBlocked || discardRequest) return;
     if (next.page === "initiative-list" && !preview && hasInitiativeDraftInput(initiativeDraft)) {
-      setDiscardRequest({ perform });
+      setDiscardRequest({ perform: () => queueNavigation(next, perform) });
       return;
     }
-    void beforeNavigate(next).then(perform).catch(onError);
+    queueNavigation(next, perform);
   };
   const setPage = (next: Page) => requestNavigation({ ...screen, page: next });
   const startInitiative = () => {

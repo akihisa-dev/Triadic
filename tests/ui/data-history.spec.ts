@@ -52,6 +52,7 @@ test("マスタの直下の日時履歴から全画面を閲覧でき、編集�
   await app.getByRole("button", { name: "現在に戻る", exact: true }).click();
   await menu.getByRole("button", { name: "履歴", exact: true }).click();
   await app.locator(".history-date").nth(1).click();
+  await expect(app.getByLabel("過去のデータを閲覧中")).toBeVisible();
   await menu.getByRole("button", { name: "施策一覧", exact: true }).click();
   await app.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();
   await app.getByRole("tab", { name: "一次予算", exact: true }).click();
@@ -224,7 +225,7 @@ test("閲覧前に未記録分を保存し、終了時の記録失敗では閉�
       const create = handle.createWritable.bind(handle);
       let writes = 0;
       handle.createWritable = async (...args) => {
-        if (++writes === 4) throw new Error("テスト用の終了記録失敗です。");
+        if (++writes === 4) throw new (parent as unknown as { Error: ErrorConstructor }).Error("テスト用の終了記録失敗です。");
         return create(...args);
       };
       return handles;
@@ -242,11 +243,12 @@ test("閲覧前に未記録分を保存し、終了時の記録失敗では閉�
   await menu.getByRole("button", { name: "総原価表", exact: true }).click();
   await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "未選択");
   await expect(app.getByRole("spinbutton", { name: "比較対象2", exact: true })).toBeEnabled();
-  await menu.getByRole("button", { name: "履歴", exact: true }).click();
+  // Close from the editing screen: entering history would checkpoint this
+  // dirty state first, so a fourth-write failure would be navigation failure.
   await app.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "閉じる", exact: true }).click();
   await expect(app.getByRole("alertdialog")).toContainText("終了記録失敗");
-  await expect(app.locator(".history-date")).toHaveCount(4);
+  await expect(app.getByRole("heading", { name: "総原価表", exact: true })).toBeVisible();
   await app.getByRole("alertdialog").getByRole("button", { name: "保存を再試行して閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await menu.getByRole("button", { name: "履歴", exact: true }).click();
@@ -266,8 +268,9 @@ test("自動記録エラーは閉じる操作を出さず、通常通知を閉�
       const create = handle.createWritable.bind(handle);
       let writes = 0;
       handle.createWritable = async (...args) => {
-        if (++writes === 2) throw new Error("テスト用の自動記録失敗です。");
-        if (writes === 3) throw new Error("テスト用の通常保存失敗です。");
+        // The in-memory file/session owner lives in the parent preview realm.
+        if (++writes === 2) throw new (parent as unknown as { Error: ErrorConstructor }).Error("テスト用の自動記録失敗です。");
+        if (writes === 3) throw new (parent as unknown as { Error: ErrorConstructor }).Error("テスト用の通常保存失敗です。");
         return create(...args);
       };
       return handles;
@@ -290,8 +293,8 @@ test("自動記録エラーは閉じる操作を出さず、通常通知を閉�
   await expect(notice).toContainText("自動記録失敗");
   await expect(notice.getByRole("button", { name: "通知を閉じる", exact: true })).toHaveCount(0);
   await menu.getByRole("button", { name: "履歴", exact: true }).click();
-  await expect(app.locator(".history-date")).toHaveCount(3);
-  await app.getByRole("button", { name: "保存を再試行", exact: true }).click();
+  // Entering history retries the failed checkpoint before publishing the page.
+  await expect(app.getByRole("heading", { name: "履歴", exact: true })).toBeVisible();
   await expect(notice).not.toBeVisible();
   await expect(app.locator(".history-date")).toHaveCount(4);
   await menu.getByRole("button", { name: "施策一覧", exact: true }).click();

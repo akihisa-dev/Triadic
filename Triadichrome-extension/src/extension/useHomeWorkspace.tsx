@@ -56,11 +56,15 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   const saveFailed = useSyncExternalStore(subscribeAutoSaveFailures, hasAutoSaveFailure);
   const navigationBlocked = saveAsMutation.busy || restoreMutation.busy || operationMutation.busy || saveFailed || (screen.page === "spreadsheet-io" && editPending);
   const searchBlocked = navigationBlocked || editPending || isSaving || historyBusy;
+  const historyEntered = useRef(screen.page === "data-history");
   const { discardRequest, setDiscardRequest, openInitiative, requestNavigation, setPage, startInitiative, duplicateInitiative } = useWorkspaceNavigation(
     screens, contents, preview !== null, navigationBlocked, saving, { initiativeDraft, setInitiativeDraft }, dismissNotice, async next => {
       await flushAutoSaves();
-      if (next.page === "data-history" && screen.page !== "data-history") await windows?.enterHistory();
-      else if (next.page !== "data-history" && !preview) windows?.leaveHistory();
+      if (next.page === "data-history" && !historyEntered.current) {
+        await windows?.enterHistory(); historyEntered.current = true;
+      } else if (next.page !== "data-history" && !preview && historyEntered.current) {
+        await windows?.leaveHistory(); historyEntered.current = false;
+      }
     }, showError);
   const openDetail = (id: number) => {
     if (navigationBlocked || saving.current || preview || discardRequest || !detailDocuments.some(item => item.id === id)) return;
