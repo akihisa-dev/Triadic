@@ -4,7 +4,31 @@ import { arrangeParts, magnetPosition, PART_INITIAL, PART_STEP, resizePart, sett
 import "./DetailPartsCanvas.css";
 import { DetailTextPart } from "./DetailTextPart";
 import { DetailTablePart } from "./DetailTablePart";
-import { emptyDetailTable } from "../core/tables/detailTable";
+import { detailTableMonths, emptyDetailTable } from "../core/tables/detailTable";
+
+function PartPreview({ kind }: { kind: DetailPart["kind"] }) {
+  const horizontal = kind === "table-horizontal";
+  const columns = horizontal ? 13 : 4, rows = horizontal ? 4 : 13;
+  const width = 180 / columns, height = 96 / rows;
+  return <svg className="detail-pool-preview" viewBox="0 0 200 120" aria-hidden="true" focusable="false">
+    {kind === "text" ? <text x="14" y="32" fontSize="12">
+      <tspan x="14">施策についての説明文</tspan>
+      <tspan x="14" dy="23">目的や考え方などを</tspan>
+      <tspan x="14" dy="20">ここに記入します。</tspan>
+    </text> : <g transform="translate(10 12)">
+      <rect width="180" height="96" className="detail-preview-paper" />
+      <rect width="180" height={height} className="detail-preview-header" />
+      <rect width={width} height="96" className="detail-preview-header" />
+      {Array.from({ length: columns + 1 }, (_, i) => <path key={`c${i}`} d={`M${i * width} 0V96`} />)}
+      {Array.from({ length: rows + 1 }, (_, i) => <path key={`r${i}`} d={`M0 ${i * height}H180`} />)}
+      <text x={width / 2} y={height / 2} dominantBaseline="central" textAnchor="middle" fontSize={horizontal ? 6 : 7}>{horizontal ? "項目" : "月"}</text>
+      {detailTableMonths.map((month, i) => <text key={month.id} x={horizontal ? (i + 1.5) * width : width / 2}
+        y={horizontal ? height / 2 : (i + 1.5) * height} dominantBaseline="central" textAnchor="middle" fontSize={horizontal ? 6 : 7}>{month.label}</text>)}
+      {["A", "B", "C"].map((name, i) => <text key={name} x={horizontal ? width / 2 : (i + 1.5) * width}
+        y={horizontal ? (i + 1.5) * height : height / 2} dominantBaseline="central" textAnchor="middle" fontSize="7">{name}</text>)}
+    </g>}
+  </svg>;
+}
 
 function newPart(kind: DetailPart["kind"]): DetailPart {
   const base = { id: crypto.randomUUID(), x: 0, y: 0 };
@@ -201,7 +225,7 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
           if (disabled || (event.key !== "Enter" && event.key !== " ")) return;
           event.preventDefault();
           change({ ...newPart(kind), x: viewport.current!.scrollLeft + 16, y: viewport.current!.scrollTop + 16 });
-        }}>{kind === "text" ? "テキスト" : kind === "table-horizontal" ? "横向き12か月" : "縦向き12か月"}</button>)}
+        }}><PartPreview kind={kind} /></button>)}
     </aside>
     {ghost && createPortal(<div className="detail-part-ghost" style={{ left: ghost.x - ghost.width / 2, top: ghost.y - ghost.height / 2, width: ghost.width, height: ghost.height }} />, document.body)}
   </div>;
