@@ -1,0 +1,16 @@
+{
+  "version": "26.5.0",
+  "capturedAt": "2026-10-21T13:32:25.732Z",
+  "viewport": "1280x800",
+  "source": "ローカルWeb表示・架空サンプル・Chrome",
+  "images": {
+    "images/icon-128.png": "65af1e59e70f0898ada436bd2169af8f54b1b4ae701feb7c03c42aecc46099ce",
+    "images/promo-small-440x280.png": "17653043d1ea06274f0f0ad91b892c7d081d195a7f308105b3e9e678aa4d4625",
+    "images/promo-marquee-1400x560.png": "793053586e4c534a1603ef81333ec1975def375447764f5cb74546afa5b5740a",
+    "screenshots/01-initiatives-1280x800.png": "abb40128b0263f2eea6a32ff355844642f548eda45f2d1374a7df058c72b4715",
+    "screenshots/02-initiative-1280x800.png": "99b44010ca62ba6d7dbb8348253b2a7cdc1afaf8d759dd5e907dd685a0b95a86",
+    "screenshots/03-cost-1280x800.png": "734fb1ae7ead9bb917b2c0bddd566ddd1424f6cb3aeb2c8c53cd0b1c6a755012",
+    "screenshots/04-breakdown-1280x800.png": "6733495118ad6d2f87bbe2666fe79540a90e05a0ae5ffb59bd9feeed49e07741",
+    "screenshots/05-entry-1280x800.png": "ec14f5c2235d567c4b14b3b733373d9a558694ecbd983310ead6a2c42631a2b6"
+  }
+}
