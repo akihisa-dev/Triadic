@@ -58,5 +58,41 @@ export async function verifyPreviousRebase(api) {
   await session.travelOperation(-1,async()=>handle);
   assert.deepEqual(await business(stored),await business(right));
   await session.travelOperation(1,async()=>handle);assert.equal((await rows(stored)).length,2);
+  const largeDb = await api.openTriadicDatabase(empty);
+  let bulkBase, bulkLocal, bulkExternal;
+  try {
+    largeDb.exec(`WITH RECURSIVE m(month) AS (VALUES(1) UNION ALL SELECT month+1 FROM m WHERE month<12), k(kind) AS (VALUES(1),(2))
+      INSERT INTO previous_amounts(previous_kind,account_id,industry_id,department_id,month,amount_yen)
+      SELECT k.kind,accounts.id,1,1,m.month,1000 FROM accounts CROSS JOIN m CROSS JOIN k;`);
+    bulkBase = api.exportTriadicDatabase(largeDb);
+    largeDb.run("UPDATE previous_amounts SET amount_yen=1001 WHERE id=(SELECT MIN(id) FROM previous_amounts)");
+    bulkLocal = api.exportTriadicDatabase(largeDb);
+    largeDb.run("UPDATE previous_amounts SET amount_yen=1000 WHERE id=(SELECT MIN(id) FROM previous_amounts)");
+    largeDb.run("UPDATE previous_amounts SET amount_yen=1002 WHERE id=(SELECT MAX(id) FROM previous_amounts)");
+    bulkExternal = api.exportTriadicDatabase(largeDb);
+  } finally { largeDb.close(); }
+  const sqlite = await api.initializeSqlite(), run = sqlite.Database.prototype.run, exec = sqlite.Database.prototype.exec;
+  let inserted = 0, deleted = 0, unchangedReads = 0;
+  sqlite.Database.prototype.run = function(sql, params) {
+    if (sql.startsWith("INSERT INTO previous_amounts VALUES")) inserted++;
+    if (sql.startsWith("DELETE FROM previous_amounts")) deleted++;
+    return run.call(this, sql, params);
+  };
+  sqlite.Database.prototype.exec = function(sql, params) {
+    if (sql === "SELECT * FROM initiative_amounts") unchangedReads++;
+    return exec.call(this, sql, params);
+  };
+  let bulkMerged;
+  try { bulkMerged = await api.rebasePlan(bulkBase, bulkLocal, bulkExternal); }
+  finally { sqlite.Database.prototype.run = run; sqlite.Database.prototype.exec = exec; }
+  assert.ok(bulkMerged?.operation);
+  assert.equal(inserted, 1, "独立した1セルだけを書き込み、前年全行を再投入しない");
+  assert.equal(deleted, 1, "変更する行だけを置換する");
+  assert.equal(unchangedReads, 0, "未変更の金額表の全行をJSへ読み出さない");
+  const bulkContents = await api.readPlanContents(bulkMerged.bytes);
+  assert.equal(bulkContents.previousAmounts.filter(row => row.amount === "1.001").length, 1);
+  assert.equal(bulkContents.previousAmounts.filter(row => row.amount === "1.002").length, 1);
+  const bulkUndo = await api.applyOperationSnapshot(bulkMerged.bytes, bulkMerged.operation.before);
+  assert.deepEqual((await api.readPlanContents(bulkUndo)).previousAmounts, (await api.readPlanContents(bulkExternal)).previousAmounts);
   console.log('PASS: 前年金額の独立追加・業務キー・ID一意性・精度・重複と相反変更・参照検証・実保存境界の失敗再試行・取消履歴');
 }

@@ -42,6 +42,12 @@ test("同梱本体の版・配布WASMと検索・複数文・保存メモリの�
       assert.throws(() => db.exec("SELECT 9223372036854775807"), /範囲/);
       assert.throws(() => db.exec("SELECT nonexistent FROM records"));
       assert.deepEqual(db.exec("SELECT payload FROM records")[0].values, [[new Uint8Array([1, 2, 255])]]);
+      const original = db.export();
+      db.attachReadonly("comparison", original);
+      assert.deepEqual(db.exec("SELECT label, value FROM comparison.records")[0].values, [["引用;符号", Number.MAX_SAFE_INTEGER]]);
+      assert.throws(() => db.run("DELETE FROM comparison.records"), /readonly|read.only|SQLITE_READONLY/i);
+      assert.throws(() => db.attachReadonly('invalid"name', original), /正しくありません/);
+      assert.deepEqual(db.export(), original, "参照専用の接続と拒否では保存内容を変えない");
       const bytes = db.export();
       const copy = new SQL.Database(bytes);
       try {

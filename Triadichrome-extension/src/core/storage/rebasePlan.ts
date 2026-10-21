@@ -42,9 +42,13 @@ export async function rebasePlan(baseBytes: Uint8Array, editedBytes: Uint8Array,
     if (!canMergeAccountReferences(base, edited, current)) return null;
     if (!canMergeRowAccounts(base, edited, current)) return null;
     if (!canMergeClassifications(base, edited, current)) return null;
-    const replacements = new Map<string, SqlValue[][]>();
+    base.attachReadonly("comparison_edit", edited.export());
+    const replacements = new Map<string, { removed: SqlValue[][]; inserted: SqlValue[][] }>();
     for (const table of BUSINESS_TABLES) {
       if (table === "document_info") continue;
+      // Ask SQLite whether this table changed before constructing three JS indexes.
+      const difference = base.exec(`SELECT EXISTS(SELECT * FROM main.${table} EXCEPT SELECT * FROM comparison_edit.${table}) OR EXISTS(SELECT * FROM comparison_edit.${table} EXCEPT SELECT * FROM main.${table})`)[0]?.values[0]?.[0];
+      if (!difference) continue;
       const original = readRebaseRows(base, table), local = readRebaseRows(edited, table), latest = readRebaseRows(current, table);
       const externalRows = new Map([...latest].map(([key, row]) => [key, [...row]]));
       const layout = rebaseLayout(base, table);
@@ -77,13 +81,22 @@ export async function rebasePlan(baseBytes: Uint8Array, editedBytes: Uint8Array,
         if (!mergeRebaseOrder(table, original, local, externalRows, latest, layout)) return null;
         changed ||= !equal([...externalRows], [...latest]);
       }
-      if (changed) replacements.set(table, [...latest.values()]);
+      if (changed) replacements.set(table, {
+        removed: [...externalRows].filter(([key, row]) => !equal(row, latest.get(key))).map(([, row]) => row),
+        inserted: [...latest].filter(([key, row]) => !equal(row, externalRows.get(key))).map(([, row]) => row),
+      });
     }
     if (!replacements.size) return { bytes: currentBytes, operation: null };
-    // Work on a private copy; disable cascades while replacing full tables, then validate every relationship.
+    // Work on a private copy; remove changed rows first so reordered unique positions can swap safely.
     current.exec("PRAGMA foreign_keys = OFF; BEGIN");
-    for (const table of replacements.keys()) current.exec(`DELETE FROM ${table}`);
-    for (const [table, values] of replacements) for (const row of values) {
+    for (const [table, { removed }] of replacements) {
+      const { keys, membership, referenceKeys, columns } = rebaseLayout(current, table);
+      for (const row of removed) {
+        const indexes = membership ? referenceKeys.filter(index => row[index] !== null) : keys;
+        current.run(`DELETE FROM ${table} WHERE ${indexes.map(index => `${columns[index]} IS ?`).join(" AND ")}`, indexes.map(index => row[index]!));
+      }
+    }
+    for (const [table, { inserted }] of replacements) for (const row of inserted) {
       current.run(`INSERT INTO ${table} VALUES (${row.map(() => "?").join(",")})`, row);
     }
     current.run("UPDATE document_info SET updated_at = ?", [new Date().toISOString()]);

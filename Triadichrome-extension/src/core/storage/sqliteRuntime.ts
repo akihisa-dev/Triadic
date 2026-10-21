@@ -7,6 +7,7 @@ export interface Database {
   exec(sql: string, params?: BindingSpec): QueryResult[];
   run(sql: string, params?: BindingSpec): Database;
   export(schema?: string): Uint8Array;
+  attachReadonly(name: string, data: Uint8Array): void;
   close(): void;
   getRowsModified(): number;
 }
@@ -69,6 +70,13 @@ export function initializeSqlite() {
         } finally { wasm.scopedAllocPop(scope); }
       }
       run(sql: string, params?: BindingSpec): Database { if (params === undefined) this.db.exec(sql); else this.db.exec({ sql, bind: params }); return this; }
+      attachReadonly(name: string, data: Uint8Array): void {
+        if (!/^[a-z_]+$/.test(name)) throw new Error("比較用データベース名が正しくありません。");
+        this.db.exec(`ATTACH DATABASE ':memory:' AS "${name}"`);
+        const pointer = wasm.allocFromTypedArray(data);
+        this.db.checkRc(capi.sqlite3_deserialize(this.db.pointer!, name, pointer, data.length, data.length,
+          capi.SQLITE_DESERIALIZE_FREEONCLOSE | capi.SQLITE_DESERIALIZE_READONLY));
+      }
       export(schema?: string): Uint8Array { return capi.sqlite3_js_db_export(this.db.pointer!, schema); }
       close(): void { this.db.close(); }
       getRowsModified(): number { return this.db.changes(); }
