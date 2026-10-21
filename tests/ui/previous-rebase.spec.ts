@@ -36,10 +36,15 @@ for(const duringSave of [false,true])test(`前年の全セル入力と外部月�
   }
   await expect(field(5)).toHaveValue('777');if(!duringSave)await field(6).fill('1002');
   await expect(nav.getByRole('button',{name:'Home',exact:true})).toBeEnabled();
-  await nav.getByRole('button',{name:'Home',exact:true}).click();await nav.getByRole('button',{name:'前年入力',exact:true}).click();
+  await nav.getByRole('button',{name:'Home',exact:true}).click();
+  await expect(app.getByRole('heading',{name:'Home',exact:true})).toBeVisible();
+  await nav.getByRole('button',{name:'前年入力',exact:true}).click();
+  await expect(app.getByRole('heading',{name:'前年入力',exact:true})).toBeVisible();
   await app.getByRole('combobox',{name:'部署名',exact:true}).selectOption('1');await app.getByRole('combobox',{name:'業種名',exact:true}).selectOption('1');
   await expect(field(4)).toHaveValue('1001');await expect(field(5)).toHaveValue('777');await expect(field(6)).toHaveValue('1002');
-  await page.screenshot({path:`/tmp/triadichrome-previous-rebase-${testInfo.project.name}-${duringSave}.png`});
+  const imagePath = testInfo.outputPath(`previous-rebase-${duringSave}.png`);
+  await page.screenshot({ path: imagePath });
+  await testInfo.attach('前年入力の外部統合後', { path: imagePath, contentType: 'image/png' });
   await app.getByRole('button',{name:'操作を取り消す',exact:true}).click();await expect(field(5)).toHaveValue('777');
   await app.getByRole('button',{name:'操作をやり直す',exact:true}).click();await expect(field(6)).toHaveValue('1002');
 });
