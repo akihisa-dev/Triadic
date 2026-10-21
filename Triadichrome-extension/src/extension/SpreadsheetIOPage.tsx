@@ -1,4 +1,5 @@
 import { PreviousKindSelection } from "./PreviousKindSelection";
+import { MeasuredTableBody } from "./MeasuredTableBody";
 import { previousKindName, type PreviousKind, type PreviousSelections } from "../core/domain/kinds";
 import { processPreviousWorkbook } from "./previousWorkbookProcessing";
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
@@ -51,6 +52,7 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
     [patches, contents.industries, contents.departments, contents.accounts]);
   const [retry, setRetry] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  const previewContainer = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
   const disabled = busy || working || patches !== null;
   const operation = async (action: () => Promise<void>) => {
@@ -122,10 +124,10 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
       </div>
       {patches && <div className="io-import-preview" role="region" aria-label="前年金額の変更確認">
         <h3>変更内容 · {previousKindName(patches[0]!.previousKind)} · {patches.length}件</h3>
-        <div className="io-preview-table"><table><thead><tr>{["業種", "部署", "科目", "月", "変更前", "変更後"].map(label => <th key={label}>{label}</th>)}</tr></thead>
-          <tbody>{previewRows.map(({ patch: p, industryName, departmentName, accountName }) => <tr key={`${p.previousKind}:${p.industryId}:${p.departmentId}:${p.accountId}:${p.month}`}>
+        <div ref={previewContainer} className="io-preview-table"><table><thead><tr>{["業種", "部署", "科目", "月", "変更前", "変更後"].map(label => <th key={label}>{label}</th>)}</tr></thead>
+          <MeasuredTableBody rows={previewRows} container={previewContainer} columns={6} rowKey={({ patch: p }) => `${p.previousKind}:${p.industryId}:${p.departmentId}:${p.accountId}:${p.month}`} render={({ patch: p, industryName, departmentName, accountName }) => <tr>
             <td>{industryName}</td><td>{departmentName}</td><td>{accountName}</td><td>{p.month}月</td><td>{p.before}</td><td>{p.after}</td>
-          </tr>)}</tbody></table></div>
+          </tr>} /></table></div>
         <div className="form-actions"><button type="button" className="secondary-button" disabled={working || busy} onClick={() => { previewPending.current = false; onPendingChange(false); setPatches(null); setRetry(false); setNotice(""); }}>キャンセル</button>
           <button type="button" className="primary-button" disabled={working || busy || readOnly} onClick={() => { void operation(async () => {
             try { await onPrepareSave(); await onChangePlan({ type: "previous-import", patches }); previewPending.current = false; setPatches(null); setRetry(false); setNotice("前年金額を取り込みました。"); }

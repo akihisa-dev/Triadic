@@ -23,7 +23,7 @@ export function useRowWindow(container: RefObject<HTMLDivElement | null>, count:
   return virtual ? { start: Math.min(window.start, count), end: Math.min(window.end, count) } : { start: 0, end: count };
 }
 export function RowSpacer({ height, columns }: { height: number; columns: number }) {
-  return height > 0 ? <tr aria-hidden="true" className="virtual-row-spacer"><td colSpan={columns} style={{ height }} /></tr> : null;
+  return height > 0 ? <tr aria-hidden="true" className="virtual-row-spacer"><td colSpan={columns} style={{ height, padding: 0, border: 0, minHeight: 0 }} /></tr> : null;
 }
 export function WindowRows<T>({ items, count, height, columns, render }: {
   items: { item: T; index: number; key?: Key }[]; count: number; height: number; columns: number;
