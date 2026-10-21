@@ -36,8 +36,11 @@ export function useWindowWorkspace(session: WindowPlanSession | undefined, works
     return;
   }, [session]);
   useLayoutEffect(() => session?.registerControls({
-    draft: () => hasInitiativeDraftInput(latest.current.initiativeDraft) || [...document.querySelectorAll<HTMLInputElement>("form input:not([type=checkbox]):not([type=radio]):not([type=hidden]), form textarea")].some(input => input.value.trim() !== ""),
-    discard: () => latest.current.setInitiativeDraft(createInitiativeDraft(String(latest.current.currentContents.fiscalYear))),
+    draft: history => (history && latest.current.detailDocuments.length > 0) || hasInitiativeDraftInput(latest.current.initiativeDraft) || [...document.querySelectorAll<HTMLInputElement>("form input:not([type=checkbox]):not([type=radio]):not([type=hidden]), form textarea")].some(input => input.value.trim() !== ""),
+    discard: () => {
+      latest.current.setInitiativeDraft(createInitiativeDraft(String(latest.current.currentContents.fiscalYear)));
+      latest.current.setDetailDocuments([]);
+    },
     confirmDiscard: labels => new Promise(resolve => { confirm.current = resolve; setDiscardLabels(labels); }),
     close: () => { /* The session closes this window after every input has been settled. */ },
   }), [session]);

@@ -170,3 +170,37 @@ test("明細の文章と表を複製せず、複製先は空の明細一覧を�
   await expect(listCopy.getByRole("button", { name: "元画面だけの明細を開く", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "元画面だけの明細を開く", exact: true })).toBeVisible();
 });
+
+
+test("別画面で保持する明細も履歴の破棄確認へ含め、取消で文章とセルを保持する", async ({ page }) => {
+  const detail = await duplicate(page);
+  await navigate(detail, "明細");
+  await detail.getByRole("button", { name: "＋ 明細を追加", exact: true }).click();
+  await detail.getByRole("textbox", { name: "明細名", exact: true }).fill("履歴前に保護する明細");
+  await detail.getByRole("button", { name: "次へ", exact: true }).click();
+  await detail.getByRole("button", { name: "テキストパーツを追加", exact: true }).press("Enter");
+  await detail.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true }).dblclick();
+  await detail.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).fill("取消して保持する文章");
+  await detail.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).press("Escape");
+  await detail.getByRole("button", { name: "横向き12か月パーツを追加", exact: true }).press("Enter");
+  await detail.getByRole("table", { name: "パーツ 2の表", exact: true }).getByRole("columnheader", { name: "項目", exact: true }).dblclick();
+  await detail.getByRole("textbox", { name: "項目 1の名前", exact: true }).fill("取消して保持するセル");
+  await navigate(detail, "Home");
+  const copy = page;
+  // Temporary details do not block operations which keep the owning window open.
+  await copy.getByRole("button", { name: "別名で保存", exact: true }).click();
+  await expect(copy.locator(".home-file-name")).toHaveText("ウィンドウ確認 のコピー.triadic");
+  await navigate(copy, "履歴");
+  const confirmation = copy.getByRole("alertdialog", { name: "履歴を開きますか？", exact: true });
+  await expect(confirmation).toContainText("ウィンドウ2");
+  await confirmation.getByRole("button", { name: "キャンセル", exact: true }).click();
+  await navigate(detail, "明細");
+  await detail.getByRole("button", { name: "履歴前に保護する明細を開く", exact: true }).click();
+  await expect(detail.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true })).toHaveText("取消して保持する文章");
+  await detail.getByRole("table", { name: "パーツ 2の表", exact: true }).getByRole("columnheader", { name: "項目", exact: true }).dblclick();
+  await expect(detail.getByRole("textbox", { name: "項目 1の名前", exact: true })).toHaveValue("取消して保持するセル");
+  await navigate(copy, "履歴");
+  await confirmation.getByRole("button", { name: "はい", exact: true }).click();
+  await expect.poll(() => detail.isClosed()).toBe(true);
+  await expect(copy.getByRole("heading", { name: "履歴", exact: true })).toBeVisible();
+});

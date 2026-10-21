@@ -8,7 +8,7 @@ export async function verifyWindowSession(api) {
   function peer(hubInstance = hub) {
     let sequence = 0;
     const pending = new Map();
-    const client = { states: [], closed: false, hasDraft: false, discard: false, accept: true, flush: async () => {}, recoveryTarget: null, recovered: [] };
+    const client = { states: [], closed: false, hasDraft: false, hasDetails: false, discard: false, accept: true, flush: async () => {}, recoveryTarget: null, recovered: [] };
     const connection = hubInstance.connect({ postMessage(message) {
       if (message.type === "state") client.states.push(message.preserveContents ? { ...message, snapshot: { ...message.snapshot, contents: client.states.at(-1)?.snapshot.contents ?? null } } : message);
       if (message.type === "result") {
@@ -21,9 +21,9 @@ export async function verifyWindowSession(api) {
           let value;
           if (message.action === "flush") await client.flush();
           if (message.action === "recover") { client.recovered.push(message.detail); value = client.recoveryTarget; }
-          if (message.action === "draft") value = client.hasDraft;
+          if (message.action === "draft") value = client.hasDraft || (message.detail === "history" && client.hasDetails);
           if (message.action === "confirm-discard") value = client.accept;
-          if (message.action === "discard") { client.hasDraft = false; client.discard = true; }
+          if (message.action === "discard") { client.hasDraft = false; client.hasDetails = false; client.discard = true; }
           if (message.action === "close") client.closed = true;
           connection.receive({ type: "reply", id: message.id, value });
         } catch (error) { connection.receive({ type: "reply", id: message.id, error: error.message }); }
@@ -114,12 +114,12 @@ export async function verifyWindowSession(api) {
     assert.equal((await api.readPlanContents(original.bytes)).departments[0].departmentName, "共有の編集");
     assert.equal((await api.readPlanContents(copy.bytes)).departments[0].departmentName, "コピー先の編集");
 
-    a.hasDraft = true; b.accept = false;
+    a.hasDetails = true; b.accept = false;
     await assert.rejects(b.request("history"), /キャンセル/);
-    assert.equal(a.hasDraft, true); assert.equal(c.closed, false);
+    assert.equal(a.hasDetails, true); assert.equal(c.closed, false);
     b.accept = true; copy.fail = true;
     await assert.rejects(b.request("history"), /確認用の保存失敗/);
-    assert.equal(a.hasDraft, true, "履歴の保存失敗では未登録入力を破棄しない");
+    assert.equal(a.hasDetails, true, "履歴の保存失敗では未登録入力を破棄しない");
     assert.equal(c.closed, false, "失敗では他のウィンドウを閉じない");
     copy.fail = false;
     await b.request("history");

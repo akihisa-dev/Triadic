@@ -136,7 +136,7 @@ export class WindowSessionHub {
           try { await this.control(item, "flush"); }
           catch (failure) { throw new Error(`ウィンドウ${item.number} · ${item.label}：${errorText(failure, "message", "保存できませんでした。")}`); }
         }));
-        const drafts = (await Promise.all(peers.map(async item => await this.control(item, "draft") ? item : null))).filter(item => item !== null);
+        const drafts = (await Promise.all(peers.map(async item => await this.control(item, "draft", history ? "history" : undefined) ? item : null))).filter(item => item !== null);
         if (drafts.length) {
           const labels = drafts.map(item => `ウィンドウ${item.number} · ${item.label}`).join("、");
           if (!history) throw new Error(`${labels}に未登録の入力があります。入力は保持しています。`);

@@ -9,7 +9,7 @@ import type { WindowView } from "./windowView";
 import { flushAutoSaves } from "./flushAutoSaves";
 import { recoverFileConflict } from "./fileConflict";
 
-type Controls = { draft: () => boolean; discard: () => void; confirmDiscard: (labels: string) => Promise<boolean>; close: () => void };
+type Controls = { draft: (history: boolean) => boolean; discard: () => void; confirmDiscard: (labels: string) => Promise<boolean>; close: () => void };
 const emptySnapshot: SessionSnapshot = { contents: null, name: "", history: emptyDataHistory, busy: false, historyError: "", canUndo: false, canRedo: false, operationRevision: 0 };
 
 /** A window owns only its view and drafts; the shared worker owns the document. */
@@ -129,7 +129,7 @@ export class WindowPlanSession implements SessionAccess {
         return;
       }
       case "resume": this.updateInfo({ settling: false }); return;
-      case "draft": return this.controls?.draft() ?? false;
+      case "draft": return this.controls?.draft(detail === "history") ?? false;
       case "discard": this.controls?.discard(); return;
       case "confirm-discard": return this.controls?.confirmDiscard(detail ?? "") ?? false;
       case "recover": {
