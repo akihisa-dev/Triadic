@@ -75,32 +75,42 @@ test('右下の斜め伸縮は左上を固定し、最小64pxと幅・高さの1
   });
 });
 
-test('テーブルの行列操作と貼り付けは元データを保ち、矩形と最低1行1列を維持する', async () => {
-  await withNodeBundle('Triadichrome-extension/src/core/tables/detailTable.ts', async ({ emptyDetailTable, setTableCell, changeTableAxis, parseTableClipboard, pasteTableCells }) => {
+test('月別表は共通の12か月と3項目で始まり、項目だけを増減する', async () => {
+  await withNodeBundle('Triadichrome-extension/src/core/tables/detailTable.ts', async ({ detailTableMonths, emptyDetailTable, setTableCell, changeTableItem }) => {
+    assert.deepEqual(detailTableMonths.map(month => month.label), ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月']);
     const cells = emptyDetailTable();
-    assert.equal(cells.length, 3); assert.ok(cells.every(row => row.length === 3 && row.every(cell => cell === '')));
-    const filled = setTableCell(cells, 1, 1, '説明\n改行');
-    assert.equal(cells[1][1], ''); assert.equal(filled[1][1], '説明\n改行');
-    const addedRow = changeTableAxis(filled, 'row', 0, false);
-    assert.equal(addedRow[2][1], '説明\n改行'); assert.equal(addedRow.length, 4);
-    const addedColumn = changeTableAxis(addedRow, 'column', 0, false);
-    assert.equal(addedColumn[2][2], '説明\n改行');
-    assert.deepEqual(changeTableAxis(changeTableAxis(addedColumn, 'column', 1, true), 'row', 1, true), filled);
-    assert.deepEqual(changeTableAxis([['保持']], 'row', 0, true), [['保持']]);
-    assert.deepEqual(changeTableAxis([['保持']], 'column', 0, true), [['保持']]);
-    const parsed = parseTableClipboard('項目\t"複数\n行"\r\n"a""b"\t001\r\n');
-    assert.deepEqual(parsed, [['項目', '複数\n行'], ['a"b', '001']]);
-    assert.deepEqual(parseTableClipboard('a\t\n\t\n'), [['a', ''], ['', '']]);
-    const pasted = pasteTableCells(filled, 2, 2, parsed);
-    assert.equal(pasted.length, 4); assert.ok(pasted.every(row => row.length === 4));
-    assert.equal(pasted[1][1], '説明\n改行'); assert.equal(pasted[2][3], '複数\n行');
-    assert.equal(pasted[3][3], '001'); assert.equal(filled.length, 3);
+    assert.equal(cells.length, 3); assert.ok(cells.every(row => row.length === 13 && row.every(cell => cell === '')));
+    const filled = setTableCell(setTableCell(cells, 1, 0, '人数'), 1, 1, '001');
+    assert.equal(cells[1][1], '');
+    const added = changeTableItem(filled, 0, false);
+    assert.equal(added.length, 4); assert.equal(added[2][0], '人数');
+    assert.deepEqual(changeTableItem(added, 1, true), filled);
+    assert.equal(changeTableItem([filled[1]], 0, true).length, 1);
+  });
+});
+
+test('月別表の貼り付けは両方向で項目だけを拡張し、12か月超過は全体を拒否する', async () => {
+  await withNodeBundle('Triadichrome-extension/src/core/tables/detailTable.ts', async ({ emptyDetailTable, parseTableClipboard, pasteTableCells }) => {
+    const cells = emptyDetailTable(); cells[0][0] = '保持';
+    const before = JSON.stringify(cells);
+    assert.deepEqual(parseTableClipboard('項目\t"複数\n行"\r\n"a""b"\t001\r\n'), [['項目', '複数\n行'], ['a"b', '001']]);
+    for (const horizontal of [true, false]) {
+      const pasted = horizontal ? [['a', '001'], ['b', '=1+1']] : [['a', 'b'], ['001', '=1+1']];
+      const result = pasteTableCells(cells, 2, 1, pasted, horizontal);
+      assert.equal(result.length, 4); assert.ok(result.every(row => row.length === 13));
+      assert.equal(result[2][1], 'a'); assert.equal(result[2][2], '001'); assert.equal(result[3][2], '=1+1');
+      const tooMany = horizontal ? [Array(13).fill('超過')] : Array.from({ length: 13 }, () => ['超過']);
+      assert.equal(pasteTableCells(cells, 0, 1, tooMany, horizontal), null);
+      const names = horizontal ? [['名前', '値']] : [['名前'], ['値']];
+      assert.equal(pasteTableCells(cells, 0, 0, names, horizontal)[0][0], '名前');
+    }
+    assert.equal(JSON.stringify(cells), before);
   });
 });
 
 test('テーブルのセルは移動・伸縮・衝突解消でも保持する', async () => {
   await withNodeBundle('Triadichrome-extension/src/core/tables/detailParts.ts', async ({ arrangeParts, resizePart }) => {
-    const table = { id: 'table', kind: 'table', cells: [['項目', '001'], ['説明\n改行', '=1+1']], x: 0, y: 0, width: 320, height: 192 };
+    const table = { id: 'table', kind: 'table-horizontal', cells: [['項目', '001'], ['説明\n改行', '=1+1']], x: 0, y: 0, width: 320, height: 192 };
     const text = { id: 'text', kind: 'text', text: '説明', x: 0, y: 0, width: 160, height: 96 };
     const result = arrangeParts([table, text], resizePart(table, 21, 21), true);
     assert.deepEqual(result.find(part => part.id === 'table').cells, table.cells);

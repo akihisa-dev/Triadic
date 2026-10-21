@@ -176,9 +176,9 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
             const dy = event.key === "ArrowDown" ? PART_STEP : event.key === "ArrowUp" ? -PART_STEP : 0;
             if (dx || dy) { event.preventDefault(); change({ ...part, x: Math.max(0, part.x + dx), y: Math.max(0, part.y + dy) }); }
           }}>
-          {part.kind === "table" ? <DetailTablePart cells={part.cells} disabled={disabled} index={index} editing={editingId === part.id}
+          {part.kind !== "text" ? <DetailTablePart cells={part.cells} horizontal={part.kind === "table-horizontal"} disabled={disabled} index={index} editing={editingId === part.id}
             onEditingChange={editing => setEditingId(editing ? part.id : null)}
-            onChange={cells => editPart(part.id, current => current.kind === "table" ? { ...current, cells } : current)} />
+            onChange={cells => editPart(part.id, current => current.kind !== "text" ? { ...current, cells } : current)} />
             : <DetailTextPart text={part.text} disabled={disabled} index={index} editing={editingId === part.id}
               onEditingChange={editing => setEditingId(editing ? part.id : null)}
               onChange={text => editPart(part.id, current => current.kind === "text" ? { ...current, text } : current)} />}
@@ -196,12 +196,12 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
     </div>
     <aside className="detail-part-pool" aria-label="パーツプール">
       <h2>パーツプール</h2>
-      {(["text", "table"] as const).map(kind => <button key={kind} type="button" className="detail-pool-source" aria-label={`${kind === "text" ? "テキスト" : "テーブル"}パーツを追加`} disabled={disabled} onPointerDown={event => start(event, undefined, false, kind)}
+      {(["text", "table-horizontal", "table-vertical"] as const).map(kind => <button key={kind} type="button" className="detail-pool-source" aria-label={`${kind === "text" ? "テキスト" : kind === "table-horizontal" ? "横向き12か月" : "縦向き12か月"}パーツを追加`} disabled={disabled} onPointerDown={event => start(event, undefined, false, kind)}
         onKeyDown={event => {
           if (disabled || (event.key !== "Enter" && event.key !== " ")) return;
           event.preventDefault();
           change({ ...newPart(kind), x: viewport.current!.scrollLeft + 16, y: viewport.current!.scrollTop + 16 });
-        }}>{kind === "text" ? "テキスト" : "テーブル"}</button>)}
+        }}>{kind === "text" ? "テキスト" : kind === "table-horizontal" ? "横向き12か月" : "縦向き12か月"}</button>)}
     </aside>
     {ghost && createPortal(<div className="detail-part-ghost" style={{ left: ghost.x - ghost.width / 2, top: ghost.y - ghost.height / 2, width: ghost.width, height: ghost.height }} />, document.body)}
   </div>;

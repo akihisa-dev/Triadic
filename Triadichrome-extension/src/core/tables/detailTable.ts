@@ -1,14 +1,17 @@
-export const emptyDetailTable = () => Array.from({ length: 3 }, () => Array<string>(3).fill(""));
+import { tablePeriods } from "./periodTables";
+
+export const detailTableMonths = tablePeriods.filter(period => period.months.length === 1);
+/** Canonical rows are items; column 0 is the name, followed by the twelve fiscal months. */
+export const emptyDetailTable = () => Array.from({ length: 3 }, () => Array<string>(detailTableMonths.length + 1).fill(""));
 
 export function setTableCell(cells: string[][], row: number, column: number, value: string) {
   return cells.map((values, r) => r === row ? values.map((cell, c) => c === column ? value : cell) : values);
 }
 
-export function changeTableAxis(cells: string[][], axis: "row" | "column", index: number, remove: boolean) {
-  if (remove && (axis === "row" ? cells.length : cells[0]!.length) === 1) return cells;
-  if (axis === "row") return remove ? cells.filter((_, r) => r !== index)
+export function changeTableItem(cells: string[][], index: number, remove: boolean) {
+  if (remove && cells.length === 1) return cells;
+  return remove ? cells.filter((_, r) => r !== index)
     : [...cells.slice(0, index + 1), Array<string>(cells[0]!.length).fill(""), ...cells.slice(index + 1)];
-  return cells.map(row => remove ? row.filter((_, c) => c !== index) : [...row.slice(0, index + 1), "", ...row.slice(index + 1)]);
 }
 
 /** Spreadsheet clipboard text: quoted cells may contain tabs, newlines and escaped quotes. */
@@ -31,11 +34,13 @@ export function parseTableClipboard(text: string): string[][] {
   return rows;
 }
 
-export function pasteTableCells(cells: string[][], row: number, column: number, pasted: string[][]) {
-  const width = Math.max(cells[0]!.length, column + Math.max(...pasted.map(values => values.length)));
-  const height = Math.max(cells.length, row + pasted.length);
-  return Array.from({ length: height }, (_, r) => Array.from({ length: width }, (_, c) => {
-    const values = pasted[r - row];
-    return values && c >= column && c < column + values.length ? values[c - column]! : cells[r]?.[c] ?? "";
+export function pasteTableCells(cells: string[][], item: number, column: number, pasted: string[][], horizontal: boolean): string[][] | null {
+  const sourceWidth = Math.max(...pasted.map(row => row.length));
+  if (column + (horizontal ? sourceWidth : pasted.length) > detailTableMonths.length + 1) return null;
+  const count = Math.max(cells.length, item + (horizontal ? pasted.length : sourceWidth));
+  const result = Array.from({ length: count }, (_, r) => [...(cells[r] ?? Array<string>(detailTableMonths.length + 1).fill(""))]);
+  pasted.forEach((row, r) => row.forEach((value, c) => {
+    result[item + (horizontal ? r : c)]![column + (horizontal ? c : r)] = value;
   }));
+  return result;
 }

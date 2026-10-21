@@ -196,98 +196,73 @@ test('テキストはダブルクリックで編集し、改行・外側クリ�
   await expect(view).toHaveText('ダブルクリックで入力');
 });
 
-test('空の3×3表を編集し、改行・行列操作・削除確認・幅の追従・画面往復を扱う', async ({ app, page }, info) => {
-  await openEditor(app);
-  const source = app.getByRole('button', { name: 'テーブルパーツを追加', exact: true });
-  await source.press('Enter');
-  const part = app.locator('.detail-part').first();
-  const table = part.getByRole('table', { name: 'パーツ 1の表', exact: true });
-  await expect(table.getByRole('row')).toHaveCount(3);
-  await expect(table.getByRole('cell')).toHaveCount(9);
-  await expect(part.getByRole('textbox')).toHaveCount(0);
-  const before = await rectangles(app);
-  await part.getByRole('group', { name: 'パーツ 1のテーブル', exact: true }).dblclick();
-  const cell = (r: number, c: number) => part.getByRole('textbox', { name: `${r}行${c}列`, exact: true });
-  await expect(cell(1, 1)).toBeFocused();
-  await cell(1, 1).fill('項目'); await cell(1, 1).press('Enter');
-  await expect(cell(2, 1)).toBeFocused();
-  await cell(2, 1).fill('説明'); await cell(2, 1).press('End'); await cell(2, 1).press('Shift+Enter');
-  await cell(2, 1).pressSequentially('続き'); await expect(cell(2, 1)).toHaveValue('説明\n続き');
-  await cell(2, 1).press('Tab'); await expect(cell(2, 2)).toBeFocused();
-  await page.screenshot({ path: `/tmp/triadichrome-table-part-edit-${info.project.name}.png` });
-  expect(await rectangles(app)).toEqual(before);
-  await part.getByRole('button', { name: '行を追加', exact: true }).click();
-  await expect(table.getByRole('row')).toHaveCount(4); await expect(cell(3, 2)).toBeFocused();
-  await part.getByRole('button', { name: '行を削除', exact: true }).click();
-  await expect(table.getByRole('row')).toHaveCount(3); await expect(app.getByRole('alertdialog')).toHaveCount(0);
-  await cell(1, 1).click(); await part.getByRole('button', { name: '行を削除', exact: true }).click();
-  const confirm = app.getByRole('alertdialog', { name: '行を削除', exact: true });
-  await expect(confirm).toBeVisible(); await confirm.getByRole('button', { name: 'キャンセル', exact: true }).click();
-  await expect(cell(1, 1)).toHaveValue('項目');
-  await part.getByRole('button', { name: '列を追加', exact: true }).click();
-  await expect(table.getByRole('cell')).toHaveCount(12);
-  await part.getByRole('button', { name: '列を削除', exact: true }).click();
-  await expect(table.getByRole('cell')).toHaveCount(9);
-  await cell(1, 1).click(); await part.getByRole('button', { name: '行を削除', exact: true }).click();
-  await confirm.getByRole('button', { name: '削除する', exact: true }).click();
-  await expect(table.getByRole('row')).toHaveCount(2); await expect(cell(1, 1)).toHaveValue('説明\n続き');
-  await cell(1, 1).press('Escape'); await expect(part.getByRole('textbox')).toHaveCount(0);
-  const oldWidths = await table.getByRole('row').first().getByRole('cell').evaluateAll(nodes => nodes.map(e => e.getBoundingClientRect().width));
-  await part.locator('.detail-part-grip').press('ArrowRight'); await settleMotion(app.locator('body'));
-  const newWidths = await table.getByRole('row').first().getByRole('cell').evaluateAll(nodes => nodes.map(e => e.getBoundingClientRect().width));
-  expect(newWidths[0]).toBeGreaterThan(oldWidths[0]!);
-  expect(Math.max(...newWidths) - Math.min(...newWidths)).toBeLessThan(1);
-  await app.getByRole('button', { name: '一覧に戻る', exact: true }).click();
-  await app.getByRole('button', { name: 'パーツ配置を開く', exact: true }).click();
-  await expect(table).toContainText('説明');
-  await page.screenshot({ path: `/tmp/triadichrome-table-part-${info.project.name}.png` });
-  await part.getByRole('group', { name: 'パーツ 1のテーブル', exact: true }).dblclick();
-  await cell(1, 1).fill('外をクリックして確定');
-  await app.getByRole('heading', { name: 'パーツ配置', exact: true }).click();
-  await expect(part.getByRole('textbox')).toHaveCount(0);
-  await expect(table).toContainText('外をクリックして確定');
-  for (let i = 0; i < 17; i++) await part.locator('.detail-part-grip').press('ArrowLeft');
-  await settleMotion(app.locator('body'));
-  await part.getByRole('group', { name: 'パーツ 1のテーブル', exact: true }).dblclick();
-  const toolbar = part.getByRole('toolbar');
-  expect(await toolbar.evaluate(e => e.scrollWidth > e.clientWidth)).toBe(true);
-  expect(await part.locator('.detail-table-scroll').evaluate(e => e.clientHeight)).toBeGreaterThan(0);
-});
-
-test('表の貼り付けは起点から行列を拡張し、長い表は内部でスクロールして保持する', async ({ app, page }) => {
-  await openEditor(app);
-  // Add the table through the same pointer path as the text pool.
-  const source = (await app.getByRole('button', { name: 'テーブルパーツを追加', exact: true }).boundingBox())!;
-  const area = (await app.locator('.detail-canvas-viewport').boundingBox())!;
-  await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2); await page.mouse.down();
-  await page.mouse.move(area.x + Math.min(230, area.width / 2), area.y + 160, { steps: 12 }); await page.mouse.up();
-  await settleMotion(app.locator('body'));
-  const part = app.locator('.detail-part').first(), table = part.getByRole('table');
-  await part.getByRole('group', { name: 'パーツ 1のテーブル', exact: true }).dblclick();
-  const start = part.getByRole('textbox', { name: '2行2列', exact: true });
-  await start.fill('保持'); await start.click();
-  await start.evaluate(node => {
-    const clipboardData = new DataTransfer();
-    clipboardData.setData('text/plain', '項目\t単価\t数量\r\n"改行\n説明"\t001\t=1+1\r\n');
-    node.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true, cancelable: true }));
+for (const horizontal of [true, false]) {
+  const direction = horizontal ? '横向き' : '縦向き';
+  test(`${direction}12か月は項目編集・削除確認・貼り付け制限・見出し固定と保持を扱う`, async ({ app, page }, info) => {
+    await openEditor(app);
+    const source = app.getByRole('button', { name: `${direction}12か月パーツを追加`, exact: true });
+    await expect(app.getByRole('button', { name: 'テーブルパーツを追加', exact: true })).toHaveCount(0);
+    await source.press('Enter');
+    const part = app.locator('.detail-part').first(), table = part.getByRole('table');
+    const wrapper = part.getByRole('group', { name: `パーツ 1の${direction}12か月`, exact: true });
+    const months = ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
+    const monthHeaders = horizontal ? table.locator('thead th').filter({ hasNotText: '項目' }) : table.locator('tbody th');
+    expect(await monthHeaders.allTextContents()).toEqual(months);
+    const before = await rectangles(app);
+    await wrapper.dblclick();
+    const name = (i: number) => part.getByRole('textbox', { name: `項目 ${i}の名前`, exact: true });
+    const cell = (i: number, month: string) => part.getByRole('textbox', { name: `項目 ${i}の${month}`, exact: true });
+    await expect(name(1)).toBeFocused();
+    await name(1).fill('人数'); await name(2).fill('単価');
+    await cell(1, '4月').fill('001'); await cell(1, '4月').press('Enter');
+    await expect(horizontal ? cell(2, '4月') : cell(1, '5月')).toBeFocused();
+    await cell(1, '4月').press('End'); await cell(1, '4月').press('Shift+Enter');
+    await cell(1, '4月').pressSequentially('説明'); await expect(cell(1, '4月')).toHaveValue('001\n説明');
+    expect(await rectangles(app)).toEqual(before);
+    await page.screenshot({ path: `/tmp/triadichrome-monthly-${horizontal ? 'horizontal' : 'vertical'}-${info.project.name}.png` });
+    await name(1).click(); await part.getByRole('button', { name: '項目を追加', exact: true }).click();
+    await expect(name(2)).toBeFocused(); await expect(name(3)).toHaveValue('単価');
+    await part.getByRole('button', { name: '項目を削除', exact: true }).click();
+    await expect(app.getByRole('alertdialog')).toHaveCount(0); await expect(name(2)).toHaveValue('単価');
+    await name(1).click(); await part.getByRole('button', { name: '項目を削除', exact: true }).click();
+    const dialog = app.getByRole('alertdialog', { name: '項目を削除', exact: true });
+    await expect(dialog).toBeVisible(); await dialog.getByRole('button', { name: 'キャンセル', exact: true }).click();
+    await expect(name(1)).toHaveValue('人数');
+    const paste = async (target: ReturnType<typeof cell>, text: string) => {
+      await target.evaluate((node, value) => {
+        const clipboardData = new DataTransfer(); clipboardData.setData('text/plain', value);
+        node.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true, cancelable: true }));
+      }, text);
+    };
+    await paste(cell(1, '3月'), horizontal ? '超過\t超過' : '超過\n超過');
+    await expect(part.getByRole('alert')).toContainText('12か月の範囲を超える');
+    await expect(cell(1, '3月')).toHaveValue(''); await expect(cell(1, '4月')).toHaveValue('001\n説明');
+    const pasted = horizontal ? Array.from({ length: 10 }, (_, i) => `${i}\t001`).join('\n')
+      : Array.from({ length: 12 }, (_, m) => `${m}\t001\t=1+1\t追加`).join('\n');
+    await paste(cell(3, '4月'), pasted);
+    await expect(part.getByRole('alert')).toHaveCount(0);
+    await expect(cell(4, '4月')).toHaveValue(horizontal ? '1' : '001');
+    await app.getByRole('heading', { name: 'パーツ配置', exact: true }).click();
+    await expect(part.getByRole('textbox')).toHaveCount(0);
+    const scroll = part.locator('.detail-table-scroll');
+    await scroll.hover(); await page.mouse.wheel(horizontal ? 300 : 0, 100);
+    await expect.poll(() => scroll.evaluate(e => e.scrollTop)).toBeGreaterThan(0);
+    if (horizontal) await expect.poll(() => scroll.evaluate(e => e.scrollLeft)).toBeGreaterThan(0);
+    const scrollBox = (await scroll.boundingBox())!, headerBox = (await table.locator('thead th').first().boundingBox())!;
+    expect(Math.abs(headerBox.y - scrollBox.y)).toBeLessThan(2);
+    expect(Math.abs(headerBox.x - scrollBox.x)).toBeLessThan(2);
+    if (horizontal) {
+      const rowHeaderBox = (await table.locator('tbody th').first().boundingBox())!;
+      expect(Math.abs(rowHeaderBox.x - scrollBox.x)).toBeLessThan(2);
+    }
+    await part.press('ArrowRight'); await settleMotion(app.locator('body'));
+    await app.getByRole('button', { name: '一覧に戻る', exact: true }).click();
+    await app.getByRole('button', { name: 'パーツ配置を開く', exact: true }).click();
+    await wrapper.press('Enter'); await expect(name(1)).toHaveValue('人数');
+    await expect(cell(1, '4月')).toHaveValue('001\n説明');
+    await name(1).click(); await part.getByRole('button', { name: '項目を削除', exact: true }).click();
+    await dialog.getByRole('button', { name: '削除する', exact: true }).click();
+    await expect(name(1)).toHaveValue('単価');
+    expect(await monthHeaders.allTextContents()).toEqual(months);
   });
-  await expect(table.getByRole('row')).toHaveCount(3); await expect(table.getByRole('cell')).toHaveCount(12);
-  await expect(part.getByRole('textbox', { name: '3行2列', exact: true })).toHaveValue('改行\n説明');
-  await expect(part.getByRole('textbox', { name: '3行3列', exact: true })).toHaveValue('001');
-  await expect(part.getByRole('textbox', { name: '3行4列', exact: true })).toHaveValue('=1+1');
-  await start.evaluate(node => {
-    const clipboardData = new DataTransfer();
-    clipboardData.setData('text/plain', Array.from({ length: 25 }, (_, i) => `${i + 1}\t説明`).join('\n'));
-    node.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true, cancelable: true }));
-  });
-  await expect(table.getByRole('row')).toHaveCount(26);
-  await start.press('Escape');
-  expect(await part.locator('.detail-table-scroll').evaluate(e => e.scrollHeight > e.clientHeight)).toBe(true);
-  await part.locator('.detail-table-scroll').hover(); await page.mouse.wheel(0, 200);
-  await expect.poll(() => part.locator('.detail-table-scroll').evaluate(e => e.scrollTop)).toBeGreaterThan(0);
-  await part.press('ArrowRight'); await settleMotion(app.locator('body'));
-  await expect(table.getByRole('row')).toHaveCount(26);
-  await app.getByRole('button', { name: '一覧に戻る', exact: true }).click();
-  await app.getByRole('button', { name: 'パーツ配置を開く', exact: true }).click();
-  await expect(table.getByRole('row')).toHaveCount(26);
-});
+}

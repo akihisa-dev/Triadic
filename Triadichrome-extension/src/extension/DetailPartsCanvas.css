@@ -22,7 +22,7 @@
 .detail-part-delete { right: 5px; top: 4px; width: 24px; height: 24px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: var(--soft); color: var(--ink); font-size: 19px; line-height: 1; cursor: pointer; }
 .detail-part-delete:hover { background: var(--line); }
 .detail-part[aria-disabled="true"] { cursor: default; }
-.detail-part-pool { flex: 0 0 clamp(112px, 18vw, 200px); min-width: 0; padding: 20px 16px; border-left: 1px solid var(--line); background: var(--surface); }
+.detail-part-pool { overflow-y: auto; flex: 0 0 clamp(112px, 18vw, 200px); min-width: 0; padding: 20px 16px; border-left: 1px solid var(--line); background: var(--surface); }
 .detail-part-pool h2 { margin: 0 0 24px; font-size: 14px; font-weight: 600; line-height: 1.6; overflow-wrap: anywhere; }
 .detail-pool-source { margin-bottom: 16px; display: block; width: 100%; aspect-ratio: 5 / 3; padding: 0; border: 1px solid var(--control-line); border-radius: 8px; background: var(--canvas); touch-action: none; cursor: grab; }
 .detail-pool-source:active { cursor: grabbing; }
