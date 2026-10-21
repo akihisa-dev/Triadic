@@ -7,13 +7,15 @@ import type { Recovery } from "./fileConflict";
 export const OPERATION_HISTORY_LIMIT = 100;
 import { preparePlanCommand, type SavedOperation } from "./preparePlanCommand";
 import { writePlanCopy } from "./savePlanAs";
-import { processPlan } from "./planProcessing";
+import { bindPlanProcessing, processPlan } from "./planProcessing";
 export type SessionSnapshot = { contents: PlanContents | null; name: string; history: DataHistoryStatus; busy: boolean; historyError: string; canUndo: boolean; canRedo: boolean; operationRevision: number };
 type Destination = () => Promise<FileSystemFileHandle>;
 /** Owns the saved document. Drafts and navigation never enter this store. */
 export class PlanSession {
   constructor(private recovery?: Recovery) {}
   private plan: OpenPlan | null = null;
+  private releaseProcessing = () => {};
+  dispose() { this.releaseProcessing(); this.releaseProcessing = () => {}; }
   private snapshot: SessionSnapshot = { contents: null, name: "", history: emptyDataHistory, busy: false, historyError: "", canUndo: false, canRedo: false, operationRevision: 0 };
   private undoStack: SavedOperation[] = [];
   private redoStack: SavedOperation[] = [];
@@ -36,7 +38,12 @@ export class PlanSession {
   private current(): OpenPlan { if (!this.plan) throw new Error("ファイルを開いてください。"); return this.plan; }
   async open(plan: Pick<OpenPlan, "name" | "bytes" | "handle">): Promise<void> {
     if (this.pending) throw new Error("ファイルの処理が終わるまでお待ちください。");
-    const { contents, savedHistory } = await readSavedPlan(plan.bytes);
+    const release = bindPlanProcessing(plan.bytes);
+    let loaded: Awaited<ReturnType<typeof readSavedPlan>>;
+    try { loaded = await readSavedPlan(plan.bytes); }
+    catch (error) { release(); throw error; }
+    this.dispose(); this.releaseProcessing = release;
+    const { contents, savedHistory } = loaded;
     this.plan = { ...plan, ...contents, savedHistory };
     this.resetOperations();
     this.publish({ contents, name: plan.name, history: savedHistory, historyError: "" });
@@ -191,6 +198,7 @@ export class PlanSession {
       // A preceding save may create dirty state after close was clicked.
       await this.recordCurrent();
       this.plan = null;
+      this.dispose();
       this.resetOperations();
       this.publish({ contents: null, name: "", history: emptyDataHistory, historyError: "" });
     });

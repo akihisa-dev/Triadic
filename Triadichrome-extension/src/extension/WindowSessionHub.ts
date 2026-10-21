@@ -49,6 +49,12 @@ export class WindowSessionHub {
     if (reservation) clearTimeout(reservation.timer);
     this.tickets.delete(ticket);
   }
+  private releaseGroup(group: Group) {
+    group.cancelCheckpoint?.(); this.groups.delete(group.id);
+    for (const [ticket, reservation] of this.tickets) if (reservation.group === group) this.removeTicket(ticket);
+    // Finish already accepted writes before releasing the document's worker.
+    void Promise.allSettled([group.opened, group.tail, group.actionTail]).then(() => group.session.dispose());
+  }
   private send(peer: Peer, message: HubMessage) { peer.port.postMessage(message); }
   private enqueue<T>(peer: Peer, operation: () => Promise<T>) {
     const group = this.requireGroup(peer);
@@ -120,7 +126,7 @@ export class WindowSessionHub {
         .catch(() => {}); // Remembering the reference must not reverse a committed file save.
     });
     group.opened = group.session.open(plan).then(() => { group.openingHandle = undefined; }, failure => {
-      this.groups.delete(group.id); throw failure;
+      this.releaseGroup(group); throw failure;
     });
     void group.opened.catch(() => {});
     return group;
@@ -140,9 +146,7 @@ export class WindowSessionHub {
     if (group.historyOwner === peer) group.historyOwner = null;
     if (group.peers.size) this.publish(group);
     else if (!group.openingPeers) {
-      group.cancelCheckpoint?.();
-      this.groups.delete(group.id);
-      for (const [ticket, reservation] of this.tickets) if (reservation.group === group) this.removeTicket(ticket);
+      this.releaseGroup(group);
     }
   }
   private requireGroup(peer: Peer) {
@@ -249,8 +253,7 @@ export class WindowSessionHub {
         } finally {
           peer.opening = false;
           if (openingGroup && --openingGroup.openingPeers === 0 && !openingGroup.peers.size) {
-            openingGroup.cancelCheckpoint?.();
-            this.groups.delete(openingGroup.id);
+            this.releaseGroup(openingGroup);
           }
         }
         return;

@@ -36,3 +36,4 @@ export { WindowPlanSession } from "../../Triadichrome-extension/src/extension/Wi
 export { processPreviousWorkbook } from "../../Triadichrome-extension/src/extension/previousWorkbookProcessing";
 
 export { diffPlanContents, applyPlanContentsPatch } from "../../Triadichrome-extension/src/core/domain/planContentsPatch";
+export { bindPlanProcessing, processPlan } from "../../Triadichrome-extension/src/extension/planProcessing";
