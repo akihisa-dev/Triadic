@@ -96,5 +96,29 @@ export async function verifyHistoryDifference(api) {
   assert.equal(session.getSnapshot().operationRevision, before.operationRevision);
   assert.equal(session.getSnapshot().busy, false);
   assert.equal(savedNotifications, 0);
+  const bulkBefore = await change(base, db => db.exec(`
+    WITH RECURSIVE months(month) AS (VALUES(1) UNION ALL SELECT month+1 FROM months WHERE month<12), kinds(kind) AS (VALUES(1),(2))
+    INSERT INTO previous_amounts(previous_kind,account_id,industry_id,department_id,month,amount_yen)
+    SELECT kinds.kind,accounts.id,1,1,months.month,1000 FROM accounts CROSS JOIN months CROSS JOIN kinds;
+  `));
+  const bulkAfter = await change(bulkBefore, db => db.run("UPDATE previous_amounts SET amount_yen=1001 WHERE id=(SELECT MIN(id) FROM previous_amounts)"));
+  const bulk = await api.trackHistoryChange(bulkBefore, bulkAfter, "2026-05-01T00:00:00.000Z");
+  const bulkId = (await api.readDataHistory(bulk)).entries[0].id;
+  const sqlite = await api.initializeSqlite(), exec = sqlite.Database.prototype.exec;
+  const batches = [];
+  sqlite.Database.prototype.exec = function(sql, params) {
+    const result = exec.call(this, sql, params);
+    if (sql.startsWith("SELECT rowid AS history_cursor")) batches.push(result[0]?.values.length ?? 0);
+    return result;
+  };
+  try {
+    const result = await api.compareSavedHistory(bulk, bulkId);
+    assert.equal(result.differences.length, 1);
+    assert.equal(result.differences[0].before, "1");
+    assert.equal(result.differences[0].after, "1.001");
+    assert.ok(batches.includes(1000), "大量の前年値を分割して読む");
+    assert.ok(batches.every(count => count <= 1000), "比較用の金額読込は一度に1000行以内");
+    assert.ok(batches.length >= 6, "両世代を末尾まで比較");
+  } finally { sqlite.Database.prototype.exec = exec; }
   console.log("履歴差分: 名称・備考・分類・マスタ・所属符号・表示順・前年・1円・継承/手修正0/同額手修正・削除追加・再作成・無変更・失敗と参照専用を確認しました。");
 }

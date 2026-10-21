@@ -26,10 +26,21 @@ const words: Record<string, string> = { sales: "売上", cost: "売上原価", e
   operating: "営業利益", ordinary: "経常利益", new: "新規", period_gap: "期間差", "initiative-list": "施策一覧", "cost-table": "総原価表", "expansion-table": "展開表" };
 
 /** Normalize business values only: timestamps, allocation counters and revisions are not user edits. */
-function items(db: Database): Map<string, Item> {
+function* amountRows(db: Database, table: "previous_amounts" | "initiative_amounts"): Generator<Row> {
+  let cursor: number | undefined;
+  for (;;) {
+    const batch = db.exec(`SELECT rowid AS history_cursor, * FROM ${table}${cursor === undefined ? "" : " WHERE rowid > ?"} ORDER BY rowid LIMIT 1000`, cursor === undefined ? undefined : [cursor])[0];
+    if (!batch) return;
+    for (const values of batch.values) {
+      cursor = Number(values[0]);
+      yield Object.fromEntries(batch.columns.slice(1).map((name, i) => [name, values[i + 1] as Scalar]));
+    }
+  }
+}
+function* items(db: Database): Generator<[string, Item]> {
   const tables = new Map<string, Row[]>();
   for (const table of BUSINESS_TABLES) {
-    if (table === "triadic_metadata") continue;
+    if (["triadic_metadata", "previous_amounts", "initiative_amounts"].includes(table)) continue;
     const result = db.exec(`SELECT * FROM ${table}`)[0];
     tables.set(table, result?.values.map(values => Object.fromEntries(result.columns.map((name, i) => [name, values[i] as Scalar]))) ?? []);
   }
@@ -38,8 +49,7 @@ function items(db: Database): Map<string, Item> {
   const identity = (table: string, id: Scalar) => String(rowFor(table, id)?.identity ?? id);
   const name = (table: string, id: Scalar) => String(rowFor(table, id)?.name ?? "未選択");
   const value = (raw: unknown, text: string): Value => ({ raw: JSON.stringify(raw), text });
-  const result = new Map<string, Item>();
-  const put = (key: unknown[], section: string, subject: string, fields: Record<string, Value>) => result.set(JSON.stringify(key), { section, subject, fields });
+  const put = (key: unknown[], section: string, subject: string, fields: Record<string, Value>): [string, Item] => [JSON.stringify(key), { section, subject, fields }];
   const fieldValue = (field: string, raw: Scalar): Value => {
     if (raw === null) return value(null, "未設定");
     const table = references[field];
@@ -59,29 +69,30 @@ function items(db: Database): Map<string, Item> {
     const owner = table === "initiative_rows" ? rowFor("initiatives", row.initiative_id!) : undefined;
     const subject = table === "initiative_rows" ? `${owner?.name} / ${name("accounts", row.account_id!)} / ${Number(row.sort_order) + 1}行目`
       : table === "kind_selections" ? words[String(row.screen)]! : table === "document_info" ? "計画" : String(row.name);
-    put([table, owner?.identity ?? "", row.identity ?? row.id ?? row.screen], section, subject, fields);
+    yield put([table, owner?.identity ?? "", row.identity ?? row.id ?? row.screen], section, subject, fields);
   }
-  for (const row of tables.get("department_industries")!) put(["department_industries", identity("departments", row.department_id!), identity("industries", row.industry_id!)],
+  for (const row of tables.get("department_industries")!) yield put(["department_industries", identity("departments", row.department_id!), identity("industries", row.industry_id!)],
     "部署の所属業種", name("departments", row.department_id!), { 所属業種: value(identity("industries", row.industry_id!), name("industries", row.industry_id!)) });
-  for (const row of tables.get("expansion_category_assignments")!) put(["expansion_category_assignments", row.expansion_id, row.category_id],
+  for (const row of tables.get("expansion_category_assignments")!) yield put(["expansion_category_assignments", row.expansion_id, row.category_id],
     "展開の区分割当", name("expansions", row.expansion_id!), { 展開区分: value(row.category_id, name("expansion_categories", row.category_id!)) });
   for (const row of tables.get("aggregation_members")!) {
     const table = row.account_id === null ? "aggregation_groups" : "accounts", id = row.account_id ?? row.group_id!;
-    put(["aggregation_members", table, id], "集計の所属", name(table, id), {
+    yield put(["aggregation_members", table, id], "集計の所属", name(table, id), {
       所属先の集計: fieldValue("parent_id", row.parent_id!), 集計の加減: fieldValue("sign", row.sign!), 表示順: fieldValue("position", row.position!),
     });
   }
   for (const row of tables.get("master_order")!) {
     const table = row.account_id === null ? "aggregation_groups" : "accounts", id = row.account_id ?? row.aggregation_group_id!;
-    put(["master_order", table, id], "科目・集計の表示順", name(table, id), { 表示順: fieldValue("position", row.position!) });
+    yield put(["master_order", table, id], "科目・集計の表示順", name(table, id), { 表示順: fieldValue("position", row.position!) });
   }
-  for (const row of tables.get("previous_amounts")!) {
+  for (const row of amountRows(db, "previous_amounts")) {
     if (row.amount_yen === 0) continue; // An absent previous-year cell is also zero.
-    put(["previous_amounts", row.previous_kind, row.account_id, identity("departments", row.department_id!), identity("industries", row.industry_id!), row.month],
+    yield put(["previous_amounts", row.previous_kind, row.account_id, identity("departments", row.department_id!), identity("industries", row.industry_id!), row.month],
       row.previous_kind === 1 ? "前年見込" : "前年実績", `${name("departments", row.department_id!)} / ${name("industries", row.industry_id!)} / ${name("accounts", row.account_id!)}`,
       { [`${row.month}月`]: value(row.amount_yen, yenToAmount(Number(row.amount_yen))) });
   }
-  const amounts = new Map(tables.get("initiative_amounts")!.map(row => [JSON.stringify([row.row_id, row.kind_id, row.month]), row.amount_yen!]));
+  const amounts = new Map<string, Scalar>();
+  for (const row of amountRows(db, "initiative_amounts")) amounts.set(JSON.stringify([row.row_id, row.kind_id, row.month]), row.amount_yen!);
   for (const row of tables.get("initiative_rows")!) {
     const owner = rowFor("initiatives", row.initiative_id!)!;
     const subject = `${owner.name} / ${name("accounts", row.account_id!)} / ${Number(row.sort_order) + 1}行目`;
@@ -90,11 +101,10 @@ function items(db: Database): Map<string, Item> {
       const inherited = kind === 2 && manual === undefined;
       const amount = manual ?? amounts.get(JSON.stringify([row.id, 1, month])) ?? 0;
       const mode = kind === 1 ? "" : inherited ? "引き継ぎ" : "手修正";
-      put(["initiative_amounts", owner.identity, row.id, kind, month], "施策の月別金額", subject,
+      yield put(["initiative_amounts", owner.identity, row.id, kind, month], "施策の月別金額", subject,
         { [`${kind === 1 ? "一次予算" : "確定予算"}・${month}月`]: value([amount, mode], `${yenToAmount(Number(amount))}${mode ? `（${mode}）` : ""}`) });
     }
   }
-  return result;
 }
 
 export async function compareSavedHistory(bytes: Uint8Array, id: number): Promise<HistoryComparison> {
@@ -107,20 +117,20 @@ export async function compareSavedHistory(bytes: Uint8Array, id: number): Promis
     try {
       const fiscalYear = (db: Database) => db.exec("SELECT fiscal_year FROM document_info WHERE id = 1")[0]?.values[0]?.[0];
       if (fiscalYear(past) !== fiscalYear(current)) throw new Error("履歴の基準年度が一致しません。");
-      const before = items(past), after = items(current), differences: HistoryDifference[] = [];
-      for (const key of new Set([...before.keys(), ...after.keys()])) {
-        const old = before.get(key), next = after.get(key), item = next ?? old!;
+      const after = new Map(items(current)), differences: HistoryDifference[] = [];
+      const compare = (old: Item | undefined, next: Item | undefined) => {
+        const item = next ?? old!;
         const change = !old ? "追加" : !next ? "削除" : "変更";
         if (!old || !next) {
           if ((item.section === "前年見込" || item.section === "前年実績")) {
             const [field, amount] = Object.entries(item.fields)[0]!;
             differences.push({ section: item.section, subject: item.subject, change: "変更", field,
               before: old ? amount.text : "0", after: next ? amount.text : "0" });
-            continue;
+            return;
           }
           const text = Object.entries(item.fields).map(([field, value]) => `${field}：${value.text}`).join("、");
           differences.push({ section: item.section, subject: item.subject, change, field: "項目全体", before: old ? text : "—", after: next ? text : "—" });
-          continue;
+          return;
         }
         for (const field of new Set([...Object.keys(old.fields), ...Object.keys(next.fields)])) {
           const left = old.fields[field], right = next.fields[field];
@@ -129,6 +139,13 @@ export async function compareSavedHistory(bytes: Uint8Array, id: number): Promis
             change, field, before: left?.text ?? "—", after: (right?.text ?? "—") + (left?.text === right?.text ? "（別の項目）" : "") });
         }
       }
+      for (const [key, old] of items(past)) {
+        const next = after.get(key);
+        after.delete(key);
+        compare(old, next);
+      }
+      for (const next of after.values()) compare(undefined, next);
+      after.clear();
       return { differences, impact: compareHistoryIncome(readContents(past), readContents(current)) };
     } finally { past.close(); }
   } finally { current.close(); }
