@@ -1,5 +1,6 @@
 import type { HistoryComparison } from "../core/domain/historyDifference";
 import { HistoryDifferenceDialog } from "./HistoryDifferenceDialog";
+import { MeasuredTableBody } from "./MeasuredTableBody";
 import { useMemo, useState, useRef } from "react";
 import type { DataHistoryEntry, HistoryDeletion } from "../core/domain/dataHistory";
 import { historySelection } from "../core/domain/historySelection";
@@ -20,6 +21,7 @@ export function DataHistoryPage({ entries, busy, error, onPreview, onCompare, on
   const [comparison, setComparison] = useState<{ entry: DataHistoryEntry; result: HistoryComparison } | null>(null);
   const [comparisonFailure, setComparisonFailure] = useState<{ entry: DataHistoryEntry; message: string } | null>(null);
   const comparing = useRef(false);
+  const list = useRef<HTMLDivElement>(null);
   const comparisonTrigger = useRef<HTMLButtonElement | null>(null);
   const [selected, setSelected] = useState<number[]>([]);
   const [cutoff, setCutoff] = useState("");
@@ -62,15 +64,15 @@ export function DataHistoryPage({ entries, busy, error, onPreview, onCompare, on
     </div>
     {(failure || error) && <div className="data-history-error" role="alert"><p>{failure || error}</p><button className="text-button" type="button" disabled={locked} onClick={() => void perform(onRetry)}>保存を再試行</button></div>}
     {comparisonFailure && <div className="data-history-error" role="alert"><p>{comparisonFailure.message}</p><button type="button" className="text-button" disabled={locked} onClick={() => void compare(comparisonFailure.entry)}>比較を再試行</button></div>}
-    <div className="data-history-list" role="region" aria-label="データの履歴" tabIndex={0}>
+    <div ref={list} className="data-history-list" role="region" aria-label="データの履歴" tabIndex={0}>
       <table><thead><tr>
         <th scope="col"><input type="checkbox" aria-label="すべての履歴を選択" disabled={locked || !entries.length} checked={entries.length > 0 && ids.length === entries.length} onChange={event => setSelected(event.target.checked ? entries.map(entry => entry.id) : [])} /></th>
         <th scope="col">記録日時</th><th scope="col">現在との比較</th>
-      </tr></thead><tbody>{entries.map(entry => <tr key={entry.id}>
+      </tr></thead><MeasuredTableBody rows={entries} container={list} columns={3} estimate={57} rowKey={entry => entry.id} render={entry => <tr>
         <td><input type="checkbox" aria-label={`${historyDate(entry.recordedAt)}の履歴を選択`} disabled={locked} checked={selectedIds.has(entry.id)} onChange={event => setSelected(current => event.target.checked ? [...current, entry.id] : current.filter(id => id !== entry.id))} /></td>
         <td><button className="text-button history-date" type="button" disabled={locked} onClick={() => void perform(() => onPreview(entry))}><time dateTime={entry.recordedAt}>{historyDate(entry.recordedAt)}</time></button></td>
         <td><button type="button" className="text-button" aria-label={`${historyDate(entry.recordedAt)}と現在の差分`} disabled={locked} onClick={event => { comparisonTrigger.current = event.currentTarget; void compare(entry); }}>差分を見る</button></td>
-      </tr>)}</tbody></table>
+      </tr>} /></table>
       {!entries.length && <p className="page-description">履歴はまだありません。</p>}
     </div>
     {comparison && <HistoryDifferenceDialog returnFocus={comparisonTrigger.current} date={historyDate(comparison.entry.recordedAt)} differences={comparison.result.differences} impact={comparison.result.impact} onClose={() => setComparison(null)} />}

@@ -1,0 +1,25 @@
+import { test, expect } from '@playwright/test';
+test('1万件の履歴で全件選択・日時削除・差分と焦点を維持する', async ({ page }) => {
+  const started = performance.now();
+  await page.goto('/tests/ui/history-window.html');
+  const rows = page.locator('tr[data-window-row]');
+  await expect.poll(() => rows.count()).toBeLessThan(80);
+  await page.getByLabel('すべての履歴を選択', { exact: true }).check();
+  await page.getByRole('button', { name: '選択した履歴を削除', exact: true }).click();
+  await expect(page.getByRole('alertdialog')).toContainText('10000件');
+  await page.getByRole('button', { name: 'キャンセル', exact: true }).click();
+  await page.getByRole('region', { name: 'データの履歴' }).evaluate(node => { node.scrollTop = node.scrollHeight; });
+  await expect(page.locator('tr[data-window-row="9999"]')).toBeVisible();
+  const trigger = page.locator('tr[data-window-row="9999"]').getByRole('button', { name: /と現在の差分/ });
+  await trigger.click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByRole('button', { name: '閉じる', exact: true }).click();
+  await expect(trigger).toBeFocused();
+  await page.getByLabel('指定日時より前を削除', { exact: true }).fill('2026-04-02T00:00');
+  await page.getByRole('button', { name: '一括削除', exact: true }).click();
+  await expect(page.getByRole('alertdialog')).toContainText('288件');
+  await page.getByRole('button', { name: '削除する', exact: true }).click();
+  await expect(page.getByTestId('count')).toHaveText('9712');
+  await expect.poll(() => rows.count()).toBeLessThan(80);
+  console.log(`履歴1万件: 操作確認${Math.round(performance.now() - started)}ms、描画${await rows.count()}行`);
+});
