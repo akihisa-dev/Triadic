@@ -1,3 +1,4 @@
+import { verifyPreviousGridTable } from "../tests/previous-grid-table.mjs";
 import { verifyPreviousBaselines } from "../tests/previous-baselines.mjs";
 import { verifyAggregationLayout } from "../tests/aggregation-layout.mjs";
 import { verifyClassificationIndirectRebase } from '../tests/classification-indirect-rebase.mjs';
@@ -132,6 +133,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyExpansionExpenseOverflow(api);
   verifyHomeMotion(api);
   verifyPreviousGrid(api);
+  verifyPreviousGridTable(api, await api.readPlanContents(await api.createTriadicDatabase(2026)));
   verifyInitiativeGrid(api);
   verifySelectionTotal(api);
   verifyBudgetHints(api);

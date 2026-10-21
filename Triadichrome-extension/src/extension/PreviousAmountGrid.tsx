@@ -2,10 +2,11 @@ import { useAdaptiveTableHeader } from "./useAdaptiveTableHeader";
 import { normalizeGridAmount } from "../core/tables/grid";
 import { gridCellEvents, nextGridCell } from "./gridCellEvents";
 import { useGridInteraction } from "./useGridInteraction";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, type ReactElement } from "react";
+import { previousGridCalculator } from "../core/tables/previousGridTable";
 import { previousByAccount } from "../core/tables/planTables";
 import { buildCostTable } from "../core/tables/costTable";
-import { formatYen, formatRate, isValidAmount, amountToYen, yenToAmount } from "../core/domain/amounts";
+import { formatYen, formatRate, isValidAmount, yenToAmount } from "../core/domain/amounts";
 import { initiativeMonths } from "../core/domain/calendar";
 import { type PlanContents } from "../core/domain/plan";
 import type { PreviousInput } from "../core/domain/kinds";
@@ -19,16 +20,15 @@ import { GridSelectionTotal } from "./GridSelectionTotal";
 export function PreviousAmountGrid({ contents, draft, onChange }: {
   contents: PlanContents; draft: PreviousInput | undefined; onChange: (draft: PreviousInput) => void;
 }) {
+  const calculate = useMemo(() => previousGridCalculator(contents), [contents.accounts, contents.aggregations, contents.fiscalYear]);
   const { rows, calculationFailed } = useMemo(() => {
-    const invalid = draft?.rows.some(row => Object.values(row.amounts).some(value => value !== undefined && value !== "" && !isValidAmount(value))) ?? false;
+    if (draft) return calculate(draft);
     try {
-      const previous = draft ? new Map(draft.rows.map(row => [row.accountId, Object.fromEntries(initiativeMonths.map(month => [month,
-        isValidAmount(row.amounts[month] ?? "0") ? amountToYen(row.amounts[month] ?? "0") : 0]))])) : previousByAccount(contents);
-      return { rows: buildCostTable(contents.accounts, contents.aggregations, [], contents.fiscalYear, previous), calculationFailed: invalid };
+      return { rows: buildCostTable(contents.accounts, contents.aggregations, [], contents.fiscalYear, previousByAccount(contents)), calculationFailed: false };
     } catch {
       return { rows: buildCostTable(contents.accounts, contents.aggregations, [], contents.fiscalYear), calculationFailed: true };
     }
-  }, [contents, draft]);
+  }, [contents, draft, calculate]);
   // A coordinate selection belongs to this exact displayed row structure.
   // Remount interaction state before painting reordered/inserted/deleted rows.
   const structure = rows.map(row => `${row.kind}:${row.id}`).join("|");
@@ -50,32 +50,63 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
   const inputsByAccount = useMemo(() => new Map(draft?.rows.map(row => [row.accountId, row])), [draft?.rows]);
   const cellError = Object.values(cellErrors).find(item => !isValidAmount(inputsByAccount.get(item.accountId)?.amounts[item.month] || "0"))?.message;
   const salesGroupId = contents.aggregations.find(group => group.required === "sales")?.id;
+  type CostRow = (typeof rows)[number];
+  const periodCache = useRef(new WeakMap<CostRow, { sales: CostRow | undefined; profit: CostRow | undefined; values: (number | undefined)[]; failed: boolean }>());
   const periodAmounts = useMemo(() => {
     const sales = rows.find(row => row.kind === "group" && row.id === salesGroupId);
     const profit = rows.find(row => row.kind === "group" && row.id === contents.aggregations.find(group => group.required === "ordinary")?.id);
     let failed = false;
-    const values = rows.map(row => previousPeriods.map(period => {
-      try { return previousPeriodAmount(row, period, sales, profit); }
-      catch { failed = true; return undefined; }
-    }));
+    const values = rows.map(row => {
+      const cached = periodCache.current.get(row);
+      if (cached && (row.kind !== "ratio" || cached.sales === sales && cached.profit === profit)) {
+        failed ||= cached.failed; return cached.values;
+      }
+      let rowFailed = false;
+      const values = previousPeriods.map(period => {
+        try { return previousPeriodAmount(row, period, sales, profit); }
+        catch { rowFailed = true; return undefined; }
+      });
+      periodCache.current.set(row, { sales, profit, values, failed: rowFailed });
+      failed ||= rowFailed; return values;
+    });
     return { values, failed };
   }, [rows, salesGroupId, contents.aggregations]);
   const salesIndex = rows.findIndex(row => row.kind === "group" && row.id === salesGroupId);
   const rowIds = useMemo(() => rows.map(row => row.kind === "account" ? row.id : null), [rows]);
   const selectedTotal = useMemo(() => previousSelectionTotal(draft, rowIds, selection), [draft, rowIds, selection]);
+  // Cached row elements keep handlers, so cross-row operations read current input/selection.
+  const latest = useRef({ grid, draft, onChange, rows, rowIds, inputsByAccount, calculationFailed });
+  latest.current = { grid, draft, onChange, rows, rowIds, inputsByAccount, calculationFailed };
+  const accountOrder = draft?.rows.map(row => row.accountId).join("|");
+  const inputIndices = useMemo(() => new Map(draft?.rows.map((row, index) => [row.accountId, index])), [accountOrder]);
+  const latestIndices = useRef(inputIndices); latestIndices.current = inputIndices;
   const apply = (operation: () => PreviousInput) => {
-    try { onChange(operation()); setError(""); setEditing(false); }
+    try { latest.current.onChange(operation()); setError(""); setEditing(false); }
     catch (failure) { setError(failure instanceof Error ? failure.message : "入力できませんでした。"); }
   };
-  const changeCell = (accountId: number, month: number, value: string) => draft && onChange({ ...draft,
-    rows: draft.rows.map(row => row.accountId === accountId ? { ...row, amounts: { ...row.amounts, [month]: value } } : row) });
-  const renderRow = (row: (typeof rows)[number], rowIndex: number) => <tr key={`${row.kind}:${row.id}`} className={`cost-data-row${row.kind !== "account" ? ` cost-subtotal${row.required ? " cost-required" : ""}` : ""}${row.kind === "group" && row.id === salesGroupId ? " cost-sales-anchor" : ""}`}>
+  const changeCell = (accountId: number, month: number, value: string) => {
+    const { draft, onChange } = latest.current;
+    const index = latestIndices.current.get(accountId);
+    if (!draft || index === undefined) return;
+    const rows = draft.rows.slice(), row = rows[index]!;
+    rows[index] = { ...row, amounts: { ...row.amounts, [month]: value } };
+    onChange({ ...draft, rows });
+  };
+  // Reuse exact elements: React can skip unchanged rows without rebuilding their inputs.
+  const rowCache = useRef(new Map<string, { row: CostRow; input: PreviousInput["rows"][number] | undefined; periods: (number | undefined)[] | undefined; selected: string; failed: boolean; editable: boolean; element: ReactElement }>());
+  const renderRow = (row: CostRow, rowIndex: number) => {
+    const key = `${row.kind}:${row.id}`, input = row.kind === "account" ? inputsByAccount.get(row.id) : undefined;
+    const selected = bounds && rowIndex >= bounds.top && rowIndex <= bounds.bottom ? `${bounds.left}:${bounds.right}` : "";
+    const periods = periodAmounts.values[rowIndex], cached = rowCache.current.get(key);
+    if (cached && cached.row === row && cached.input === input && cached.periods === periods && cached.selected === selected
+      && cached.failed === calculationFailed && cached.editable === !!draft) return cached.element;
+    const element = <tr key={`${row.kind}:${row.id}`} className={`cost-data-row${row.kind !== "account" ? ` cost-subtotal${row.required ? " cost-required" : ""}` : ""}${row.kind === "group" && row.id === salesGroupId ? " cost-sales-anchor" : ""}`}>
           <th scope="row" className="initiative-list-name">{row.name}</th>
           {initiativeMonths.map((month, column) => {
             const cell = { row: rowIndex, column };
             const selected = bounds && rowIndex >= bounds.top && rowIndex <= bounds.bottom && column >= bounds.left && column <= bounds.right;
             const value = inputsByAccount.get(row.id)?.amounts[month] ?? "0";
-            const events = row.kind === "account" && draft ? gridCellEvents(grid, cell, value, {
+            const events = row.kind === "account" && draft ? gridCellEvents(() => latest.current.grid, cell, value, {
               captureOriginal: () => { original.current = value; },
               change: value => changeCell(row.id, month, value),
               cancel: editing => {
@@ -88,12 +119,13 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
                 try { changeCell(row.id, month, normalizeGridAmount(value)); clearCellError(row.id, month); return true; }
                 catch (failure) { setCellErrors(current => ({ ...current, [`${row.id}:${month}`]: { accountId: row.id, month, message: (failure as Error).message } })); return false; }
               },
-              fill: (selection, text) => apply(() => fillPreviousGrid(draft, rowIds, selection, text)),
-              paste: (start, text, selection) => apply(() => pastePreviousGrid(draft, rowIds, start, text, selection)),
-              copy: bounds => rows.slice(bounds.top, bounds.bottom + 1).map(item => initiativeMonths.slice(bounds.left, bounds.right + 1).map(m =>
+              fill: (selection, text) => apply(() => fillPreviousGrid(latest.current.draft!, latest.current.rowIds, selection, text)),
+              paste: (start, text, selection) => apply(() => pastePreviousGrid(latest.current.draft!, latest.current.rowIds, start, text, selection)),
+              copy: bounds => { const { rows, inputsByAccount, calculationFailed } = latest.current; return rows.slice(bounds.top, bounds.bottom + 1).map(item => initiativeMonths.slice(bounds.left, bounds.right + 1).map(m =>
                 item.kind === "account" ? inputsByAccount.get(item.id)?.amounts[m] || "0" : calculationFailed ? "" : item.kind === "ratio" ? formatRate(item.previous[m]) : item.previous[m] === undefined ? "" : yenToAmount(item.previous[m]!)
-              ).join("\t")).join("\n"),
+              ).join("\t")).join("\n"); },
               next: (from, key, shift) => {
+                const { rows, rowIds } = latest.current;
                 const vertical = key === "ArrowUp" || ((key === "Enter" || key === "Tab") && shift) ? -1 : 1;
                 return nextGridCell(from, key, shift, rows.length, target => rowIds[target.row] !== null,
                   target => ({ ...target, row: target.row + vertical }));
@@ -112,6 +144,9 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
             {calculationFailed ? "" : row.kind === "ratio" ? formatRate(periodAmounts.values[rowIndex]?.[index]) : formatYen(periodAmounts.values[rowIndex]?.[index])}
           </td>)}
         </tr>;
+    rowCache.current.set(key, { row, input, periods, selected, failed: calculationFailed, editable: !!draft, element });
+    return element;
+  };
   return <>
     <StatusNotice message={error || cellError || (calculationFailed || periodAmounts.failed ? "金額の合計が正確に計算できる範囲を超えています。分類を絞るか金額を修正してください。" : "")} error onDismiss={() => { setError(""); setCellErrors({}); }} />
     <GridSelectionTotal total={selectedTotal} accountsOnly />

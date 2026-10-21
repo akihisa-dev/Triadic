@@ -39,38 +39,44 @@ export function nextGridCell(from: GridCell, key: GridMovementKey, shift: boolea
   return inside() && editable(next) ? next : null;
 }
 
-/** DOM event policy is shared; values, validation and mutations belong to typed adapters. */
-export function gridCellEvents(grid: Interaction, cell: GridCell, value: string, adapter: GridCellAdapter) {
-  const { selection, setSelection, editing, setEditing, bounds, dragging, focus } = grid;
+/** DOM event policy is shared; cached rows may read the latest interaction on demand. */
+export function gridCellEvents(grid: Interaction | (() => Interaction), cell: GridCell, value: string, adapter: GridCellAdapter) {
+  const current = () => typeof grid === "function" ? grid() : grid;
   return {
     onPointerDown(event: PointerEvent<HTMLElement>) {
+      const { selection, editing, dragging, focus } = current();
       if (adapter.blocked || event.button !== 0 || (event.target as HTMLElement).closest("button")
         || (editing && selection?.end.row === cell.row && selection.end.column === cell.column && !event.shiftKey)) return;
       event.preventDefault(); dragging.current = true; focus(cell, event.shiftKey);
     },
     input: {
       onFocus(event: FocusEvent<HTMLInputElement>) {
+        const { setSelection } = current();
         adapter.captureOriginal(); event.currentTarget.select();
         setSelection(current => current && (current.anchor.row === cell.row && current.anchor.column === cell.column
           || current.end.row === cell.row && current.end.column === cell.column) ? current : { anchor: cell, end: cell });
       },
-      onBlur() { setEditing(false); },
-      onDoubleClick() { setEditing(true); adapter.captureOriginal(); },
+      onBlur() { current().setEditing(false); },
+      onDoubleClick() { current().setEditing(true); adapter.captureOriginal(); },
       onChange(event: ChangeEvent<HTMLInputElement>) {
+        const { editing, setEditing } = current();
         if (!editing) adapter.captureOriginal();
         setEditing(true); adapter.change(event.target.value, event.target.validity.badInput);
       },
       onCopy(event: ClipboardEvent<HTMLInputElement>) {
+        const { editing, bounds } = current();
         if (editing || !bounds) return;
         event.preventDefault(); event.clipboardData.setData("text/plain", adapter.copy(bounds));
       },
       onPaste(event: ClipboardEvent<HTMLInputElement>) {
+        const { editing, bounds, selection } = current();
         if (!event.clipboardData.types.includes("text/plain")) { event.preventDefault(); return; }
         if (editing) return;
         event.preventDefault();
         adapter.paste(bounds ? { row: bounds.top, column: bounds.left } : cell, event.clipboardData.getData("text/plain"), selection);
       },
       onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+        const { selection, setSelection, editing, setEditing, focus } = current();
         if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229 || adapter.blocked) return;
         const input = event.currentTarget;
         if (!editing && event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) adapter.onTyping?.(input);
