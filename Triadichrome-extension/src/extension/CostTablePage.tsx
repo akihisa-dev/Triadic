@@ -1,4 +1,5 @@
 import { useAdaptiveTableHeader } from "./useAdaptiveTableHeader";
+import { MeasuredTableBody, type TableRowMeasurements } from "./MeasuredTableBody";
 import { TableCalculationBoundary } from "./TableCalculationBoundary";
 import { periodCellClass } from "./periodCellStyle";
 import type { ReactNode, RefObject } from "react";
@@ -16,7 +17,7 @@ import { type PlanContents } from "../core/domain/plan";
 
 import { formatTableYen, formatTableRate } from "./tableNumberFormat";
 
-export type CostTableView = { industries: number[]; departments: number[]; top: number; left: number };
+export type CostTableView = { industries: number[]; departments: number[]; top: number; left: number; rowHeights?: TableRowMeasurements };
 
 type Props = { contents: PlanContents; selected: KindId[]; selection: ReactNode;
   view: RefObject<CostTableView>; onOpenInitiative: (initiative: Initiative, kind?: KindId) => void; navigationBlocked: boolean };
@@ -85,6 +86,11 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
   const [detail, setDetail] = useState<{ target: CostBreakdownTarget; title: string } | null>(null);
   const container = useRef<HTMLDivElement>(null);
   const tableElement = useRef<HTMLTableElement>(null);
+  const [availableHeight, setAvailableHeight] = useState(0);
+  const measuredHeight = useRef(-1);
+  const focused = useRef<{ key: string; label: string } | null>(null);
+  const restoreFocus = useRef(false);
+  const rowHeights = useMemo(() => view.current.rowHeights ??= { width: 0, rows: {} }, [view]);
   const freezeHeader = useAdaptiveTableHeader(tableElement);
   useLayoutEffect(() => {
     if (container.current) { container.current.scrollTop = view.current.top; container.current.scrollLeft = view.current.left; }
@@ -99,7 +105,29 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
   const { labels, rows } = table;
   const salesGroupId = contents.aggregations.find(group => group.required === "sales")?.id;
   const salesIndex = rows.findIndex(row => row.kind === "group" && row.id === salesGroupId);
-  const renderRow = (row: (typeof rows)[number]) => <tr key={`${row.kind}:${row.id}`} className={`cost-data-row${row.kind !== "account" ? ` cost-subtotal${row.required ? " cost-required" : ""}` : ""}${row.kind === "group" && row.id === salesGroupId ? " cost-sales-anchor" : ""}`}>
+  // A prefix that cannot possibly fit already uses the column-only fallback.
+  // Put its data rows into the same row window, rather than mounting them all.
+  const virtualPrefix = rows.length > 200 && (salesIndex + 1) * 24 + 72 > availableHeight;
+  const bodyRows = useMemo(() => virtualPrefix ? rows : rows.slice(salesIndex + 1), [rows, salesIndex, virtualPrefix]);
+  useLayoutEffect(() => {
+    const region = container.current;
+    if (!region) return;
+    const measure = () => {
+      if (measuredHeight.current === region.clientHeight) return;
+      restoreFocus.current = Boolean(tableElement.current?.contains(document.activeElement));
+      measuredHeight.current = region.clientHeight; setAvailableHeight(region.clientHeight);
+    };
+    const observer = new ResizeObserver(measure); observer.observe(region); measure();
+    return () => observer.disconnect();
+  }, []);
+  useLayoutEffect(() => {
+    if (restoreFocus.current && focused.current && document.activeElement === document.body) {
+      [...(tableElement.current?.querySelectorAll<HTMLButtonElement>("button[aria-label]") ?? [])]
+        .find(button => button.getAttribute("aria-label") === focused.current!.label)?.focus();
+    }
+    restoreFocus.current = false;
+  }, [availableHeight, virtualPrefix]);
+  const renderRow = (row: (typeof rows)[number]) => <tr key={`${row.kind}:${row.id}`} data-cost-row={`${row.kind}:${row.id}`} className={`cost-data-row${row.kind !== "account" ? ` cost-subtotal${row.required ? " cost-required" : ""}` : ""}${row.kind === "group" && row.id === salesGroupId ? " cost-sales-anchor" : ""}`}>
     <th scope="row" className="initiative-list-name">{row.name}{!row.configured && <span className="cost-unconfigured">未設定</span>}</th>
     {tablePeriods.map(period => <Fragment key={period.id}>{row.values.map((values, index) => <td key={index} className={periodCellClass(period, index === 0, index === labels.length - 1)}>{row.kind === "ratio" ? formatTableRate(values[period.id], labels[index] === "前年差" || labels[index] === "一次予算差")
       : row.configured && values[period.id] !== undefined ? <button type="button" className="cost-amount-button"
@@ -117,7 +145,10 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
       : formatTableYen(values[period.id])}</td>)}</Fragment>)}
   </tr>;
   return <><div ref={container} onScroll={event => { view.current.top = event.currentTarget.scrollTop; view.current.left = event.currentTarget.scrollLeft; }} className="initiative-list-container cost-table-container" role="region" aria-label="総原価表の月別前年・種別別金額" tabIndex={0}>
-      <table ref={tableElement} className={`initiative-list-table cost-table${freezeHeader ? "" : " cost-header-scroll"}`} aria-label="総原価表">
+      <table ref={tableElement} onFocusCapture={event => {
+        const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button[aria-label]"), key = button?.closest<HTMLElement>("tr[data-cost-row]")?.dataset.costRow;
+        if (button && key) focused.current = { key, label: button.getAttribute("aria-label")! };
+      }} className={`initiative-list-table cost-table${freezeHeader ? "" : " cost-header-scroll"}`} aria-label="総原価表">
         <colgroup>
           <col className="cost-name-column" />
           {tablePeriods.flatMap(period => labels.map((_, index) => <col key={`${period.id}:${index}`} className="cost-amount-column" />))}
@@ -127,9 +158,10 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
             {tablePeriods.map(period => <th key={period.id} colSpan={labels.length} scope="colgroup" className={periodCellClass(period, true)}>{period.label}</th>)}
           </tr>
           <tr data-column-header>{tablePeriods.map(period => <Fragment key={period.id}>{labels.map((_, index) => <th key={index} scope="col" className={periodCellClass(period, index === 0, index === labels.length - 1)}>{labels[index]}</th>)}</Fragment>)}</tr>
-          {rows.slice(0, salesIndex + 1).map(renderRow)}
+          {!virtualPrefix && rows.slice(0, salesIndex + 1).map(renderRow)}
         </thead>
-        <tbody>{rows.slice(salesIndex + 1).map(renderRow)}</tbody>
+        <MeasuredTableBody rows={bodyRows} container={container} estimate={24} columns={1 + tablePeriods.length * labels.length}
+          retainKey={focused.current?.key ?? null} heightCache={rowHeights} rowKey={row => `${row.kind}:${row.id}`} render={renderRow} />
       </table>
     </div>
     {detail && <CostBreakdownDialog contents={contents} selected={selected} target={detail.target} title={detail.title}

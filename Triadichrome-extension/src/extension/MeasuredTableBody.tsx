@@ -1,13 +1,20 @@
 import { cloneElement, Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElement, type RefObject } from "react";
 import { RowSpacer } from "./VirtualTableRows";
+export type TableRowMeasurements = { width: number; rows: Record<string, number> };
 
 /** Window only table rows; measure wrapped names instead of fixing their height. */
-export function MeasuredTableBody<T>({ rows, container, columns, estimate = 34, rowKey, render }: {
+export function MeasuredTableBody<T>({ rows, container, columns, estimate = 34, rowKey, render, retainKey, heightCache }: {
   rows: readonly T[]; container: RefObject<HTMLDivElement | null>; columns: number; estimate?: number;
   rowKey: (row: T) => string | number; render: (row: T, index: number) => ReactElement;
+  retainKey?: string | number | null; heightCache?: TableRowMeasurements;
 }) {
   const body = useRef<HTMLTableSectionElement>(null);
-  const measurements = useMemo(() => new Map<number, number>(), [rows]);
+  const keyOf = useRef(rowKey); keyOf.current = rowKey;
+  const measurements = useMemo(() => {
+    const result = new Map<number, number>();
+    if (heightCache) rows.forEach((row, index) => { const height = heightCache.rows[String(keyOf.current(row))]; if (height) result.set(index, height); });
+    return result;
+  }, [rows, heightCache]);
   const [revision, setRevision] = useState(0);
   const [viewport, setViewport] = useState({ top: 0, height: 640 });
   const [focus, setFocus] = useState<number | null>(null);
@@ -31,6 +38,10 @@ export function MeasuredTableBody<T>({ rows, container, columns, estimate = 34, 
   // Retain a focused control and its neighbours so Tab can advance across a
   // window boundary and a dialog can return focus to its original button.
   if (virtual && focus !== null) for (let i = Math.max(0, focus - 1); i <= Math.min(rows.length - 1, focus + 1); i++) indices.add(i);
+  if (virtual && retainKey != null) {
+    const retained = rows.findIndex(row => rowKey(row) === retainKey);
+    if (retained >= 0) for (let i = Math.max(0, retained - 1); i <= Math.min(rows.length - 1, retained + 1); i++) indices.add(i);
+  }
   const shown = [...indices].sort((a, b) => a - b);
   // The scroll region belongs to our parent. Its ref is attached after child
   // layout effects, so subscribe after all DOM refs have been attached.
@@ -38,6 +49,9 @@ export function MeasuredTableBody<T>({ rows, container, columns, estimate = 34, 
     const region = container.current, section = body.current;
     if (!region || !section || !virtual) return;
     let frame = 0, previousWidth = region.clientWidth;
+    if (heightCache && heightCache.width !== previousWidth) {
+      heightCache.width = previousWidth; heightCache.rows = {}; measurements.clear(); setRevision(value => value + 1);
+    }
     const update = () => {
       frame = 0;
       const offset = section.getBoundingClientRect().top - region.getBoundingClientRect().top + region.scrollTop;
@@ -50,12 +64,13 @@ export function MeasuredTableBody<T>({ rows, container, columns, estimate = 34, 
     const observer = new ResizeObserver(() => {
       if (region.clientWidth !== previousWidth) {
         previousWidth = region.clientWidth; measurements.clear(); setRevision(value => value + 1);
+        if (heightCache) { heightCache.width = previousWidth; heightCache.rows = {}; }
       }
       schedule();
     });
     observer.observe(region); region.addEventListener("scroll", scroll, { passive: true }); update();
     return () => { observer.disconnect(); region.removeEventListener("scroll", scroll); cancelAnimationFrame(frame); region.style.overflowAnchor = previousAnchor; };
-  }, [container, virtual, measurements]);
+  }, [container, virtual, measurements, heightCache]);
   useLayoutEffect(() => {
     const region = container.current, saved = anchor.current;
     if (!region || !saved) return;
@@ -82,7 +97,10 @@ export function MeasuredTableBody<T>({ rows, container, columns, estimate = 34, 
           while (low < high) { const middle = (low + high) >>> 1; if (old[middle + 1]! <= position) low = middle + 1; else high = middle; }
           anchor.current = { index: low, within: position - old[low]!, origin, bottom: bottom.current };
         }
-        frame = 0; updates.forEach(([index, height]) => measurements.set(index, height));
+        frame = 0; updates.forEach(([index, height]) => {
+          measurements.set(index, height);
+          if (heightCache) heightCache.rows[String(keyOf.current(rows[index]!))] = height;
+        });
         setRevision(value => value + 1);
       });
     };
@@ -90,7 +108,7 @@ export function MeasuredTableBody<T>({ rows, container, columns, estimate = 34, 
     for (const row of body.current.querySelectorAll("tr[data-window-row]")) observer.observe(row);
     measure();
     return () => { observer.disconnect(); cancelAnimationFrame(frame); };
-  }, [signature, virtual, measurements, rows]);
+  }, [signature, virtual, measurements, rows, heightCache]);
   let previous = 0;
   return <tbody ref={body} onFocusCapture={event => {
     const row = (event.target as HTMLElement).closest<HTMLTableRowElement>("tr[data-window-row]");
