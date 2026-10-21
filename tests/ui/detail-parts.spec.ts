@@ -56,8 +56,8 @@ test('プールからテキストパーツを繰り返し置き、押し出し�
     for (let i = 0; i < 5; i++) await dropPart(page, app, 200 + i * 28, 140 + i * 22);
     await app.locator('.detail-part').last().hover();
     await settleMotion(app.locator('body'));
-    await page.screenshot({ path: '/tmp/triadichrome-detail-parts-desktop.png' });
-  } else await page.screenshot({ path: '/tmp/triadichrome-detail-parts-narrow.png' });
+    await page.screenshot({ path: info.outputPath('detail-parts.png') });
+  } else await page.screenshot({ path: info.outputPath('detail-parts.png') });
 });
 
 test('移動中の吸着と確定時のスナップ、右下だけの斜め伸縮を確認する', async ({ app, page }, info) => {
@@ -91,7 +91,7 @@ test('移動中の吸着と確定時のスナップ、右下だけの斜め伸�
   // Return across the nearest-point boundary without changing the indicated landing position.
   await page.mouse.move(partBox.x + 37, partBox.y + 49, { steps: 4 });
   await expect.poll(() => destination.evaluate(e => new DOMMatrix((e as HTMLElement).style.transform).m41)).toBe(target.x);
-  await page.screenshot({ path: '/tmp/triadichrome-detail-destination.png' });
+  await page.screenshot({ path: info.outputPath('detail-destination.png') });
   await page.mouse.up(); await settleMotion(app.locator('body'));
   await expect(destination).toHaveCount(0);
   const snapped = (await rectangles(app))[0]!;
@@ -111,7 +111,7 @@ test('移動中の吸着と確定時のスナップ、右下だけの斜め伸�
   const resized = (await rectangles(app))[0]!;
   expect(resized.width).toBe(176); expect(resized.height).toBe(128);
   expect(resized.x).toBe(snapped.x); expect(resized.y).toBe(snapped.y);
-  await page.screenshot({ path: '/tmp/triadichrome-detail-part-corner.png' });
+  await page.screenshot({ path: info.outputPath('detail-part-corner.png') });
   const smaller = (await grip.boundingBox())!;
   await page.mouse.move(smaller.x + smaller.width / 2, smaller.y + smaller.height / 2); await page.mouse.down();
   await page.mouse.move(smaller.x - 130, smaller.y - 100, { steps: 12 }); await page.mouse.up();
@@ -172,7 +172,7 @@ test('テキストはダブルクリックで編集し、改行・外側クリ�
   await app.getByRole('heading', { name: 'パーツ配置', exact: true }).click();
   await expect(input).toHaveCount(0);
   await expect(view).toHaveText('人件費の算定根拠\n単価 × 人数 × 月数');
-  await page.screenshot({ path: `/tmp/triadichrome-text-part-plain-${info.project.name}.png` });
+  await page.screenshot({ path: info.outputPath('text-part-plain.png') });
   await view.dblclick(); await input.fill('Escでも入力を保持'); await input.press('Escape');
   await expect(input).toHaveCount(0); await expect(view).toHaveText('Escでも入力を保持');
   await view.press('Enter'); await expect(input).toBeFocused();
@@ -185,7 +185,7 @@ test('テキストはダブルクリックで編集し、改行・外側クリ�
   await expect.poll(() => view.evaluate(e => e.scrollTop)).toBeGreaterThan(0);
   expect(await rectangles(app)).toEqual(before);
   await expect(view.locator('b')).toHaveCount(0);
-  await page.screenshot({ path: `/tmp/triadichrome-text-part-${info.project.name}.png` });
+  await page.screenshot({ path: info.outputPath('text-part.png') });
   await part.press('ArrowRight'); await settleMotion(app.locator('body'));
   await expect(view).toHaveText(longText);
   await view.press('Enter'); await input.fill('画面移動でも入力を保持');
@@ -225,7 +225,7 @@ for (const horizontal of [true, false]) {
     await cell(1, '4月').press('End'); await cell(1, '4月').press('Shift+Enter');
     await cell(1, '4月').pressSequentially('説明'); await expect(cell(1, '4月')).toHaveValue('001\n説明');
     expect(await rectangles(app)).toEqual(before);
-    await page.screenshot({ path: `/tmp/triadichrome-monthly-${horizontal ? 'horizontal' : 'vertical'}-${info.project.name}.png` });
+    await page.screenshot({ path: info.outputPath(`monthly-${horizontal ? 'horizontal' : 'vertical'}.png`) });
     await name(1).click(); await part.getByRole('button', { name: '項目を追加', exact: true }).click();
     await expect(name(2)).toBeFocused(); await expect(name(3)).toHaveValue('単価');
     await part.getByRole('button', { name: '項目を削除', exact: true }).click();
