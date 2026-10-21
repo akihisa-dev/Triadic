@@ -42,10 +42,21 @@ export async function verifyWindowSession(api) {
     await a.request("open", { name: original.handle.name, handle: original.handle, bytes });
     const group = a.latest().info.group;
     const view = { screen: { page: "cost-table", selectedInitiative: null, detailOrigin: "initiative-list" }, costTable: { industries: [1], departments: [1], top: 140, left: 300 }, relation: null, values: { "table:kinds": { "cost-table": [2] } }, scroll: [{ key: "table", top: 140, left: 300 }] };
+    const unfinished = { ...view, screen: { ...view.screen, page: "detail-editor", selectedDetailId: 9 }, values: { ...view.values,
+      "details:documents": [{ id: 9, name: "一時明細", parts: [{ text: "保持する文章", cells: [["未保存のセル"]] }] }], "future:draft": "複製しない" } };
+    await a.request("reserve", "detail-ticket", unfinished);
+    const detailCopy = peer(); await detailCopy.request("join", group, "detail-ticket");
+    const cloned = detailCopy.latest().info.initialView;
+    assert.equal(cloned.screen.page, "details");
+    assert.equal(cloned.screen.selectedDetailId, undefined);
+    assert.deepEqual(cloned.values, view.values, "表示条件だけを引き継ぐ");
+    assert.deepEqual(cloned.scroll, [], "存在しない明細のスクロールを復元しない");
+    assert.equal(unfinished.values["details:documents"][0].parts[0].text, "保持する文章");
+    detailCopy.disconnect();
     await a.request("reserve", "ticket", view);
     await b.request("join", group, "ticket");
     assert.deepEqual(b.latest().info.initialView, view, "画面・条件・表示位置を複製する");
-    assert.equal(b.latest().info.number, 2);
+    assert.equal(b.latest().info.number, 3);
     await c.request("open", { name: original.handle.name, handle: original.handle, bytes });
     assert.equal(c.latest().info.group, group, "通常の開き直しでも同一ファイルの共有へ参加する");
     const seed = a.latest().snapshot.contents;
@@ -117,7 +128,7 @@ export async function verifyWindowSession(api) {
     await b.request("leave-history");
     await b.request("reserve", "resumed", view);
     const d = peer(); await d.request("join", group, "resumed");
-    assert.equal(d.latest().info.number, 4, "番号を使い回さない");
+    assert.equal(d.latest().info.number, 5, "番号を使い回さない");
     b.hasDraft = true;
     await d.request("close");
     assert.equal(b.latest().snapshot.contents.departments[0].departmentName, "コピー先の編集", "他の入力やファイルを閉じない");

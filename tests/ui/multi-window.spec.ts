@@ -142,3 +142,31 @@ test("別画面の集計の未登録入力を別名保存と履歴集約で保�
   await expect.poll(() => copy.isClosed()).toBe(true);
   await expect(page.getByRole("heading", { name: "履歴", exact: true })).toBeVisible();
 });
+
+
+test("明細の文章と表を複製せず、複製先は空の明細一覧を開く", async ({ page }) => {
+  await navigate(page, "明細");
+  await page.getByRole("button", { name: "＋ 明細を追加", exact: true }).click();
+  await page.getByRole("textbox", { name: "明細名", exact: true }).fill("元画面だけの明細");
+  await page.getByRole("button", { name: "次へ", exact: true }).click();
+  await page.getByRole("button", { name: "テキストパーツを追加", exact: true }).press("Enter");
+  await page.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true }).dblclick();
+  await page.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).fill("元画面だけの文章");
+  await page.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).press("Escape");
+  await page.getByRole("button", { name: "横向き12か月パーツを追加", exact: true }).press("Enter");
+  await page.getByRole("table", { name: "パーツ 2の表", exact: true }).getByRole("columnheader", { name: "項目", exact: true }).dblclick();
+  await page.getByRole("textbox", { name: "項目 1の名前", exact: true }).fill("元画面だけのセル");
+  const copy = await duplicate(page);
+  await expect(copy.getByRole("heading", { name: "明細", exact: true })).toBeVisible();
+  await expect(copy.getByRole("button", { name: "元画面だけの明細を開く", exact: true })).toHaveCount(0);
+  await expect(copy.locator(".detail-part")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "元画面だけの明細", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true })).toHaveText("元画面だけの文章");
+  await page.getByRole("table", { name: "パーツ 2の表", exact: true }).getByRole("columnheader", { name: "項目", exact: true }).dblclick();
+  await expect(page.getByRole("textbox", { name: "項目 1の名前", exact: true })).toHaveValue("元画面だけのセル");
+  await page.getByRole("button", { name: "一覧に戻る", exact: true }).click();
+  const listCopy = await duplicate(page);
+  await expect(listCopy.getByRole("heading", { name: "明細", exact: true })).toBeVisible();
+  await expect(listCopy.getByRole("button", { name: "元画面だけの明細を開く", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "元画面だけの明細を開く", exact: true })).toBeVisible();
+});

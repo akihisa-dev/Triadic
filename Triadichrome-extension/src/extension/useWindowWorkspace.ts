@@ -1,6 +1,7 @@
 import { useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { hasInitiativeDraftInput, createInitiativeDraft } from "../core/domain/initiativeRules";
 import { WindowViewContext, captureWindowScroll, restoreWindowScroll } from "./windowView";
+import { cloneWindowView } from "./windowViewClone";
 import type { WindowPlanSession } from "./WindowPlanSession";
 import type { HomeWorkspace } from "./useHomeWorkspace";
 import type { Page } from "./workspace/types";
@@ -45,8 +46,8 @@ export function useWindowWorkspace(session: WindowPlanSession | undefined, works
   const duplicate = () => {
     if (!session || workspace.preview || workspace.screen.page === "data-history") return;
     try {
-      session.duplicate({ screen: workspace.screen, costTable: workspace.costTableView.current,
-        relation: workspace.relationView.current, values: { ...values }, scroll: captureWindowScroll() });
+      session.duplicate(cloneWindowView({ screen: workspace.screen, costTable: workspace.costTableView.current,
+        relation: workspace.relationView.current, values: { ...values }, scroll: captureWindowScroll() }));
     } catch (failure) { workspace.showError(failure); }
   };
   return { label, duplicate, settling: info.settling, discardLabels, finishDiscard };

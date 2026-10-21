@@ -1,3 +1,4 @@
+import { cloneWindowView } from "./windowViewClone";
 import type { Recovery } from "./fileConflict";
 import { PlanSession } from "./PlanSession";
 import type { OpenPlan } from "./planFile";
@@ -177,7 +178,7 @@ export class WindowSessionHub {
         const group = this.requireGroup(peer);
         if (group.historyOwner) throw new Error("履歴の閲覧中はウィンドウを複製できません。");
         const [ticket, view] = args as [string, WindowView];
-        this.tickets.set(ticket, { group, view }); return;
+        this.tickets.set(ticket, { group, view: cloneWindowView(view) }); return;
       }
       case "cancel-reserve": this.tickets.delete(args[0] as string); return;
       case "label": peer.label = args[0] as string; return;
