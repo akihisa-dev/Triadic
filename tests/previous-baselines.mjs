@@ -19,7 +19,14 @@ export async function verifyPreviousBaselines(api, { excel = false } = {}) {
     ws.getCell(4 + contents.accounts.findIndex(item => item.id === accountId), 3).value = 111;
     const patches = api.readPreviousWorkbook(wb, contents);
     assert.equal(patches.length, 1); assert.equal(patches[0].previousKind, 2);
-    const updated = await api.readPlanContents(await api.changePlanSettings(bytes, { type: 'previous-import', patches }));
+    const encoded = await api.serializeWorkbook(wb);
+    const imported = await api.parsePreviousWorkbook(encoded, contents);
+    assert.deepEqual(imported, patches, '編集した前年実績をXLSXの検査・再読込から抽出');
+    const savedBytes = await api.changePlanSettings(bytes, { type: 'previous-import', patches: imported });
+    const updated = await api.readPlanContents(savedBytes);
+    assert.deepEqual(updated.previousAmounts.filter(item => item.previousKind === 1), contents.previousAmounts.filter(item => item.previousKind === 1), '前年見込の全金額を保持');
+    await assert.rejects(api.parsePreviousWorkbook(encoded, updated), /出力後に前年金額/, '旧出力の再取込は既存の競合規則で拒否');
+    assert.deepEqual(await api.parsePreviousWorkbook(await api.createPreviousWorkbookBytes(updated, [pair], 2), updated), [], '保存後の再出力には差分がない');
     assert.equal(api.createPreviousInput(updated, pair.industryId, pair.departmentId, 1).rows.find(item => item.accountId === accountId).amounts[4], '100');
     assert.equal(api.createPreviousInput(updated, pair.industryId, pair.departmentId, 2).rows.find(item => item.accountId === accountId).amounts[4], '111');
     wb.getWorksheet('_triadichrome').getCell('A1').value = 'Triadichrome previous v2';
