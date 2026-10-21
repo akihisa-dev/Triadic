@@ -259,6 +259,28 @@ export async function verifyWindowSession(api) {
   } finally { releaseRecovery(); recoveryA.disconnect(); recoveryB.disconnect(); }
   console.log("PASS: 別ファイルの保存・取消・読込は独立、同一ファイルの順序と読込中の実体判定は維持");
 
+  const ticketHub = new api.WindowSessionHub(undefined, 30_000, 20);
+  const ticketOwner = peer(ticketHub), ticketCopy = peer(ticketHub);
+  const ticketView = { screen: { page: "home", selectedInitiative: null, detailOrigin: "initiative-list" }, costTable: { industries: [], departments: [], top: 0, left: 0 }, relation: null, values: {}, scroll: [] };
+  try {
+    await ticketOwner.request("open", { name: original.handle.name, handle: original.handle, bytes });
+    const group = ticketOwner.latest().info.group;
+    await ticketOwner.request("reserve", "never-joined", ticketView);
+    assert.equal(ticketHub.tickets.size, 1);
+    await new Promise(resolve => setTimeout(resolve, 40));
+    assert.equal(ticketHub.tickets.size, 0, "起動前に閉じた複製先の予約と画面状態を解放");
+    await assert.rejects(ticketCopy.request("join", group, "never-joined"), /開き直/);
+    await ticketOwner.request("reserve", "fresh", ticketView);
+    await ticketCopy.request("join", group, "fresh");
+    assert.deepEqual(ticketCopy.latest().info.initialView, ticketView, "新しい複製先へ正しい画面を渡す");
+    assert.equal(ticketHub.tickets.size, 0, "使用済み予約も解放");
+    await ticketOwner.request("reserve", "cancel", ticketView);
+    await ticketOwner.request("cancel-reserve", "cancel");
+    assert.equal(ticketHub.tickets.size, 0);
+    await ticketOwner.request("reserve", "closing", ticketView);
+  } finally { ticketOwner.disconnect(); ticketCopy.disconnect(); }
+  assert.equal(ticketHub.tickets.size, 0, "最後のウィンドウ終了でも予約と期限処理を解放");
+
   await verifyWindowControlTimeout(api, bytes);
 
   const saved = [], controller = new api.AutoSave(async draft => { saved.push(draft); }, 60_000);

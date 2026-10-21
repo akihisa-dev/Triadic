@@ -19,11 +19,11 @@ class WindowControlTimeoutError extends Error {}
 export class WindowSessionHub {
   private groups = new Map<string, Group>();
   private peers = new Set<Peer>();
-  private tickets = new Map<string, { group: Group; view: WindowView }>();
+  private tickets = new Map<string, { group: Group; view: WindowView; expiresAt: number; timer: ReturnType<typeof setTimeout> }>();
   private controls = new Map<number, { peer: Peer; resolve: (value: unknown) => void; reject: (error: Error) => void }>();
   private sequence = 0;
   private openingTail: Promise<unknown> = Promise.resolve();
-  constructor(private makeSession: (recovery: Recovery) => PlanSession = recovery => new PlanSession(recovery), private controlTimeoutMs = 30_000) {}
+  constructor(private makeSession: (recovery: Recovery) => PlanSession = recovery => new PlanSession(recovery), private controlTimeoutMs = 30_000, private reservationTimeoutMs = 30_000) {}
 
   connect(port: Pick<MessagePort, "postMessage">) {
     const peer: Peer = { port, group: null, number: 1, label: "Home", initialView: null };
@@ -42,6 +42,11 @@ export class WindowSessionHub {
       },
       disconnect: () => this.detach(peer),
     };
+  }
+  private removeTicket(ticket: string) {
+    const reservation = this.tickets.get(ticket);
+    if (reservation) clearTimeout(reservation.timer);
+    this.tickets.delete(ticket);
   }
   private send(peer: Peer, message: HubMessage) { peer.port.postMessage(message); }
   private enqueue<T>(peer: Peer, operation: () => Promise<T>) {
@@ -130,7 +135,7 @@ export class WindowSessionHub {
     else if (!group.openingPeers) {
       group.cancelCheckpoint?.();
       this.groups.delete(group.id);
-      for (const [ticket, reservation] of this.tickets) if (reservation.group === group) this.tickets.delete(ticket);
+      for (const [ticket, reservation] of this.tickets) if (reservation.group === group) this.removeTicket(ticket);
     }
   }
   private requireGroup(peer: Peer) {
@@ -182,10 +187,11 @@ export class WindowSessionHub {
           const group = this.groups.get(groupId);
           if (!group) throw new Error("このファイルは既に閉じられています。「ファイルを開く」から開き直してください。");
           if (group.historyOwner) throw new Error("履歴の閲覧中はウィンドウを複製できません。");
-          const reserved = ticket ? this.tickets.get(ticket) : undefined;
+          let reserved = ticket ? this.tickets.get(ticket) : undefined;
+          if (ticket && reserved && reserved.expiresAt <= Date.now()) { this.removeTicket(ticket); reserved = undefined; }
           if (ticket && (!reserved || reserved.group !== group)) throw new Error("ウィンドウを開き直してください。");
           this.attach(peer, group, reserved?.view ?? null);
-          if (ticket) this.tickets.delete(ticket);
+          if (ticket) this.removeTicket(ticket);
         }
         return this.info(peer);
       }
@@ -193,9 +199,11 @@ export class WindowSessionHub {
         const group = this.requireGroup(peer);
         if (group.historyOwner) throw new Error("履歴の閲覧中はウィンドウを複製できません。");
         const [ticket, view] = args as [string, WindowView];
-        this.tickets.set(ticket, { group, view: cloneWindowView(view) }); return;
+        this.removeTicket(ticket);
+        const timer = setTimeout(() => this.removeTicket(ticket), this.reservationTimeoutMs);
+        this.tickets.set(ticket, { group, view: cloneWindowView(view), expiresAt: Date.now() + this.reservationTimeoutMs, timer }); return;
       }
-      case "cancel-reserve": this.tickets.delete(args[0] as string); return;
+      case "cancel-reserve": this.removeTicket(args[0] as string); return;
       case "label": peer.label = args[0] as string; return;
       case "leave-history": { const group = this.requireGroup(peer); if (group.historyOwner === peer) group.historyOwner = null; return; }
       case "activate": {
