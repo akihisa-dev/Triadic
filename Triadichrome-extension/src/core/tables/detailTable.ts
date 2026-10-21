@@ -35,7 +35,8 @@ export function parseTableClipboard(text: string): string[][] {
 }
 
 export function pasteTableCells(cells: string[][], item: number, column: number, pasted: string[][], horizontal: boolean): string[][] | null {
-  const sourceWidth = Math.max(...pasted.map(row => row.length));
+  let sourceWidth = 0;
+  for (const row of pasted) sourceWidth = Math.max(sourceWidth, row.length);
   if (column + (horizontal ? sourceWidth : pasted.length) > detailTableMonths.length + 1) return null;
   const count = Math.max(cells.length, item + (horizontal ? pasted.length : sourceWidth));
   const result = Array.from({ length: count }, (_, r) => [...(cells[r] ?? Array<string>(detailTableMonths.length + 1).fill(""))]);

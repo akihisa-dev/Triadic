@@ -129,3 +129,18 @@ test('テーブルのセルは移動・伸縮・衝突解消でも保持する',
     assert.equal(result.find(part => part.id === 'text').text, '説明');
   });
 });
+
+test('引数上限を超える20万行の貼り付けでも内容を保持し、月範囲外なら元の表を変更しない', async () => {
+  await withNodeBundle('Triadichrome-extension/src/core/tables/detailTable.ts', async ({ emptyDetailTable, pasteTableCells }) => {
+    const cells = emptyDetailTable(); cells[0][0] = '元の項目';
+    const source = Array.from({ length: 200000 }, (_, i) => [`項目${i}`, String(i)]);
+    const before = JSON.stringify(cells);
+    const result = pasteTableCells(cells, 1, 0, source, true);
+    assert.equal(result.length, 200001);
+    assert.equal(result[0][0], '元の項目');
+    for (let i = 0; i < source.length; i++) assert.deepEqual(result[i + 1].slice(0, 2), source[i]);
+    assert.equal(pasteTableCells(cells, 0, 12, source, true), null);
+    assert.equal(pasteTableCells(cells, 0, 0, source, false), null);
+    assert.equal(JSON.stringify(cells), before);
+  });
+});
