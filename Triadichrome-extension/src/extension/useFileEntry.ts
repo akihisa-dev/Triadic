@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type DragEvent } from "react";
-import { createNewPlanFile } from "./newPlanFile";
 import { readTriadicFile } from "./readTriadicFile";
 import { TRIADIC_FILE_EXTENSION } from "../core/storage/triadicSchema";
 import { currentFiscalYear } from "../core/domain/calendar";
@@ -64,15 +63,18 @@ export function useFileEntry(session: SessionAccess, savedName: string, clearClo
       }
     } finally { busy.current = false; setIsBusy(false); }
   };
+  const opened = async (handle: FileSystemFileHandle, name: string) => {
+    clearCloseError();
+    // Failed reads and denied write access never replace the last opened file.
+    await remember(handle);
+    setDisplayName(name);
+    setFileName(name);
+  };
   const open = async (file: File, handle?: FileSystemFileHandle) => {
     if (!handle) throw new Error("この開き方では自動保存できません。「ファイルを開く」から選択してください。");
     const bytes = await readTriadicFile(file);
     await session.open({ name: file.name, bytes, handle });
-    clearCloseError();
-    // Failed reads and denied write access never replace the last opened file.
-    await remember(handle);
-    setDisplayName(file.name);
-    setFileName(file.name);
+    await opened(handle, file.name);
   };
   const resume = () => void run(async () => {
     if (recentFile) await open(await readRecentFile(recentFile), recentFile);
@@ -94,8 +96,8 @@ export function useFileEntry(session: SessionAccess, savedName: string, clearClo
     if (!picker) throw new Error("この環境ではファイルを新規作成できません。");
     const handle = await picker.call(window, { suggestedName: `Untitled${TRIADIC_FILE_EXTENSION}`, types: fileTypes });
     if (!handle.name.toLowerCase().endsWith(TRIADIC_FILE_EXTENSION)) throw new Error("拡張子は.triadicにしてください。");
-    await createNewPlanFile(handle, Number(newFiscalYear));
-    await open(await readRecentFile(handle), handle);
+    await session.create(handle, Number(newFiscalYear));
+    await opened(handle, handle.name);
   });
   const drag = (event: DragEvent<HTMLElement>) => {
     if (!Array.from(event.dataTransfer.types).includes("Files")) return;

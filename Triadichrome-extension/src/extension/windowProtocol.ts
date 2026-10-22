@@ -2,7 +2,7 @@ import type { PlanContentsPatch } from "../core/domain/planContentsPatch";
 import type { PlanSession, SessionSnapshot } from "./PlanSession";
 import type { WindowView } from "./windowView";
 
-export type SessionAccess = Pick<PlanSession, "getSnapshot" | "subscribe" | "subscribeFileSave" | "open" | "getHandle" | "prepareSave" | "saveAs" | "dispatch" | "travelOperation" | "checkpoint" | "preview" | "compareHistory" | "restore" | "deleteHistory" | "close">;
+export type SessionAccess = Pick<PlanSession, "getSnapshot" | "subscribe" | "subscribeFileSave" | "open" | "getHandle" | "prepareSave" | "saveAs" | "dispatch" | "travelOperation" | "checkpoint" | "preview" | "compareHistory" | "restore" | "deleteHistory" | "close"> & { create: (handle: FileSystemFileHandle, fiscalYear: number) => Promise<void> };
 export type WindowInfo = { group: string | null; number: number; peers: number; initialView: WindowView | null };
 export type WindowControl = "flush" | "flush-input" | "resume" | "draft" | "discard" | "close" | "confirm-discard" | "recover";
 export type HubRequest = { type: "request"; id: number; method: string; args: unknown[] };

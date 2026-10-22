@@ -9,6 +9,7 @@ import { emptyDataHistory } from "../core/domain/dataHistory";
 import { scheduleHistoryCheckpoint } from "./historyCheckpoint";
 import { reconcileWindowCommand, type WindowCommandBase } from "../core/domain/windowCommand";
 import type { PlanContents } from "../core/domain/plan";
+import { createNewPlanFile } from "./newPlanFile";
 
 type Peer = { port: Pick<MessagePort, "postMessage">; group: Group | null; number: number; label: string; initialView: WindowView | null; publishedContents?: PlanContents | null; opening?: boolean };
 type Group = { id: string; session: PlanSession; peers: Set<Peer>; openingPeers: number; nextNumber: number; cancelCheckpoint?: () => void; releaseRecovery?: () => void; actionTail: Promise<void>; historyPreparing: boolean; historyOwner: Peer | null; tail: Promise<unknown>; acting: Peer | null; openingHandle: FileSystemFileHandle | undefined; opened: Promise<void> };
@@ -165,7 +166,7 @@ export class WindowSessionHub {
       if (plan.handle) plan = { ...plan, bytes: new Uint8Array(await (await plan.handle.getFile()).arrayBuffer()) };
     }
   }
-  private async reserveSaveTarget(group: Group, handle: FileSystemFileHandle): Promise<() => void> {
+  private async reserveSaveTarget(group: Group | null, handle: FileSystemFileHandle): Promise<() => void> {
     const selected = this.openingTail.then(async () => {
       const occupied = () => new Error("別のウィンドウで使用している保存先です。保存先を開いている画面を閉じるか、別の保存先を選択してください。元のファイルと入力は保持しています。");
       // A flush may recover to a different file while this group's Save As is waiting.
@@ -292,13 +293,26 @@ export class WindowSessionHub {
         return;
       }
       case "detach": this.detach(peer); return;
+      case "create":
       case "open": {
         if (peer.group || peer.opening) throw new Error("現在のファイルを閉じてください。");
         peer.opening = true;
         let openingGroup: Group | undefined;
+        let releaseTarget: (() => void) | undefined;
         try {
-          const plan = args[0] as Pick<OpenPlan, "name" | "bytes" | "handle">;
-          const group = await this.selectGroup(plan);
+          let group: Group;
+          if (method === "create") {
+            const [handle, fiscalYear] = args as [FileSystemFileHandle, number];
+            releaseTarget = await this.reserveSaveTarget(null, handle);
+            if (!this.peers.has(peer)) return;
+            await createNewPlanFile(handle, fiscalYear);
+            const bytes = new Uint8Array(await (await handle.getFile()).arrayBuffer());
+            // Publish the new group before releasing its destination to waiting opens.
+            group = this.newGroup({ name: handle.name, handle, bytes });
+            group.openingPeers++;
+          } else {
+            group = await this.selectGroup(args[0] as Pick<OpenPlan, "name" | "bytes" | "handle">);
+          }
           openingGroup = group;
           await group.opened;
           if (!this.peers.has(peer)) return;
@@ -310,6 +324,7 @@ export class WindowSessionHub {
           if (openingGroup && --openingGroup.openingPeers === 0 && !openingGroup.peers.size) {
             this.releaseGroup(openingGroup);
           }
+          releaseTarget?.();
         }
         return;
       }

@@ -172,6 +172,7 @@ export class WindowPlanSession implements SessionAccess {
     }, 0);
   }
   async open(plan: Pick<OpenPlan, "name" | "bytes" | "handle">) { await this.request("open", plan); }
+  async create(handle: FileSystemFileHandle, fiscalYear: number) { await this.request("create", handle, fiscalYear); }
   async prepareSave(_destination: () => Promise<FileSystemFileHandle>) {
     const handle = this.handle as FileSystemFileHandle & { queryPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState>; requestPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState> };
     if (handle?.requestPermission && await handle.queryPermission?.({ mode: "readwrite" }) !== "granted") {

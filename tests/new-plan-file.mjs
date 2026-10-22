@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import { verifyWindowNewPlan } from "./window-new-plan.mjs";
 
 export async function verifyNewPlanFile(api) {
+  await verifyWindowNewPlan(api);
   for (const initial of [new Uint8Array(), new Uint8Array([1, 2, 3])]) {
     let stored = initial.slice();
     let locked = false, reads = 0, writes = 0, aborted = 0;
