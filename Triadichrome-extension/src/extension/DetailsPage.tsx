@@ -4,7 +4,7 @@ import "./DetailsPage.css";
 import { useAutoSave, type AutoSaveProps } from "./useAutoSave";
 import { AutoSaveStatus } from "./AutoSaveStatus";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
-import type { DetailDocument, DetailDraft } from "../core/domain/detailDocuments";
+import type { DetailDocument } from "../core/domain/detailDocuments";
 import type { Initiative } from "../core/domain/plan";
 import { DetailPartsCanvas } from "./DetailPartsCanvas";
 
@@ -85,11 +85,9 @@ export function DetailEditorPage({ document, disabled, onBack, onSave, onPending
   initiatives: readonly Initiative[]; onOpenInitiative: (initiative: Initiative) => void;
 }) {
   const readOnly = useHistoryReadOnly();
-  const baseline = useRef(document);
-  const autoSave = useAutoSave<DetailDraft>(async draft => {
-    const before = baseline.current;
-    if (!before || readOnly) throw new Error("この明細は編集できません。");
-    await onSave({ ...before, ...draft });
+  const autoSave = useAutoSave<DetailDocument>(async draft => {
+    if (!document || readOnly) throw new Error("この明細は編集できません。");
+    await onSave(draft);
   }, onPendingChange);
   const { controller, revision } = autoSave;
   useLayoutEffect(() => {
@@ -97,8 +95,7 @@ export function DetailEditorPage({ document, disabled, onBack, onSave, onPending
     const state = controller.getSnapshot();
     // Keep the saved revision of unfinished edits. Conflicting writes must be rejected, not silently overwritten.
     if (!state.pending || state.saving) {
-      baseline.current = document;
-      controller.syncSaved({ name: document.name, parts: document.parts });
+      controller.syncSaved(document, document.id);
     }
   }, [document, controller, revision, autoSave.pending]);
   const draft = readOnly ? document : autoSave.draft;
@@ -111,6 +108,6 @@ export function DetailEditorPage({ document, disabled, onBack, onSave, onPending
     <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave} />
     <DetailPartsCanvas key={document?.id} parts={draft?.parts ?? []} disabled={disabled || readOnly || !document}
       initiatives={initiatives} navigationBlocked={disabled} onOpenInitiative={onOpenInitiative}
-      onChange={parts => { if (draft && !readOnly) controller.change({ name: draft.name, parts }); }} />
+      onChange={parts => { if (draft && !readOnly) controller.change({ ...draft, parts }); }} />
   </main>;
 }
