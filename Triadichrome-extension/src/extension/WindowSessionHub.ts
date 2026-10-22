@@ -11,7 +11,7 @@ import { reconcileWindowCommand } from "../core/domain/windowCommand";
 import type { PlanContents } from "../core/domain/plan";
 
 type Peer = { port: Pick<MessagePort, "postMessage">; group: Group | null; number: number; label: string; initialView: WindowView | null; publishedContents?: PlanContents | null; opening?: boolean };
-type Group = { id: string; session: PlanSession; peers: Set<Peer>; openingPeers: number; nextNumber: number; cancelCheckpoint?: () => void; actionTail: Promise<void>; historyOwner: Peer | null; tail: Promise<unknown>; acting: Peer | null; openingHandle: FileSystemFileHandle | undefined; opened: Promise<void> };
+type Group = { id: string; session: PlanSession; peers: Set<Peer>; openingPeers: number; nextNumber: number; cancelCheckpoint?: () => void; releaseRecovery?: () => void; actionTail: Promise<void>; historyOwner: Peer | null; tail: Promise<unknown>; acting: Peer | null; openingHandle: FileSystemFileHandle | undefined; opened: Promise<void> };
 const destinationMissing = async (): Promise<FileSystemFileHandle> => { throw new Error("保存先を選択してください。入力は保持しています。"); };
 const errorText = (failure: unknown, field: "message" | "name", fallback: string) => failure && typeof failure === "object" && field in failure && typeof Reflect.get(failure, field) === "string" ? String(Reflect.get(failure, field)) : fallback;
 class WindowControlTimeoutError extends Error {}
@@ -24,7 +24,7 @@ export class WindowSessionHub {
   private controls = new Map<number, { peer: Peer; resolve: (value: unknown) => void; reject: (error: Error) => void }>();
   private sequence = 0;
   private openingTail: Promise<unknown> = Promise.resolve();
-  private saveTargets = new Map<Group, { handle: FileSystemFileHandle; settled: Promise<void>; release: () => void }>();
+  private saveTargets = new Set<{ handle: FileSystemFileHandle; settled: Promise<void> }>();
   constructor(private makeSession: (recovery: Recovery) => PlanSession = recovery => new PlanSession(recovery), private controlTimeoutMs = 30_000, private reservationTimeoutMs = 30_000) {}
 
   connect(port: Pick<MessagePort, "postMessage">) {
@@ -61,7 +61,10 @@ export class WindowSessionHub {
     const group = this.requireGroup(peer);
     const task = group.tail.then(async () => {
       group.acting = peer;
-      try { return await operation(); } finally { group.acting = null; }
+      try { return await operation(); } finally {
+        // Keep the recovery destination reserved through publication of the new handle.
+        group.releaseRecovery?.(); delete group.releaseRecovery; group.acting = null;
+      }
     });
     group.tail = task.catch(() => {});
     return task;
@@ -117,7 +120,12 @@ export class WindowSessionHub {
   }
 
   private newGroup(plan: Pick<OpenPlan, "name" | "bytes" | "handle">) {
-    const group: Group = { id: crypto.randomUUID(), session: this.makeSession(name => group.acting ? this.control(group.acting, "recover", name) as Promise<FileSystemFileHandle | null> : Promise.resolve(null)),
+    const group: Group = { id: crypto.randomUUID(), session: this.makeSession(async name => {
+      if (!group.acting) return null;
+      const handle = await this.control(group.acting, "recover", name) as FileSystemFileHandle | null;
+      if (handle) group.releaseRecovery = await this.reserveSaveTarget(group, handle);
+      return handle;
+    }),
       peers: new Set(), openingPeers: 0, nextNumber: 1, actionTail: Promise.resolve(), historyOwner: null, tail: Promise.resolve(), acting: null, opened: Promise.resolve(), openingHandle: plan.handle };
     this.groups.set(group.id, group);
     group.session.subscribe(() => this.publish(group));
@@ -152,27 +160,23 @@ export class WindowSessionHub {
     }
   }
   private async reserveSaveTarget(group: Group, handle: FileSystemFileHandle): Promise<() => void> {
-    for (;;) {
-      const selected = this.openingTail.then(async () => {
-        const own = this.saveTargets.get(group);
-        if (own) return { wait: own.settled };
-        const occupied = () => new Error("別のウィンドウで使用している保存先です。保存先を開いている画面を閉じるか、別の保存先を選択してください。元のファイルと入力は保持しています。");
-        for (const [other, target] of this.saveTargets) if (other !== group && await target.handle.isSameEntry(handle)) throw occupied();
-        for (const other of this.groups.values()) if (other !== group) {
-          const current = other.openingHandle ?? other.session.getHandle();
-          if (current && await current.isSameEntry(handle)) throw occupied();
-        }
-        let release!: () => void;
-        const settled = new Promise<void>(resolve => { release = resolve; });
-        const target = { handle, settled, release };
-        this.saveTargets.set(group, target);
-        return { release: () => { if (this.saveTargets.get(group) === target) this.saveTargets.delete(group); release(); } };
-      });
-      this.openingTail = selected.then(() => {}, () => {});
-      const result = await selected;
-      if ("release" in result) return result.release;
-      await result.wait;
-    }
+    const selected = this.openingTail.then(async () => {
+      const occupied = () => new Error("別のウィンドウで使用している保存先です。保存先を開いている画面を閉じるか、別の保存先を選択してください。元のファイルと入力は保持しています。");
+      // A flush may recover to a different file while this group's Save As is waiting.
+      // Reserve each destination independently instead of waiting on our own operation.
+      for (const target of this.saveTargets) if (await target.handle.isSameEntry(handle)) throw occupied();
+      for (const other of this.groups.values()) if (other !== group) {
+        const current = other.openingHandle ?? other.session.getHandle();
+        if (current && await current.isSameEntry(handle)) throw occupied();
+      }
+      let release!: () => void;
+      const settled = new Promise<void>(resolve => { release = resolve; });
+      const target = { handle, settled };
+      this.saveTargets.add(target);
+      return () => { this.saveTargets.delete(target); release(); };
+    });
+    this.openingTail = selected.then(() => {}, () => {});
+    return selected;
   }
   private attach(peer: Peer, group: Group, view: WindowView | null = null) {
     peer.group = group; peer.number = group.nextNumber++; peer.initialView = view;

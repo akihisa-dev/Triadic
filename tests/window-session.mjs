@@ -288,6 +288,76 @@ export async function verifyWindowSession(api) {
   } finally { releaseRecovery(); recoveryA.disconnect(); recoveryB.disconnect(); }
   console.log("PASS: 別ファイルの保存・取消・読込は独立、同一ファイルの順序と読込中の実体判定は維持");
 
+  // Conflict recovery reserves its destination until the switched session is published.
+  const recoverySource = file("競合元.triadic", bytes), occupied = file("使用中.triadic", bytes), recovered = file("復旧先.triadic", new Uint8Array());
+  const recovering = peer(), occupiedOwner = peer(), recoveryJoiner = peer();
+  const conflicting = await api.saveKindSelection(bytes, "cost-table", [2]);
+  const localChange = { type: "settings", change: { type: "selection", screen: "cost-table", selected: [1, 2] } };
+  let finishRecovery, recoveryStarted;
+  const recoveryWriting = new Promise(resolve => { recoveryStarted = resolve; });
+  const holdRecovery = new Promise(resolve => { finishRecovery = resolve; });
+  let recoverySave, recoveryOpen;
+  try {
+    await recovering.request("open", { name: recoverySource.handle.name, handle: recoverySource.handle, bytes });
+    await occupiedOwner.request("open", { name: occupied.handle.name, handle: occupied.handle, bytes });
+    recoverySource.replace(conflicting);
+    recovering.hasDraft = occupiedOwner.hasDraft = true;
+    recovering.recoveryTarget = occupied.handle;
+    await assert.rejects(recovering.request("dispatch", localChange), /別のウィンドウで使用/);
+    assert.deepEqual(recoverySource.bytes, conflicting); assert.deepEqual(occupied.bytes, bytes);
+    assert.equal(recovering.hasDraft, true); assert.equal(occupiedOwner.hasDraft, true);
+    assert.equal(recovering.latest().snapshot.canUndo, false);
+    assert.equal(recovering.latest().handle, recoverySource.handle);
+
+    recovering.recoveryTarget = recovered.handle; recovered.fail = true;
+    await assert.rejects(recovering.request("dispatch", localChange), /確認用の保存失敗/);
+    assert.equal(hub.saveTargets.size, 0, "復旧の書込み失敗でも予約を解放");
+    assert.deepEqual(recovered.bytes, new Uint8Array());
+    recovered.fail = false; recovered.gate = async () => { recoveryStarted(); await holdRecovery; };
+    recoverySave = recovering.request("dispatch", localChange);
+    await recoveryWriting;
+    let joined = false;
+    recoveryOpen = recoveryJoiner.request("open", { name: recovered.handle.name, handle: recovered.handle, bytes: new Uint8Array() }).then(() => { joined = true; });
+    await assert.rejects(occupiedOwner.request("saveAs", recovered.handle), /別のウィンドウで使用/);
+    assert.equal(joined, false, "復旧書込み中のopenは公開を待つ");
+    finishRecovery(); await recoverySave; await recoveryOpen;
+    assert.equal(recoveryJoiner.latest().info.group, recovering.latest().info.group);
+    assert.deepEqual(recoveryJoiner.latest().snapshot.contents.kindSelections["cost-table"], [1, 2]);
+    assert.deepEqual(recoverySource.bytes, conflicting);
+    assert.equal(hub.saveTargets.size, 0);
+  } finally {
+    finishRecovery(); await Promise.allSettled([recoverySave, recoveryOpen]);
+    recovering.disconnect(); occupiedOwner.disconnect(); recoveryJoiner.disconnect();
+  }
+
+  for (const pendingKind of ["open", "saveAs"]) {
+    const source = file("競合元.triadic", bytes), target = file("予約先.triadic", bytes), otherFile = file("別計画.triadic", bytes);
+    let release, started;
+    const gate = new Promise(resolve => { release = resolve; }), began = new Promise(resolve => { started = resolve; });
+    const pendingHub = new api.WindowSessionHub(recover => {
+      const session = new api.PlanSession(recover), open = session.open.bind(session);
+      session.open = async plan => { if (plan.handle === target.handle) { started(); await gate; } await open(plan); };
+      return session;
+    });
+    const actor = peer(pendingHub), holder = peer(pendingHub);
+    let holding;
+    try {
+      await actor.request("open", { name: source.handle.name, handle: source.handle, bytes });
+      source.replace(conflicting); actor.recoveryTarget = target.handle;
+      if (pendingKind === "open") holding = holder.request("open", { name: target.handle.name, handle: target.handle, bytes });
+      else {
+        await holder.request("open", { name: otherFile.handle.name, handle: otherFile.handle, bytes });
+        holder.flush = async () => { started(); await gate; };
+        holding = holder.request("saveAs", target.handle);
+      }
+      await began;
+      await assert.rejects(actor.request("dispatch", localChange), /別のウィンドウで使用/);
+      assert.deepEqual(target.bytes, bytes); assert.deepEqual(source.bytes, conflicting);
+      release(); await holding;
+    } finally { release(); await holding; actor.disconnect(); holder.disconnect(); }
+  }
+  console.log("PASS: 競合復旧先の使用中・読込中・保存予約を拒否し、成功時の共有参加と失敗後の予約解放を維持");
+
   const ticketHub = new api.WindowSessionHub(undefined, 30_000, 20);
   const ticketOwner = peer(ticketHub), ticketCopy = peer(ticketHub);
   const ticketView = { screen: { page: "home", selectedInitiative: null, detailOrigin: "initiative-list" }, costTable: { industries: [], departments: [], top: 0, left: 0 }, relation: null, values: {}, scroll: [] };
@@ -324,7 +394,7 @@ export async function verifyWindowSession(api) {
 
   function file(name, initial) {
     let stored = initial.slice();
-    const result = { fail: false, get bytes() { return stored; } };
+    const result = { fail: false, get bytes() { return stored; }, replace(value) { stored = value.slice(); } };
     result.handle = { name, kind: "file", isSameEntry: async other => other === result.handle,
       queryPermission: async () => "granted",
       requestPermission: async () => { throw new Error("許可済みの保存でダイアログを要求しない"); },
