@@ -19,7 +19,6 @@ async function dropPart(page: Page, app: FrameLocator, x = 70, y = 90) {
   await page.mouse.down();
   await page.mouse.move(canvas.x + Math.min(x, canvas.width / 2), canvas.y + Math.min(y, canvas.height / 2), { steps: 12 });
   await page.mouse.up();
-  await expect.poll(() => app.locator('.detail-contact-filter').evaluateAll(nodes => nodes.every(node => node.getAttribute('data-depth') === '0'))).toBe(true);
   await settleMotion(app.locator('body'));
 }
 async function rectangles(app: FrameLocator) {
@@ -30,16 +29,14 @@ async function rectangles(app: FrameLocator) {
   }));
 }
 
-test('プールからテキストパーツを繰り返し置き、周囲の位置保持・ホバー・削除・画面往復を確認する', async ({ app, page }, info) => {
+test('プールからテキストパーツを繰り返し置き、押し出し・ホバー・削除・画面往復を確認する', async ({ app, page }, info) => {
   await openEditor(app);
   await dropPart(page, app);
   await expect(app.locator('.detail-part')).toHaveCount(1);
   await expect(app.locator('.detail-part').first()).toHaveText('ダブルクリックで入力×');
   await expect(app.getByRole('button', { name: 'テキストパーツを追加', exact: true })).toBeVisible();
-  const fixed = (await rectangles(app))[0];
   await dropPart(page, app);
   await expect(app.locator('.detail-part')).toHaveCount(2);
-  expect((await rectangles(app))[0]).toEqual(fixed);
   const rects = await rectangles(app), [a, b] = rects;
   expect(a!.x + a!.width <= b!.x || b!.x + b!.width <= a!.x || a!.y + a!.height <= b!.y || b!.y + b!.height <= a!.y).toBe(true);
   expect(a!.width).toBe(168); expect(a!.height).toBe(96);
@@ -137,8 +134,9 @@ test('ドラッグのEscと領域外ドロップは配置を変更せず、自�
   const source = (await app.getByRole('button', { name: 'テキストパーツを追加', exact: true }).boundingBox())!;
   await page.mouse.move(source.x + 20, source.y + 20); await page.mouse.down();
   await page.mouse.move(part.x + 120, part.y + 120, { steps: 8 });
-  await expect(app.locator('.detail-part.has-contact')).toHaveCount(2);
-  await expect(app.locator('.detail-part-destination')).toHaveCount(0);
+  await expect(app.locator('.detail-part-destination')).toBeVisible();
+  await expect(app.locator('.detail-part-destination')).toHaveCSS('width', '168px');
+  await expect(app.locator('.detail-part-destination')).toHaveCSS('height', '96px');
   await page.mouse.move(20, 20, { steps: 8 });
   await expect(app.locator('.detail-part-destination')).toHaveCount(0);
   await page.mouse.up();
@@ -286,15 +284,39 @@ for (const horizontal of [true, false]) {
 }
 
 
+test('移動中に相手パーツを押し退け、解放後も重ならない格子位置へ確定する', async ({ app, page }, info) => {
+  test.skip(info.project.name !== 'desktop');
+  await openEditor(app);
+  const source = app.getByRole('button', { name: 'テキストパーツを追加', exact: true });
+  await source.press('Enter'); await source.press('Enter');
+  await settleMotion(app.locator('body'));
+  const before = await rectangles(app);
+  const moving = app.getByRole('group', { name: 'パーツ 1', exact: true });
+  const box = (await moving.boundingBox())!;
+  await page.mouse.move(box.x + 40, box.y + 40); await page.mouse.down();
+  await page.mouse.move(box.x + 40, box.y + 40 - 96, { steps: 16 });
+  await expect.poll(async () => (await rectangles(app))[1]!.y).toBe(120);
+  await settleMotion(app.locator('body'));
+  const during = await rectangles(app);
+  expect(during[0]).toEqual(before[1]);
+  expect(during[1]).toEqual(before[0]);
+  await expect(app.locator('.detail-part-destination')).toBeVisible();
+  await page.screenshot({ path: info.outputPath('push-during.png') });
+  await page.mouse.up();
+  await settleMotion(app.locator('body'));
+  expect(await rectangles(app)).toEqual(during);
+  await expect(app.locator('.detail-part-destination')).toHaveCount(0);
+});
+
 test('24px格子上で左右・上下の辺と角を共有して配置し、移動・伸縮でも隣接を保つ', async ({ app }, info) => {
   test.skip(info.project.name !== 'desktop');
   await openEditor(app);
   const source = app.getByRole('button', { name: 'テキストパーツを追加', exact: true });
   await source.press('Enter'); await source.press('Enter');
-  const part = app.getByRole('group', { name: 'パーツ 2', exact: true });
+  const part = app.getByRole('group', { name: 'パーツ 1', exact: true });
   const expected = (x: number, y: number) => [
-    { x: 24, y: 24, width: 168, height: 96 },
     { x, y, width: 168, height: 96 },
+    { x: 24, y: 24, width: 168, height: 96 },
   ];
   expect(await rectangles(app)).toEqual(expected(24, 120)); // shared horizontal edge
   for (let i = 0; i < 7; i++) await part.press('ArrowRight');
@@ -304,93 +326,8 @@ test('24px格子上で左右・上下の辺と角を共有して配置し、移�
   await part.press('ArrowRight'); await part.press('ArrowLeft');
   await settleMotion(app.locator('body'));
   expect(await rectangles(app)).toEqual(expected(192, 24));
-  const grip = app.getByRole('button', { name: 'パーツ 2の右下でサイズ変更', exact: true });
+  const grip = app.getByRole('button', { name: 'パーツ 1の右下でサイズ変更', exact: true });
   await grip.press('ArrowLeft'); await grip.press('ArrowRight');
   await settleMotion(app.locator('body'));
   expect(await rectangles(app)).toEqual(expected(192, 24));
-});
-
-test('接触時だけ凹んで解放時に戻り、取消では配置を保持する', async ({ page }) => {
-  await page.goto('/tests/ui/detail-contact.html');
-  const first = page.getByRole('group', { name: 'パーツ 1', exact: true });
-  const second = page.getByRole('group', { name: 'パーツ 2', exact: true });
-  const fixed = await second.getAttribute('style');
-  const box = (await first.boundingBox())!;
-  await page.mouse.move(box.x + 28, box.y + 35); await page.mouse.down();
-  await page.mouse.move(box.x + 140, box.y + 35, { steps: 10 });
-  await expect.poll(() => second.locator('.detail-contact-filter').getAttribute('data-depth').then(Number)).toBeGreaterThan(5);
-  await expect.poll(() => first.evaluate(node => new DOMMatrix((node as HTMLElement).style.transform).m41)).toBeGreaterThan(120);
-  await expect(page.locator('output')).toContainText('"x":72');
-  await page.mouse.up();
-  await expect(page.locator('output')).toContainText('"x":120');
-  await expect.poll(() => second.locator('.detail-contact-filter').getAttribute('data-depth').then(Number)).toBe(0);
-  await expect(second).toHaveAttribute('style', fixed!);
-  await settleMotion(page.locator('body'));
-  const touching = (await first.boundingBox())!;
-  await page.mouse.move(touching.x + 28, touching.y + 35); await page.mouse.down();
-  await page.mouse.move(touching.x + 70, touching.y + 35);
-  await page.keyboard.press('Escape'); await page.mouse.up();
-  await expect(page.locator('output')).toContainText('"x":120');
-  await expect.poll(() => second.locator('.detail-contact-filter').getAttribute('data-depth').then(Number)).toBe(0);
-  await expect(second).toHaveAttribute('style', fixed!);
-});
-
-for (const reverse of [false, true]) test(`テーブルの辺とセルが滑らかに凹み、緩めると浅くなり、解放すると反発する ${reverse ? '右から' : '左から'}`, async ({ page }, info) => {
-  test.skip(info.project.name !== 'desktop');
-  await page.goto(`/tests/ui/detail-contact.html?tables${reverse ? '&reverse' : ''}`);
-  const direction = reverse ? -1 : 1;
-  const moving = page.getByRole('group', { name: 'パーツ 1', exact: true });
-  const fixed = page.getByRole('group', { name: 'パーツ 2', exact: true });
-  const spring = fixed.locator('.detail-contact-filter');
-  const verifySeam = async () => {
-    const error = await page.locator('.detail-contact-outline path').evaluateAll((nodes, reverse) => {
-      const paths = nodes as SVGPathElement[];
-      if (paths.length !== 2) throw new Error('接触する双方の輪郭が必要です');
-      const samples = paths.map(path => {
-        const result: DOMPoint[] = [], length = path.getTotalLength(), matrix = path.getScreenCTM()!;
-        for (let t=0;t<=length;t+=.5) result.push(path.getPointAtLength(t).matrixTransform(matrix));
-        return result;
-      });
-      const minY = Math.max(...samples.map(points => Math.min(...points.map(p=>p.y))))+24;
-      const maxY = Math.min(...samples.map(points => Math.max(...points.map(p=>p.y))))-24;
-      let error = 0;
-      for(let y=minY;y<maxY;y+=16) {
-        const edges = samples.map((points,index) => {
-          const xs:number[]=[];
-          for(let i=1;i<points.length;i++) {
-            const a=points[i-1]!,b=points[i]!;
-            if((a.y<=y&&b.y>y)||(b.y<=y&&a.y>y)) xs.push(a.x+(b.x-a.x)*(y-a.y)/(b.y-a.y));
-          }
-          return (index===0)!==reverse?Math.max(...xs):Math.min(...xs);
-        });
-        error=Math.max(error,Math.abs(edges[0]!-edges[1]!));
-      }
-      return error;
-    }, reverse);
-    expect(error,'双方の辺は画面上で同じ曲線につながる').toBeLessThan(.1);
-    await expect(page.locator('.detail-part-destination')).toHaveCount(0);
-  };
-  const position = await fixed.evaluate(node => (node as HTMLElement).style.transform);
-  const box = (await moving.boundingBox())!;
-  await page.screenshot({path:info.outputPath('contact-before.png')});
-  await page.mouse.move(box.x+150,box.y+220); await page.mouse.down();
-  await page.mouse.move(box.x+150+190*direction,box.y+220,{steps:20});
-  await expect.poll(()=>spring.getAttribute('data-depth').then(Number)).toBeGreaterThan(13);
-  await verifySeam();
-  await page.screenshot({path:info.outputPath('contact-pressed.png')});
-  await page.screenshot({path:info.outputPath('contact-boundary.png'),clip:{x:reverse?368:440,y:330,width:140,height:410}});
-  await page.mouse.move(box.x+150+82*direction,box.y+220,{steps:10});
-  await expect.poll(()=>spring.getAttribute('data-depth').then(Number)).toBeLessThan(5);
-  await verifySeam();
-  await page.screenshot({path:info.outputPath('contact-eased.png')});
-  await page.mouse.move(box.x+150+190*direction,box.y+220,{steps:10});
-  await expect.poll(()=>spring.getAttribute('data-depth').then(Number)).toBeGreaterThan(13);
-  await page.mouse.up();
-  await expect.poll(()=>spring.getAttribute('data-depth').then(Number), {intervals:[10]}).toBeLessThan(-.1);
-  await verifySeam();
-  await page.screenshot({path:info.outputPath('contact-rebound.png')});
-  await expect.poll(()=>spring.getAttribute('data-depth').then(Number)).toBe(0);
-  await page.screenshot({path:info.outputPath('contact-settled.png')});
-  expect(await fixed.evaluate(node => (node as HTMLElement).style.transform)).toBe(position);
-  await expect(page.locator('output')).toContainText(`"x":${reverse ? 408 : 144}`);
 });
