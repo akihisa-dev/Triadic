@@ -330,6 +330,8 @@ npm run build
 
 The stack is TypeScript, React, Vite, the official SQLite WebAssembly distribution (`@sqlite.org/sqlite-wasm` 3.53.4-build2, SQLite 3.53.4), and Chrome Extension Manifest V3.
 
+The development/build tool Vite is pinned to 7.3.7 (MIT), and its indirect source-map-js dependency resolves to 1.2.2 (BSD-3-Clause). These incorporate the published [Vite security fix](https://github.com/vitejs/vite/security/advisories/GHSA-rq7h-c2jc-7f22) and [source-map-js fix](https://github.com/7rulnik/source-map-js/releases/tag/v1.2.2). Reproduce with `npm ci`; the preview server remains bound to 127.0.0.1.
+
 SQLite is bundled and works in memory without external communication or extra permissions. Storage/history structures remain. The official npm distribution is Apache-2.0, SQLite itself is public domain, and supporting code is MIT/NCSA. Keep bundled license notices when distributing.
 
 `npm run build` typechecks, builds/validates in temporary storage, and generates loadable `dist/extension/` and distributable `dist/Triadichrome-<version>.zip`. ZIPs remain local and are excluded from Git/commit/push. Manifest is at ZIP root; source, test data, and temporary files are excluded. Tracked Manifest, standalone pages, assets, icons, and service worker continue to synchronize to `Triadichrome-extension/`. ZIP generation and runtime Excel ZIP inspection use runtime JSZip with the MIT license selected. Build then regenerates the [test .triadic file](#test-triadic-file).
@@ -890,6 +892,8 @@ npm run build
 ```
 
 TypeScript、React、Vite、SQLite公式のWebAssembly配布（`@sqlite.org/sqlite-wasm` 3.53.4-build2、SQLite 3.53.4）、Chrome Extension Manifest V3を使用します。
+
+開発・ビルド用のViteは7.3.7（MIT）へ固定し、間接依存のsource-map-jsは1.2.2（BSD-3-Clause）へ解決しています。[Viteの公開済み修正](https://github.com/vitejs/vite/security/advisories/GHSA-rq7h-c2jc-7f22)と[source-map-jsの修正](https://github.com/7rulnik/source-map-js/releases/tag/v1.2.2)を取り込み、`npm ci`で再現します。確認用サーバーの接続先は127.0.0.1のままで、拡張の権限・外部送信・保存形式を追加しません。
 
 SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外部通信・追加権限は不要です。保存形式と履歴の構造は維持します。SQLite公式のnpm配布部分はApache-2.0、SQLite本体は著作権放棄、補助コードはMIT・NCSAで提供されています。配布時には同梱のライセンス表示を保持します。
 
