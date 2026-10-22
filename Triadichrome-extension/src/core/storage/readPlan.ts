@@ -1,3 +1,4 @@
+import { detailBindings } from "./detailBindings";
 import { listDetailDocuments } from "./detailDocuments";
 import { listExpansionCategories } from "./expansionCategoryMaster";
 import type { Database } from "./sqliteRuntime";
@@ -34,6 +35,10 @@ export function listInitiatives(db: Database, fiscalYear: number, initiativeId?:
       const overrides = row.overrides as KindOverrides;
       (overrides[2] ??= {})[Number(month)] = yenToAmount(Number(amount)); row.overrideRevisions![Number(month)] = Number(revision);
     }
+  }
+  for (const b of detailBindings(db, listDetailDocuments(db))) {
+    const row = rowsById.get(b.rowId);
+    if (row) ((row.detailSources ??= {})[b.kindId] ??= {})[b.month] = b.source;
   }
   const rules = new Map(listPeriodTypes(db).map(period => [period.id, period.startMonthRule]));
   return (db.exec(`SELECT id, name, note, expansion_id, expansion_category_id, department_id, period_type_id, industry_id, revision, identity FROM initiatives${initiativeId === undefined ? "" : " WHERE id = ?"} ORDER BY sort_order, id`, params)[0]?.values ?? [])

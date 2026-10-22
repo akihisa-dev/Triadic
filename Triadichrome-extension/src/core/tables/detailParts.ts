@@ -1,9 +1,14 @@
-/** Screen-only geometry: gentle attraction during movement, aligned placement on release. */
+export type DetailValueRef = { partId: string; itemId?: string };
+export type DetailBinding = { source: DetailValueRef | null; rowId: string | null; kindId: 1 | 2; months: number[]; unit: "yen" | "thousand-yen" };
+/** Parts carry their content and screen geometry. References use stable identifiers. */
 export type DetailPart = { id: string; x: number; y: number; width: number; height: number } &
   ({ kind: "text"; text: string } | { kind: "heading"; text: string } | { kind: "image"; src: string; name: string }
     | { kind: "assumption"; label: string; value: string; unit: string }
-    | { kind: "initiative-reference"; initiativeIdentity: string | null }
-    | { kind: "table-horizontal"; cells: string[][] } | { kind: "table-vertical"; cells: string[][] });
+    | { kind: "initiative-reference"; initiativeIdentity: string | null; binding?: DetailBinding }
+    | { kind: "calculation"; label: string; operation: "add" | "subtract" | "multiply" | "divide" | "sum"; operands: (DetailValueRef | null)[]; unit: string }
+    | { kind: "breakdown"; label: string; items: { id: string; label: string; quantity: string; price: string }[] }
+    | { kind: "table-horizontal"; cells: string[][]; rowIds: string[]; unit: string }
+    | { kind: "table-vertical"; cells: string[][]; rowIds: string[]; unit: string });
 export const PART_STEP = 24;
 export const PART_MIN = 72;
 export const PART_GAP = 0;

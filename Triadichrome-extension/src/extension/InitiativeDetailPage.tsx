@@ -1,3 +1,4 @@
+import type { DetailLinkActions } from "./InitiativeAmountGrid";
 import type { KindId } from "../core/domain/kinds";
 import type { ExpansionCategory } from "../core/domain/expansionCategoryMaster";
 import { type Industry } from "../core/domain/industryMaster";
@@ -15,6 +16,7 @@ import type { InitiativeDraftReferences } from "../core/domain/initiativeDraftRe
 
 type Props = AutoSaveProps & {
   initiative: Initiative;
+  detailLinks?: DetailLinkActions;
   accounts: Account[];
   expansions: Expansion[];
   expansionCategories: ExpansionCategory[];
@@ -31,7 +33,7 @@ type Props = AutoSaveProps & {
   onRecoverDraft?: (draft: InitiativeEntryDraft, references: InitiativeDraftReferences, release: () => void) => void;
 };
 
-export function InitiativeDetailPage({ initiative, accounts, expansions, expansionCategories, departments, periodTypes, industries, initialKind, backLabel = "施策一覧", onUpdate, onBack, onOpenMaster, onPendingChange, onPrepareSave, onDuplicate, duplicationBlocked = false, onRecoverDraft }: Props) {
+export function InitiativeDetailPage({ initiative, accounts, expansions, expansionCategories, departments, periodTypes, industries, initialKind, backLabel = "施策一覧", onUpdate, onBack, onOpenMaster, onPendingChange, onPrepareSave, onDuplicate, duplicationBlocked = false, onRecoverDraft, detailLinks }: Props) {
   const readOnly = useHistoryReadOnly();
   const autoSave = useAutoSave(onUpdate, onPendingChange);
   const { controller, draft, revision } = autoSave;
@@ -48,7 +50,7 @@ export function InitiativeDetailPage({ initiative, accounts, expansions, expansi
       references: autoSave.pending && source.current ? source.current.references : { accounts, expansions, expansionCategories, departments, periodTypes, industries } };
   }, [controller, initiative, revision, autoSave.pending, accounts, expansions, expansionCategories, departments, periodTypes, industries]);
   if (!draft) return null;
-  return <InitiativeEntryPage initialKind={initialKind ?? 1} draft={draft} onDraftChange={value => controller.change(value)} accounts={accounts} expansions={expansions} expansionCategories={expansionCategories} departments={departments} periodTypes={periodTypes} industries={industries}
+  return <InitiativeEntryPage detailLinks={detailLinks ? { ...detailLinks, disabled: detailLinks.disabled || autoSave.pending || autoSave.saving } : undefined} initialKind={initialKind ?? 1} draft={draft} onDraftChange={value => controller.change(value)} accounts={accounts} expansions={expansions} expansionCategories={expansionCategories} departments={departments} periodTypes={periodTypes} industries={industries}
     isSaving={false} onOpenMaster={onOpenMaster} onRegister={() => {}} editing={{
       savedRows: (source.current?.initiative ?? initiative).rows, saving: autoSave.saving, pending: autoSave.pending, onCompositionStart: () => controller.pause(), onCompositionEnd: () => controller.resume(),
       before: <button className="text-button master-back" type="button" disabled={autoSave.pending} onClick={onBack}>← {backLabel}へ戻る</button>,

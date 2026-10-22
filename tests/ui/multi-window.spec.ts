@@ -176,12 +176,12 @@ test("明細の文章と表を共有し、複製先でも同じ明細を開く",
   await page.getByRole("button", { name: "＋ 明細を追加", exact: true }).click();
   await page.getByRole("textbox", { name: "明細名", exact: true }).fill("元画面だけの明細");
   await page.getByRole("button", { name: "次へ", exact: true }).click();
-  await page.getByRole("button", { name: "テキストパーツを追加", exact: true }).press("Enter");
+  await page.getByRole("button", { name: "文章パーツを追加", exact: true }).press("Enter");
   await page.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true }).dblclick();
   await page.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).fill("元画面だけの文章");
   await page.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).press("Escape");
   await settleMotion(page.locator("body"));
-  await page.getByRole("button", { name: "横向き12か月パーツを追加", exact: true }).press("Enter");
+  await page.getByRole("button", { name: "月別表パーツを追加", exact: true }).press("Enter");
   await page.getByRole("table", { name: "パーツ 2の表", exact: true }).getByRole("columnheader", { name: "項目", exact: true }).dblclick();
   await page.getByRole("textbox", { name: "項目 1の名前", exact: true }).fill("元画面だけのセル");
   const copy = await duplicate(page);
@@ -207,12 +207,12 @@ test("別画面の明細を保存して履歴へ集約し、文章とセルを�
   await detail.getByRole("button", { name: "＋ 明細を追加", exact: true }).click();
   await detail.getByRole("textbox", { name: "明細名", exact: true }).fill("履歴前に保護する明細");
   await detail.getByRole("button", { name: "次へ", exact: true }).click();
-  await detail.getByRole("button", { name: "テキストパーツを追加", exact: true }).press("Enter");
+  await detail.getByRole("button", { name: "文章パーツを追加", exact: true }).press("Enter");
   await detail.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true }).dblclick();
   await detail.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).fill("取消して保持する文章");
   await detail.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).press("Escape");
   await settleMotion(detail.locator("body"));
-  await detail.getByRole("button", { name: "横向き12か月パーツを追加", exact: true }).press("Enter");
+  await detail.getByRole("button", { name: "月別表パーツを追加", exact: true }).press("Enter");
   await detail.getByRole("table", { name: "パーツ 2の表", exact: true }).getByRole("columnheader", { name: "項目", exact: true }).dblclick();
   await detail.getByRole("textbox", { name: "項目 1の名前", exact: true }).fill("取消して保持するセル");
   await navigate(detail, "Home");
@@ -256,7 +256,7 @@ test("応答のない別画面を30秒で案内し、明細を保持して履歴
   await copy.getByRole("button", { name: "＋ 明細を追加", exact: true }).click();
   await copy.getByRole("textbox", { name: "明細名", exact: true }).fill("応答待ちでも保持");
   await copy.getByRole("button", { name: "次へ", exact: true }).click();
-  await copy.getByRole("button", { name: "テキストパーツを追加", exact: true }).press("Enter");
+  await copy.getByRole("button", { name: "文章パーツを追加", exact: true }).press("Enter");
   await copy.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true }).dblclick();
   await copy.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).fill("中止後も残る文章");
   await copy.evaluate(() => { Reflect.set(window, "holdWindowFlush", true); });

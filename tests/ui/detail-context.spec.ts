@@ -6,12 +6,12 @@ async function open(app: FrameLocator, page: Page) {
   await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
   await app.getByRole('navigation', { name: 'メインナビゲーション' }).getByRole('button', { name: '明細', exact: true }).click();
   await app.getByRole('button', { name: '全パーツの保存確認を開く', exact: true }).click();
-  await expect(app.locator('.detail-part')).toHaveCount(7);
+  await expect(app.locator('.detail-part')).toHaveCount(9);
 }
 
 test('施策参照から一次予算を開き、改名を反映して元の明細へ戻る', async ({ app, page }) => {
   await open(app, page);
-  const reference = app.locator('.detail-initiative-part');
+  const reference = app.locator('.detail-output-part');
   const original = (await reference.locator('.detail-initiative-link').textContent())!;
   await reference.locator('.detail-initiative-link').click();
   await expect(app.getByRole('tab', { name: '一次予算', exact: true })).toHaveAttribute('aria-selected', 'true');
@@ -21,8 +21,8 @@ test('施策参照から一次予算を開き、改名を反映して元の明�
   await expect(reference.locator('.detail-initiative-link')).toHaveText('明細参照から変更');
   await app.getByRole('button', { name: '操作を取り消す', exact: true }).click();
   await expect(reference.locator('.detail-initiative-link')).toHaveText(original);
-  await reference.getByRole('button', { name: 'パーツ 5の参照施策を変更' }).click();
-  const select = reference.getByRole('combobox');
+  await reference.getByRole('button', { name: '変更', exact: true }).click();
+  const select = reference.getByRole('combobox', { name: '反映先の施策', exact: true });
   const replacement = await select.locator('option').nth(2).textContent();
   await select.selectOption({ index: 2 });
   await expect(reference.locator('.detail-initiative-link')).toHaveText(replacement!);
@@ -34,7 +34,7 @@ test('施策参照から一次予算を開き、改名を反映して元の明�
 
 test('前提条件と見出しを編集し、文字のまま保存・取消・履歴で保持する', async ({ app, page }, info) => {
   await open(app, page);
-  const assumption = app.getByRole('button', { name: 'パーツ 6の前提条件を編集', exact: true });
+  const assumption = app.getByRole('button', { name: 'パーツ 6の入力値を編集', exact: true });
   await assumption.dblclick();
   await app.getByRole('textbox', { name: 'パーツ 6の項目名', exact: true }).fill('配送単価差');
   await app.getByRole('textbox', { name: 'パーツ 6の値', exact: true }).fill('0010.00');
@@ -58,7 +58,7 @@ test('前提条件と見出しを編集し、文字のまま保存・取消・�
   await app.getByRole('button', { name: '全パーツの保存確認を開く', exact: true }).click();
   await expect(assumption).toHaveText('配送単価差0010.00円／件');
   await expect(assumption).toHaveAttribute('aria-disabled', 'true');
-  await expect(app.getByRole('button', { name: 'パーツ 5の参照施策を変更' })).toHaveCount(0);
+  await expect(app.getByRole('button', { name: '変更', exact: true })).toHaveCount(0);
   await app.locator('.detail-initiative-link').click();
   await expect(app.getByRole('textbox', { name: '施策名', exact: true })).toBeDisabled();
   await app.getByRole('button', { name: '← 明細へ戻る', exact: true }).click();
@@ -74,7 +74,7 @@ test('3種類をプールから追加し、空で開始して移動・伸縮・�
   await app.getByRole('button', { name: '＋ 明細を追加', exact: true }).click();
   await app.getByRole('textbox', { name: '明細名', exact: true }).fill('新しいパーツ');
   await app.getByRole('button', { name: '次へ', exact: true }).click();
-  for (const [i, label] of ['施策参照', '前提条件', '見出し'].entries()) {
+  for (const [i, label] of ['施策への反映', '入力値', '文章'].entries()) {
     const pool = app.getByRole('button', { name: `${label}パーツを追加`, exact: true });
     await pool.scrollIntoViewIfNeeded();
     const source = (await pool.boundingBox())!;
@@ -85,15 +85,15 @@ test('3種類をプールから追加し、空で開始して移動・伸縮・�
     await page.mouse.up();
     await expect(app.locator('.detail-part')).toHaveCount(i + 1);
   }
-  await expect(app.getByRole('combobox', { name: 'パーツ 1の参照施策' })).toHaveValue('');
-  await expect(app.getByRole('button', { name: 'パーツ 2の前提条件を編集' })).toHaveText('項目名値単位');
-  await expect(app.getByRole('heading', { name: '見出し', exact: true })).toBeVisible();
+  await expect(app.getByRole('combobox', { name: '反映先の施策', exact: true })).toHaveValue('');
+  await expect(app.getByRole('button', { name: 'パーツ 2の入力値を編集' })).toHaveText('項目名値単位');
+  await expect(app.getByRole('button', { name: 'パーツ 3のテキストを編集', exact: true })).toBeVisible();
   const part = app.locator('.detail-part').last();
   await part.focus(); await part.press('ArrowRight');
   const grip = part.getByRole('button', { name: 'パーツ 3の右下でサイズ変更' });
   await grip.focus(); await grip.press('ArrowRight');
   await settleMotion(app.locator('body'));
-  expect(await part.evaluate(node => parseFloat((node as HTMLElement).style.width))).toBe(360);
+  expect(await part.evaluate(node => parseFloat((node as HTMLElement).style.width))).toBe(192);
   await part.focus(); await part.press('Delete');
   await expect(app.locator('.detail-part')).toHaveCount(2);
 });

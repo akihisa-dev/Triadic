@@ -16,7 +16,7 @@ function Harness() {
   return <><h1>明細テーブル性能確認</h1><div style={{ height: 360, width: 1240, maxWidth: "100%" }}>
     <Profiler id="detail-table" onRender={(_id, _phase, duration) => {
       window.detailTableMeasurement.renders.push({ phase: window.detailTableMeasurement.phase, duration });
-    }}><DetailTablePart cells={cells} horizontal={horizontal} disabled={false} index={0} editing={editing} onEditingChange={setEditing} onChange={setCells} /></Profiler>
+    }}><DetailTablePart rowIds={cells.map((_, i) => String(i))} unit="" onUnitChange={() => {}} onOrientationChange={() => {}} cells={cells} horizontal={horizontal} disabled={false} index={0} editing={editing} onEditingChange={setEditing} onChange={setCells} /></Profiler>
   </div><button type="button">外側へ移動</button></>;
 }
 createRoot(document.getElementById("root")!).render(<Harness />);

@@ -36,9 +36,10 @@ test("画面とデータの対応が実際の保存テーブル・列・参照�
       assert.deepEqual(details.tables.map(item => item.table), ["document_info", "detail_documents"], "明細の保存元と共通ヘッダーを示す");
       assert.ok(details.calculated.some(text => text.includes("画像データと元ファイル名")));
       const detailEditor = screenData.find(screen => screen.page === "detail-editor");
-      assert.deepEqual(detailEditor.tables.map(item => item.table), ["document_info", "detail_documents", "initiatives"]);
-      assert.deepEqual(detailEditor.tables.find(item => item.table === "initiatives").fields, ["id", "identity", "name"]);
+      assert.deepEqual(detailEditor.tables.map(item => item.table), ["document_info", "detail_documents", "initiatives", "initiative_rows", "initiative_amounts", "accounts"]);
+      assert.deepEqual(detailEditor.tables.find(item => item.table === "initiatives").fields, ["id", "identity", "name", "revision"]);
       assert.ok(detailEditor.calculated.some(text => text.includes("参照先がありません") && text.includes("予算") && text.includes("前提条件")));
+      assert.ok(screenData.find(item => item.page === "initiative-detail").tables.some(item => item.table === "detail_documents"));
       assert.ok(detailEditor.calculated.some(text => text.includes("自動保存") && text.includes("保存失敗")));
       const list = screenData.find(item => item.page === "initiative-list");
       for (const name of ["expansions", "period_types"]) assert.ok(list.tables.some(item => item.table === name), "施策一覧の展開名と期間名の参照先を説明する");

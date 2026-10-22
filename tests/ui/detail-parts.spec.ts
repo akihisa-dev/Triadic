@@ -13,7 +13,7 @@ async function openEditor(app: FrameLocator) {
   await settleMotion(app.locator('body'));
 }
 async function dropPart(page: Page, app: FrameLocator, x = 70, y = 90) {
-  const source = (await app.getByRole('button', { name: 'テキストパーツを追加', exact: true }).boundingBox())!;
+  const source = (await app.getByRole('button', { name: '文章パーツを追加', exact: true }).boundingBox())!;
   const canvas = (await app.getByRole('region', { name: 'パーツの編集領域', exact: true }).boundingBox())!;
   await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
   await page.mouse.down();
@@ -34,7 +34,7 @@ test('プールからテキストパーツを繰り返し置き、押し出し�
   await dropPart(page, app);
   await expect(app.locator('.detail-part')).toHaveCount(1);
   await expect(app.locator('.detail-part').first()).toHaveText('ダブルクリックで入力×');
-  await expect(app.getByRole('button', { name: 'テキストパーツを追加', exact: true })).toBeVisible();
+  await expect(app.getByRole('button', { name: '文章パーツを追加', exact: true })).toBeVisible();
   await dropPart(page, app);
   await expect(app.locator('.detail-part')).toHaveCount(2);
   const rects = await rectangles(app), [a, b] = rects;
@@ -131,7 +131,7 @@ test('ドラッグのEscと領域外ドロップは配置を変更せず、自�
   await page.keyboard.press('Escape'); await page.mouse.up();
   await expect(app.locator('.detail-part-destination')).toHaveCount(0);
   await settleMotion(app.locator('body')); expect(await rectangles(app)).toEqual(before);
-  const source = (await app.getByRole('button', { name: 'テキストパーツを追加', exact: true }).boundingBox())!;
+  const source = (await app.getByRole('button', { name: '文章パーツを追加', exact: true }).boundingBox())!;
   await page.mouse.move(source.x + 20, source.y + 20); await page.mouse.down();
   await page.mouse.move(part.x + 120, part.y + 120, { steps: 8 });
   await expect(app.locator('.detail-part-destination')).toBeVisible();
@@ -200,10 +200,16 @@ for (const horizontal of [true, false]) {
   const direction = horizontal ? '横向き' : '縦向き';
   test(`${direction}12か月は項目編集・削除確認・貼り付け制限・見出し固定と保持を扱う`, async ({ app, page }, info) => {
     await openEditor(app);
-    const source = app.getByRole('button', { name: `${direction}12か月パーツを追加`, exact: true });
+    const source = app.getByRole('button', { name: '月別表パーツを追加', exact: true });
     await expect(app.getByRole('button', { name: 'テーブルパーツを追加', exact: true })).toHaveCount(0);
     await source.press('Enter');
     const part = app.locator('.detail-part').first(), table = part.getByRole('table');
+    if (!horizontal) {
+      await table.locator('th').first().dblclick();
+      await app.getByLabel('月別表の向き', { exact: true }).selectOption('vertical');
+      await part.getByRole('textbox', { name: '項目 1の名前', exact: true }).press('Escape');
+      await settleMotion(app.locator('body'));
+    }
     const wrapper = part.getByRole('group', { name: `パーツ 1の${direction}12か月`, exact: true });
     const months = ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
     const monthHeaders = horizontal ? table.locator('thead th').filter({ hasNotText: '項目' }) : table.locator('tbody th');
@@ -287,7 +293,7 @@ for (const horizontal of [true, false]) {
 test('移動中に相手パーツを押し退け、解放後も重ならない格子位置へ確定する', async ({ app, page }, info) => {
   test.skip(info.project.name !== 'desktop');
   await openEditor(app);
-  const source = app.getByRole('button', { name: 'テキストパーツを追加', exact: true });
+  const source = app.getByRole('button', { name: '文章パーツを追加', exact: true });
   await source.press('Enter'); await source.press('Enter');
   await settleMotion(app.locator('body'));
   const before = await rectangles(app);
@@ -311,7 +317,7 @@ test('移動中に相手パーツを押し退け、解放後も重ならない�
 test('24px格子上で左右・上下の辺と角を共有して配置し、移動・伸縮でも隣接を保つ', async ({ app }, info) => {
   test.skip(info.project.name !== 'desktop');
   await openEditor(app);
-  const source = app.getByRole('button', { name: 'テキストパーツを追加', exact: true });
+  const source = app.getByRole('button', { name: '文章パーツを追加', exact: true });
   await source.press('Enter'); await source.press('Enter');
   const part = app.getByRole('group', { name: 'パーツ 1', exact: true });
   const expected = (x: number, y: number) => [
@@ -335,7 +341,7 @@ test('24px格子上で左右・上下の辺と角を共有して配置し、移�
 test('浅い接触と解放では相手を動かさず、8px超の押し込みで押し退ける', async ({ app, page }, info) => {
   test.skip(info.project.name !== 'desktop');
   await openEditor(app);
-  const source = app.getByRole('button', { name: 'テキストパーツを追加', exact: true });
+  const source = app.getByRole('button', { name: '文章パーツを追加', exact: true });
   await source.press('Enter'); await source.press('Enter');
   await settleMotion(app.locator('body'));
   const before = await rectangles(app);

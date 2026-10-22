@@ -19,7 +19,7 @@ let bytes = await changeDetailDocument(await createTriadicDatabase(2026), { type
     { id: "b", kind: "text", x: 192, y: 0, width: 168, height: 96, text: "最初の文章B" },
     { id: "image", kind: "image", x: 0, y: 120, width: 168, height: 120, src: "", name: "" },
     { id: "table", kind: vertical ? "table-vertical" : "table-horizontal", x: 0, y: 264, width: vertical ? 696 : 1200, height: 480,
-      cells: [row("項目A"), row("項目B")] },
+      cells: [row("項目A"), row("項目B")], rowIds: ["row-a", "row-b"], unit: "" },
   ],
 } });
 const read = async () => (await readPlanContents(bytes)).detailDocuments[0]!;
@@ -35,7 +35,8 @@ function Preview() {
   };
   const tableChange = (kind: "insert" | "remove" | "update") => external(parts => parts.map(part => {
     if (part.kind !== "table-horizontal" && part.kind !== "table-vertical") return part;
-    return { ...part, cells: kind === "insert" ? [row("新しい項目"), ...part.cells] : kind === "remove" ? part.cells.slice(1) : part.cells.map((cells, index) => index === 1 ? row("更新した項目B") : cells) };
+    return { ...part, cells: kind === "insert" ? [row("新しい項目"), ...part.cells] : kind === "remove" ? part.cells.slice(1) : part.cells.map((cells, index) => index === 1 ? row("更新した項目B") : cells),
+      rowIds: kind === "insert" ? ["row-new", ...part.rowIds] : kind === "remove" ? part.rowIds.slice(1) : part.rowIds };
   }));
   return <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
     <header style={{ padding: 4, display: "flex", flexWrap: "wrap", gap: 4 }}>

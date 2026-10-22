@@ -51,7 +51,7 @@ export function reconcileInitiativeDraftReferences(draft: InitiativeEntryDraft, 
 export function recoverInitiativeDraft(draft: InitiativeEntryDraft, before: InitiativeDraftReferences, after: InitiativeDraftReferences): InitiativeEntryDraft {
   const checked = reconcileInitiativeDraftReferences(draft, before, after);
   return { ...structuredClone(checked), rows: checked.rows.map(row => {
-    const { id: _id, revision: _revision, amountRevisions: _amountRevisions, overrideRevisions: _overrideRevisions, ...input } = row;
+    const { detailSources: _detailSources, id: _id, revision: _revision, amountRevisions: _amountRevisions, overrideRevisions: _overrideRevisions, ...input } = row;
     return { ...structuredClone(input), id: crypto.randomUUID() };
   }) };
 }

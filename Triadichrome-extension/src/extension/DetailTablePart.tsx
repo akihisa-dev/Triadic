@@ -5,16 +5,17 @@ import { ConfirmationDialog } from "./ConfirmationDialog";
 import "./DetailTablePart.css";
 
 type Cell = { item: number; column: number };
-export function DetailTablePart({ cells, horizontal, disabled, index, editing, onEditingChange, onChange }: {
+export function DetailTablePart({ cells, rowIds, unit, onUnitChange, onOrientationChange, horizontal, disabled, index, editing, onEditingChange, onChange }: {
+  rowIds: string[]; unit: string; onUnitChange: (unit: string) => void; onOrientationChange: (horizontal: boolean) => void;
   cells: string[][]; horizontal: boolean; disabled: boolean; index: number; editing: boolean;
-  onEditingChange: (editing: boolean) => void; onChange: (cells: string[][]) => void;
+  onEditingChange: (editing: boolean) => void; onChange: (cells: string[][], rowIds: string[]) => void;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<Cell>({ item: 0, column: 0 });
   const [deleting, setDeleting] = useState<{ item: number; key: string } | null>(null);
   const [error, setError] = useState("");
   const item = Math.min(selected.item, cells.length - 1), column = Math.min(selected.column, detailTableMonths.length);
-  const deletionKey = JSON.stringify([cells, horizontal]);
+  const deletionKey = JSON.stringify([cells, rowIds, horizontal]);
   useLayoutEffect(() => {
     if (deleting && deleting.key !== deletionKey) {
       setDeleting(null); onEditingChange(false);
@@ -28,20 +29,22 @@ export function DetailTablePart({ cells, horizontal, disabled, index, editing, o
   const finish = () => { onEditingChange(false); setError(""); requestAnimationFrame(() => root.current?.focus({ preventScroll: true })); };
   function alter(remove: boolean) {
     if (disabled) return;
-    onChange(changeTableItem(cells, item, remove));
+    const ids = [...rowIds];
+    if (remove) ids.splice(item, 1); else ids.splice(item + 1, 0, crypto.randomUUID());
+    onChange(changeTableItem(cells, item, remove), ids);
     setSelected({ item: Math.max(0, item + (remove ? -1 : 1)), column });
   }
   function requestDelete() {
     if (cells[item]!.some(value => value !== "")) setDeleting({ item, key: deletionKey });
     else alter(true);
   }
-  const latest = useRef({ cells, horizontal, disabled, onChange });
-  latest.current = { cells, horizontal, disabled, onChange };
+  const latest = useRef({ cells, rowIds, horizontal, disabled, onChange });
+  latest.current = { cells, rowIds, horizontal, disabled, onChange };
   const handlers = useMemo<TableCellHandlers>(() => ({
     select: (item, column) => setSelected(previous => previous.item === item && previous.column === column ? previous : { item, column }),
     change: (item, column, value) => {
       const current = latest.current;
-      if (!current.disabled) current.onChange(setTableCell(current.cells, item, column, value));
+      if (!current.disabled) current.onChange(setTableCell(current.cells, item, column, value), current.rowIds);
     },
     advance: (item, column) => {
       const current = latest.current;
@@ -53,7 +56,7 @@ export function DetailTablePart({ cells, horizontal, disabled, index, editing, o
       if (current.disabled) return;
       const result = pasteTableCells(current.cells, item, column, parseTableClipboard(text), current.horizontal);
       if (!result) { setError("12か月の範囲を超えるため、貼り付けませんでした。貼り付ける範囲を調整してください。"); return; }
-      setError(""); current.onChange(result);
+      setError(""); current.onChange(result, [...current.rowIds, ...Array.from({ length: result.length - current.rowIds.length }, () => crypto.randomUUID())]);
     },
   }), []);
   return <div ref={root} className={`detail-table-part${editing ? " is-editing" : ""}`} tabIndex={disabled ? -1 : 0}
@@ -70,6 +73,8 @@ export function DetailTablePart({ cells, horizontal, disabled, index, editing, o
       }
     }}>
     {editing && <div className="detail-table-toolbar" role="toolbar" aria-label="項目の操作">
+      <label>向き<select aria-label="月別表の向き" value={horizontal ? "horizontal" : "vertical"} onChange={e => onOrientationChange(e.target.value === "horizontal")}><option value="horizontal">横向き</option><option value="vertical">縦向き</option></select></label>
+      <label>単位<input aria-label="月別表の単位" value={unit} onChange={e => onUnitChange(e.target.value)} /></label>
       <button type="button" disabled={disabled} onClick={() => alter(false)}>項目を追加</button>
       <button type="button" disabled={disabled || cells.length === 1} onClick={requestDelete}>項目を削除</button>
     </div>}

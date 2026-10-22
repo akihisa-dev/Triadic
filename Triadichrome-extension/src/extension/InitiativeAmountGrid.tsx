@@ -15,17 +15,22 @@ import { StatusNotice } from "./StatusNotice";
 import { initiativeSelectionTotal } from "../core/tables/selectionTotal";
 import { GridSelectionTotal } from "./GridSelectionTotal";
 import "./InitiativeAmountGrid.css";
+import type { DetailSource } from "../core/domain/detailDocuments";
 
-export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRows, rowOperationsDisabled = false, onDraftChange }: {
+export type DetailLinkActions = { disabled: boolean; onOpen: (documentId: string) => void; onDisconnect: (source: DetailSource, kind: KindId, month: number) => Promise<void> };
+
+export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRows, rowOperationsDisabled = false, onDraftChange, detailLinks }: {
   draft: InitiativeEntryDraft; kind: KindId; accounts: Account[];
   savedRows?: InitiativeEntryDraft["rows"] | undefined;
   rowOperationsDisabled?: boolean;
   isSaving: boolean; onDraftChange: (draft: InitiativeEntryDraft) => void;
+  detailLinks?: DetailLinkActions | undefined;
 }) {
   const readOnly = useHistoryReadOnly();
   const grid = useGridInteraction();
   const { selection, setSelection, setEditing, table, original, bounds, extendSelection } = grid;
   const [error, setError] = useState("");
+  const [disconnecting, setDisconnecting] = useState(false);
   const [activeAccount, setActiveAccount] = useState<string | null>(null);
   const originalInherited = useRef(false);
   const accountsById = useMemo(() => new Map(accounts.map(account => [account.id, account])), [accounts]);
@@ -53,9 +58,20 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
     if (isSaving || !canEditInitiativeCell(draft, kind, cell)) return;
     onDraftChange(changeInitiativeCell(draft, kind, cell, value, badInput ? { original: original.current, inherited: originalInherited.current } : undefined));
   };
+  const selectedCell = selection?.end;
+  const selectedMonth = selectedCell ? months[selectedCell.column] : undefined;
+  const selectedSource = selectedCell && selectedMonth ? draft.rows[selectedCell.row]?.detailSources?.[kind]?.[selectedMonth] : undefined;
   return <>
     <StatusNotice message={error || totals.error || selectedTotal?.error || ""} error {...(error ? { onDismiss: () => setError("") } : {})} />
     <GridSelectionTotal total={selectedTotal} compact />
+    {selectedSource && detailLinks && <div className="initiative-detail-source" role="region" aria-label="明細からの反映">
+      <span>{selectedMonth}月：{selectedSource.documentName}から反映中{selectedSource.error ? `（${selectedSource.error} 保存済みの金額を保持しています）` : ""}</span>
+      <button type="button" disabled={detailLinks.disabled || disconnecting} onClick={() => detailLinks.onOpen(selectedSource.documentId)}>反映元の明細を開く</button>
+      {!readOnly && <button type="button" disabled={detailLinks.disabled || disconnecting} onClick={() => {
+        setDisconnecting(true); setError("");
+        void detailLinks.onDisconnect(selectedSource, kind, selectedMonth!).catch(e => setError(e instanceof Error ? e.message : "切り替えできませんでした。")).finally(() => setDisconnecting(false));
+      }}>直接入力へ切り替える</button>}
+    </div>}
     <div className="initiative-grid-scroll">
         <table ref={table} className="initiative-amount-table" aria-label="月別計画金額">
           <thead>
@@ -85,6 +101,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                 {months.map((month, column) => {
                   const cell = { row: index, column };
                   const value = valueAt(cell);
+                  const detailSource = row.detailSources?.[kind]?.[month];
                   const invalidInput = row.invalidAmounts?.[kind]?.[month];
                   const captureOriginal = () => {
                     original.current = invalidInput?.original ?? value;
@@ -128,6 +145,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                       disabled={readOnly || isSaving || !canEditInitiativeCell(draft, kind, cell)} value={value}
                       {...events.input}
                     />
+                    {detailSource && <button type="button" className="text-button" aria-label={`${accountName} ${month}月の反映元`} onClick={() => setSelection({ anchor: cell, end: cell })}>明細{detailSource.error ? "（要確認）" : ""}</button>}
                   </td>
                 })}
               </tr>;

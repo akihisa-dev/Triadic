@@ -25,7 +25,7 @@ export function DetailAssumptionPart({ assumption, disabled, index, editing, onE
       aria-label={`パーツ ${index + 1}の${label}`} value={assumption[key]}
       onChange={event => onChange({ label: assumption.label, value: assumption.value, unit: assumption.unit, [key]: event.target.value })} /></label>)}
   </div> : <div ref={view} className="detail-assumption-view" role="button" tabIndex={disabled ? -1 : 0}
-    aria-disabled={disabled} aria-label={`パーツ ${index + 1}の前提条件を編集`}
+    aria-disabled={disabled} aria-label={`パーツ ${index + 1}の入力値を編集`}
     onDoubleClick={event => { event.stopPropagation(); if (!disabled) onEditingChange(true); }}
     onKeyDown={event => {
       if (event.key === "Enter" || event.key === " ") {

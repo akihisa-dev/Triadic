@@ -1,3 +1,4 @@
+import { applyDetailBindings } from "./detailBindings";
 import { validateDetailDocument, type DetailChange, type DetailDocument } from "../domain/detailDocuments";
 import type { Database } from "./sqliteRuntime";
 import { editDatabase } from "./transaction";
@@ -25,5 +26,6 @@ export async function changeDetailDocument(bytes: Uint8Array, change: DetailChan
       if (!Number.isSafeInteger(item.revision + 1)) throw new Error("明細の更新回数が上限に達しました。");
       db.run("UPDATE detail_documents SET name = ?, parts_json = ?, revision = revision + 1 WHERE id = ?", [item.name, parts, item.id]);
     }
+    applyDetailBindings(db, listDetailDocuments(db));
   })).bytes;
 }

@@ -231,13 +231,23 @@ export async function createSamplePlan(fiscalYear = currentFiscalYear(), large =
     id: "00000000-0000-4000-8000-000000000001", name: "全パーツの保存確認", revision: 0, parts: [
       { id: "sample-text", kind: "text", x: 0, y: 0, width: 168, height: 96, text: "見積と月別の算定根拠\n保存・取消・履歴を確認" },
       { id: "sample-image", kind: "image", x: 168, y: 0, width: 336, height: 240, name: "確認用.png", src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAECAYAAACzzX7wAAAAG0lEQVR4AWM0ytvynwEPYGIgAJgYCAAmBgIAAC5JAlut5VLxAAAAAElFTkSuQmCC" },
-      { id: "sample-horizontal", kind: "table-horizontal", x: 0, y: 240, width: 1200, height: 192, cells: [["単価", ...Array.from({ length: 12 }, (_, index) => String(index + 1))]] },
-      { id: "sample-vertical", kind: "table-vertical", x: 1200, y: 0, width: 336, height: 456, cells: [["人数", ...Array(12).fill("2")]] },
-      { id: "sample-reference", kind: "initiative-reference", x: 504, y: 0, width: 336, height: 120, initiativeIdentity: initiative.identity! },
-      { id: "sample-assumption", kind: "assumption", x: 840, y: 0, width: 336, height: 144, label: "単価差", value: "10", unit: "円／件" },
-      { id: "sample-heading", kind: "heading", x: 504, y: 120, width: 336, height: 96, text: "算定根拠" },
+      { id: "sample-horizontal", kind: "table-horizontal", x: 0, y: 624, width: 1200, height: 192, rowIds: ["monthly-item"], unit: "件", cells: [["取扱件数", ...Array.from({ length: 12 }, (_, index) => String(index + 1))]] },
+      { id: "sample-vertical", kind: "table-vertical", x: 1296, y: 0, width: 336, height: 456, rowIds: ["quantity-item"], unit: "人", cells: [["人数", ...Array(12).fill("2")]] },
+      { id: "sample-reference", kind: "initiative-reference", x: 504, y: 0, width: 432, height: 600, initiativeIdentity: initiative.identity! },
+      { id: "sample-assumption", kind: "assumption", x: 960, y: 0, width: 336, height: 144, label: "単価差", value: "10", unit: "円／件" },
+      { id: "sample-heading", kind: "heading", x: 0, y: 264, width: 336, height: 96, text: "算定根拠" },
+      { id: "sample-calculation", kind: "calculation", x: 0, y: 840, width: 432, height: 432, label: "月別の増減", operation: "multiply", operands: [{ partId: "sample-assumption" }, { partId: "sample-horizontal", itemId: "monthly-item" }], unit: "円" },
+      { id: "sample-breakdown", kind: "breakdown", x: 456, y: 840, width: 600, height: 336, label: "備品の見積", items: [{ id: "sample-equipment", label: "備品", quantity: "2", price: "1250" }] },
     ],
   } });
+  if (large) {
+    const linked = (await readPlanContents(bytes)).initiatives[1]!;
+    bytes = await changeDetailDocument(bytes, { type: "create", document: { id: "00000000-0000-4000-8000-000000000002", name: "明細の値を施策へ反映", revision: 0, parts: [
+      { id: "linked-value", kind: "assumption", x: 0, y: 0, width: 336, height: 144, label: "3月の契約額", value: linked.rows[0]!.amounts[3]!, unit: "千円" },
+      { id: "linked-output", kind: "initiative-reference", x: 360, y: 0, width: 432, height: 600, initiativeIdentity: linked.identity!, binding: { source: { partId: "linked-value" }, rowId: linked.rows[0]!.id!, kindId: 1, months: [3], unit: "thousand-yen" } },
+      { id: "linked-guide", kind: "text", x: 0, y: 168, width: 336, height: 240, text: "入力値を変えると3月に反映します。空欄や円未満では最後の反映値を保持します。施策側の「明細」から直接入力に切り替えると値を残して連動を解除します。他の月は直接入力できます。" },
+    ] } });
+  }
   bytes = await stable(bytes);
   const draft: InitiativeEntryDraft = { ...initiative, fiscalYear: String(fiscalYear) };
   const historic = (amount: string) => ({ ...draft, note: large ? `直販契約の年間計画。4月の見込額は${amount}千円。代理店販売・原価・広告費・出張費は年間の契約計画に従う。` : "履歴確認用の過去の状態", rows: draft.rows.map((row, index) => index === 0 ? { ...row, amounts: { ...row.amounts, 4: amount } } : row) });

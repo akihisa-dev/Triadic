@@ -6,23 +6,25 @@ import { DetailImagePart } from "./DetailImagePart";
 import { DetailTextPart } from "./DetailTextPart";
 import { DetailTablePart } from "./DetailTablePart";
 import { DetailAssumptionPart } from "./DetailAssumptionPart";
-import { DetailInitiativePart } from "./DetailInitiativePart";
+import { DetailOutputPart } from "./DetailOutputPart";
+import { DetailNumericPart } from "./DetailNumericPart";
+import type { Account } from "../core/domain/accountMaster";
 import type { Initiative } from "../core/domain/plan";
 import { detailTableMonths, emptyDetailTable } from "../core/tables/detailTable";
 
-const partLabels = { text: "テキスト", "table-horizontal": "横向き12か月", "table-vertical": "縦向き12か月", image: "画像",
-  "initiative-reference": "施策参照", assumption: "前提条件", heading: "見出し" } satisfies Record<DetailPart["kind"], string>;
+const partLabels = { text: "文章", "table-horizontal": "月別表", image: "画像",
+  "initiative-reference": "施策への反映", assumption: "入力値", calculation: "計算", breakdown: "内訳表" };
 
 function PartPreview({ kind }: { kind: DetailPart["kind"] }) {
   const horizontal = kind === "table-horizontal";
   const columns = horizontal ? 13 : 4, rows = horizontal ? 4 : 13;
   const width = 180 / columns, height = 96 / rows;
   return <svg className="detail-pool-preview" viewBox="0 0 200 120" aria-hidden="true" focusable="false">
-    {kind === "heading" ? <text x="14" y="65" fontSize="24" fontWeight="700">見出し</text>
+    {kind === "calculation" || kind === "breakdown" ? <text x="14" y="65" fontSize="20">{kind === "calculation" ? "計算 ＝" : "内訳表"}</text> : kind === "heading" ? <text x="14" y="65" fontSize="24" fontWeight="700">見出し</text>
     : kind === "assumption" ? <text x="14" y="35" fontSize="12">
-      <tspan x="14">前提条件</tspan><tspan x="14" dy="34">単価差</tspan><tspan x="88">10</tspan><tspan x="120">円／件</tspan>
+      <tspan x="14">入力値</tspan><tspan x="14" dy="34">単価差</tspan><tspan x="88">10</tspan><tspan x="120">円／件</tspan>
     </text> : kind === "initiative-reference" ? <text x="14" y="35" fontSize="12">
-      <tspan x="14">施策参照</tspan><tspan x="14" dy="34" textDecoration="underline">配送単価の改定</tspan>
+      <tspan x="14">施策への反映</tspan><tspan x="14" dy="34" textDecoration="underline">配送単価の改定</tspan>
       <tspan x="150" dy="30" fontSize="10">変更</tspan>
     </text> : kind === "image" ? <g>
       <rect x="20" y="14" width="160" height="92" rx="4" className="detail-preview-paper" />
@@ -52,13 +54,15 @@ function newPart(kind: DetailPart["kind"]): DetailPart {
   const base = { id: crypto.randomUUID(), x: 0, y: 0 };
   if (kind === "heading") return { ...base, kind, width: 336, height: 96, text: "" };
   if (kind === "assumption") return { ...base, kind, width: 336, height: 144, label: "", value: "", unit: "" };
-  if (kind === "initiative-reference") return { ...base, kind, width: 336, height: 120, initiativeIdentity: null };
+  if (kind === "initiative-reference") return { ...base, kind, width: 432, height: 600, initiativeIdentity: null };
+  if (kind === "calculation") return { ...base, kind, width: 432, height: 432, label: "", operation: "multiply", operands: [null, null], unit: "" };
+  if (kind === "breakdown") return { ...base, kind, width: 600, height: 336, label: "", items: [{ id: crypto.randomUUID(), label: "", quantity: "", price: "" }] };
   return kind === "image" ? { ...base, width: 336, height: 240, kind, src: "", name: "" } : kind === "text" ? { ...base, ...PART_INITIAL, kind, text: "" }
-    : { ...base, ...TABLE_PART_MIN[kind], kind, cells: emptyDetailTable() };
+    : { ...base, ...TABLE_PART_MIN[kind], kind, cells: emptyDetailTable(), rowIds: Array.from({ length: 3 }, () => crypto.randomUUID()), unit: "" };
 }
 
 type Props = { parts: DetailPart[]; disabled: boolean; onChange: (parts: DetailPart[]) => void;
-  initiatives: readonly Initiative[]; navigationBlocked: boolean; onOpenInitiative: (initiative: Initiative) => void };
+  accounts: readonly Account[]; initiatives: readonly Initiative[]; navigationBlocked: boolean; onOpenInitiative: (initiative: Initiative, kind?: 1 | 2) => void };
 type Gesture = {
   pointerId: number; source: HTMLElement; origin: DetailPart; base: DetailPart[]; resizing: boolean;
   pool: boolean; startX: number; startY: number; scrollX: number; scrollY: number;
@@ -66,7 +70,7 @@ type Gesture = {
   destination: DetailPart | null;
 };
 
-export function DetailPartsCanvas({ parts, disabled, onChange, initiatives, navigationBlocked, onOpenInitiative }: Props) {
+export function DetailPartsCanvas({ parts, disabled, onChange, initiatives, accounts, navigationBlocked, onOpenInitiative }: Props) {
   const viewport = useRef<HTMLDivElement>(null);
   const gesture = useRef<Gesture | null>(null);
   const frame = useRef(0);
@@ -250,20 +254,24 @@ export function DetailPartsCanvas({ parts, disabled, onChange, initiatives, navi
             const dy = event.key === "ArrowDown" ? PART_STEP : event.key === "ArrowUp" ? -PART_STEP : 0;
             if (dx || dy) { event.preventDefault(); change({ ...part, x: Math.max(0, part.x + dx), y: Math.max(0, part.y + dy) }); }
           }}>
-          {part.kind === "initiative-reference" ? <DetailInitiativePart identity={part.initiativeIdentity} initiatives={initiatives}
-            disabled={disabled} navigationBlocked={navigationBlocked} index={index} editing={editingId === part.id}
+          {part.kind === "initiative-reference" ? <DetailOutputPart part={part} parts={parts} initiatives={initiatives} accounts={accounts}
+            disabled={disabled} navigationBlocked={navigationBlocked} editing={editingId === part.id}
             onEditingChange={editing => setEditingId(editing ? part.id : null)} onOpen={onOpenInitiative}
-            onChange={initiativeIdentity => editPart(part.id, current => current.kind === "initiative-reference" ? { ...current, initiativeIdentity } : current)} />
+            onChange={updated => editPart(part.id, () => updated)} />
+            : part.kind === "calculation" || part.kind === "breakdown" ? <DetailNumericPart part={part} parts={parts} disabled={disabled} editing={editingId === part.id}
+              onEditingChange={editing => setEditingId(editing ? part.id : null)} onChange={updated => editPart(part.id, () => updated)} />
             : part.kind === "assumption" ? <DetailAssumptionPart assumption={part} disabled={disabled} index={index} editing={editingId === part.id}
             onEditingChange={editing => setEditingId(editing ? part.id : null)}
             onChange={assumption => editPart(part.id, current => current.kind === "assumption" ? { ...current, ...assumption } : current)} />
             : part.kind === "image" ? <DetailImagePart src={part.src} name={part.name} disabled={disabled} index={index} editing={editingId === part.id}
             onEditingChange={editing => setEditingId(editing ? part.id : null)}
             onChange={image => editPart(part.id, current => current.kind === "image" ? { ...current, ...image } : current, true)} />
-            : part.kind === "table-horizontal" || part.kind === "table-vertical" ? <DetailTablePart cells={part.cells} horizontal={part.kind === "table-horizontal"} disabled={disabled} index={index} editing={editingId === part.id}
+            : part.kind === "table-horizontal" || part.kind === "table-vertical" ? <DetailTablePart cells={part.cells} rowIds={part.rowIds} unit={part.unit}
+            onUnitChange={unit => editPart(part.id, current => current.kind === "table-horizontal" || current.kind === "table-vertical" ? { ...current, unit } : current)}
+            onOrientationChange={horizontal => change({ ...part, kind: horizontal ? "table-horizontal" : "table-vertical", ...TABLE_PART_MIN[horizontal ? "table-horizontal" : "table-vertical"] })} horizontal={part.kind === "table-horizontal"} disabled={disabled} index={index} editing={editingId === part.id}
             onEditingChange={editing => setEditingId(editing ? part.id : null)}
-            onChange={cells => editPart(part.id, current => (current.kind === "table-horizontal" || current.kind === "table-vertical") ? { ...current, cells } : current)} />
-            : <DetailTextPart text={part.text} heading={part.kind === "heading"} disabled={disabled} index={index} editing={editingId === part.id}
+            onChange={(cells, rowIds) => editPart(part.id, current => (current.kind === "table-horizontal" || current.kind === "table-vertical") ? { ...current, cells, rowIds } : current)} />
+            : <DetailTextPart onHeadingChange={heading => editPart(part.id, current => current.kind === "text" || current.kind === "heading" ? { ...current, kind: heading ? "heading" : "text" } : current)} text={part.text} heading={part.kind === "heading"} disabled={disabled} index={index} editing={editingId === part.id}
               onEditingChange={editing => setEditingId(editing ? part.id : null)}
               onChange={text => editPart(part.id, current => current.kind === "text" || current.kind === "heading" ? { ...current, text } : current)} />}
           <button type="button" className="detail-part-grip" disabled={disabled}
@@ -280,7 +288,7 @@ export function DetailPartsCanvas({ parts, disabled, onChange, initiatives, navi
     </div>
     <aside className="detail-part-pool" aria-label="パーツプール">
       <h2>パーツプール</h2>
-      {(Object.keys(partLabels) as DetailPart["kind"][]).map(kind => <button key={kind} type="button" className="detail-pool-source" aria-label={`${partLabels[kind]}パーツを追加`} disabled={disabled} onPointerDown={event => start(event, undefined, false, kind)}
+      {(Object.keys(partLabels) as (keyof typeof partLabels)[]).map(kind => <button key={kind} type="button" className="detail-pool-source" aria-label={`${partLabels[kind]}パーツを追加`} disabled={disabled} onPointerDown={event => start(event, undefined, false, kind)}
         onKeyDown={event => {
           if (disabled || (event.key !== "Enter" && event.key !== " ")) return;
           event.preventDefault();

@@ -1,82 +1,82 @@
 {
   "data-history": {
-    "implementation": "4f1c586e89ec14a04e375032cad9a50f08c288db4c918710c34ec2d4faf4306f",
+    "implementation": "523be1789ef4548a8b7acc81f00a1a03d8faa042c25e797b0365340d4ebca195",
     "description": "12d39d4c3163e0daab7971c579d2f6d444e0182861ca027b995968f359f64d11"
   },
   "previous-input": {
-    "implementation": "1539e0fbc8dd790e12451ebab17be6327bbc939c6402086e1fc2d8e717bbf3ba",
+    "implementation": "fb6938e25eebd7b9cec03e344dde3e4fde4e7760bbba4a98348ffc0f81a0e7af",
     "description": "7eaa136057d49985af08a2dac79e256b71a80353f736d8f3262d239d3473c689"
   },
   "initiative-entry": {
-    "implementation": "b38ac5af10bf2cf722c73ccc302338d3f2e27964ce0037efc1ee06202f402277",
+    "implementation": "9143668601c0ca385de27d480d634f0edc0d02d336c8a3ec68c13847e6e4e651",
     "description": "6051a0a944465fc4ee009f762b76a3d4f40ba689e68951917f160694cbbef5c0"
   },
   "initiative-detail": {
-    "implementation": "245f7e96dccabc7a93411edea5ba19b7bffbaa3df904f6db40f62157603a97fb",
-    "description": "310967ff421db2876d68694197efcbc4a27f52f7c164dae5e03cef1b1736db74"
+    "implementation": "f30f6bba1d5d797336caa710b968e2d9c87a8eba797bc257c81a7da10c8570bc",
+    "description": "9baaa9df586b9a402f54ad32fc6bcbbd59adaf3e6298a27fae7745721f0067b5"
   },
   "initiative-list": {
-    "implementation": "66a7f43019545e3826e70a2681a282274cd01c41495dc76084d78949aef5809f",
+    "implementation": "9000a2a2836cb86949b0a88dc0e6084f5fbeb1ad4e2c24d357653db0a57ead57",
     "description": "788289fd4092ab740e347567cb540df3b57dde4afbda7acba87944b03a7b9f28"
   },
   "cost-table": {
-    "implementation": "613b258d8071d3edf87c8f8e0b6ece353d2866fbbe49d1452e54e05ede8fc12d",
+    "implementation": "1f3c8b9e3fd628fdc2a9be1b025ba8c527dabacab5f6b320a596ff463f97cf50",
     "description": "aaffd3a5eda75575e58678b801668dc0a6a5318ceb111000283e0498606ba567"
   },
   "expansion-table": {
-    "implementation": "d827a6f472e828f572af95a893e743510d1960ce4bebdded56b9f6b5724205f6",
+    "implementation": "6fd555a149fe9bbde879c0adeef1d830f94c264644fe843971ff808a23f630f1",
     "description": "e43b4c810c1a5a3eac40aee063b95a92e31245e67ee301fa91efa1da0c7b2707"
   },
   "kind-master": {
-    "implementation": "1e32f26aba57ce9b645a3acd8f10939c13a10b6f33f272229da6f39315653cfe",
+    "implementation": "3d2c1ccac93f9b885e665698c66b838b449a881dd8808fad138916b853743740",
     "description": "5090326ba80ae5238e028f7a9c782904538fc091aa8785a93764e301e2f0f416"
   },
   "period-master": {
-    "implementation": "b66ecd0855ea736adba9d24ce63717946f5a876e01848e4acaa1cd0660a05ceb",
+    "implementation": "87956df61fdad75313b4e076bfb89d4654c700a675d3d7ad7cf6f19f33158cd7",
     "description": "1a6c54332735228a147b409f6058ec30aabc30a85e209eb94703067245aa2db4"
   },
   "department-master": {
-    "implementation": "b956a146d05f02830981c8646e62f382d592c2de335ee7d484f80fd33dd37873",
+    "implementation": "53e44d2054ec2f7c6d682e21acb79f3e38271734700a6bec0c20723eed62b912",
     "description": "27808b62f6b0b86f9a8be0e753ea493a27919806c5a5053706f2b9f98af654cb"
   },
   "industry-master": {
-    "implementation": "73b84ef021a3a007df18bc72d5d457d1acf63525ceea9c88bad706c297221520",
+    "implementation": "58881ae8d6bebe3d5444c8b4a58f59524ad4249518f769999298e534b9226898",
     "description": "0e3a26abca5f99c7cf49fb55ef490aa29e4d4be3327675e99e3927c1b7d9d085"
   },
   "expansion-master": {
-    "implementation": "559cedf507e9c34e8baa0ae5513e5c027d0265344e1df40a43f5373d0a47be6e",
+    "implementation": "51f53bd7a9df7246a6ae7dd3bf6fe1e57c1cc8e95eeffb160fcfff7fc7691d15",
     "description": "8e75acde8a9d581a7ef2aeeaa9a0eb6a7a7588e555ef93568aac9786f616fa37"
   },
   "account-master": {
-    "implementation": "5e7c961d69dbb8a26c549bba13f8feef349c6a5f1dfb222c1f09ff1a4a0bd4b5",
+    "implementation": "06827bc6fa6894241b80c7c485252cc45b4129300abbfd7a8548fc0c7d96d89d",
     "description": "15105f85e31e72c97c77fc65feee4499670f364bae111c50be8762b7d22924cc"
   },
   "spreadsheet-io": {
-    "implementation": "0ccade5b7ffebf5ebe68ff7a6c586f59f41854df018cc962ad4dac047bbc3255",
+    "implementation": "21f740fb8de10dbc9be2d5e997b312474db8cc2147e5f73584606f54f219e3d8",
     "description": "579a2a7e2bf48b11931a4c0b4f247493e1afeaf8d1329570274212bc71a33b7e"
   },
   "account-type-master": {
-    "implementation": "be4827142380e6e47031dcead3928d9eba59eb27e6c5bcd6e2933a81cf576d50",
+    "implementation": "464f73ab86243c71d1fb7c64c2bdcfdc1e6a70b1bd6df248926df94024dc60a4",
     "description": "8a10c556248ede54c9ce2b89a436359652e78cbe58cddc019c0b6943422f217b"
   },
   "amount-item-master": {
-    "implementation": "b84c53b1c08d7f77b873dc7842a3242737177bed5c51c365bda4fae95b0cf1f3",
+    "implementation": "e1d364455767df2132c41da48ce480df816370cb0eebffc5d90fd9b314fad9bf",
     "description": "53f8c14dba0597c40b7ac851a10186d46cf13f5c7c39f66b187e7554a1a90400"
   },
   "expansion-category-master": {
-    "implementation": "cd00e12811d884185467151cd870f971d93268b910eba367439d324dfd7b3f9c",
+    "implementation": "4feabfd24de27462f255bd0d61c4bf76237262195a6b572ec19ec4407251531b",
     "description": "2fa4a759671060861637706b879cf6c366a6d0c60a2444b4c5cd821d515bcdf0"
   },
   "aggregation-master": {
-    "implementation": "500f3147e33e49a0ad489d15cdb6110b7fef4ad56d3bc625d8b99efc418d064c",
+    "implementation": "8851ce19f09373598ea43ffa0fb533566a5b3cf8e4113b26dd141d6238acbe50",
     "description": "6aa35dd3c08072ee090c132651f5f5da04b7cbb04de7ce1e1dc024e37c78014e"
   },
   "details": {
-    "implementation": "800776795e03eb5ae4339132a3c414589e632635797dee2e4ae82b311c500f3c",
-    "description": "f32924f340925987dd995abb5e6bd817b1ef6b7ea5b3719268ea50bf32e4e9ec"
+    "implementation": "74b7e59eeb66930779b7ae9e995ffd8ed06aebe4ac2884d9b9728896b4cebbd8",
+    "description": "981ee5b64d771eba5b38d272e01defe6224dd05fa5eb934cbca47f8d5f6c7d47"
   },
   "detail-editor": {
-    "implementation": "ace45979927fab06674fd20e17a28b5d2b910668bdd5611b4defe488d4e6fc23",
-    "description": "162ef8303d7c99feec492a15b2f4ee4e8625af38e27ea81811aaed1fde9e8e5d"
+    "implementation": "548c44770ac8b1632a32ed885c807c95bc6ad19d2a7d0b975560c1f963a9d7d9",
+    "description": "93b06fb89dd73e0e04d4b0b52af0bcdfc44b2685951fb691a2913806e2a6acc5"
   }
 }

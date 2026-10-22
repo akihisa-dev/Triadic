@@ -1,3 +1,5 @@
+import { detailBindings } from "./detailBindings";
+import { listDetailDocuments } from "./detailDocuments";
 import type { Database } from "./sqliteRuntime";
 import { amountToYen, yenToAmount } from "../domain/amounts";
 import { canChangeAccountRow, kindIds, type AmountSource } from "../domain/kinds";
@@ -33,11 +35,13 @@ export async function registerInitiative(bytes: Uint8Array, draft: InitiativeEnt
 
 /** The absence of a confirmed record means inheritance; explicit zero/same values stay records. */
 function writeAmounts(db: Database, rowId: string, source: AmountSource): void {
+  const bound = new Set(detailBindings(db, listDetailDocuments(db)).filter(b => b.rowId === rowId).map(b => `${b.kindId}:${b.month}`));
   const previous = new Map((db.exec("SELECT kind_id, month, amount_yen FROM initiative_amounts WHERE row_id = ?", [rowId])[0]?.values ?? [])
     .map(([kind, month, amount]) => [`${kind}:${month}`, yenToAmount(Number(amount))]));
   for (const kind of kindIds) for (const month of initiativeMonths) {
     const value = kind === 1 ? source.amounts[month] || "0" : source.overrides?.[kind]?.[month];
     const old = previous.get(`${kind}:${month}`);
+    if (bound.has(`${kind}:${month}`) && (value === undefined || old === undefined || amountToYen(value || "0") !== amountToYen(old))) throw new Error("明細から反映中の金額です。明細を編集するか、直接入力へ切り替えてください。");
     if (value === undefined) {
       if (old !== undefined) db.run("DELETE FROM initiative_amounts WHERE row_id = ? AND kind_id = ? AND month = ?", [rowId, kind, month]);
     } else if (old === undefined || amountToYen(value || "0") !== amountToYen(old)) {
@@ -61,6 +65,7 @@ export async function updateInitiative(bytes: Uint8Array, id: number, previousYe
     const draftRowsById = new Map(draft.rows.filter(row => row.id !== undefined).map(row => [row.id, row]));
     for (const row of original.rows) {
       const next = draftRowsById.get(row.id);
+      if ((!next || next.accountId !== row.accountId) && row.detailSources) throw new Error("明細から反映中の行は科目変更・削除できません。反映を解除してください。");
       if ((!next || next.accountId !== row.accountId) && !canChangeAccountRow(row)) throw new Error("全種別・全月の金額が0の行だけ勘定科目を変更・削除できます。");
     }
     database.run("UPDATE initiatives SET name = ?, note = ?, expansion_id = ?, expansion_category_id = ?, department_id = ?, period_type_id = ?, industry_id = ?, revision = revision + 1 WHERE id = ?", [draft.name.trim(), draft.note, draft.expansionId, draft.expansionCategoryId ?? null, draft.departmentId ?? null, draft.periodTypeId ?? null, draft.industryId ?? null, id]);

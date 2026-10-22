@@ -2,6 +2,7 @@ import { canMergeInitiativeOwners } from "./rebaseInitiativeOwners";
 import { canMergeAccountReferences } from "./rebaseAccountReferences";
 import { mergeRebaseOrder } from "./rebaseOrder";
 import { canMergeRowAccounts } from "./rebaseRowAccounts";
+import { canMergeDetailTargets } from "./rebaseDetailTargets";
 import { canMergeClassifications } from "./rebaseClassifications";
 import { remapAddedAccounts } from "./rebaseAccounts";
 import { BUSINESS_TABLES } from "./triadicSchema";
@@ -41,6 +42,7 @@ export async function rebasePlan(baseBytes: Uint8Array, editedBytes: Uint8Array,
     if (!canMergeInitiativeOwners(base, edited, current)) return null;
     if (!canMergeAccountReferences(base, edited, current)) return null;
     if (!canMergeRowAccounts(base, edited, current)) return null;
+    if (!canMergeDetailTargets(base, edited, current)) return null;
     if (!canMergeClassifications(base, edited, current)) return null;
     base.attachReadonly("comparison_edit", edited.export());
     const replacements = new Map<string, { removed: SqlValue[][]; inserted: SqlValue[][] }>();

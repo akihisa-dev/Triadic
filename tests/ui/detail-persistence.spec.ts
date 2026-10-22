@@ -4,7 +4,7 @@ import type { FrameLocator } from '@playwright/test';
 async function details(app: FrameLocator) {
   await app.getByRole('navigation', {name:'メインナビゲーション'}).getByRole('button',{name:'明細',exact:true}).click();
   await app.getByRole('button',{name:'全パーツの保存確認を開く',exact:true}).click();
-  await expect(app.locator('.detail-part')).toHaveCount(7);
+  await expect(app.locator('.detail-part')).toHaveCount(9);
 }
 async function text(app: FrameLocator, value: string) {
   await app.getByRole('button',{name:'パーツ 1のテキストを編集',exact:true}).dblclick();

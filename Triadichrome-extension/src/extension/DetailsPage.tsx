@@ -1,3 +1,4 @@
+import type { Account } from "../core/domain/accountMaster";
 import { useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import "./DetailsPage.css";
@@ -80,9 +81,9 @@ function DetailCreateDialog({ disabled, onCancel, onCreate, returnFocus }: {
   </dialog>, document.body);
 }
 
-export function DetailEditorPage({ document, disabled, onBack, onSave, onPendingChange, onPrepareSave, initiatives, onOpenInitiative }: AutoSaveProps & {
+export function DetailEditorPage({ document, disabled, onBack, onSave, onPendingChange, onPrepareSave, initiatives, accounts = [], onOpenInitiative }: AutoSaveProps & {
   document: DetailDocument | undefined; disabled: boolean; onBack: () => void; onSave: (document: DetailDocument) => Promise<void>;
-  initiatives: readonly Initiative[]; onOpenInitiative: (initiative: Initiative) => void;
+  accounts?: readonly Account[]; initiatives: readonly Initiative[]; onOpenInitiative: (initiative: Initiative, kind?: 1 | 2) => void;
 }) {
   const readOnly = useHistoryReadOnly();
   const autoSave = useAutoSave<DetailDocument>(async draft => {
@@ -107,7 +108,7 @@ export function DetailEditorPage({ document, disabled, onBack, onSave, onPending
     </div>
     <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave} />
     <DetailPartsCanvas key={document?.id} parts={draft?.parts ?? []} disabled={disabled || readOnly || !document}
-      initiatives={initiatives} navigationBlocked={disabled} onOpenInitiative={onOpenInitiative}
+      accounts={accounts} initiatives={initiatives} navigationBlocked={disabled} onOpenInitiative={onOpenInitiative}
       onChange={parts => { if (draft && !readOnly) controller.change({ ...draft, parts }); }} />
   </main>;
 }
