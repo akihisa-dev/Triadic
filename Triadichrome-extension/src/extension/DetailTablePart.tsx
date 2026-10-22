@@ -11,9 +11,16 @@ export function DetailTablePart({ cells, horizontal, disabled, index, editing, o
 }) {
   const root = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<Cell>({ item: 0, column: 0 });
-  const [deleting, setDeleting] = useState(false);
+  const [deleting, setDeleting] = useState<{ item: number; key: string } | null>(null);
   const [error, setError] = useState("");
   const item = Math.min(selected.item, cells.length - 1), column = Math.min(selected.column, detailTableMonths.length);
+  const deletionKey = JSON.stringify([cells, horizontal]);
+  useLayoutEffect(() => {
+    if (deleting && deleting.key !== deletionKey) {
+      setDeleting(null); onEditingChange(false);
+      requestAnimationFrame(() => root.current?.focus({ preventScroll: true }));
+    }
+  }, [deleting, deletionKey, onEditingChange]);
   useLayoutEffect(() => {
     if (editing && !deleting) root.current?.querySelector<HTMLTextAreaElement>(`[data-item="${item}"][data-column="${column}"]`)?.focus();
   }, [editing, deleting, item, column, cells.length]);
@@ -25,7 +32,7 @@ export function DetailTablePart({ cells, horizontal, disabled, index, editing, o
     setSelected({ item: Math.max(0, item + (remove ? -1 : 1)), column });
   }
   function requestDelete() {
-    if (cells[item]!.some(value => value !== "")) setDeleting(true);
+    if (cells[item]!.some(value => value !== "")) setDeleting({ item, key: deletionKey });
     else alter(true);
   }
   const latest = useRef({ cells, horizontal, disabled, onChange });
@@ -74,8 +81,11 @@ export function DetailTablePart({ cells, horizontal, disabled, index, editing, o
         <DetailTableRows cells={cells} horizontal={horizontal} editing={editing} disabled={disabled} handlers={handlers} />
       </table>
     </div>
-    <ConfirmationDialog open={editing && deleting} title="項目を削除"
+    <ConfirmationDialog open={editing && deleting !== null} title="項目を削除"
       message="選択した項目の名前と12か月の入力内容も削除します。削除しますか？" confirmLabel="削除する" busy={disabled}
-      onCancel={() => setDeleting(false)} onConfirm={() => { alter(true); setDeleting(false); }} />
+      onCancel={() => setDeleting(null)} onConfirm={() => {
+        if (deleting?.key === deletionKey && deleting.item === item) alter(true);
+        setDeleting(null);
+      }} />
   </div>;
 }

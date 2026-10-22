@@ -140,6 +140,8 @@ Accepted detail image reads finish and save before Save As, undo, navigation, or
 
 Moving, resizing, or adding detail parts preserves shared text, table, and image changes received during the gesture. A concurrent layout change cancels the gesture and displays the latest saved layout; Escape also keeps shared changes.
 
+A detail table item deletion confirmation expires if its rows, contents, or orientation change. Select the item again against the current table; unrelated text changes and cancelling the dialog leave the table intact.
+
 New file creation reserves the selected destination in the shared session before writing. A file already open, loading, or reserved for another save/create is rejected without changing its contents. Opens arriving during creation wait and read the newly saved plan. An unused existing file can still be replaced explicitly. Failed creation releases the reservation and permits retry.
 
 ### Home and disclosure of calculations and data
@@ -700,6 +702,8 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 選択済みの明細画像は、読込と保存が完了してから別名保存・操作取消・画面移動・履歴移動へ進みます。別名保存のキャンセルでも画像を保持します。画像の再選択・置換・パーツ削除では、古い読込結果を適用しません。
 
 明細パーツの移動・伸縮・追加中に届いた文章・表・画像の共有更新を保持して確定します。配置・寸法・パーツ構成も変わった場合は操作を取り消し、最新の配置を表示します。Escで取り消した場合も共有更新を保持します。
+
+明細表の項目削除を確認中に、表の項目・内容・向きが変わった場合は確認を無効にします。最新の表で項目を選び直してください。無関係の文章更新では確認を維持し、キャンセルでは表を変更しません。
 
 新規作成は書き込み前に、共有セッションで保存先を予約します。別ウィンドウで使用中・読込中、または別の保存・作成の予約中のファイルは、内容を変更せず拒否します。作成中に同じファイルを開く操作は完了を待ち、新しく保存した内容を読み込みます。未使用の既存ファイルは明示して置き換えられます。失敗時は予約を解除し、再試行できます。
 
