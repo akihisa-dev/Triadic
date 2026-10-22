@@ -81,13 +81,13 @@ export class PlanSession {
     return this.serialize(async () => { this.plan = { ...this.current(), ...await prepared }; });
   }
   getHandle(): FileSystemFileHandle | undefined { return this.plan?.handle; }
-  saveAs(destination: Destination): Promise<PlanContents> {
+  saveAs(destination: Destination, destinationBytes?: Uint8Array): Promise<PlanContents> {
     if (this.pending) return Promise.reject(new Error("ファイルの処理が終わるまでお待ちください。"));
     const source = this.current();
     // Start the picker while user activation is available and reserve the session immediately.
     const selected = destination().then(async handle => {
       if (!handle.name.toLowerCase().endsWith(".triadic")) throw new Error("拡張子は.triadicにしてください。");
-      const expected = new Uint8Array(await (await handle.getFile()).arrayBuffer());
+      const expected = destinationBytes ?? new Uint8Array(await (await handle.getFile()).arrayBuffer());
       if (source.handle && (!handle.isSameEntry || await handle.isSameEntry(source.handle))) {
         throw new Error("元のファイルとは別の保存先を選択してください。元のファイルと入力は保持しています。");
       }

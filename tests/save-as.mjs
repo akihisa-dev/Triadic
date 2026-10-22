@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import { verifyWindowSaveAs } from "./window-save-as.mjs";
 
 export async function verifySaveAs(api) {
   const initial = await api.createTriadicDatabase(2026);
+  await verifyWindowSaveAs(api, initial);
   const file = (name, bytes = new Uint8Array()) => {
     let stored = bytes, fail = "", locked = false, changed = false;
     const handle = { name, isSameEntry: async other => other === handle,

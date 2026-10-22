@@ -296,8 +296,9 @@ export class WindowSessionHub {
       case "travelOperation": return this.coordinate(peer, group => this.enqueue(peer, () => group.session.travelOperation(args[0] as -1 | 1, destinationMissing)));
       case "saveAs": {
         const group = this.requireGroup(peer), handle = args[0] as FileSystemFileHandle;
+        const expected = args[1] as Uint8Array;
         const release = await this.reserveSaveTarget(group, handle);
-        try { return await this.coordinate(peer, group => this.enqueue(peer, () => group.session.saveAs(async () => handle))); }
+        try { return await this.coordinate(peer, group => this.enqueue(peer, () => group.session.saveAs(async () => handle, expected))); }
         finally { release(); }
       }
       case "close": {

@@ -178,7 +178,10 @@ export class WindowPlanSession implements SessionAccess {
   saveAs(destination: () => Promise<FileSystemFileHandle>): Promise<PlanContents> {
     // The native picker must start in the click, before any asynchronous flushing.
     const selected = destination();
-    return selected.then(handle => this.request<PlanContents>("saveAs", handle));
+    return selected.then(async handle => {
+      const expected = new Uint8Array(await (await handle.getFile()).arrayBuffer());
+      return this.request<PlanContents>("saveAs", handle, expected);
+    });
   }
   travelOperation(direction: -1 | 1, _destination: () => Promise<FileSystemFileHandle>) { return this.request<PlanContents>("travelOperation", direction); }
   async checkpoint(force: boolean, _destination: () => Promise<FileSystemFileHandle>) { await this.request("checkpoint", force); }
