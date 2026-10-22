@@ -1,6 +1,6 @@
 /** Screen-only geometry: gentle attraction during movement, aligned placement on release. */
 export type DetailPart = { id: string; x: number; y: number; width: number; height: number } &
-  ({ kind: "text"; text: string } | { kind: "table-horizontal" | "table-vertical"; cells: string[][] });
+  ({ kind: "text"; text: string } | { kind: "image"; src: string; name: string } | { kind: "table-horizontal" | "table-vertical"; cells: string[][] });
 export const PART_STEP = 24;
 export const PART_MIN = 72;
 export const PART_GAP = 0;

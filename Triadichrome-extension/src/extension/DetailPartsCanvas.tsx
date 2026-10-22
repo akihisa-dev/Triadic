@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as Reac
 import { createPortal } from "react-dom";
 import { arrangeParts, magnetPosition, PART_INITIAL, PART_STEP, TABLE_PART_MIN, resizePart, settlePart, stableSnapPosition, type DetailPart } from "../core/tables/detailParts";
 import "./DetailPartsCanvas.css";
+import { DetailImagePart } from "./DetailImagePart";
 import { DetailTextPart } from "./DetailTextPart";
 import { DetailTablePart } from "./DetailTablePart";
 import { detailTableMonths, emptyDetailTable } from "../core/tables/detailTable";
@@ -11,7 +12,12 @@ function PartPreview({ kind }: { kind: DetailPart["kind"] }) {
   const columns = horizontal ? 13 : 4, rows = horizontal ? 4 : 13;
   const width = 180 / columns, height = 96 / rows;
   return <svg className="detail-pool-preview" viewBox="0 0 200 120" aria-hidden="true" focusable="false">
-    {kind === "text" ? <text x="14" y="32" fontSize="12">
+    {kind === "image" ? <g>
+      <rect x="20" y="14" width="160" height="92" rx="4" className="detail-preview-paper" />
+      <circle cx="135" cy="38" r="10" />
+      <path d="M30 94L75 45L106 76L126 58L170 94Z" />
+      <text x="100" y="113" textAnchor="middle" fontSize="10">画像</text>
+    </g> : kind === "text" ? <text x="14" y="32" fontSize="12">
       <tspan x="14">施策についての説明文</tspan>
       <tspan x="14" dy="23">目的や考え方などを</tspan>
       <tspan x="14" dy="20">ここに記入します。</tspan>
@@ -32,7 +38,7 @@ function PartPreview({ kind }: { kind: DetailPart["kind"] }) {
 
 function newPart(kind: DetailPart["kind"]): DetailPart {
   const base = { id: crypto.randomUUID(), x: 0, y: 0 };
-  return kind === "text" ? { ...base, ...PART_INITIAL, kind, text: "" }
+  return kind === "image" ? { ...base, width: 336, height: 240, kind, src: "", name: "" } : kind === "text" ? { ...base, ...PART_INITIAL, kind, text: "" }
     : { ...base, ...TABLE_PART_MIN[kind], kind, cells: emptyDetailTable() };
 }
 
@@ -200,9 +206,12 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
             const dy = event.key === "ArrowDown" ? PART_STEP : event.key === "ArrowUp" ? -PART_STEP : 0;
             if (dx || dy) { event.preventDefault(); change({ ...part, x: Math.max(0, part.x + dx), y: Math.max(0, part.y + dy) }); }
           }}>
-          {part.kind !== "text" ? <DetailTablePart cells={part.cells} horizontal={part.kind === "table-horizontal"} disabled={disabled} index={index} editing={editingId === part.id}
+          {part.kind === "image" ? <DetailImagePart src={part.src} name={part.name} disabled={disabled} index={index} editing={editingId === part.id}
             onEditingChange={editing => setEditingId(editing ? part.id : null)}
-            onChange={cells => editPart(part.id, current => current.kind !== "text" ? { ...current, cells } : current)} />
+            onChange={image => editPart(part.id, current => current.kind === "image" ? { ...current, ...image } : current)} />
+            : part.kind !== "text" ? <DetailTablePart cells={part.cells} horizontal={part.kind === "table-horizontal"} disabled={disabled} index={index} editing={editingId === part.id}
+            onEditingChange={editing => setEditingId(editing ? part.id : null)}
+            onChange={cells => editPart(part.id, current => (current.kind === "table-horizontal" || current.kind === "table-vertical") ? { ...current, cells } : current)} />
             : <DetailTextPart text={part.text} disabled={disabled} index={index} editing={editingId === part.id}
               onEditingChange={editing => setEditingId(editing ? part.id : null)}
               onChange={text => editPart(part.id, current => current.kind === "text" ? { ...current, text } : current)} />}
@@ -220,7 +229,7 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
     </div>
     <aside className="detail-part-pool" aria-label="パーツプール">
       <h2>パーツプール</h2>
-      {(["text", "table-horizontal", "table-vertical"] as const).map(kind => <button key={kind} type="button" className="detail-pool-source" aria-label={`${kind === "text" ? "テキスト" : kind === "table-horizontal" ? "横向き12か月" : "縦向き12か月"}パーツを追加`} disabled={disabled} onPointerDown={event => start(event, undefined, false, kind)}
+      {(["text", "table-horizontal", "table-vertical", "image"] as const).map(kind => <button key={kind} type="button" className="detail-pool-source" aria-label={`${kind === "image" ? "画像" : kind === "text" ? "テキスト" : kind === "table-horizontal" ? "横向き12か月" : "縦向き12か月"}パーツを追加`} disabled={disabled} onPointerDown={event => start(event, undefined, false, kind)}
         onKeyDown={event => {
           if (disabled || (event.key !== "Enter" && event.key !== " ")) return;
           event.preventDefault();
