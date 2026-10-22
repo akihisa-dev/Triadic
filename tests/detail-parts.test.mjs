@@ -221,3 +221,24 @@ test('2000項目の1セル更新と両方向の貼り付けで、変更した項
     assert.equal(JSON.stringify(cells), before);
   });
 });
+
+test('移動は四方向で8pxまで周囲を保ち、8px超で押し退け、浅い解放は操作側だけを調整する', async () => {
+  await withNodeBundle('Triadichrome-extension/src/core/tables/detailParts.ts', async ({ arrangeParts, settleMovingParts, partsOverlap, PART_PUSH_DEPTH }) => {
+    const fixed = { id: 'fixed', kind: 'text', text: '保持', x: 240, y: 240, width: 96, height: 96 };
+    for (const [x,y,dx,dy] of [[144,240,1,0],[336,240,-1,0],[240,144,0,1],[240,336,0,-1],[144,144,1,1]]) {
+      const origin = {...fixed,id:'active',x,y}, base=[fixed,origin], saved=JSON.stringify(base);
+      for (const depth of [0,1,4,8,8.01,12,24]) {
+        const active={...origin,x:x+depth*dx,y:y+depth*dy};
+        const preview=arrangeParts(base,active,false,undefined,PART_PUSH_DEPTH);
+        if(depth<=8) assert.deepEqual(preview[0],fixed);
+        else { assert.notDeepEqual(preview[0],fixed); assert.ok(!partsOverlap(preview[0],preview[1])); }
+        // Even a landing preview rounded into the neighbour must leave that neighbour alone.
+        const landing=settleMovingParts(preview,{...origin,x:x+24*dx,y:y+24*dy});
+        assert.deepEqual(landing[0],preview[0]);
+        assert.ok(!partsOverlap(landing[0],landing[1]));
+        for(const p of landing) for(const k of ['x','y','width','height']) assert.equal(p[k]%24,0);
+      }
+      assert.equal(JSON.stringify(base),saved,'取消用の元配置を保持');
+    }
+  });
+});

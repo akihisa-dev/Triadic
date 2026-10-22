@@ -4,6 +4,7 @@ export type DetailPart = { id: string; x: number; y: number; width: number; heig
 export const PART_STEP = 24;
 export const PART_MIN = 72;
 export const PART_GAP = 0;
+export const PART_PUSH_DEPTH = 8;
 export const PART_INITIAL = { width: 168, height: 96 };
 // Space for twelve month headers and the initial items, including editing controls.
 export const TABLE_PART_MIN = {
@@ -94,34 +95,47 @@ class PartSpace {
   }
 }
 
-/** The active rectangle stays under the pointer; neighbours choose the nearest free edge. */
-export function arrangeParts(original: readonly DetailPart[], active: DetailPart, settled = false, metrics?: { overlapChecks: number }): DetailPart[] {
-  if (settled) { original = original.map(settlePart); active = settlePart(active); }
+function nearestFreePart(part: DetailPart, placed: readonly DetailPart[], space: PartSpace): DetailPart {
+  if (!space.overlaps(part)) return part;
   const forward = (value: number) => Math.ceil(value / PART_STEP) * PART_STEP;
   const backward = (value: number) => Math.floor(value / PART_STEP) * PART_STEP;
+  const candidates: DetailPart[] = [], xs = new Set<number>(), ys = new Set<number>();
+  for (const other of placed) {
+    for (const x of [forward(other.x + other.width + PART_GAP), backward(other.x - part.width - PART_GAP)]) {
+      if (x >= 0 && !xs.has(x)) { xs.add(x); candidates.push({ ...part, x }); }
+    }
+    for (const y of [forward(other.y + other.height + PART_GAP), backward(other.y - part.height - PART_GAP)]) {
+      if (y >= 0 && !ys.has(y)) { ys.add(y); candidates.push({ ...part, y }); }
+    }
+  }
+  candidates.sort((a, b) => (a.x - part.x) ** 2 + (a.y - part.y) ** 2 - ((b.x - part.x) ** 2 + (b.y - part.y) ** 2));
+  // The first free candidate in stable distance order is the old winner.
+  return candidates.find(item => !space.overlaps(item))!;
+}
+
+/** The active rectangle stays under the pointer; neighbours choose the nearest free edge. */
+export function arrangeParts(original: readonly DetailPart[], active: DetailPart, settled = false, metrics?: { overlapChecks: number }, pushDepth = 0): DetailPart[] {
+  if (settled) { original = original.map(settlePart); active = settlePart(active); }
   const placed: DetailPart[] = [active], space = new PartSpace(metrics);
-  space.add(active);
+  // Only the moving part has a contact allowance; pushed neighbours still avoid each other.
+  space.add({ ...active, x: active.x + pushDepth, y: active.y + pushDepth,
+    width: active.width - pushDepth * 2, height: active.height - pushDepth * 2 });
   for (const part of original) {
     if (part.id === active.id) continue;
-    let candidate = part;
-    if (space.overlaps(part)) {
-      const candidates: DetailPart[] = [], xs = new Set<number>(), ys = new Set<number>();
-      for (const other of placed) {
-        for (const x of [forward(other.x + other.width + PART_GAP), backward(other.x - part.width - PART_GAP)]) {
-          if (x >= 0 && !xs.has(x)) { xs.add(x); candidates.push({ ...part, x }); }
-        }
-        for (const y of [forward(other.y + other.height + PART_GAP), backward(other.y - part.height - PART_GAP)]) {
-          if (y >= 0 && !ys.has(y)) { ys.add(y); candidates.push({ ...part, y }); }
-        }
-      }
-      candidates.sort((a, b) => (a.x - part.x) ** 2 + (a.y - part.y) ** 2 - ((b.x - part.x) ** 2 + (b.y - part.y) ** 2));
-      // The first free candidate in stable distance order is the old winner.
-      candidate = candidates.find(item => !space.overlaps(item))!;
-    }
+    const candidate = nearestFreePart(part, placed, space);
     placed.push(candidate); space.add(candidate);
   }
   const byId = new Map(placed.map(part => [part.id, part]));
   const result = original.map(part => byId.get(part.id)!);
   if (!original.some(part => part.id === active.id)) result.push(active);
   return result;
+}
+
+/** Resolve the landing against the preview's neighbours, without pushing on a shallow release. */
+export function settleMovingParts(preview: readonly DetailPart[], destination: DetailPart): DetailPart[] {
+  const neighbours = preview.filter(part => part.id !== destination.id);
+  const space = new PartSpace();
+  for (const part of neighbours) space.add(part);
+  const active = nearestFreePart(settlePart(destination), neighbours, space);
+  return preview.map(part => part.id === active.id ? active : part);
 }

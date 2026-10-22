@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { createPortal } from "react-dom";
-import { arrangeParts, magnetPosition, PART_INITIAL, PART_STEP, TABLE_PART_MIN, resizePart, settlePart, stableSnapPosition, type DetailPart } from "../core/tables/detailParts";
+import { arrangeParts, settleMovingParts, PART_PUSH_DEPTH, magnetPosition, PART_INITIAL, PART_STEP, TABLE_PART_MIN, resizePart, settlePart, stableSnapPosition, type DetailPart } from "../core/tables/detailParts";
 import "./DetailPartsCanvas.css";
 import { DetailImagePart } from "./DetailImagePart";
 import { DetailTextPart } from "./DetailTextPart";
@@ -103,7 +103,6 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
       const y = stableSnapPosition(active.y, previous?.y);
       if (!g.destination || g.destination.x !== x || g.destination.y !== y) {
         g.destination = { ...settlePart(active), x, y };
-        setDestination(g.destination);
       }
     } else if (g.destination) {
       g.destination = null;
@@ -114,7 +113,10 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
     const signature = `${active.x}:${active.y}:${active.width}:${active.height}:${inside}`;
     if (signature !== g.signature) {
       g.signature = signature;
-      setDisplay(inside ? arrangeParts(g.base, active) : g.base);
+      const preview = inside ? arrangeParts(g.base, active, false, undefined, g.resizing ? 0 : PART_PUSH_DEPTH) : g.base;
+      setDisplay(preview);
+      setDestination(inside && g.destination
+        ? settleMovingParts(preview, g.destination).find(part => part.id === active.id)! : null);
     }
     setGhost(previous => {
       if (!g.pool || inside) return previous === null ? previous : null;
@@ -128,7 +130,8 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
     if (!g) return;
     draw(performance.now(), false);
     cancelAnimationFrame(frame.current);
-    const result = commit && g.valid && !latest.current.disabled ? arrangeParts(g.base, g.destination ?? g.current, true) : latest.current.parts;
+    const result = commit && g.valid && !latest.current.disabled ? (g.resizing ? arrangeParts(g.base, g.current, true)
+      : settleMovingParts(arrangeParts(g.base, g.current, false, undefined, PART_PUSH_DEPTH), g.destination ?? g.current)) : latest.current.parts;
     gesture.current = null;
     setDragging(null); setGhost(null); setDestination(null); setDisplay(result);
     if (g.source.hasPointerCapture(g.pointerId)) g.source.releasePointerCapture(g.pointerId);

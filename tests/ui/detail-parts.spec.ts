@@ -331,3 +331,32 @@ test('24px格子上で左右・上下の辺と角を共有して配置し、移�
   await settleMotion(app.locator('body'));
   expect(await rectangles(app)).toEqual(expected(192, 24));
 });
+
+test('浅い接触と解放では相手を動かさず、8px超の押し込みで押し退ける', async ({ app, page }, info) => {
+  test.skip(info.project.name !== 'desktop');
+  await openEditor(app);
+  const source = app.getByRole('button', { name: 'テキストパーツを追加', exact: true });
+  await source.press('Enter'); await source.press('Enter');
+  await settleMotion(app.locator('body'));
+  const before = await rectangles(app);
+  const moving = app.getByRole('group', { name: 'パーツ 1', exact: true });
+  const box = (await moving.boundingBox())!;
+  const start = async () => { await page.mouse.move(box.x + 70, box.y + 45); await page.mouse.down(); };
+  const overlap = async (depth: number) => {
+    await page.mouse.move(box.x + 70, box.y + 45 - depth, { steps: 8 });
+    await expect.poll(async () => (await rectangles(app))[0]!.y).toBeLessThan(before[0]!.y);
+    await settleMotion(app.locator('body'));
+  };
+  await start();
+  for (const depth of [4, 8]) { await overlap(depth); expect((await rectangles(app))[1]).toEqual(before[1]); }
+  await page.screenshot({ path: info.outputPath('push-shallow.png') });
+  await page.mouse.up(); await settleMotion(app.locator('body'));
+  expect(await rectangles(app)).toEqual(before);
+  await start(); await overlap(12);
+  await expect.poll(async () => (await rectangles(app))[1]!.y).toBe(0);
+  await settleMotion(app.locator('body'));
+  await page.screenshot({ path: info.outputPath('push-deep.png') });
+  await page.mouse.up(); await settleMotion(app.locator('body'));
+  const after = await rectangles(app);
+  expect(after[1]!.y + after[1]!.height).toBeLessThanOrEqual(after[0]!.y);
+});
