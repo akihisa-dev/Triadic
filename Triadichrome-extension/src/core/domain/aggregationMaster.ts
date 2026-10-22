@@ -7,7 +7,9 @@ type AggregationChangeOperation =
   | { type: "add"; name: string; displayName?: string }
   | { type: "update"; id: number; name: string; displayName?: string; members: AggregationMember[] }
   | { type: "move"; member: Pick<AggregationMember, "kind" | "id">; parentId: number | null; sign: 1 | -1 }
-  | { type: "delete"; id: number };
+  | { type: "delete"; id: number; deletionKey?: string };
+
+export const aggregationDeletionKey = (group: Aggregation) => JSON.stringify([group.id, group.name, group.displayName ?? group.name, group.required, group.members]);
 
 export function changedAggregations(groups: Aggregation[], accounts: Account[], change: AggregationChange): Aggregation[] {
   if (change.type === "reorder") { validateMasterOrder(change.order, accounts, groups); return groups; }
@@ -32,6 +34,9 @@ export function changedAggregations(groups: Aggregation[], accounts: Account[], 
     const current = groups.find(group => group.id === change.id);
     if (!current) throw new Error("集計が見つかりません。");
     if (change.type === "delete") {
+      if (change.deletionKey !== undefined && change.deletionKey !== aggregationDeletionKey(current)) {
+        throw new Error("削除対象の集計が変更されています。対象を選び直してください。");
+      }
       if (current.required) throw new Error("必須集計は削除できません。");
       if (current.members.length || groups.some(group => group.members.some(member => member.kind === "group" && member.id === current.id))) throw new Error("使用中の集計は削除できません。先に所属を解除してください。");
       next = groups.filter(group => group.id !== current.id);

@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import { verifyWindowMasterDelete } from "./window-master-delete.mjs";
 
 export async function verifyPeriodData(api) {
+  await verifyWindowMasterDelete(api);
   const { createTriadicDatabase, readPlanContents, changePeriodMaster, savePeriodMaster, openTriadicDatabase, registerInitiative, updateInitiative, validateTriadicDatabase } = api;
   const bytes = await createTriadicDatabase();
   const initial = await readPlanContents(bytes);

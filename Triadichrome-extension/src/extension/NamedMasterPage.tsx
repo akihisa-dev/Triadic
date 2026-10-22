@@ -7,8 +7,8 @@ import { AutoSaveStatus } from "./AutoSaveStatus";
 import { ConfirmationDialog } from "./ConfirmationDialog";
 import { StatusNotice } from "./StatusNotice";
 
-export type NamedMasterRow = { id: number; identity?: string; name: string; code: string; relationIds?: number[] };
-export type NamedMasterChange = { type: "add"; name: string; code: string; relationIds?: number[] } | ({ type: "update" } & NamedMasterRow) | { type: "delete"; id: number };
+export type NamedMasterRow = { id: number; identity?: string; name: string; code: string; relationIds?: number[]; deletionKey?: string };
+export type NamedMasterChange = { type: "add"; name: string; code: string; relationIds?: number[] } | ({ type: "update" } & NamedMasterRow) | { type: "delete"; id: number; deletionKey?: string };
 type Props = AutoSaveProps & {
   rows: NamedMasterRow[]; usedIds?: Set<number>; isSaving: boolean;
   subject: string; slug: string; coded?: boolean;
@@ -69,7 +69,7 @@ export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange,
     {draft && <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave} />}
     <StatusNotice {...notice} onDismiss={dismissNotice} />
     <ConfirmationDialog open={deleting !== null} title={`${subject}を削除`} message={deleting ? `「${coded ? `${deleting.code} ` : ""}${deleting.name}」を削除しますか？` : ""}
-      confirmLabel="削除する" busy={isSaving} onCancel={() => setDeleting(null)} onConfirm={() => { if (deleting && !isSaving) void save({ type: "delete", id: deleting.id }); }} />
+      confirmLabel="削除する" busy={isSaving} onCancel={() => setDeleting(null)} onConfirm={() => { if (deleting && !isSaving) void save({ type: "delete", id: deleting.id, ...(deleting.deletionKey === undefined ? {} : { deletionKey: deleting.deletionKey }) }); }} />
     <div className="account-master-list" role="region" aria-label={`${subject}一覧`} tabIndex={0}>
       <table className={`account-master-table ${slug}-master-table`} aria-label={`${subject}一覧`}>
         <thead><tr>{coded && <th scope="col">{subject}コード</th>}<th scope="col">{subject}名</th>{relationOptions && <th scope="col">{relationLabel}</th>}<th scope="col">操作</th></tr></thead>

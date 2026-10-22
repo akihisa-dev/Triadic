@@ -132,6 +132,8 @@ The sidebar normally forms a 64px icon rail. Hovering shows item names and the f
 
 Three further parts are available: Initiative reference, Assumption, and Heading. A reference selects one saved initiative by its creation identity, follows renames, and opens its initial budget; the Back to details action returns to the originating detail. Change selects another initiative. A deleted or recreated target displays “参照先がありません” instead of linking to a reused numeric ID. Assumptions display a label, value, and unit; double-click edits all three, preserving values as text without calculations or budget changes. Headings use larger bold text and double-click editing. Outside clicks or Esc retain edits. Initial sizes are 336×120px, 336×144px, and 336×96px respectively, with the existing 72×72px minimum and 24px placement rules. New parts start empty. Their content is saved in detail_documents.parts_json and participates in autosave, undo/redo, history, Save As, and shared windows. Past viewing is read-only and references open initiatives from the same snapshot. Deleted content may remain in history or copies; there is no automatic expiry, external transmission, or additional permission.
 
+Period and optional aggregation deletions compare the confirmed business fields again when saving. Reusing an ID or changing the target makes the old confirmation fail without writing; select the current target and confirm again. Unrelated master changes do not invalidate it.
+
 New file creation reserves the selected destination in the shared session before writing. A file already open, loading, or reserved for another save/create is rejected without changing its contents. Opens arriving during creation wait and read the newly saved plan. An unused existing file can still be replaced explicitly. Failed creation releases the reservation and permits retry.
 
 ### Home and disclosure of calculations and data
@@ -684,6 +686,8 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 画像パーツはプールの画像の見本から追加し、ダブルクリックまたはEnter・Spaceで端末内のPNG・JPEG・WebPを選択・差し替えできる。初期寸法は336×240px、最小寸法と配置規則はテキストと共通とし、画像は縦横比を保って枠内に収める。移動・右下での伸縮・削除は既存パーツと共通とする。画像の読み込みと表示可能かの検証に成功した後だけ置き換え、選択取消・非対応形式・破損・読み込み失敗では元の画像と配置を保持する。画像データと元ファイル名を同じ.triadicに保存し、閉じて開き直しても表示する。取消・時点履歴・別名保存と複数ウィンドウで共有する。外部送信・追加権限はない。
 
 明細編集のパーツプールに「施策参照」「前提条件」「見出し」を置きます。施策参照は登録済み施策を1件選び、現在の施策名をクリックすると一次予算の詳細を開き、「明細へ戻る」で元の明細へ戻ります。「変更」で選び直せます。参照には施策の作成識別子を保持し、改名に追従します。削除・再作成で参照が失われた場合は「参照先がありません」と表示し、同じ番号の別施策へ接続しません。前提条件は項目名・値・単位をひとまとまりで表示し、ダブルクリックで3項目を編集します。値は文字としてそのまま保持し、数値変換・計算・予算への転記を行いません。見出しは説明文より大きな太字で表示し、ダブルクリックで編集します。前提条件と見出しは外をクリックまたはEscで内容を保持して編集を終えます。初期寸法は施策参照336×120px、前提条件336×144px、見出し336×96pxとし、最小72×72px・24px刻みの移動と伸縮・削除は既存パーツと共通です。プールの見本は内容を引き継がず空で追加します。3種類ともdetail_documentsのparts_jsonへ保存し、自動保存・取り消し・やり直し・時点履歴・別名保存・複数ウィンドウの共有に含めます。過去閲覧では編集できず、施策参照は同じ時点の施策詳細を参照専用で開きます。削除後も取消・履歴・コピーには残る場合があり、保持期限・自動削除・外部送信・追加権限はありません。
+
+期間・任意集計の削除は、確認時の業務項目を保存時にも照合します。同じ番号で別の対象が作られた場合や対象が変更された場合は書き込まず拒否し、現在の対象を選び直して確認できます。無関係のマスタ更新だけでは拒否しません。
 
 新規作成は書き込み前に、共有セッションで保存先を予約します。別ウィンドウで使用中・読込中、または別の保存・作成の予約中のファイルは、内容を変更せず拒否します。作成中に同じファイルを開く操作は完了を待ち、新しく保存した内容を読み込みます。未使用の既存ファイルは明示して置き換えられます。失敗時は予約を解除し、再試行できます。
 

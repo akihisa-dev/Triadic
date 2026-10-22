@@ -2,6 +2,8 @@ import type { PlanCommand } from "./planCommands";
 import type { Initiative, InitiativeEntryDraft, PlanContents } from "./plan";
 import { reconcileSavedDraft } from "../reconcileSavedDraft";
 import { createPreviousInput } from "./previousAmounts";
+import { periodDeletionKey } from "./periodMaster";
+import { aggregationDeletionKey } from "./aggregationMaster";
 
 const collections = { account: "accounts", aggregation: "aggregations", expansion: "expansions", "expansion-category": "expansionCategories", department: "departments", industry: "industries", period: "periodTypes" } as const;
 export type WindowCommandBase = Partial<Pick<PlanContents, typeof collections[keyof typeof collections] | "initiatives" | "previousAmounts">>;
@@ -15,7 +17,8 @@ export function windowCommandBase(command: PlanCommand, contents: PlanContents):
     return { industries: contents.industries.filter(item => item.id === industryId), departments: contents.departments.filter(item => item.id === departmentId),
       accounts: contents.accounts, previousAmounts: contents.previousAmounts.filter(item => item.industryId === industryId && item.departmentId === departmentId && item.previousKind === previousKind) };
   }
-  if (command.type !== "initiative.register" && command.type !== "settings" && command.change.type === "update") {
+  if (command.type !== "initiative.register" && command.type !== "settings" && (command.change.type === "update"
+    || ((command.type === "period" || command.type === "aggregation") && command.change.type === "delete"))) {
     const key = collections[command.type], id = command.change.id;
     return { [key]: contents[key].filter(item => item.id === id) };
   }
@@ -30,6 +33,18 @@ const initiativeDraft = (item: Initiative): InitiativeEntryDraft => ({ name: ite
 /** A focus change can arrive ahead of the previous window's save publication. Apply only this window's edits. */
 export function reconcileWindowCommand(command: PlanCommand, base: WindowCommandBase, current: PlanContents): PlanCommand {
   if (command.type === "detail") return command;
+  if (command.type === "period" && command.change.type === "delete") {
+    const id = command.change.id;
+    const before = base.periodTypes?.find(item => item.id === id);
+    if (!before) throw new Error("削除対象の期間が変更されています。対象を選び直してください。");
+    return { ...command, change: { ...command.change, deletionKey: command.change.deletionKey ?? periodDeletionKey(before) } };
+  }
+  if (command.type === "aggregation" && command.change.type === "delete") {
+    const id = command.change.id;
+    const before = base.aggregations?.find(item => item.id === id);
+    if (!before) throw new Error("削除対象の集計が変更されています。対象を選び直してください。");
+    return { ...command, change: { ...command.change, deletionKey: command.change.deletionKey ?? aggregationDeletionKey(before) } };
+  }
   if (command.type === "initiative.update") {
     const before = base.initiatives?.find(item => item.id === command.id);
     const saved = current.initiatives.find(item => item.id === command.id);

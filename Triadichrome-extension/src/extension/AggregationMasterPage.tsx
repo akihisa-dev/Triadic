@@ -1,7 +1,7 @@
 import { Fragment, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Account } from "../core/domain/accountMaster";
 import type { Aggregation } from "../core/domain/aggregations";
-import type { AggregationChange } from "../core/domain/aggregationMaster";
+import { aggregationDeletionKey, type AggregationChange } from "../core/domain/aggregationMaster";
 import { masterRowKey, orderedMasterRows, type MasterRow } from "../core/domain/masterRows";
 import { aggregationRanges, placedMasterRows, masterRowSubtree, shiftedMasterRows } from "../core/tables/aggregationLayout";
 import { aggregationForbidden } from "../core/tables/aggregationGraph";
@@ -237,7 +237,7 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
       <button className="primary-button" type="submit" disabled={disabled || !name.trim() || !displayName.trim()}>登録</button><button className="text-button" type="button" disabled={disabled} onClick={() => setAdding(false)}>キャンセル</button></form>}
     <StatusNotice {...notice} onDismiss={dismiss} />
     <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave} />
-    <ConfirmationDialog open={deleting !== null} title="集計を削除" message={`「${deleting?.name ?? ""}」を削除しますか？`} confirmLabel="削除する" busy={isSaving || busy} onCancel={() => setDeleting(null)} onConfirm={() => { if (deleting && !disabled) void perform({ type: "delete", id: deleting.id }).then(() => setDeleting(null)); }} />
+    <ConfirmationDialog open={deleting !== null} title="集計を削除" message={`「${deleting?.name ?? ""}」を削除しますか？`} confirmLabel="削除する" busy={isSaving || busy} onCancel={() => setDeleting(null)} onConfirm={() => { if (deleting && !disabled) void perform({ type: "delete", id: deleting.id, deletionKey: aggregationDeletionKey(deleting) }).then(() => setDeleting(null)); }} />
     <div className="aggregation-workspace">
     <div className="aggregation-grid-scroll" ref={viewport} role="region" aria-label="集計の構成" tabIndex={0}>
       <div className="aggregation-grid-surface" ref={surface} style={{ minWidth: Math.max(500, gutter + 360) }}>
