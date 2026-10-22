@@ -1,5 +1,5 @@
-// Previous placement rules retained only as a regression oracle.
-const PART_STEP = 16, PART_GAP = 4;
+// Exhaustive reference implementation for the current placement rules.
+const PART_STEP = 24, PART_GAP = 0;
 export function referenceArrangement(original, active, settled, { partsOverlap, settlePart }) {
   if (settled) { original = original.map(settlePart); active = settlePart(active); }
   const forward = (value) => Math.ceil(value / PART_STEP) * PART_STEP;

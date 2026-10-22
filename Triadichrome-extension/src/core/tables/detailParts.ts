@@ -1,14 +1,14 @@
 /** Screen-only geometry: gentle attraction during movement, aligned placement on release. */
 export type DetailPart = { id: string; x: number; y: number; width: number; height: number } &
   ({ kind: "text"; text: string } | { kind: "table-horizontal" | "table-vertical"; cells: string[][] });
-export const PART_STEP = 16;
-export const PART_MIN = 64;
-export const PART_GAP = 4;
-export const PART_INITIAL = { width: 160, height: 96 };
+export const PART_STEP = 24;
+export const PART_MIN = 72;
+export const PART_GAP = 0;
+export const PART_INITIAL = { width: 168, height: 96 };
 // Space for twelve month headers and the initial items, including editing controls.
 export const TABLE_PART_MIN = {
   "table-horizontal": { width: 1200, height: 192 },
-  "table-vertical": { width: 320, height: 448 },
+  "table-vertical": { width: 336, height: 456 },
 };
 
 function minimumSize(part: DetailPart) {

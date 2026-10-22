@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { withNodeBundle } from '../scripts/node-bundle.mjs';
 
-test('衝突を解消した全パーツが確定時に16px間隔へ揃い、件数と元配置を保持する', async () => {
+test('衝突を解消した全パーツが確定時に24px間隔へ揃い、件数と元配置を保持する', async () => {
   await withNodeBundle('Triadichrome-extension/src/core/tables/detailParts.ts', async ({ arrangeParts, partsOverlap, settlePart }) => {
     const originals = Array.from({ length: 100 }, (_, i) => ({ id: String(i), text: `説明文 ${i}\n根拠を記載`, x: (i % 10) * 164 + .5, y: Math.floor(i / 10) * 100 + .25, width: 160, height: 96 }));
     const before = JSON.stringify(originals);
@@ -15,8 +15,8 @@ test('衝突を解消した全パーツが確定時に16px間隔へ揃い、件�
           const part = result[i];
           assert.equal(part.text, part.id === active.id ? active.text : originals.find(item => item.id === part.id).text, '移動・伸縮・押し出しで文章を失わない');
           assert.ok(part.x >= 0 && part.y >= 0);
-          if (settled) for (const value of [part.x, part.y, part.width, part.height]) assert.equal(value % 16, 0);
-          for (let j = i + 1; j < result.length; j++) assert.ok(!partsOverlap(part, result[j]), `${part.id} と ${result[j].id} は4px以上離れる`);
+          if (settled) for (const value of [part.x, part.y, part.width, part.height]) assert.equal(value % 24, 0);
+          for (let j = i + 1; j < result.length; j++) assert.ok(!partsOverlap(part, result[j]), `${part.id} と ${result[j].id} は内部が重ならない`);
         }
       }
     }
@@ -24,14 +24,30 @@ test('衝突を解消した全パーツが確定時に16px間隔へ揃い、件�
   });
 });
 
+test('左右・上下・角の接触はそのまま配置でき、内部が重なる場合だけ押し出す', async () => {
+  await withNodeBundle('Triadichrome-extension/src/core/tables/detailParts.ts', async ({ arrangeParts, partsOverlap }) => {
+    const active = { id: 'active', kind: 'text', text: '保持', x: 240, y: 240, width: 168, height: 96 };
+    for (const [x, y] of [[72, 240], [408, 240], [240, 144], [240, 336], [72, 144], [408, 336], [72, 336], [408, 144]]) {
+      const neighbour = { ...active, id: 'neighbour', x, y };
+      assert.equal(partsOverlap(active, neighbour), false, '辺または角の接触は重なりにしない');
+      for (const settled of [false, true]) assert.deepEqual(arrangeParts([active, neighbour], active, settled), [active, neighbour]);
+    }
+    const overlapping = { ...active, id: 'neighbour', x: 407 };
+    assert.equal(partsOverlap(active, overlapping), true, '1pxの内部重なりを検出する');
+    const result = arrangeParts([active, overlapping], active, true);
+    assert.equal(result[1].x, active.x + active.width, '押し出し先にも余計な隙間を設けない');
+    assert.equal(partsOverlap(result[0], result[1]), false);
+  });
+});
+
 test('移動中は近い位置へ軽く吸着し、境界を跨いでも連続して追従する', async () => {
   await withNodeBundle('Triadichrome-extension/src/core/tables/detailParts.ts', async ({ magnetPosition, snapPosition }) => {
-    assert.ok(magnetPosition(29) > 29 && magnetPosition(29) < 32, '近づいた位置へ引き寄せるが移動中は完全固定しない');
-    assert.ok(magnetPosition(35) < 35 && magnetPosition(35) > 32);
-    assert.equal(magnetPosition(32), 32);
+    assert.ok(magnetPosition(45) > 45 && magnetPosition(45) < 48, '近づいた位置へ引き寄せるが移動中は完全固定しない');
+    assert.ok(magnetPosition(51) < 51 && magnetPosition(51) > 48);
+    assert.equal(magnetPosition(48), 48);
     assert.equal(magnetPosition(-10), 0);
-    assert.equal(snapPosition(29), 32);
-    assert.equal(snapPosition(35), 32);
+    assert.equal(snapPosition(45), 48);
+    assert.equal(snapPosition(51), 48);
     let previous = magnetPosition(0);
     for (let i = 1; i <= 640; i++) {
       const current = magnetPosition(i / 10);
@@ -43,34 +59,34 @@ test('移動中は近い位置へ軽く吸着し、境界を跨いでも連続�
 
 test('移動先は境界付近の揺れで往復せず、十分に進めると切り替わる', async () => {
   await withNodeBundle('Triadichrome-extension/src/core/tables/detailParts.ts', async ({ stableSnapPosition }) => {
-    let target = 32;
-    for (const value of [39, 41, 39.5, 40.5, 44]) {
-      target = stableSnapPosition(value, target);
-      assert.equal(target, 32);
-    }
-    target = stableSnapPosition(45, target);
-    assert.equal(target, 48);
-    for (const value of [41, 39, 40.5, 36]) {
+    let target = 48;
+    for (const value of [59, 61, 59.5, 60.5, 64]) {
       target = stableSnapPosition(value, target);
       assert.equal(target, 48);
     }
-    assert.equal(stableSnapPosition(35, target), 32);
-    assert.equal(stableSnapPosition(110, 32), 112, '速い移動は複数マス先へ進める');
-    assert.equal(stableSnapPosition(-10, 16), 0);
-    assert.equal(stableSnapPosition(9), 16, 'プールからの初回進入は最寄りへ置く');
+    target = stableSnapPosition(65, target);
+    assert.equal(target, 72);
+    for (const value of [61, 59, 60.5, 56]) {
+      target = stableSnapPosition(value, target);
+      assert.equal(target, 72);
+    }
+    assert.equal(stableSnapPosition(55, target), 48);
+    assert.equal(stableSnapPosition(155, 48), 144, '速い移動は複数マス先へ進める');
+    assert.equal(stableSnapPosition(-10, 24), 0);
+    assert.equal(stableSnapPosition(13), 24, 'プールからの初回進入は最寄りへ置く');
   });
 });
 
-test('右下の斜め伸縮は左上を固定し、最小64pxと幅・高さの16px刻みを守る', async () => {
+test('右下の斜め伸縮は左上を固定し、最小72pxと幅・高さの24px刻みを守る', async () => {
   await withNodeBundle('Triadichrome-extension/src/core/tables/detailParts.ts', async ({ resizePart, settlePart }) => {
-    const part = { id: 'a', x: 32, y: 48, width: 160, height: 96 };
+    const part = { id: 'a', x: 48, y: 72, width: 168, height: 96 };
     const live = resizePart(part, 23.5, 39.5);
-    assert.equal(live.width, 183.5); assert.equal(live.height, 135.5);
+    assert.equal(live.width, 191.5); assert.equal(live.height, 135.5);
     const settled = settlePart(live);
     assert.equal(settled.x, part.x); assert.equal(settled.y, part.y);
-    assert.equal(settled.width, 176); assert.equal(settled.height, 128);
+    assert.equal(settled.width, 192); assert.equal(settled.height, 144);
     const minimum = settlePart(resizePart(part, -1000, -1000));
-    assert.equal(minimum.width, 64); assert.equal(minimum.height, 64);
+    assert.equal(minimum.width, 72); assert.equal(minimum.height, 72);
     assert.equal(minimum.x, part.x); assert.equal(minimum.y, part.y);
   });
 });
@@ -78,9 +94,9 @@ test('右下の斜め伸縮は左上を固定し、最小64pxと幅・高さの1
 test('両方向の表は12か月分の最小寸法を保ち、拡大後も内容と左上を保持する', async () => {
   await withNodeBundle('Triadichrome-extension/src/core/tables/detailParts.ts', async ({ TABLE_PART_MIN, resizePart, settlePart }) => {
     for (const kind of ['table-horizontal', 'table-vertical']) {
-      const part = { id: kind, kind, x: 32, y: 48, ...TABLE_PART_MIN[kind], cells: [['保持']] };
-      const expanded = settlePart(resizePart(part, 32, 32));
-      assert.equal(expanded.width, part.width + 32); assert.equal(expanded.height, part.height + 32);
+      const part = { id: kind, kind, x: 48, y: 72, ...TABLE_PART_MIN[kind], cells: [['保持']] };
+      const expanded = settlePart(resizePart(part, 24, 24));
+      assert.equal(expanded.width, part.width + 24); assert.equal(expanded.height, part.height + 24);
       assert.deepEqual(settlePart(resizePart(expanded, -10000, -10000)), part);
       assert.deepEqual(settlePart({ ...part, width: 1, height: 1 }), part);
     }

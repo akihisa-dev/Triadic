@@ -38,9 +38,9 @@ test('プールからテキストパーツを繰り返し置き、押し出し�
   await dropPart(page, app);
   await expect(app.locator('.detail-part')).toHaveCount(2);
   const rects = await rectangles(app), [a, b] = rects;
-  expect(a!.x + a!.width + 4 <= b!.x || b!.x + b!.width + 4 <= a!.x || a!.y + a!.height + 4 <= b!.y || b!.y + b!.height + 4 <= a!.y).toBe(true);
-  expect(a!.width).toBe(160); expect(a!.height).toBe(96);
-  for (const rect of rects) { expect(rect.x % 16).toBe(0); expect(rect.y % 16).toBe(0); }
+  expect(a!.x + a!.width <= b!.x || b!.x + b!.width <= a!.x || a!.y + a!.height <= b!.y || b!.y + b!.height <= a!.y).toBe(true);
+  expect(a!.width).toBe(168); expect(a!.height).toBe(96);
+  for (const rect of rects) { expect(rect.x % 24).toBe(0); expect(rect.y % 24).toBe(0); }
   await app.getByRole('button', { name: '一覧に戻る', exact: true }).click();
   await app.getByRole('button', { name: 'パーツ配置を開く', exact: true }).click();
   await expect(app.locator('.detail-part')).toHaveCount(2);
@@ -64,7 +64,7 @@ test('移動中の吸着と確定時のスナップ、右下だけの斜め伸�
   test.skip(info.project.name !== 'desktop', 'ポインターの位置と斜め伸縮は通常幅、狭幅は追加・スクロール・削除を別テストで確認');
   await openEditor(app); await dropPart(page, app, 210, 160);
   const canvas = app.locator('.detail-canvas');
-  await expect(canvas).toHaveCSS('background-size', '16px 16px');
+  await expect(canvas).toHaveCSS('background-size', '24px 24px');
   expect(await canvas.evaluate(e => getComputedStyle(e).backgroundImage)).toContain('radial-gradient');
   const before = (await rectangles(app))[0]!;
   const partBox = (await app.locator('.detail-part').boundingBox())!;
@@ -74,12 +74,12 @@ test('移動中の吸着と確定時のスナップ、右下だけの斜め伸�
     await page.mouse.move(partBox.x + 30 + dx, partBox.y + 30, { steps: 2 });
     await expect.poll(() => destination.evaluate(e => new DOMMatrix((e as HTMLElement).style.transform).m41)).toBe(before.x);
   }
-  await page.mouse.move(partBox.x + 43, partBox.y + 49, { steps: 12 });
-  const raw = { x: before.x + 13, y: before.y + 19 };
-  const target = { x: Math.round(raw.x / 16) * 16, y: Math.round(raw.y / 16) * 16 };
+  await page.mouse.move(partBox.x + 49, partBox.y + 51, { steps: 12 });
+  const raw = { x: before.x + 19, y: before.y + 21 };
+  const target = { x: Math.round(raw.x / 24) * 24, y: Math.round(raw.y / 24) * 24 };
   await expect.poll(async () => Math.abs((await rectangles(app))[0]!.x - target.x)).toBeLessThan(Math.abs(raw.x - target.x));
   const live = (await rectangles(app))[0]!;
-  expect(live.x % 16).not.toBe(0); expect(live.y % 16).not.toBe(0);
+  expect(live.x % 24).not.toBe(0); expect(live.y % 24).not.toBe(0);
   await expect(destination).toBeVisible();
   expect(await destination.evaluate(e => {
     const matrix = new DOMMatrix((e as HTMLElement).style.transform);
@@ -89,7 +89,7 @@ test('移動中の吸着と確定時のスナップ、右下だけの斜め伸�
   await expect(destination).toHaveCSS('pointer-events', 'none');
   await expect(destination).toHaveCSS('transition-duration', '0.1s');
   // Return across the nearest-point boundary without changing the indicated landing position.
-  await page.mouse.move(partBox.x + 37, partBox.y + 49, { steps: 4 });
+  await page.mouse.move(partBox.x + 43, partBox.y + 51, { steps: 4 });
   await expect.poll(() => destination.evaluate(e => new DOMMatrix((e as HTMLElement).style.transform).m41)).toBe(target.x);
   await page.screenshot({ path: info.outputPath('detail-destination.png') });
   await page.mouse.up(); await settleMotion(app.locator('body'));
@@ -103,21 +103,21 @@ test('移動中の吸着と確定時のスナップ、右下だけの斜め伸�
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down();
   await page.mouse.move(box.x + box.width / 2 + 23, box.y + box.height / 2 + 39, { steps: 12 });
   await expect(destination).toHaveCount(0);
-  await expect.poll(async () => (await rectangles(app))[0]!.width % 16).not.toBe(0);
-  await expect.poll(async () => (await rectangles(app))[0]!.height % 16).not.toBe(0);
+  await expect.poll(async () => (await rectangles(app))[0]!.width % 24).not.toBe(0);
+  await expect.poll(async () => (await rectangles(app))[0]!.height % 24).not.toBe(0);
   await page.mouse.up();
   await expect(app.locator('.detail-part')).toHaveCSS('transition-duration', '0.24s, 0.24s, 0.24s, 0.16s');
   await settleMotion(app.locator('body'));
   const resized = (await rectangles(app))[0]!;
-  expect(resized.width).toBe(176); expect(resized.height).toBe(128);
+  expect(resized.width).toBe(192); expect(resized.height).toBe(144);
   expect(resized.x).toBe(snapped.x); expect(resized.y).toBe(snapped.y);
   await page.screenshot({ path: info.outputPath('detail-part-corner.png') });
   const smaller = (await grip.boundingBox())!;
   await page.mouse.move(smaller.x + smaller.width / 2, smaller.y + smaller.height / 2); await page.mouse.down();
-  await page.mouse.move(smaller.x - 130, smaller.y - 100, { steps: 12 }); await page.mouse.up();
+  await page.mouse.move(smaller.x - 180, smaller.y - 130, { steps: 12 }); await page.mouse.up();
   await settleMotion(app.locator('body'));
-  expect((await rectangles(app))[0]!.width).toBe(64);
-  expect((await rectangles(app))[0]!.height).toBe(64);
+  expect((await rectangles(app))[0]!.width).toBe(72);
+  expect((await rectangles(app))[0]!.height).toBe(72);
 });
 
 test('ドラッグのEscと領域外ドロップは配置を変更せず、自動スクロールで画面外へ運べる', async ({ app, page }, info) => {
@@ -135,7 +135,7 @@ test('ドラッグのEscと領域外ドロップは配置を変更せず、自�
   await page.mouse.move(source.x + 20, source.y + 20); await page.mouse.down();
   await page.mouse.move(part.x + 120, part.y + 120, { steps: 8 });
   await expect(app.locator('.detail-part-destination')).toBeVisible();
-  await expect(app.locator('.detail-part-destination')).toHaveCSS('width', '160px');
+  await expect(app.locator('.detail-part-destination')).toHaveCSS('width', '168px');
   await expect(app.locator('.detail-part-destination')).toHaveCSS('height', '96px');
   await page.mouse.move(20, 20, { steps: 8 });
   await expect(app.locator('.detail-part-destination')).toHaveCount(0);
@@ -282,3 +282,28 @@ for (const horizontal of [true, false]) {
     expect(await monthHeaders.allTextContents()).toEqual(months);
   });
 }
+
+
+test('24px格子上で左右・上下の辺と角を共有して配置し、移動・伸縮でも隣接を保つ', async ({ app }, info) => {
+  test.skip(info.project.name !== 'desktop');
+  await openEditor(app);
+  const source = app.getByRole('button', { name: 'テキストパーツを追加', exact: true });
+  await source.press('Enter'); await source.press('Enter');
+  const part = app.getByRole('group', { name: 'パーツ 1', exact: true });
+  const expected = (x: number, y: number) => [
+    { x, y, width: 168, height: 96 },
+    { x: 24, y: 24, width: 168, height: 96 },
+  ];
+  expect(await rectangles(app)).toEqual(expected(24, 120)); // shared horizontal edge
+  for (let i = 0; i < 7; i++) await part.press('ArrowRight');
+  expect(await rectangles(app)).toEqual(expected(192, 120)); // shared corner
+  for (let i = 0; i < 4; i++) await part.press('ArrowUp');
+  expect(await rectangles(app)).toEqual(expected(192, 24)); // shared vertical edge
+  await part.press('ArrowRight'); await part.press('ArrowLeft');
+  await settleMotion(app.locator('body'));
+  expect(await rectangles(app)).toEqual(expected(192, 24));
+  const grip = app.getByRole('button', { name: 'パーツ 1の右下でサイズ変更', exact: true });
+  await grip.press('ArrowLeft'); await grip.press('ArrowRight');
+  await settleMotion(app.locator('body'));
+  expect(await rectangles(app)).toEqual(expected(192, 24));
+});
