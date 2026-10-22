@@ -138,6 +138,8 @@ Detail save retries retain the revision associated with the unfinished input. A 
 
 Accepted detail image reads finish and save before Save As, undo, navigation, or history actions continue. Cancelling Save As retains the image; reselecting, replacing, or deleting the image invalidates older reads.
 
+Moving, resizing, or adding detail parts preserves shared text, table, and image changes received during the gesture. A concurrent layout change cancels the gesture and displays the latest saved layout; Escape also keeps shared changes.
+
 New file creation reserves the selected destination in the shared session before writing. A file already open, loading, or reserved for another save/create is rejected without changing its contents. Opens arriving during creation wait and read the newly saved plan. An unused existing file can still be replaced explicitly. Failed creation releases the reservation and permits retry.
 
 ### Home and disclosure of calculations and data
@@ -696,6 +698,8 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 明細の保存失敗では、入力内容と編集開始時の更新番号を一緒に保持します。競合後の再試行・追加入力でも保存済みの他画面の変更を上書きせず拒否し、「入力を取り消す」で最新の保存内容を表示します。自分の保存が成功した場合は、保存中の追加入力を新しい更新番号で続けて保存します。
 
 選択済みの明細画像は、読込と保存が完了してから別名保存・操作取消・画面移動・履歴移動へ進みます。別名保存のキャンセルでも画像を保持します。画像の再選択・置換・パーツ削除では、古い読込結果を適用しません。
+
+明細パーツの移動・伸縮・追加中に届いた文章・表・画像の共有更新を保持して確定します。配置・寸法・パーツ構成も変わった場合は操作を取り消し、最新の配置を表示します。Escで取り消した場合も共有更新を保持します。
 
 新規作成は書き込み前に、共有セッションで保存先を予約します。別ウィンドウで使用中・読込中、または別の保存・作成の予約中のファイルは、内容を変更せず拒否します。作成中に同じファイルを開く操作は完了を待ち、新しく保存した内容を読み込みます。未使用の既存ファイルは明示して置き換えられます。失敗時は予約を解除し、再試行できます。
 

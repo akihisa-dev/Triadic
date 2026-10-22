@@ -80,7 +80,21 @@ export function DetailPartsCanvas({ parts, disabled, onChange, initiatives, navi
   const [size, setSize] = useState({ width: 0, height: 0 });
 
   useLayoutEffect(() => {
-    if (!gesture.current) setDisplay(parts);
+    const moving = gesture.current;
+    if (!moving) { setDisplay(parts); return; }
+    const sameLayout = moving.base.length === parts.length && moving.base.every((before, index) => {
+      const after = parts[index]!;
+      return before.id === after.id && before.kind === after.kind && before.x === after.x && before.y === after.y
+        && before.width === after.width && before.height === after.height;
+    });
+    // Only geometry belongs to this gesture. Keep incoming content, or cancel if its layout changed.
+    if (!sameLayout) { endRef.current(false); return; }
+    moving.base = parts;
+    if (!moving.pool) moving.origin = parts.find(part => part.id === moving.origin.id)!;
+    if (moving.destination) moving.destination = { ...moving.origin, x: moving.destination.x, y: moving.destination.y,
+      width: moving.destination.width, height: moving.destination.height };
+    moving.signature = "";
+    draw(performance.now(), false);
   }, [parts]);
   useLayoutEffect(() => {
     const element = viewport.current!;
