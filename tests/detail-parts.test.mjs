@@ -221,3 +221,24 @@ test('2000項目の1セル更新と両方向の貼り付けで、変更した項
     assert.equal(JSON.stringify(cells), before);
   });
 });
+
+test('移動の接触は周囲を固定し、高速移動を止め、めり込みを表示だけに制限する', async () => {
+  await withNodeBundle('Triadichrome-extension/src/core/tables/detailPartContact.ts', async ({ contactPosition, elasticPosition, freePart, contactClip }) => {
+    const part = (id,x,y) => ({id,kind:'text',text:id,x,y,width:96,height:96});
+    const a=part('a',0,96), b=part('b',192,96), original=[a,b];
+    const before=JSON.stringify(original);
+    const safe=contactPosition(original,a,{...a,x:600});
+    assert.equal(safe.x,96,'高速移動でも相手の手前で止まる');
+    const visual=elasticPosition(safe,{...a,x:600});
+    assert.ok(visual.x>96 && visual.x<=112,'めり込みは16px以内');
+    assert.ok(contactClip(b,visual)?.startsWith('polygon('));
+    assert.equal(freePart(original,safe).x,96,'確定位置は接触する格子位置');
+    assert.equal(contactPosition(original,safe,a).x,0,'押すのをやめれば離れられる');
+    assert.equal(contactPosition(original,safe,{...safe,y:0}).y,0,'接触面に沿って動かせる');
+    for(const target of [part('new',192,96),part('new',210,120)]) {
+      const placed=freePart(original,target);
+      for(const other of original) assert.ok(!(placed.x<other.x+96 && placed.x+96>other.x && placed.y<other.y+96 && placed.y+96>other.y));
+    }
+    assert.equal(JSON.stringify(original),before,'位置と入力内容を変更しない');
+  });
+});

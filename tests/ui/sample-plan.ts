@@ -1,3 +1,4 @@
+// 明細の接触確認: 既存パーツへドラッグし、周囲の位置保持・接触部の凹み・解放時の反発・Escでの配置保持を確認する。
 // 明細の画像・文章・表・配置の保存と再読込・取消・履歴・別名保存・競合・失敗保護は tests/detail-document-storage.test.mjs と tests/ui/detail-persistence.spec.ts で確認する。
 import { changeDetailDocument } from "../../Triadichrome-extension/src/core/storage/detailDocuments";
 // 複数ウィンドウの同期・表示条件/位置の複製・共有取消・全保存先切替・履歴集約は既存の施策/月額/3時点履歴を使い、tests/window-session.mjs と tests/ui/multi-window.spec.ts で確認する。保存データは追加しない。

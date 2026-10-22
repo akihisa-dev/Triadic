@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as Reac
 import { createPortal } from "react-dom";
 import { arrangeParts, magnetPosition, PART_INITIAL, PART_STEP, TABLE_PART_MIN, resizePart, settlePart, stableSnapPosition, type DetailPart } from "../core/tables/detailParts";
 import "./DetailPartsCanvas.css";
+import { contactClip, contactPosition, elasticPosition, freePart } from "../core/tables/detailPartContact";
 import { DetailImagePart } from "./DetailImagePart";
 import { DetailTextPart } from "./DetailTextPart";
 import { DetailTablePart } from "./DetailTablePart";
@@ -36,6 +37,10 @@ function PartPreview({ kind }: { kind: DetailPart["kind"] }) {
   </svg>;
 }
 
+function replaceMoving(parts: DetailPart[], active: DetailPart) {
+  return parts.some(part => part.id === active.id) ? parts.map(part => part.id === active.id ? active : part) : [...parts, active];
+}
+
 function newPart(kind: DetailPart["kind"]): DetailPart {
   const base = { id: crypto.randomUUID(), x: 0, y: 0 };
   return kind === "image" ? { ...base, width: 336, height: 240, kind, src: "", name: "" } : kind === "text" ? { ...base, ...PART_INITIAL, kind, text: "" }
@@ -47,7 +52,7 @@ type Gesture = {
   pointerId: number; source: HTMLElement; origin: DetailPart; base: DetailPart[]; resizing: boolean;
   pool: boolean; startX: number; startY: number; scrollX: number; scrollY: number;
   clientX: number; clientY: number; valid: boolean; current: DetailPart; signature: string; time: number;
-  destination: DetailPart | null;
+  destination: DetailPart | null; safe: DetailPart | null;
 };
 
 export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
@@ -57,6 +62,7 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
   const latest = useRef({ parts, disabled, onChange });
   latest.current = { parts, disabled, onChange };
   const [display, setDisplay] = useState(parts);
+  const [rebounding, setRebounding] = useState<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [destination, setDestination] = useState<DetailPart | null>(null);
@@ -97,24 +103,28 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
       active = g.resizing ? resizePart(g.origin, dx, dy)
         : { ...g.origin, x: Math.max(0, g.origin.x + dx), y: Math.max(0, g.origin.y + dy) };
     }
+    if (!g.resizing) active = { ...active, x: magnetPosition(active.x), y: magnetPosition(active.y) };
+    const target = active;
     if (inside && !g.resizing) {
+      g.safe = g.safe ? contactPosition(g.base, g.safe, target) : freePart(g.base, target);
+      active = g.safe;
       const previous = g.destination ?? (g.pool ? null : settlePart(g.origin));
       const x = stableSnapPosition(active.x, previous?.x);
       const y = stableSnapPosition(active.y, previous?.y);
       if (!g.destination || g.destination.x !== x || g.destination.y !== y) {
-        g.destination = { ...settlePart(active), x, y };
+        g.destination = freePart(g.base, { ...settlePart(active), x, y });
         setDestination(g.destination);
       }
     } else if (g.destination) {
       g.destination = null;
       setDestination(null);
     }
-    if (!g.resizing) active = { ...active, x: magnetPosition(active.x), y: magnetPosition(active.y) };
     g.current = active;
-    const signature = `${active.x}:${active.y}:${active.width}:${active.height}:${inside}`;
+    const signature = `${active.x}:${active.y}:${active.width}:${active.height}:${inside}:${g.clientX}:${g.clientY}:${target.x}:${target.y}`;
     if (signature !== g.signature) {
       g.signature = signature;
-      setDisplay(inside ? arrangeParts(g.base, active) : g.base);
+      const visual = !g.resizing && g.safe ? elasticPosition(g.safe, target) : active;
+      setDisplay(inside ? g.resizing ? arrangeParts(g.base, active) : replaceMoving(g.base, visual) : g.base);
     }
     setGhost(previous => {
       if (!g.pool || inside) return previous === null ? previous : null;
@@ -128,8 +138,9 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
     if (!g) return;
     draw(performance.now(), false);
     cancelAnimationFrame(frame.current);
-    const result = commit && g.valid && !latest.current.disabled ? arrangeParts(g.base, g.destination ?? g.current, true) : latest.current.parts;
+    const result = commit && g.valid && !latest.current.disabled ? (g.resizing ? arrangeParts(g.base, g.current, true) : replaceMoving(g.base, freePart(g.base, g.destination ?? g.current))) : latest.current.parts;
     gesture.current = null;
+    setRebounding(!g.resizing ? g.origin.id : null);
     setDragging(null); setGhost(null); setDestination(null); setDisplay(result);
     if (g.source.hasPointerCapture(g.pointerId)) g.source.releasePointerCapture(g.pointerId);
     if (commit && g.valid && !latest.current.disabled) latest.current.onChange(result);
@@ -169,14 +180,15 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
     gesture.current = { pointerId: event.pointerId, source: event.currentTarget, origin, base: latest.current.parts,
       resizing, pool: !part, startX: event.clientX, startY: event.clientY,
       scrollX: element.scrollLeft, scrollY: element.scrollTop, clientX: event.clientX, clientY: event.clientY,
-      valid: false, current: origin, destination: null, signature: "", time: performance.now() };
+      valid: false, current: origin, destination: null, safe: part && !resizing ? origin : null, signature: "", time: performance.now() };
     event.currentTarget.setPointerCapture(event.pointerId);
+    setRebounding(null);
     setDragging(origin.id);
     const tick = (time: number) => { if (!gesture.current) return; draw(time); frame.current = requestAnimationFrame(tick); };
     frame.current = requestAnimationFrame(tick);
   }
-  function change(part: DetailPart) {
-    if (!disabled && !gesture.current) latest.current.onChange(arrangeParts(parts, part, true));
+  function change(part: DetailPart, resizing = false) {
+    if (!disabled && !gesture.current) latest.current.onChange(resizing ? arrangeParts(parts, part, true) : replaceMoving(parts, freePart(parts, part)));
   }
   function remove(id: string) {
     if (!disabled && !gesture.current) latest.current.onChange(parts.filter(part => part.id !== id));
@@ -194,6 +206,7 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
     }
     latest.current.onChange(latest.current.parts.map(apply));
   }
+  const movingPart = display.find(part => part.id === dragging);
   const width = Math.max(size.width * 2, 1200, ...display.map(part => part.x + part.width + size.width));
   const height = Math.max(size.height * 2, 900, ...display.map(part => part.y + part.height + size.height));
   return <div className="detail-workspace">
@@ -201,9 +214,10 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
       <div className="detail-canvas" style={{ width, height }}>
         {destination && <div className="detail-part-destination" aria-hidden="true"
           style={{ width: destination.width, height: destination.height, transform: `translate3d(${destination.x}px, ${destination.y}px, 0)` }} />}
-        {display.map((part, index) => <div key={part.id} className={`detail-part${dragging === part.id ? " is-dragging" : ""}${editingId === part.id ? " is-editing" : ""}`}
-          style={{ width: part.width, height: part.height, transform: `translate3d(${part.x}px, ${part.y}px, 0)` }}
+        {display.map((part, index) => <div key={part.id} className={`detail-part${dragging === part.id ? " is-dragging" : ""}${editingId === part.id ? " is-editing" : ""}${rebounding === part.id ? " is-rebounding" : ""}`}
+          style={{ zIndex: movingPart && !gesture.current?.resizing && contactClip(part, movingPart) ? 4 : undefined, clipPath: movingPart && !gesture.current?.resizing ? contactClip(part, movingPart) : undefined, width: part.width, height: part.height, transform: `translate3d(${part.x}px, ${part.y}px, 0)` }}
           role="group" aria-label={`パーツ ${index + 1}`} tabIndex={disabled ? -1 : 0} aria-disabled={disabled}
+          onTransitionEnd={event => { if (event.target === event.currentTarget && event.propertyName === "transform") setRebounding(null); }}
           onPointerDown={event => start(event, part)}
           onDoubleClick={event => {
             // Pointer capture targets the group when a double-click follows a move gesture.
@@ -230,7 +244,7 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
             onKeyDown={event => {
               const dx = event.key === "ArrowRight" ? PART_STEP : event.key === "ArrowLeft" ? -PART_STEP : 0;
               const dy = event.key === "ArrowDown" ? PART_STEP : event.key === "ArrowUp" ? -PART_STEP : 0;
-              if (dx || dy) { event.preventDefault(); event.stopPropagation(); change(settlePart(resizePart(part, dx, dy))); }
+              if (dx || dy) { event.preventDefault(); event.stopPropagation(); change(settlePart(resizePart(part, dx, dy)), true); }
             }} />
           <button type="button" className="detail-part-delete" disabled={disabled} aria-label={`パーツ ${index + 1}を削除`}
             onPointerDown={event => event.stopPropagation()} onClick={() => remove(part.id)}>×</button>

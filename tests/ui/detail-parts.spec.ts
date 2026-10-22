@@ -29,14 +29,16 @@ async function rectangles(app: FrameLocator) {
   }));
 }
 
-test('プールからテキストパーツを繰り返し置き、押し出し・ホバー・削除・画面往復を確認する', async ({ app, page }, info) => {
+test('プールからテキストパーツを繰り返し置き、周囲の位置保持・ホバー・削除・画面往復を確認する', async ({ app, page }, info) => {
   await openEditor(app);
   await dropPart(page, app);
   await expect(app.locator('.detail-part')).toHaveCount(1);
   await expect(app.locator('.detail-part').first()).toHaveText('ダブルクリックで入力×');
   await expect(app.getByRole('button', { name: 'テキストパーツを追加', exact: true })).toBeVisible();
+  const fixed = (await rectangles(app))[0];
   await dropPart(page, app);
   await expect(app.locator('.detail-part')).toHaveCount(2);
+  expect((await rectangles(app))[0]).toEqual(fixed);
   const rects = await rectangles(app), [a, b] = rects;
   expect(a!.x + a!.width <= b!.x || b!.x + b!.width <= a!.x || a!.y + a!.height <= b!.y || b!.y + b!.height <= a!.y).toBe(true);
   expect(a!.width).toBe(168); expect(a!.height).toBe(96);
@@ -289,10 +291,10 @@ test('24px格子上で左右・上下の辺と角を共有して配置し、移�
   await openEditor(app);
   const source = app.getByRole('button', { name: 'テキストパーツを追加', exact: true });
   await source.press('Enter'); await source.press('Enter');
-  const part = app.getByRole('group', { name: 'パーツ 1', exact: true });
+  const part = app.getByRole('group', { name: 'パーツ 2', exact: true });
   const expected = (x: number, y: number) => [
-    { x, y, width: 168, height: 96 },
     { x: 24, y: 24, width: 168, height: 96 },
+    { x, y, width: 168, height: 96 },
   ];
   expect(await rectangles(app)).toEqual(expected(24, 120)); // shared horizontal edge
   for (let i = 0; i < 7; i++) await part.press('ArrowRight');
@@ -302,8 +304,31 @@ test('24px格子上で左右・上下の辺と角を共有して配置し、移�
   await part.press('ArrowRight'); await part.press('ArrowLeft');
   await settleMotion(app.locator('body'));
   expect(await rectangles(app)).toEqual(expected(192, 24));
-  const grip = app.getByRole('button', { name: 'パーツ 1の右下でサイズ変更', exact: true });
+  const grip = app.getByRole('button', { name: 'パーツ 2の右下でサイズ変更', exact: true });
   await grip.press('ArrowLeft'); await grip.press('ArrowRight');
   await settleMotion(app.locator('body'));
   expect(await rectangles(app)).toEqual(expected(192, 24));
+});
+
+test('接触時だけ凹んで解放時に戻り、取消では配置を保持する', async ({ page }) => {
+  await page.goto('/tests/ui/detail-contact.html');
+  const first = page.getByRole('group', { name: 'パーツ 1', exact: true });
+  const second = page.getByRole('group', { name: 'パーツ 2', exact: true });
+  const fixed = await second.getAttribute('style');
+  const box = (await first.boundingBox())!;
+  await page.mouse.move(box.x + 28, box.y + 35); await page.mouse.down();
+  await page.mouse.move(box.x + 140, box.y + 35, { steps: 10 });
+  await expect.poll(() => second.evaluate(node => (node as HTMLElement).style.clipPath)).toContain('polygon');
+  await expect.poll(() => first.evaluate(node => new DOMMatrix((node as HTMLElement).style.transform).m41)).toBeGreaterThan(120);
+  await expect(page.locator('output')).toContainText('"x":72');
+  await page.mouse.up();
+  await expect(page.locator('output')).toContainText('"x":120');
+  await expect(second).toHaveAttribute('style', fixed!);
+  await settleMotion(page.locator('body'));
+  const touching = (await first.boundingBox())!;
+  await page.mouse.move(touching.x + 28, touching.y + 35); await page.mouse.down();
+  await page.mouse.move(touching.x + 70, touching.y + 35);
+  await page.keyboard.press('Escape'); await page.mouse.up();
+  await expect(page.locator('output')).toContainText('"x":120');
+  await expect(second).toHaveAttribute('style', fixed!);
 });
