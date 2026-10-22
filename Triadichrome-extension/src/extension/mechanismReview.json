@@ -32,11 +32,11 @@
     "description": "6ad5e38695f8cdaf6baf0d32ad061ad8a259535503342e4045125b530b96da6e"
   },
   "open": {
-    "implementation": "68873f0c208a3235189ba9a132ae266be14a74c2a2292a0daed446ad115c697a",
+    "implementation": "a7301b7285368d04505019ca2debeda235545bdbf015350499aa720052e2d540",
     "description": "8d01fd68c18f9e4a3256e8dd401c5275fbc236bdfaf33c5bb55c01674f790a3e"
   },
   "save": {
-    "implementation": "8b61f2b90f500c9fc66b1d9f9c030a23faa3f0dc279174fce9e9ec7b7a38e410",
+    "implementation": "bdeaaeacfb4050405ca083254be2995e742774f58c28ec04df1cfdbc4a30a689",
     "description": "956d2b9c4f0e80410d4ee2d34a1678300bb1b17a9f5c7c2d99cb204d86413020"
   },
   "failure": {
@@ -44,15 +44,15 @@
     "description": "c3d07b7cc41c14059c527984ded4899f16013d5813505141665e3b19254e43a8"
   },
   "history": {
-    "implementation": "dbf4a778ae7fa3b1557bd56bb084fedc161de05420e7d78f1e38cf2d4fa9d8a5",
+    "implementation": "5a89d41f384fc45f90f8b756affd1ecf8328527ec60c5ae97d09670ec01b9619",
     "description": "7c9d6e7643f680d8116ccee827431098767c57c3ad5966683fd630caea8484c4"
   },
   "undo": {
-    "implementation": "ff2067dfd41a37595a62f022c2293c3093a5a3e460fda1c1ef6f22ee0d556042",
+    "implementation": "1d7da84f035926fe35c68794105d791f749b5d5e8557984b79611e10981c2880",
     "description": "f1f427fce2212e6cf9fddf5308ef30794853f527f3f0daa42492a4629aefb1d4"
   },
   "storage": {
-    "implementation": "2374c9d877863218eafe064902447c7ccf4f5fb05783b079c63a6e7d139fa82f",
+    "implementation": "45bf7d77d28935a224ec3b1963e891e921eca7a92ad1a874e512c3284741775a",
     "description": "52efcaa9acfb8d39c448d8b96b257bead954f8ec077afa80886f7a8a5a83546c"
   },
   "validation": {
@@ -92,7 +92,7 @@
     "description": "1fa26e9098b628675e0ac7c21628219f9223d6250a946ca7471fa41b96c672b8"
   },
   "save-as": {
-    "implementation": "56e25f0cbede71660e97a3f09d59e7ca9f442a899e4fe417eedc60e71c4f1524",
+    "implementation": "b5cdf2f753a99af4dec94f0b3112d04221d28d7b9376cd44e2dbd1de6a8cae0e",
     "description": "5d8c378431e07a37039b2f928239e50bf81817f2d85e53055c2e644e5b266b94"
   },
   "history-difference": {

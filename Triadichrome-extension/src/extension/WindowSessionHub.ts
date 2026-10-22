@@ -11,7 +11,7 @@ import { reconcileWindowCommand } from "../core/domain/windowCommand";
 import type { PlanContents } from "../core/domain/plan";
 
 type Peer = { port: Pick<MessagePort, "postMessage">; group: Group | null; number: number; label: string; initialView: WindowView | null; publishedContents?: PlanContents | null; opening?: boolean };
-type Group = { id: string; session: PlanSession; peers: Set<Peer>; openingPeers: number; nextNumber: number; cancelCheckpoint?: () => void; releaseRecovery?: () => void; actionTail: Promise<void>; historyOwner: Peer | null; tail: Promise<unknown>; acting: Peer | null; openingHandle: FileSystemFileHandle | undefined; opened: Promise<void> };
+type Group = { id: string; session: PlanSession; peers: Set<Peer>; openingPeers: number; nextNumber: number; cancelCheckpoint?: () => void; releaseRecovery?: () => void; actionTail: Promise<void>; historyPreparing: boolean; historyOwner: Peer | null; tail: Promise<unknown>; acting: Peer | null; openingHandle: FileSystemFileHandle | undefined; opened: Promise<void> };
 const destinationMissing = async (): Promise<FileSystemFileHandle> => { throw new Error("保存先を選択してください。入力は保持しています。"); };
 const errorText = (failure: unknown, field: "message" | "name", fallback: string) => failure && typeof failure === "object" && field in failure && typeof Reflect.get(failure, field) === "string" ? String(Reflect.get(failure, field)) : fallback;
 class WindowControlTimeoutError extends Error {}
@@ -126,7 +126,7 @@ export class WindowSessionHub {
       if (handle) group.releaseRecovery = await this.reserveSaveTarget(group, handle);
       return handle;
     }),
-      peers: new Set(), openingPeers: 0, nextNumber: 1, actionTail: Promise.resolve(), historyOwner: null, tail: Promise.resolve(), acting: null, opened: Promise.resolve(), openingHandle: plan.handle };
+      peers: new Set(), openingPeers: 0, nextNumber: 1, actionTail: Promise.resolve(), historyPreparing: false, historyOwner: null, tail: Promise.resolve(), acting: null, opened: Promise.resolve(), openingHandle: plan.handle };
     this.groups.set(group.id, group);
     group.session.subscribe(() => this.publish(group));
     group.session.subscribeFileSave(async handle => {
@@ -203,6 +203,8 @@ export class WindowSessionHub {
   private coordinate<T>(peer: Peer, operation: (group: Group) => Promise<T>, history = false) {
     const group = this.requireGroup(peer);
     const task = group.actionTail.then(async () => {
+      // Freeze membership before collecting windows or awaiting their input/save decisions.
+      if (history) group.historyPreparing = true;
       const peers = [...group.peers];
       const transaction = history ? crypto.randomUUID() : "";
       let committed = false;
@@ -238,6 +240,7 @@ export class WindowSessionHub {
         }
         return result;
       } finally {
+        if (history) group.historyPreparing = false;
         if (history && !committed) for (const item of peers) {
           try { this.send(item, { type: "history-decision", transaction, commit: false }); }
           catch { /* The failed transport must not prevent other windows from resuming. */ }
@@ -256,7 +259,7 @@ export class WindowSessionHub {
         if (groupId) {
           const group = this.groups.get(groupId);
           if (!group) throw new Error("このファイルは既に閉じられています。「ファイルを開く」から開き直してください。");
-          if (group.historyOwner) throw new Error("履歴の閲覧中はウィンドウを複製できません。");
+          if (group.historyPreparing || group.historyOwner) throw new Error("履歴の閲覧中はウィンドウを複製できません。");
           let reserved = ticket ? this.tickets.get(ticket) : undefined;
           if (ticket && reserved && reserved.expiresAt <= Date.now()) { this.removeTicket(ticket); reserved = undefined; }
           if (ticket && (!reserved || reserved.group !== group)) throw new Error("ウィンドウを開き直してください。");
@@ -267,7 +270,7 @@ export class WindowSessionHub {
       }
       case "reserve": {
         const group = this.requireGroup(peer);
-        if (group.historyOwner) throw new Error("履歴の閲覧中はウィンドウを複製できません。");
+        if (group.historyPreparing || group.historyOwner) throw new Error("履歴の閲覧中はウィンドウを複製できません。");
         const [ticket, view] = args as [string, WindowView];
         this.removeTicket(ticket);
         const timer = setTimeout(() => this.removeTicket(ticket), this.reservationTimeoutMs);
@@ -293,7 +296,7 @@ export class WindowSessionHub {
           openingGroup = group;
           await group.opened;
           if (!this.peers.has(peer)) return;
-          if (group.historyOwner) throw new Error("同じファイルの履歴を閲覧しています。通常画面に戻ってから開いてください。");
+          if (group.historyPreparing || group.historyOwner) throw new Error("同じファイルの履歴を閲覧しています。通常画面に戻ってから開いてください。");
           this.groups.set(group.id, group);
           this.attach(peer, group);
         } finally {

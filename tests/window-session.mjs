@@ -2,6 +2,7 @@ import { verifyPlanContentsPatch } from "./plan-contents-patch.mjs";
 import { verifyPlanProcessing } from "./plan-processing.mjs";
 import { verifyLatestNavigation } from "./latest-navigation.mjs";
 import assert from "node:assert/strict";
+import { verifyHistoryMembership } from "./window-history-membership.mjs";
 import { verifyHistoryCommit } from "./window-history-commit.mjs";
 import { verifyWindowControlTimeout } from "./window-control-timeout.mjs";
 
@@ -392,6 +393,7 @@ export async function verifyWindowSession(api) {
 
   await verifyWindowControlTimeout(api, bytes);
   await verifyHistoryCommit(api, bytes);
+  await verifyHistoryMembership(api, bytes);
 
   const saved = [], controller = new api.AutoSave(async draft => { saved.push(draft); }, 60_000);
   const unregister = api.registerAutoSave(controller);
