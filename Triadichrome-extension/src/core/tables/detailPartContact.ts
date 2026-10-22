@@ -43,19 +43,33 @@ export function elasticPosition(safe: DetailPart, target: DetailPart): DetailPar
   return { ...safe, x: safe.x + dx*ratio, y: safe.y + dy*ratio };
 }
 
-/** A local indentation on the contacted edge, used for display only. */
-export function contactClip(part: DetailPart, active: DetailPart): string | undefined {
+export type PartContact = { side: "left" | "right" | "top" | "bottom"; center: number; radius: number; depth: number };
+
+/** Describe the actual shared edge, not the centre of the moving rectangle. */
+export function partContact(part: DetailPart, active: DetailPart): PartContact | undefined {
   if (part.id === active.id || !partsOverlap(part, active)) return;
-  const left = active.x+active.width-part.x, right = part.x+part.width-active.x;
-  const top = active.y+active.height-part.y, bottom = part.y+part.height-active.y;
-  const edge = Math.min(left,right,top,bottom);
-  const depth = Math.min(edge,16);
-  const x = Math.max(20, Math.min(part.width-20, active.x+active.width/2-part.x));
-  const y = Math.max(20, Math.min(part.height-20, active.y+active.height/2-part.y));
-  const w = part.width, h = part.height;
-  const points = edge === left ? `0 0, ${w} 0, ${w} ${h}, 0 ${h}, 0 ${y+20}, ${depth*.7} ${y+10}, ${depth} ${y}, ${depth*.7} ${y-10}, 0 ${y-20}`
-    : edge === right ? `0 0, ${w} 0, ${w} ${y-20}, ${w-depth*.7} ${y-10}, ${w-depth} ${y}, ${w-depth*.7} ${y+10}, ${w} ${y+20}, ${w} ${h}, 0 ${h}`
-    : edge === top ? `0 0, ${x-20} 0, ${x-10} ${depth*.7}, ${x} ${depth}, ${x+10} ${depth*.7}, ${x+20} 0, ${w} 0, ${w} ${h}, 0 ${h}`
-    : `0 0, ${w} 0, ${w} ${h}, ${x+20} ${h}, ${x+10} ${h-depth*.7}, ${x} ${h-depth}, ${x-10} ${h-depth*.7}, ${x-20} ${h}, 0 ${h}`;
-  return `polygon(${points.split(', ').map(point => point.split(' ').map(value => `${value}px`).join(' ')).join(', ')})`;
+  const depths = [active.x + active.width - part.x, part.x + part.width - active.x,
+    active.y + active.height - part.y, part.y + part.height - active.y];
+  // Ignore floating-point residue at an exactly touching edge.
+  if (Math.min(...depths) <= .01) return;
+  const index = depths.indexOf(Math.min(...depths));
+  const vertical = index < 2;
+  const start = Math.max(vertical ? part.y : part.x, vertical ? active.y : active.x);
+  const end = Math.min(vertical ? part.y + part.height : part.x + part.width,
+    vertical ? active.y + active.height : active.x + active.width);
+  return { side: (["left", "right", "top", "bottom"] as const)[index]!,
+    center: (start + end) / 2 - (vertical ? part.y : part.x),
+    radius: Math.max(1, (end - start) / 2 - 8), depth: Math.min(16, depths[index]!) };
+}
+
+/** Smooth displacement map: the border, background, text and cells bend together. */
+export function contactMap(width: number, height: number, contact: PartContact & { inset?: number }): string {
+  const vertical = contact.side === "left" || contact.side === "right";
+  const inset = contact.inset ?? 0;
+  const x = vertical ? contact.side === "left" ? inset : width - inset : contact.center;
+  const y = vertical ? contact.center : contact.side === "top" ? inset : height - inset;
+  const color = contact.side === "left" ? "0,128,128" : contact.side === "right" ? "255,128,128"
+    : contact.side === "top" ? "128,0,128" : "128,255,128";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width + 48}" height="${height + 48}" viewBox="-24 -24 ${width + 48} ${height + 48}"><defs><radialGradient id="bend"><stop stop-color="rgb(${color})"/><stop offset=".45" stop-color="rgb(${color})" stop-opacity=".7"/><stop offset="1" stop-color="rgb(${color})" stop-opacity="0"/></radialGradient></defs><path fill="rgb(128,128,128)" d="M-24 -24H${width + 24}V${height + 24}H-24Z"/><ellipse cx="${x}" cy="${y}" rx="${vertical ? 80 : contact.radius}" ry="${vertical ? contact.radius : 80}" fill="url(#bend)"/></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }

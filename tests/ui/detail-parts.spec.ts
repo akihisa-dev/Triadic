@@ -19,6 +19,7 @@ async function dropPart(page: Page, app: FrameLocator, x = 70, y = 90) {
   await page.mouse.down();
   await page.mouse.move(canvas.x + Math.min(x, canvas.width / 2), canvas.y + Math.min(y, canvas.height / 2), { steps: 12 });
   await page.mouse.up();
+  await expect.poll(() => app.locator('.detail-contact-filter').evaluateAll(nodes => nodes.every(node => node.getAttribute('data-depth') === '0'))).toBe(true);
   await settleMotion(app.locator('body'));
 }
 async function rectangles(app: FrameLocator) {
@@ -136,9 +137,8 @@ test('ドラッグのEscと領域外ドロップは配置を変更せず、自�
   const source = (await app.getByRole('button', { name: 'テキストパーツを追加', exact: true }).boundingBox())!;
   await page.mouse.move(source.x + 20, source.y + 20); await page.mouse.down();
   await page.mouse.move(part.x + 120, part.y + 120, { steps: 8 });
-  await expect(app.locator('.detail-part-destination')).toBeVisible();
-  await expect(app.locator('.detail-part-destination')).toHaveCSS('width', '168px');
-  await expect(app.locator('.detail-part-destination')).toHaveCSS('height', '96px');
+  await expect(app.locator('.detail-part.has-contact')).toHaveCount(2);
+  await expect(app.locator('.detail-part-destination')).toHaveCount(0);
   await page.mouse.move(20, 20, { steps: 8 });
   await expect(app.locator('.detail-part-destination')).toHaveCount(0);
   await page.mouse.up();
@@ -318,11 +318,12 @@ test('接触時だけ凹んで解放時に戻り、取消では配置を保持�
   const box = (await first.boundingBox())!;
   await page.mouse.move(box.x + 28, box.y + 35); await page.mouse.down();
   await page.mouse.move(box.x + 140, box.y + 35, { steps: 10 });
-  await expect.poll(() => second.evaluate(node => (node as HTMLElement).style.clipPath)).toContain('polygon');
+  await expect.poll(() => second.locator('.detail-contact-filter').getAttribute('data-depth').then(Number)).toBeGreaterThan(5);
   await expect.poll(() => first.evaluate(node => new DOMMatrix((node as HTMLElement).style.transform).m41)).toBeGreaterThan(120);
   await expect(page.locator('output')).toContainText('"x":72');
   await page.mouse.up();
   await expect(page.locator('output')).toContainText('"x":120');
+  await expect.poll(() => second.locator('.detail-contact-filter').getAttribute('data-depth').then(Number)).toBe(0);
   await expect(second).toHaveAttribute('style', fixed!);
   await settleMotion(page.locator('body'));
   const touching = (await first.boundingBox())!;
@@ -330,5 +331,66 @@ test('接触時だけ凹んで解放時に戻り、取消では配置を保持�
   await page.mouse.move(touching.x + 70, touching.y + 35);
   await page.keyboard.press('Escape'); await page.mouse.up();
   await expect(page.locator('output')).toContainText('"x":120');
+  await expect.poll(() => second.locator('.detail-contact-filter').getAttribute('data-depth').then(Number)).toBe(0);
   await expect(second).toHaveAttribute('style', fixed!);
+});
+
+for (const reverse of [false, true]) test(`テーブルの辺とセルが滑らかに凹み、緩めると浅くなり、解放すると反発する ${reverse ? '右から' : '左から'}`, async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop');
+  await page.goto(`/tests/ui/detail-contact.html?tables${reverse ? '&reverse' : ''}`);
+  const direction = reverse ? -1 : 1;
+  const moving = page.getByRole('group', { name: 'パーツ 1', exact: true });
+  const fixed = page.getByRole('group', { name: 'パーツ 2', exact: true });
+  const spring = fixed.locator('.detail-contact-filter');
+  const verifySeam = async () => {
+    const error = await page.locator('.detail-contact-outline path').evaluateAll((nodes, reverse) => {
+      const paths = nodes as SVGPathElement[];
+      if (paths.length !== 2) throw new Error('接触する双方の輪郭が必要です');
+      const samples = paths.map(path => {
+        const result: DOMPoint[] = [], length = path.getTotalLength(), matrix = path.getScreenCTM()!;
+        for (let t=0;t<=length;t+=.5) result.push(path.getPointAtLength(t).matrixTransform(matrix));
+        return result;
+      });
+      const minY = Math.max(...samples.map(points => Math.min(...points.map(p=>p.y))))+24;
+      const maxY = Math.min(...samples.map(points => Math.max(...points.map(p=>p.y))))-24;
+      let error = 0;
+      for(let y=minY;y<maxY;y+=16) {
+        const edges = samples.map((points,index) => {
+          const xs:number[]=[];
+          for(let i=1;i<points.length;i++) {
+            const a=points[i-1]!,b=points[i]!;
+            if((a.y<=y&&b.y>y)||(b.y<=y&&a.y>y)) xs.push(a.x+(b.x-a.x)*(y-a.y)/(b.y-a.y));
+          }
+          return (index===0)!==reverse?Math.max(...xs):Math.min(...xs);
+        });
+        error=Math.max(error,Math.abs(edges[0]!-edges[1]!));
+      }
+      return error;
+    }, reverse);
+    expect(error,'双方の辺は画面上で同じ曲線につながる').toBeLessThan(.1);
+    await expect(page.locator('.detail-part-destination')).toHaveCount(0);
+  };
+  const position = await fixed.evaluate(node => (node as HTMLElement).style.transform);
+  const box = (await moving.boundingBox())!;
+  await page.screenshot({path:info.outputPath('contact-before.png')});
+  await page.mouse.move(box.x+150,box.y+220); await page.mouse.down();
+  await page.mouse.move(box.x+150+190*direction,box.y+220,{steps:20});
+  await expect.poll(()=>spring.getAttribute('data-depth').then(Number)).toBeGreaterThan(13);
+  await verifySeam();
+  await page.screenshot({path:info.outputPath('contact-pressed.png')});
+  await page.screenshot({path:info.outputPath('contact-boundary.png'),clip:{x:reverse?368:440,y:330,width:140,height:410}});
+  await page.mouse.move(box.x+150+82*direction,box.y+220,{steps:10});
+  await expect.poll(()=>spring.getAttribute('data-depth').then(Number)).toBeLessThan(5);
+  await verifySeam();
+  await page.screenshot({path:info.outputPath('contact-eased.png')});
+  await page.mouse.move(box.x+150+190*direction,box.y+220,{steps:10});
+  await expect.poll(()=>spring.getAttribute('data-depth').then(Number)).toBeGreaterThan(13);
+  await page.mouse.up();
+  await expect.poll(()=>spring.getAttribute('data-depth').then(Number), {intervals:[10]}).toBeLessThan(-.1);
+  await verifySeam();
+  await page.screenshot({path:info.outputPath('contact-rebound.png')});
+  await expect.poll(()=>spring.getAttribute('data-depth').then(Number)).toBe(0);
+  await page.screenshot({path:info.outputPath('contact-settled.png')});
+  expect(await fixed.evaluate(node => (node as HTMLElement).style.transform)).toBe(position);
+  await expect(page.locator('output')).toContainText(`"x":${reverse ? 408 : 144}`);
 });

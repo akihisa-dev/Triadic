@@ -2,7 +2,9 @@ import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as Reac
 import { createPortal } from "react-dom";
 import { arrangeParts, magnetPosition, PART_INITIAL, PART_STEP, TABLE_PART_MIN, resizePart, settlePart, stableSnapPosition, type DetailPart } from "../core/tables/detailParts";
 import "./DetailPartsCanvas.css";
-import { contactClip, contactPosition, elasticPosition, freePart } from "../core/tables/detailPartContact";
+import { contactPosition, elasticPosition, freePart } from "../core/tables/detailPartContact";
+import { useDetailContactMotion } from "./useDetailContactMotion";
+import { DetailContactFilter, type SurfaceContact } from "./DetailContactFilter";
 import { DetailImagePart } from "./DetailImagePart";
 import { DetailTextPart } from "./DetailTextPart";
 import { DetailTablePart } from "./DetailTablePart";
@@ -206,16 +208,43 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
     }
     latest.current.onChange(latest.current.parts.map(apply));
   }
-  const movingPart = display.find(part => part.id === dragging);
+  const contactMotion = useDetailContactMotion(display, gesture.current?.resizing ? null : dragging);
+  const surfaces = new Map<string, { part: DetailPart; contacts: SurfaceContact[] }>();
+  const movingBase = dragging ? gesture.current?.safe : display.find(part => part.id === contactMotion.activeId);
+  if (movingBase && contactMotion.contacts.length) {
+    let dx = 0, dy = 0;
+    for (const contact of contactMotion.contacts) {
+      if (contact.side === "left") dx = contact.depth;
+      if (contact.side === "right") dx = -contact.depth;
+      if (contact.side === "top") dy = contact.depth;
+      if (contact.side === "bottom") dy = -contact.depth;
+    }
+    const moving = { ...movingBase, x: movingBase.x + dx, y: movingBase.y + dy };
+    const activeContacts: SurfaceContact[] = [];
+    for (const contact of contactMotion.contacts) {
+      const fixed = display.find(part => part.id === contact.id);
+      if (!fixed) continue;
+      const opposite = { left: "right", right: "left", top: "bottom", bottom: "top" } as const;
+      const vertical = contact.side === "left" || contact.side === "right";
+      surfaces.set(fixed.id, { part: fixed, contacts: [contact] });
+      activeContacts.push({ ...contact, side: opposite[contact.side], depth: -contact.depth, inset: contact.depth,
+        center: contact.center + (vertical ? fixed.y - moving.y : fixed.x - moving.x) });
+    }
+    surfaces.set(moving.id, { part: moving, contacts: activeContacts });
+  }
   const width = Math.max(size.width * 2, 1200, ...display.map(part => part.x + part.width + size.width));
   const height = Math.max(size.height * 2, 900, ...display.map(part => part.y + part.height + size.height));
   return <div className="detail-workspace">
     <div ref={viewport} className="detail-canvas-viewport" role="region" aria-label="パーツの編集領域" tabIndex={0}>
       <div className="detail-canvas" style={{ width, height }}>
-        {destination && <div className="detail-part-destination" aria-hidden="true"
+        {destination && contactMotion.contacts.length === 0 && <div className="detail-part-destination" aria-hidden="true"
           style={{ width: destination.width, height: destination.height, transform: `translate3d(${destination.x}px, ${destination.y}px, 0)` }} />}
-        {display.map((part, index) => <div key={part.id} className={`detail-part${dragging === part.id ? " is-dragging" : ""}${editingId === part.id ? " is-editing" : ""}${rebounding === part.id ? " is-rebounding" : ""}`}
-          style={{ zIndex: movingPart && !gesture.current?.resizing && contactClip(part, movingPart) ? 4 : undefined, clipPath: movingPart && !gesture.current?.resizing ? contactClip(part, movingPart) : undefined, width: part.width, height: part.height, transform: `translate3d(${part.x}px, ${part.y}px, 0)` }}
+        {display.map((storedPart, index) => {
+          const surface = surfaces.get(storedPart.id), part = surface?.part ?? storedPart;
+          const contacts = surface?.contacts ?? [];
+          const deformed = contacts.some(contact => Math.abs(contact.depth) > .01);
+          return <div key={part.id} className={`detail-part${dragging === part.id ? " is-dragging" : ""}${editingId === part.id ? " is-editing" : ""}${rebounding === part.id ? " is-rebounding" : ""}${deformed ? " has-contact" : ""}`}
+          style={{ width: part.width, height: part.height, transform: `translate3d(${part.x}px, ${part.y}px, 0)` }}
           role="group" aria-label={`パーツ ${index + 1}`} tabIndex={disabled ? -1 : 0} aria-disabled={disabled}
           onTransitionEnd={event => { if (event.target === event.currentTarget && event.propertyName === "transform") setRebounding(null); }}
           onPointerDown={event => start(event, part)}
@@ -230,6 +259,7 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
             const dy = event.key === "ArrowDown" ? PART_STEP : event.key === "ArrowUp" ? -PART_STEP : 0;
             if (dx || dy) { event.preventDefault(); change({ ...part, x: Math.max(0, part.x + dx), y: Math.max(0, part.y + dy) }); }
           }}>
+          <DetailContactFilter width={part.width} height={part.height} contacts={contacts}>
           {part.kind === "image" ? <DetailImagePart src={part.src} name={part.name} disabled={disabled} index={index} editing={editingId === part.id}
             onEditingChange={editing => setEditingId(editing ? part.id : null)}
             onChange={image => editPart(part.id, current => current.kind === "image" ? { ...current, ...image } : current)} />
@@ -239,6 +269,7 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
             : <DetailTextPart text={part.text} disabled={disabled} index={index} editing={editingId === part.id}
               onEditingChange={editing => setEditingId(editing ? part.id : null)}
               onChange={text => editPart(part.id, current => current.kind === "text" ? { ...current, text } : current)} />}
+          </DetailContactFilter>
           <button type="button" className="detail-part-grip" disabled={disabled}
             aria-label={`パーツ ${index + 1}の右下でサイズ変更`} onPointerDown={event => start(event, part, true)}
             onKeyDown={event => {
@@ -248,7 +279,7 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
             }} />
           <button type="button" className="detail-part-delete" disabled={disabled} aria-label={`パーツ ${index + 1}を削除`}
             onPointerDown={event => event.stopPropagation()} onClick={() => remove(part.id)}>×</button>
-        </div>)}
+        </div>; })}
       </div>
     </div>
     <aside className="detail-part-pool" aria-label="パーツプール">
