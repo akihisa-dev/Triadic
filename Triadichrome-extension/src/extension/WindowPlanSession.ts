@@ -29,6 +29,7 @@ export class WindowPlanSession implements SessionAccess {
   private controls: Controls | null = null;
   private releaseLock: (() => void) | undefined;
   private closing = false;
+  private preparedHistory: { transaction: string; discard: boolean; close: boolean } | null = null;
   private activation: Promise<unknown> = Promise.resolve();
   private activationWaiters = new Set<() => void>();
   private flushDepth = 0;
@@ -110,6 +111,14 @@ export class WindowPlanSession implements SessionAccess {
         await Promise.all([...this.savedListeners].map(listener => listener(message.handle)));
         this.port!.postMessage({ type: "reply", id: message.id });
       } catch (failure) { this.port!.postMessage({ type: "reply", id: message.id, error: failure instanceof Error ? failure.message : "ファイルの参照を記憶できませんでした。" }); }
+    } else if (message.type === "history-decision") {
+      const prepared = this.preparedHistory;
+      if (prepared?.transaction !== message.transaction) return;
+      this.preparedHistory = null;
+      if (message.commit) {
+        if (prepared.discard) this.controls?.discard();
+        if (prepared.close) this.closeWindow();
+      }
     } else {
       try {
         if (message.expiresAt !== undefined && message.expiresAt <= Date.now()) {
@@ -135,26 +144,31 @@ export class WindowPlanSession implements SessionAccess {
       }
       case "resume": this.updateInfo({ settling: false }); return;
       case "draft": return this.controls?.draft(detail === "history") ?? false;
-      case "discard": this.controls?.discard(); return;
+      case "discard":
+      case "close": {
+        // Acknowledge readiness without destroying input. Only the shared decision commits it.
+        if (!detail) throw new Error("ウィンドウ処理を再試行してください。入力は保持しています。");
+        if (this.preparedHistory?.transaction !== detail) this.preparedHistory = { transaction: detail, discard: false, close: false };
+        this.preparedHistory[action] = true;
+        return;
+      }
       case "confirm-discard": return this.controls?.confirmDiscard(detail ?? "") ?? false;
       case "recover": {
         const handle = this.handle;
         if (!handle) throw new Error("保存先が見つかりません。入力は保持しています。");
         return recoverFileConflict(handle);
       }
-      case "close": {
-        this.closing = true;
-        this.controls?.close();
-        // Acknowledge first, so pagehide cannot turn a successful close into a failed history action.
-        setTimeout(() => {
-          // Only this extension's own tab is removed; no tabs permission is required.
-          if (typeof chrome !== "undefined" && chrome.tabs?.getCurrent) {
-            void chrome.tabs.getCurrent().then(tab => { if (tab?.id !== undefined) void chrome.tabs.remove(tab.id); });
-          } else window.close();
-        }, 0);
-        return;
-      }
     }
+  }
+  private closeWindow() {
+    this.closing = true;
+    this.controls?.close();
+    setTimeout(() => {
+      // Only this extension's own tab is removed; no tabs permission is required.
+      if (typeof chrome !== "undefined" && chrome.tabs?.getCurrent) {
+        void chrome.tabs.getCurrent().then(tab => { if (tab?.id !== undefined) void chrome.tabs.remove(tab.id); });
+      } else window.close();
+    }, 0);
   }
   async open(plan: Pick<OpenPlan, "name" | "bytes" | "handle">) { await this.request("open", plan); }
   async prepareSave(_destination: () => Promise<FileSystemFileHandle>) {

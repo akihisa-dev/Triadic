@@ -84,6 +84,8 @@ Plans, masters, and snapshots are saved in the same `.triadic` file. Text and nu
 
 “Undo operation” (操作を取り消す) reverses the latest 100 operations during the current file session. “History” (履歴) views and restores saved past states, including after reopening the file. Snapshots are recorded five minutes after the first successful save of an unrecorded change, on normal file closure, and before viewing past states. There is no retention expiry; delete snapshots as needed. See [Data history](#data-history).
 
+History consolidation waits for every window to prepare discarding and closing before committing either action. A missing response or disconnect during preparation keeps input in the remaining windows; retry starts a separate decision.
+
 Save As captures the destination contents immediately after selection, before waiting for other windows to finish saving, and rejects later external changes.
 
 Save As and conflict recovery both reject destinations used by another open/loading plan or pending save. A recovery destination stays reserved until the new file reference is shared; cancellation or failure releases the reservation.
@@ -969,6 +971,8 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 同じファイルは共有Worker（`windowSession.worker.ts`）の一つの`PlanSession`で管理し、ファイル参照の同一性で通常のファイル選択からも共有へ参加します。各ウィンドウの終了は寿命に連動するブラウザのロックと`pagehide`で検出します。保存状態だけの更新では計画本体を再送せず、各画面の計算元の参照を維持します。保存済み内容の小さな変更は項目の差分を同じ通信順で反映し、変わらない計算元の参照を保持します。初回接続・別計画の読込と、差分が1,000項目を超える変更では全体を同期します。差分作成は同じ変更前の計画ごとに共有し、保存成功後の取消・履歴・外部統合も同じ通知を使います。共有データと取消履歴はメモリ内だけで、全ウィンドウ終了後は保持しません。保存形式・拡張権限・依存ライブラリ・外部送信に変更はありません。ファイルの許可要求と保存先選択は利用者が操作した画面で行います。[ファイル許可要求のブラウザ仕様](https://developer.mozilla.org/en-US/docs/Web/API/FileSystemHandle/requestPermission)に従い、共有Workerから新しい許可ダイアログを要求しません。
 
 複数ウィンドウの確認は[専用の確認画面](http://127.0.0.1:4173/tests/ui/multi-window.html)で行えます。実際の共有Workerと本番の画面を使い、確認用の保存先だけをブラウザ内のテスト用領域へ置きます。利用者の選択した実ファイルを読み書きしません。従来の確認画面はメソッドを持つメモリ内ファイルを使うため、通信境界だけを画面内へ置き換え、同じ共有管理・保存待ち・画面処理を検証します。配布用のビルドには確認用入口・データ・通信の代替実装を含めません。
+
+履歴へ集約する際の入力破棄・ウィンドウ終了は、すべての画面が準備に応答してから確定します。準備途中の応答切れ・切断では残った画面の入力を保持し、再試行とは別の操作として扱います。
 
 別名保存先の内容は選択直後に保持します。他画面の入力確定を待つ間の外部更新も、書き込み前に検出して拒否します。
 

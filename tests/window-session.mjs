@@ -2,6 +2,7 @@ import { verifyPlanContentsPatch } from "./plan-contents-patch.mjs";
 import { verifyPlanProcessing } from "./plan-processing.mjs";
 import { verifyLatestNavigation } from "./latest-navigation.mjs";
 import assert from "node:assert/strict";
+import { verifyHistoryCommit } from "./window-history-commit.mjs";
 import { verifyWindowControlTimeout } from "./window-control-timeout.mjs";
 
 export async function verifyWindowSession(api) {
@@ -22,6 +23,13 @@ export async function verifyWindowSession(api) {
         const request = pending.get(message.id); pending.delete(message.id);
         if (message.error) request.reject(new Error(message.error)); else request.resolve(message.value);
       }
+      if (message.type === "history-decision" && client.prepared?.transaction === message.transaction) {
+        const prepared = client.prepared; client.prepared = null;
+        if (message.commit) {
+          if (prepared.discard) { client.hasDraft = false; client.hasDetails = false; client.discard = true; }
+          if (prepared.close) client.closed = true;
+        }
+      }
       if (message.type === "saved") queueMicrotask(() => connection.receive({ type: "reply", id: message.id }));
       if (message.type === "control") queueMicrotask(async () => {
         try {
@@ -30,8 +38,10 @@ export async function verifyWindowSession(api) {
           if (message.action === "recover") { client.recovered.push(message.detail); value = client.recoveryTarget; }
           if (message.action === "draft") value = client.hasDraft || (message.detail === "history" && client.hasDetails);
           if (message.action === "confirm-discard") value = client.accept;
-          if (message.action === "discard") { client.hasDraft = false; client.hasDetails = false; client.discard = true; }
-          if (message.action === "close") client.closed = true;
+          if (message.action === "discard" || message.action === "close") {
+            if (client.prepared?.transaction !== message.detail) client.prepared = { transaction: message.detail };
+            client.prepared[message.action] = true;
+          }
           connection.receive({ type: "reply", id: message.id, value });
         } catch (error) { connection.receive({ type: "reply", id: message.id, error: error.message }); }
       });
@@ -381,6 +391,7 @@ export async function verifyWindowSession(api) {
   assert.equal(ticketHub.tickets.size, 0, "最後のウィンドウ終了でも予約と期限処理を解放");
 
   await verifyWindowControlTimeout(api, bytes);
+  await verifyHistoryCommit(api, bytes);
 
   const saved = [], controller = new api.AutoSave(async draft => { saved.push(draft); }, 60_000);
   const unregister = api.registerAutoSave(controller);

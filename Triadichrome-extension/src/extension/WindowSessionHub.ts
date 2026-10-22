@@ -204,6 +204,8 @@ export class WindowSessionHub {
     const group = this.requireGroup(peer);
     const task = group.actionTail.then(async () => {
       const peers = [...group.peers];
+      const transaction = history ? crypto.randomUUID() : "";
+      let committed = false;
       try {
         // Flush outside the document queue: each UI must be able to submit its pending save.
         await Promise.all(peers.map(async item => {
@@ -221,15 +223,25 @@ export class WindowSessionHub {
         }
         const result = await operation(group);
         if (history) {
-          // Do not discard or close anything until the saved checkpoint has succeeded.
-          for (const item of drafts) await this.control(item, "discard");
+          // Prepare every destructive action first. A timeout/disconnect still preserves all input.
+          for (const item of drafts) await this.control(item, "discard", transaction);
+          for (const item of peers) if (item !== peer) await this.control(item, "close", transaction);
+          this.requireGroup(peer);
           group.historyOwner = peer;
-          for (const item of peers) if (item !== peer && group.peers.has(item)) {
-            await this.control(item, "close"); this.detach(item);
+          committed = true;
+          // One decision follows all readiness replies. Closing tabs need no further acknowledgement.
+          for (const item of peers) {
+            try { this.send(item, { type: "history-decision", transaction, commit: true }); }
+            catch { /* A disconnected recipient retains its input; do not report a rolled-back decision. */ }
+            if (item !== peer && group.peers.has(item)) this.detach(item);
           }
         }
         return result;
       } finally {
+        if (history && !committed) for (const item of peers) {
+          try { this.send(item, { type: "history-decision", transaction, commit: false }); }
+          catch { /* The failed transport must not prevent other windows from resuming. */ }
+        }
         // Recovery must not add another response timeout to the failed action.
         for (const item of group.peers) void this.control(item, "resume").catch(() => {});
       }

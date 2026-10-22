@@ -20,13 +20,22 @@ export async function verifyWindowControlTimeout(api, bytes) {
         const request = pending.get(message.id); pending.delete(message.id);
         if (message.error) request.reject(new Error(message.error)); else request.resolve(message.value);
       }
+      if (message.type === "history-decision" && peer.prepared?.transaction === message.transaction) {
+        const prepared = peer.prepared; peer.prepared = null;
+        if (message.commit) {
+          if (prepared.discard) { peer.discarded = true; peer.draft = false; }
+          if (prepared.close) peer.closed = true;
+        }
+      }
       if (message.type === "control" || message.type === "saved") {
         calls.push(message);
         const action = message.type === "saved" ? "saved" : message.action;
         if (peer.hold.has(action)) { held.push(message); return; }
         queueMicrotask(() => {
-          if (action === "discard") { peer.discarded = true; peer.draft = false; }
-          if (action === "close") peer.closed = true;
+          if (action === "discard" || action === "close") {
+            if (peer.prepared?.transaction !== message.detail) peer.prepared = { transaction: message.detail };
+            peer.prepared[action] = true;
+          }
           if (action === "resume") peer.resumed++;
           connection.receive({ type: "reply", id: message.id, value: action === "draft" ? peer.draft : action === "confirm-discard" ? true : undefined });
         });
