@@ -1,0 +1,73 @@
+import { test, expect } from "./fixtures";
+
+test.beforeEach(async ({ page, app }) => {
+  await page.goto("/tests/ui/shared-editing.html");
+  await expect(page.getByRole("status")).toHaveText("操作できます");
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("button", { name: "サイドバーを開く", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "マスタ", exact: true }).click();
+});
+
+test("科目の共有名称・表示名に追従し、未保存コード・保存中の追加入力と操作履歴を保持する", async ({ page, app }) => {
+  await app.getByRole("button", { name: /^勘定科目マスタ / }).click();
+  await app.getByRole("button", { name: "売上高を編集", exact: true }).click();
+  const code = app.getByRole("textbox", { name: /の科目コード$/ });
+  const name = app.getByRole("textbox", { name: /の名称$/ });
+  const display = app.getByRole("textbox", { name: /の表示名$/ });
+  const update = page.getByRole("button", { name: "別ウィンドウで科目を更新", exact: true });
+  const read = async () => JSON.parse(await page.getByLabel("SQLite保存内容", { exact: true }).innerText()).account;
+  await update.click();
+  await expect(name).toHaveValue("別画面の名称1"); await expect(display).toHaveValue("別画面の表示名1");
+  await code.fill("");
+  await expect(app.getByRole("alert")).toContainText("自動保存できませんでした");
+  await update.click();
+  await expect(name).toHaveValue("別画面の名称2"); await expect(display).toHaveValue("別画面の表示名2"); await expect(code).toHaveValue("");
+  await code.fill("999"); await app.getByRole("button", { name: "完了", exact: true }).click();
+  await expect(app.getByRole("button", { name: "別画面の名称2を編集", exact: true })).toBeVisible();
+  expect(await read()).toMatchObject({ accountCode: "999", accountName: "別画面の名称2", displayName: "別画面の表示名2" });
+  await page.getByRole("button", { name: "次の保存を保留", exact: true }).click();
+  await app.getByRole("button", { name: "別画面の名称2を編集", exact: true }).click(); await name.fill("自分の科目名");
+  await expect(page.getByRole("status")).toHaveText("保存を保留中");
+  await display.fill("保存中の追加入力");
+  await page.getByRole("button", { name: "保存を完了", exact: true }).click();
+  await app.getByRole("button", { name: "完了", exact: true }).click();
+  await expect(app.getByRole("button", { name: "自分の科目名を編集", exact: true })).toBeVisible();
+  expect(await read()).toMatchObject({ accountCode: "999", accountName: "自分の科目名", displayName: "保存中の追加入力" });
+  await app.getByRole("button", { name: "操作を取り消す", exact: true }).click();
+  await expect.poll(async () => (await read()).displayName).toBe("別画面の表示名2");
+  await app.getByRole("button", { name: "操作をやり直す", exact: true }).click();
+  await expect.poll(async () => (await read()).displayName).toBe("保存中の追加入力");
+  await app.getByRole("button", { name: "自分の科目名を編集", exact: true }).click(); await code.fill("");
+  await expect(app.getByRole("alert")).toContainText("自動保存できませんでした");
+  await app.getByRole("button", { name: "入力を取り消す", exact: true }).click();
+  await expect(code).toHaveValue("999"); await expect(display).toHaveValue("保存中の追加入力");
+});
+
+test("集計の共有表示名と所属を保持し、名称だけの保存・保存中入力・取消やり直しに対応する", async ({ page, app }) => {
+  await app.getByRole("button", { name: /^集計マスタ / }).click();
+  await app.getByRole("button", { name: "社外売上小計を移動", exact: true }).press("F2");
+  const name = app.getByRole("textbox", { name: /の集計名$/ });
+  const display = app.getByRole("textbox", { name: /の表示名$/ });
+  const update = page.getByRole("button", { name: "別ウィンドウで集計を更新", exact: true });
+  const read = async () => JSON.parse(await page.getByLabel("SQLite保存内容", { exact: true }).innerText()).aggregation;
+  await update.click(); await expect(display).toHaveValue("別画面の集計表示1");
+  await name.fill(""); await expect(app.getByRole("alert")).toContainText("自動保存できませんでした");
+  await update.click(); await expect(display).toHaveValue("別画面の集計表示2"); await expect(name).toHaveValue("");
+  await name.fill("自分の集計名"); await app.getByRole("button", { name: "完了", exact: true }).click();
+  await expect(name).toHaveCount(0);
+  expect(await read()).toMatchObject({ name: "自分の集計名", displayName: "別画面の集計表示2", members: [{ kind: "account", id: 1, sign: -1 }, { kind: "account", id: 2, sign: 1 }] });
+  await page.getByRole("button", { name: "次の保存を保留", exact: true }).click();
+  await app.getByRole("button", { name: "自分の集計名を移動", exact: true }).press("F2"); await name.fill("保存中の集計名");
+  await expect(page.getByRole("status")).toHaveText("保存を保留中");
+  await display.fill("集計の追加入力"); await page.getByRole("button", { name: "保存を完了", exact: true }).click();
+  await app.getByRole("button", { name: "完了", exact: true }).click(); await expect(name).toHaveCount(0);
+  expect(await read()).toMatchObject({ name: "保存中の集計名", displayName: "集計の追加入力" });
+  await app.getByRole("button", { name: "操作を取り消す", exact: true }).click();
+  await expect.poll(async () => (await read()).displayName).toBe("別画面の集計表示2");
+  await app.getByRole("button", { name: "操作をやり直す", exact: true }).click();
+  await expect.poll(async () => (await read()).displayName).toBe("集計の追加入力");
+  await app.getByRole("button", { name: "保存中の集計名を移動", exact: true }).press("F2"); await name.fill("");
+  await expect(app.getByRole("alert")).toContainText("自動保存できませんでした");
+  await app.getByRole("button", { name: "入力を取り消す", exact: true }).click();
+  await expect(name).toHaveValue("保存中の集計名"); await expect(display).toHaveValue("集計の追加入力");
+});

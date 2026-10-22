@@ -60,6 +60,17 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
   const [busy, setBusy] = useState(false);
   const autoSave = useAutoSave<{ id: number; name: string; displayName: string }>(draft => onChange({ type: "update", ...draft, members: byGroup.get(draft.id)!.members }), onPendingChange);
   const { draft: editing, controller } = autoSave;
+  const savedSource = useRef<string | null>(null);
+  useLayoutEffect(() => {
+    if (!editing) { savedSource.current = null; return; }
+    const group = byGroup.get(editing.id);
+    if (!group) return;
+    const saved = { id: group.id, name: group.name, displayName: group.displayName ?? group.name };
+    const key = JSON.stringify(saved);
+    if (key === savedSource.current) return;
+    savedSource.current = key;
+    controller.syncSaved(saved);
+  }, [byGroup, controller, editing?.id]);
   const [deleting, setDeleting] = useState<Aggregation | null>(null);
   const disabled = readOnly || isSaving || busy || editing !== null;
   const movingRow = dragged ?? (liftedKey ? byRow.get(liftedKey) : null);

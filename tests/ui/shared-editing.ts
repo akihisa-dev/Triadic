@@ -41,4 +41,19 @@ document.querySelector("#replace")!.addEventListener("click", () => { void (asyn
 document.querySelector("#hold")!.addEventListener("click", () => { hold = true; status.textContent = "次の保存を保留します"; });
 document.querySelector("#release")!.addEventListener("click", () => { hold = false; release?.(); release = undefined; });
 document.querySelector("#read")!.addEventListener("click", () => { void read(); });
+let accountUpdate = 0, aggregationUpdate = 0;
+document.querySelector("#account")!.addEventListener("click", () => { void (async () => {
+  const account = peer.getSnapshot().contents!.accounts[0]!;
+  const index = ++accountUpdate;
+  await peer.dispatch({ type: "account", change: { type: "update", id: account.id, accountCode: account.accountCode!, accountType: account.accountType!,
+    accountName: `別画面の名称${index}`, displayName: `別画面の表示名${index}` } }, async () => handle);
+  await read(); status.textContent = `科目の共有更新${index}を反映しました`;
+})().catch(error => { status.textContent = String(error); }); });
+document.querySelector("#aggregation")!.addEventListener("click", () => { void (async () => {
+  const group = peer.getSnapshot().contents!.aggregations[0]!;
+  const index = ++aggregationUpdate;
+  await peer.dispatch({ type: "aggregation", change: { type: "update", id: group.id, name: group.name, displayName: `別画面の集計表示${index}`,
+    members: group.members.map((member, position) => position === 0 ? { ...member, sign: -1 } : member) } }, async () => handle);
+  await read(); status.textContent = `集計の共有更新${index}を反映しました`;
+})().catch(error => { status.textContent = String(error); }); });
 await read();

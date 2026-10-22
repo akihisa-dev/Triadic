@@ -33,6 +33,18 @@ export function AccountMasterPage({ accounts, groups, usedAccountIds, isSaving, 
   const perform = (operation: Operation) => operation.kind === "account" ? changeAccount(operation.change) : changeGroup(operation.change);
   const autoSave = useAutoSave<Draft>(draft => changeAccount({type:"update",id:draft.id,accountCode:draft.code,accountName:draft.name,accountType:draft.attribute,displayName:draft.displayName}),onPendingChange);
   const {draft:editing,controller} = autoSave;
+  const savedSource = useRef<string | null>(null);
+  useLayoutEffect(() => {
+    if (!editing) { savedSource.current = null; return; }
+    const account = accounts.find(item => item.id === editing.id);
+    if (!account) return;
+    const saved: Draft = { kind: "account", id: account.id, code: account.accountCode ?? "", name: account.accountName,
+      displayName: account.displayName ?? account.accountName, attribute: account.accountType ?? "" };
+    const key = JSON.stringify(saved);
+    if (key === savedSource.current) return;
+    savedSource.current = key;
+    controller.syncSaved(saved);
+  }, [accounts, controller, editing?.id]);
   const {notice,dismiss,save} = useMasterOperation<Operation>({onChange:perform,onSuccess:operation => { if(operation.change.type === "add") setAdding(empty()); setDeleting(null); },onFailure:() => {positions.current=null;setDeleting(null);},successMessage:() => "マスタを保存しました。",cancelledMessage:() => "保存をキャンセルしました。元の内容を保っています。"});
   const disabled = readOnly || isSaving || editing !== null;
   useLayoutEffect(() => {

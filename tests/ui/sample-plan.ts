@@ -1,6 +1,7 @@
 // 明細の画像・文章・表・配置の保存と再読込・取消・履歴・別名保存・競合・失敗保護は tests/detail-document-storage.test.mjs と tests/ui/detail-persistence.spec.ts で確認する。
 import { changeDetailDocument } from "../../Triadichrome-extension/src/core/storage/detailDocuments";
 // 複数ウィンドウの同期・表示条件/位置の複製・共有取消・全保存先切替・履歴集約は既存の施策/月額/3時点履歴を使い、tests/window-session.mjs と tests/ui/multi-window.spec.ts で確認する。保存データは追加しない。
+// 勘定科目・集計の共有更新と編集中の同期、未保存・保存中の追加入力、完了と取消は tests/ui/shared-editing.html と master-shared-editing.spec.ts で初期マスタを使って検証する。サンプルの保存内容は変えない。
 // 集計の登録時の集計名・表示名の個別指定、空白拒否・保存失敗・再読込は tests/ui/aggregations.spec.ts で確認する。既存の保存項目を使用し、サンプル内容は変えない。
 // 集計と全子孫をまとめる並べ替え・浮遊表示・所属と加減の保持は tests/aggregation-layout.mjs と tests/ui/aggregation-drop.spec.ts で確認する。保存項目は増やさない。
 // L字の高さが足りない縦書き名だけを隠し、集計行名・配置を保つ表示と再表示は tests/ui/aggregation-labels.spec.ts で確認する。保存データは変えない。
