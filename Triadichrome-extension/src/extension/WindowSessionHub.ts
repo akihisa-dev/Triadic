@@ -7,7 +7,7 @@ import type { ClientReply, HubMessage, HubRequest, WindowControl, WindowInfo } f
 import type { WindowView } from "./windowView";
 import { emptyDataHistory } from "../core/domain/dataHistory";
 import { scheduleHistoryCheckpoint } from "./historyCheckpoint";
-import { reconcileWindowCommand } from "../core/domain/windowCommand";
+import { reconcileWindowCommand, type WindowCommandBase } from "../core/domain/windowCommand";
 import type { PlanContents } from "../core/domain/plan";
 
 type Peer = { port: Pick<MessagePort, "postMessage">; group: Group | null; number: number; label: string; initialView: WindowView | null; publishedContents?: PlanContents | null; opening?: boolean };
@@ -38,7 +38,13 @@ export class WindowSessionHub {
           if (message.error) pending.reject(new Error(message.error)); else pending.resolve(message.value);
           return;
         }
-        void this.request(peer, message.method, message.args).then(value => this.send(peer, { type: "result", id: message.id, value }), failure => {
+        void this.request(peer, message.method, message.args).then(value => {
+          // State and result use the same ordered port. Reconstruct this operation's exact result
+          // against the last published contents, even if a newer operation was already published.
+          const contentsPatch = message.method === "dispatch" && peer.publishedContents
+            ? diffPlanContents(peer.publishedContents, value as PlanContents) : null;
+          this.send(peer, { type: "result", id: message.id, ...(contentsPatch ? { contentsPatch } : { value }) });
+        }, failure => {
           this.send(peer, { type: "result", id: message.id, error: errorText(failure, "message", "処理できませんでした。入力は保持しています。"), errorName: errorText(failure, "name", "Error") });
         });
       },
@@ -333,7 +339,7 @@ export class WindowSessionHub {
           switch (method) {
             case "dispatch": {
               const command = args[0] as Parameters<PlanSession["dispatch"]>[0];
-              const base = args[1] as PlanContents | null | undefined;
+              const base = args[1] as WindowCommandBase | null | undefined;
               const current = group.session.getSnapshot().contents!;
               return group.session.dispatch(base ? reconcileWindowCommand(command, base, current) : command, destinationMissing);
             }

@@ -1,4 +1,5 @@
 import { applyPlanContentsPatch } from "../core/domain/planContentsPatch";
+import { windowCommandBase } from "../core/domain/windowCommand";
 import { emptyDataHistory, type HistoryDeletion } from "../core/domain/dataHistory";
 import type { PlanCommand } from "../core/domain/planCommands";
 import type { PlanContents } from "../core/domain/plan";
@@ -98,7 +99,7 @@ export class WindowPlanSession implements SessionAccess {
       if (!request) return;
       this.pending.delete(message.id);
       if (message.error) request.reject(message.errorName === "AbortError" ? new DOMException(message.error, "AbortError") : new Error(message.error));
-      else request.resolve(message.value);
+      else request.resolve(message.contentsPatch ? applyPlanContentsPatch(this.snapshot.contents!, message.contentsPatch) : message.value);
     } else if (message.type === "state") {
       const sameGroup = message.info.group === this.info.group;
       this.updateInfo({ ...message.info, initialView: sameGroup ? this.info.initialView : message.info.initialView });
@@ -179,7 +180,7 @@ export class WindowPlanSession implements SessionAccess {
     await this.request("prepareSave");
   }
   async dispatch(command: PlanCommand, _destination: () => Promise<FileSystemFileHandle>): Promise<PlanContents> {
-    const base = this.snapshot.contents;
+    const base = this.snapshot.contents ? windowCommandBase(command, this.snapshot.contents) : null;
     if (!this.flushDepth) {
       let release!: () => void;
       const forcedFlush = new Promise<void>(resolve => { release = resolve; });

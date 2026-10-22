@@ -2,6 +2,7 @@ import { verifyPlanContentsPatch } from "./plan-contents-patch.mjs";
 import { verifyPlanProcessing } from "./plan-processing.mjs";
 import { verifyLatestNavigation } from "./latest-navigation.mjs";
 import assert from "node:assert/strict";
+import { verifyWindowTransfer } from "./window-transfer.mjs";
 import { verifyHistoryMembership } from "./window-history-membership.mjs";
 import { verifyHistoryCommit } from "./window-history-commit.mjs";
 import { verifyWindowControlTimeout } from "./window-control-timeout.mjs";
@@ -22,7 +23,7 @@ export async function verifyWindowSession(api) {
       if (message.type === "state") client.states.push(message.contentsPatch ? { ...message, snapshot: { ...message.snapshot, contents: api.applyPlanContentsPatch(client.states.at(-1)?.snapshot.contents, message.contentsPatch) } } : message.preserveContents ? { ...message, snapshot: { ...message.snapshot, contents: client.states.at(-1)?.snapshot.contents ?? null } } : message);
       if (message.type === "result") {
         const request = pending.get(message.id); pending.delete(message.id);
-        if (message.error) request.reject(new Error(message.error)); else request.resolve(message.value);
+        if (message.error) request.reject(new Error(message.error)); else request.resolve(message.contentsPatch ? api.applyPlanContentsPatch(client.states.at(-1).snapshot.contents, message.contentsPatch) : message.value);
       }
       if (message.type === "history-decision" && client.prepared?.transaction === message.transaction) {
         const prepared = client.prepared; client.prepared = null;
@@ -394,6 +395,7 @@ export async function verifyWindowSession(api) {
   await verifyWindowControlTimeout(api, bytes);
   await verifyHistoryCommit(api, bytes);
   await verifyHistoryMembership(api, bytes);
+  await verifyWindowTransfer(api);
 
   const saved = [], controller = new api.AutoSave(async draft => { saved.push(draft); }, 60_000);
   const unregister = api.registerAutoSave(controller);

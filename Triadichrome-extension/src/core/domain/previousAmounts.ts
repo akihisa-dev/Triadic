@@ -15,7 +15,7 @@ export function indexPreviousAmounts(amounts: readonly PreviousAmount[], previou
   return index;
 }
 
-export function createPreviousInput(contents: PlanContents, industryId: number, departmentId: number, previousKind: PreviousKind = 1): PreviousInput {
+export function createPreviousInput(contents: Pick<PlanContents, "previousAmounts" | "accounts">, industryId: number, departmentId: number, previousKind: PreviousKind = 1): PreviousInput {
   const amounts = indexPreviousAmounts(contents.previousAmounts, previousKind);
   return { previousKind, industryId, departmentId, rows: contents.accounts.map(account => ({ accountId: account.id,
     amounts: Object.fromEntries(initiativeMonths.map(month => [month, amounts.get(previousAmountKey(industryId, departmentId, account.id, month)) ?? "0"])) })) };

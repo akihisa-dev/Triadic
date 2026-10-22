@@ -9,7 +9,7 @@ export type HubRequest = { type: "request"; id: number; method: string; args: un
 export type ClientReply = { type: "reply"; id: number; value?: unknown; error?: string };
 export type HubMessage =
   | { type: "state"; snapshot: SessionSnapshot; info: WindowInfo; handle?: FileSystemFileHandle; preserveContents?: boolean; contentsPatch?: PlanContentsPatch }
-  | { type: "result"; id: number; value?: unknown; error?: string; errorName?: string }
+  | { type: "result"; id: number; value?: unknown; contentsPatch?: PlanContentsPatch; error?: string; errorName?: string }
   | { type: "control"; id: number; action: WindowControl; detail?: string; expiresAt?: number }
   | { type: "history-decision"; transaction: string; commit: boolean }
   | { type: "saved"; id: number; handle: FileSystemFileHandle };
