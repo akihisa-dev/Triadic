@@ -2,6 +2,7 @@ import type { InitiativeEntryDraft, PlanContents } from "./plan";
 
 type ReferenceCollection = "accounts" | "expansions" | "expansionCategories" | "periodTypes";
 export type LocalDraftReference = { collection: ReferenceCollection; id: number; expected: object };
+export type InitiativeDraftReferences = Pick<PlanContents, ReferenceCollection | "departments" | "industries">;
 
 /** Identity-less masters are compared by their business fields, never usage/order. */
 function signature(collection: ReferenceCollection, item: object) {
@@ -13,7 +14,7 @@ function signature(collection: ReferenceCollection, item: object) {
 }
 
 /** Reconcile only published current data, never a history preview or failed save. */
-export function reconcileInitiativeDraftReferences(draft: InitiativeEntryDraft, before: PlanContents, after: PlanContents, local?: LocalDraftReference | null): InitiativeEntryDraft {
+export function reconcileInitiativeDraftReferences(draft: InitiativeEntryDraft, before: InitiativeDraftReferences, after: InitiativeDraftReferences, local?: LocalDraftReference | null): InitiativeEntryDraft {
   const oldAccounts = new Map(before.accounts.map(account => [account.id, account]));
   const nextAccounts = new Map(after.accounts.map(account => [account.id, account]));
   const accountChecks = new Map<number, boolean>();
@@ -44,4 +45,13 @@ export function reconcileInitiativeDraftReferences(draft: InitiativeEntryDraft, 
     && expansionId === draft.expansionId && (expansionCategoryId ?? null) === (draft.expansionCategoryId ?? null)
     && (periodTypeId ?? null) === (draft.periodTypeId ?? null) && rows.every((row, index) => row === draft.rows[index])) return draft;
   return { ...draft, departmentId, industryId, expansionId, expansionCategoryId, periodTypeId, rows };
+}
+
+/** Keep protected input independent of the replaced initiative and recheck its master references. */
+export function recoverInitiativeDraft(draft: InitiativeEntryDraft, before: InitiativeDraftReferences, after: InitiativeDraftReferences): InitiativeEntryDraft {
+  const checked = reconcileInitiativeDraftReferences(draft, before, after);
+  return { ...structuredClone(checked), rows: checked.rows.map(row => {
+    const { id: _id, revision: _revision, amountRevisions: _amountRevisions, overrideRevisions: _overrideRevisions, ...input } = row;
+    return { ...structuredClone(input), id: crypto.randomUUID() };
+  }) };
 }

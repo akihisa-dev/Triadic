@@ -2,6 +2,8 @@ import type { KindId } from "../../core/domain/kinds";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { createInitiativeDraft, duplicateInitiativeDraft, hasInitiativeDraftInput } from "../../core/domain/initiativeRules";
 import type { Initiative, PlanContents } from "../../core/domain/plan";
+import type { InitiativeEntryDraft } from "../../core/domain/plan";
+import { recoverInitiativeDraft, type InitiativeDraftReferences } from "../../core/domain/initiativeDraftReferences";
 import type { useRetainedInitiativeDraft } from "./useRetainedInitiativeDraft";
 import type { useScreenHistory } from "../useScreenHistory";
 import type { Page, Screen } from "./types";
@@ -19,8 +21,10 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
   callbacks.current = { beforeNavigate, onError };
   const [queueNavigation] = useState(() => latestNavigation<Screen>(next => callbacks.current.beforeNavigate(next), error => callbacks.current.onError(error)));
   navigationState.current = { blocked: navigationBlocked, page };
-  const [discardRequest, setDiscardRequest] = useState<{ perform: () => void; duplicate?: boolean } | null>(null);
+  const [discardRequest, setDiscardRequest] = useState<{ perform: () => void; duplicate?: boolean; recovery?: boolean } | null>(null);
   const { initiatives } = contents;
+  const latestContents = useRef(contents);
+  latestContents.current = contents;
   useEffect(() => {
     screens.prune(entry => entry.page !== "initiative-detail" || initiatives.some(item => item.id === entry.selectedInitiative?.id),
       { page: "home", selectedInitiative: null, detailOrigin: "initiative-list" });
@@ -60,5 +64,16 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
     if (hasInitiativeDraftInput(initiativeDraft)) setDiscardRequest({ perform, duplicate: true });
     else perform();
   };
-  return { discardRequest, setDiscardRequest, openInitiative, requestNavigation, setPage, startInitiative, duplicateInitiative };
+  const recoverInitiative = (input: InitiativeEntryDraft, references: InitiativeDraftReferences, release: () => void) => {
+    if (preview || saving.current || discardRequest) return;
+    const perform = () => {
+      // Transfer first, then release the protected editor. No file write happens here.
+      setInitiativeDraft(recoverInitiativeDraft(input, references, latestContents.current));
+      release(); dismissNotice();
+      navigate({ page: "initiative-entry", selectedInitiative: null, detailOrigin: "initiative-list" });
+    };
+    if (hasInitiativeDraftInput(initiativeDraft)) setDiscardRequest({ perform, recovery: true });
+    else perform();
+  };
+  return { discardRequest, setDiscardRequest, openInitiative, requestNavigation, setPage, startInitiative, duplicateInitiative, recoverInitiative };
 }

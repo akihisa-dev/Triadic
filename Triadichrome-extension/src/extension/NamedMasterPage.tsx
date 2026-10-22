@@ -7,7 +7,7 @@ import { AutoSaveStatus } from "./AutoSaveStatus";
 import { ConfirmationDialog } from "./ConfirmationDialog";
 import { StatusNotice } from "./StatusNotice";
 
-export type NamedMasterRow = { id: number; name: string; code: string; relationIds?: number[] };
+export type NamedMasterRow = { id: number; identity?: string; name: string; code: string; relationIds?: number[] };
 export type NamedMasterChange = { type: "add"; name: string; code: string; relationIds?: number[] } | ({ type: "update" } & NamedMasterRow) | { type: "delete"; id: number };
 type Props = AutoSaveProps & {
   rows: NamedMasterRow[]; usedIds?: Set<number>; isSaving: boolean;
@@ -36,7 +36,7 @@ export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange,
     const key = JSON.stringify(saved);
     if (key === savedSource.current) return;
     savedSource.current = key;
-    controller.syncSaved(saved);
+    controller.syncSaved(saved, JSON.stringify([row.id, row.identity]));
   }, [rows, controller, draft?.id]);
   const { notice, dismiss: dismissNotice, save } = useMasterOperation<NamedMasterChange>({
     onChange,
@@ -88,7 +88,7 @@ export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange,
               {relationOptions && <td>{editing ? relationChoices(editing.relationIds ?? [], relationIds => controller.change({ ...editing, relationIds }), readOnly, `${item.name}の${relationLabel}`) : relationOptions.filter(option => item.relationIds?.includes(option.id)).map(option => option.name).join("・")}</td>}
               <td><div className="form-actions">{editing
                 ? <button className="text-button" type="button" disabled={readOnly || autoSave.pending} onClick={() => controller.end()}>完了</button>
-                : <><button className="text-button" type="button" aria-label={`${item.name}を編集`} disabled={readOnly || isSaving || draft !== null} onClick={() => { dismissNotice(); controller.begin({ type: "update", ...item }); }}>編集</button>
+                : <><button className="text-button" type="button" aria-label={`${item.name}を編集`} disabled={readOnly || isSaving || draft !== null} onClick={() => { dismissNotice(); controller.begin({ type: "update", ...item }, JSON.stringify([item.id, item.identity])); }}>編集</button>
                   <button className="text-button" type="button" aria-label={`${item.name}を削除`} title={usedIds.has(item.id) ? "施策で使用中" : undefined} disabled={readOnly || isSaving || draft !== null || usedIds.has(item.id)} onClick={() => { dismissNotice(); setDeleting(item); }}>削除</button></>}
               </div></td>
             </tr>;

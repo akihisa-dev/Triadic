@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="ja">
+<head><meta charset="UTF-8"><title>共有編集中の入力保護</title>
+<style>body{margin:0;font:14px system-ui}header{padding:8px;display:flex;gap:8px;flex-wrap:wrap}iframe{width:100%;height:78vh;border:0}pre{margin:8px;white-space:pre-wrap;max-height:12vh;overflow:auto}</style></head>
+<body>
+<header>
+<button id="replace">別ウィンドウから置換を反映</button>
+<button id="hold">次の保存を保留</button><button id="release">保存を完了</button>
+<button id="read">保存内容を読む</button><output id="status" role="status">準備中</output>
+</header>
+<iframe id="app-preview" title="Triadichromeの実装画面"></iframe>
+<pre id="saved" aria-label="SQLite保存内容"></pre>
+<script type="module" src="./shared-editing.ts"></script>
+</body></html>

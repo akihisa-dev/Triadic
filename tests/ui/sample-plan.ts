@@ -319,6 +319,17 @@ export async function createRecreatedInitiativeFixture() {
   return { base, external };
 }
 
+/** Both owners have no rows: only creation identity can protect pending detail input. */
+export async function createReplacedEmptyInitiativeFixture() {
+  const fixture = await createRecreatedInitiativeFixture();
+  const initiative = (await readPlanContents(fixture.external)).initiatives[0]!;
+  const zeroed = await updateInitiative(fixture.external, initiative.id, 2026, { ...initiative, fiscalYear: "2026",
+    rows: initiative.rows.map(row => ({ ...row, amounts: {} })) });
+  return { base: fixture.base, external: await updateInitiative(zeroed, initiative.id, 2026, {
+    ...initiative, name: "置換後の施策", note: "置換先の備考", fiscalYear: "2026", rows: [],
+  }) };
+}
+
 /** Two independently overflowing initiatives whose account-level totals cancel. */
 export async function createCostInitiativeCancellationPlan(kind: KindId = 1) {
   let bytes = await createTriadicDatabase(2026);

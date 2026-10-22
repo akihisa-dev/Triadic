@@ -11,6 +11,7 @@ import { InitiativeEntryPage } from "./InitiativeEntryPage";
 import { AutoSaveStatus } from "./AutoSaveStatus";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
 import { useAutoSave, type AutoSaveProps } from "./useAutoSave";
+import type { InitiativeDraftReferences } from "../core/domain/initiativeDraftReferences";
 
 type Props = AutoSaveProps & {
   initiative: Initiative;
@@ -27,26 +28,33 @@ type Props = AutoSaveProps & {
   onOpenMaster: () => void;
   onDuplicate?: () => void;
   duplicationBlocked?: boolean;
+  onRecoverDraft?: (draft: InitiativeEntryDraft, references: InitiativeDraftReferences, release: () => void) => void;
 };
 
-export function InitiativeDetailPage({ initiative, accounts, expansions, expansionCategories, departments, periodTypes, industries, initialKind, backLabel = "施策一覧", onUpdate, onBack, onOpenMaster, onPendingChange, onPrepareSave, onDuplicate, duplicationBlocked = false }: Props) {
+export function InitiativeDetailPage({ initiative, accounts, expansions, expansionCategories, departments, periodTypes, industries, initialKind, backLabel = "施策一覧", onUpdate, onBack, onOpenMaster, onPendingChange, onPrepareSave, onDuplicate, duplicationBlocked = false, onRecoverDraft }: Props) {
   const readOnly = useHistoryReadOnly();
   const autoSave = useAutoSave(onUpdate, onPendingChange);
   const { controller, draft, revision } = autoSave;
-  const source = useRef<Initiative | null>(null);
+  const source = useRef<{ initiative: Initiative; references: InitiativeDraftReferences } | null>(null);
+  const received = useRef<Initiative | null>(null);
+  const emptyRow = useRef(crypto.randomUUID());
   useLayoutEffect(() => {
-    if (source.current !== initiative || !controller.getSnapshot().draft) {
-      source.current = initiative;
+    if (received.current !== initiative || !controller.getSnapshot().draft) {
+      received.current = initiative;
       controller.syncSaved({ name: initiative.name, note: initiative.note, expansionId: initiative.expansionId, expansionCategoryId: initiative.expansionCategoryId ?? null, departmentId: initiative.departmentId ?? null, periodTypeId: initiative.periodTypeId ?? null, industryId: initiative.industryId ?? null,
-      fiscalYear: initiative.fiscalYear === null ? "" : String(initiative.fiscalYear), rows: initiative.rows.length ? initiative.rows : [{ id: crypto.randomUUID(), accountId: null, amounts: {} }] });
+      fiscalYear: initiative.fiscalYear === null ? "" : String(initiative.fiscalYear), rows: initiative.rows.length ? initiative.rows : [{ id: emptyRow.current, accountId: null, amounts: {} }] }, `${initiative.id}:${initiative.identity ?? ""}`);
     }
-  }, [controller, initiative, revision]);
+    if (!controller.hasSourceChange()) source.current = { initiative,
+      references: autoSave.pending && source.current ? source.current.references : { accounts, expansions, expansionCategories, departments, periodTypes, industries } };
+  }, [controller, initiative, revision, autoSave.pending, accounts, expansions, expansionCategories, departments, periodTypes, industries]);
   if (!draft) return null;
   return <InitiativeEntryPage initialKind={initialKind ?? 1} draft={draft} onDraftChange={value => controller.change(value)} accounts={accounts} expansions={expansions} expansionCategories={expansionCategories} departments={departments} periodTypes={periodTypes} industries={industries}
     isSaving={false} onOpenMaster={onOpenMaster} onRegister={() => {}} editing={{
-      savedRows: initiative.rows, saving: autoSave.saving, pending: autoSave.pending, onCompositionStart: () => controller.pause(), onCompositionEnd: () => controller.resume(),
+      savedRows: (source.current?.initiative ?? initiative).rows, saving: autoSave.saving, pending: autoSave.pending, onCompositionStart: () => controller.pause(), onCompositionEnd: () => controller.resume(),
       before: <button className="text-button master-back" type="button" disabled={autoSave.pending} onClick={onBack}>← {backLabel}へ戻る</button>,
       actions: onDuplicate && <button className="secondary-button" type="button" disabled={readOnly || duplicationBlocked || autoSave.pending || autoSave.saving} onClick={onDuplicate}>複製して新規作成</button>,
-      status: <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave} />,
+      status: <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave}
+        recovery={controller.hasSourceChange() && onRecoverDraft && <button className="text-button" type="button" disabled={readOnly || autoSave.saving}
+          onClick={() => { if (source.current) onRecoverDraft(draft, source.current.references, () => controller.discard()); }}>新規施策として入力を引き継ぐ</button>} />,
     }} />;
 }

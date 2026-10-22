@@ -56,7 +56,7 @@ export function useHomeWorkspace({ windows, onChangeDetail, onChangePlan, fileNa
   const navigationBlocked = saveAsMutation.busy || restoreMutation.busy || operationMutation.busy || saveFailed || (screen.page === "spreadsheet-io" && editPending);
   const searchBlocked = navigationBlocked || editPending || isSaving || historyBusy;
   const historyEntered = useRef(screen.page === "data-history");
-  const { discardRequest, setDiscardRequest, openInitiative, requestNavigation, setPage, startInitiative, duplicateInitiative } = useWorkspaceNavigation(
+  const { discardRequest, setDiscardRequest, openInitiative, requestNavigation, setPage, startInitiative, duplicateInitiative, recoverInitiative } = useWorkspaceNavigation(
     screens, contents, preview !== null, navigationBlocked, saving, { initiativeDraft, setInitiativeDraft }, dismissNotice, async next => {
       await flushAutoSaves();
       if (next.page === "data-history" && !historyEntered.current) {
@@ -170,7 +170,7 @@ export function useHomeWorkspace({ windows, onChangeDetail, onChangePlan, fileNa
     isSidebarOpen, screen, initiativeDraft, setInitiativeDraft, preview, setPreview,
     restoreRequested, setRestoreRequested, restoreError, setRestoreError, contents, currentContents,
     notice, dismissNotice, isSaving, operationMutation, navigationBlocked, searchBlocked, discardRequest,
-    setDiscardRequest, operationBlocked, travelOperation, requestNavigation, setPage, startInitiative, duplicateInitiative,
+    setDiscardRequest, operationBlocked, travelOperation, requestNavigation, setPage, startInitiative, duplicateInitiative, recoverInitiative,
     usedAccountIds, changePlan, kindSelection, changeMaster, changePeriodTypes, changeDepartments,
     changeIndustries, changeExpansions, changeExpansionCategories, changeAggregations, update, register,
     resetScreens, previewEntry, returnToCurrent, restorePreview, closeSidebar, screens, fileName,

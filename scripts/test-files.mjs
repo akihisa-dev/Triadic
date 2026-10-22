@@ -24,6 +24,7 @@ import { verifyAccountReferenceRebase } from "../tests/account-reference-rebase.
 import { verifyHistoryDependencies } from "../tests/history-dependencies.mjs";
 import { verifyOrderRebase } from "../tests/order-rebase.mjs";
 import { verifyAutoSaveRebase } from "../tests/auto-save-rebase.mjs";
+import { verifyAutoSaveSource } from "../tests/auto-save-source.mjs";
 import { verifyRowAccountRebase } from "../tests/row-account-rebase.mjs";
 import { verifyClassificationRebase } from "../tests/classification-rebase.mjs";
 import { verifyPreviousInputRebase } from "../tests/previous-input-rebase.mjs";
@@ -159,6 +160,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyAggregationData({ ...api, createTriadicDatabase: () => api.createCurrentEmptyTestPlan(2026) });
   await verifyAutoSave(api);
   await verifyAutoSaveRebase(api);
+  await verifyAutoSaveSource(api);
   await verifyNamedMasterRebase(api);
   await verifyDataHistory(api);
   await verifyHistoryDifference(api);

@@ -15,14 +15,16 @@ export function registerAutoSave(controller: Controller) {
 export async function flushAutoSaves() {
   do {
     for (const controller of controllers) {
-      // An older save may still be publishing and scheduling the latest input.
-      while (controller.getSnapshot().saving) await new Promise<void>(resolve => {
-        const unsubscribe = controller.subscribe(() => {
+      while (controller.getSnapshot().pending || controller.getSnapshot().saving) {
+        // Another flush can start the next write after an older write publishes.
+        // Wait on every iteration so concurrent flushes cannot starve that write.
+        while (controller.getSnapshot().saving) await new Promise<void>(resolve => {
+          const unsubscribe = controller.subscribe(() => {
+            if (!controller.getSnapshot().saving) { unsubscribe(); resolve(); }
+          });
           if (!controller.getSnapshot().saving) { unsubscribe(); resolve(); }
         });
-        if (!controller.getSnapshot().saving) { unsubscribe(); resolve(); }
-      });
-      while (controller.getSnapshot().pending) {
+        if (!controller.getSnapshot().pending) break;
         if (controller.isComposing()) throw new Error("日本語の変換を確定してください。入力は保持しています。");
         await controller.flush();
         const state = controller.getSnapshot();

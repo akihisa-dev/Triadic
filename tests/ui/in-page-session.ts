@@ -3,7 +3,7 @@ import { WindowSessionHub } from "../../Triadichrome-extension/src/extension/Win
 /** Only transport is replaced: existing memory handles contain methods and cannot be structured-cloned. */
 export function installInPageSession() {
   const hub = new WindowSessionHub();
-  Reflect.set(window, "__triadichromePreviewTransport", () => {
+  const transport = () => {
     let listener: ((event: MessageEvent) => void) | null = null;
     const connection = hub.connect({ postMessage: value => queueMicrotask(() => listener?.(new MessageEvent("message", { data: value }))) });
     return { onerror: null, port: {
@@ -13,5 +13,7 @@ export function installInPageSession() {
         else connection.receive(message as Parameters<typeof connection.receive>[0]);
       }, start() {}, close() { connection.disconnect(); },
     } as unknown as MessagePort };
-  });
+  };
+  Reflect.set(window, "__triadichromePreviewTransport", transport);
+  return transport;
 }

@@ -29,7 +29,10 @@ export function PreviousInputPage({ contents, onSave, onPendingChange, onPrepare
   useLayoutEffect(() => {
     if (validPair && industryId !== null && departmentId !== null && (savedSource.current !== contents || !controller.getSnapshot().draft)) {
       savedSource.current = contents;
-      controller.syncSaved(createPreviousInput(contents, industryId, departmentId, previousKind));
+      controller.syncSaved(createPreviousInput(contents, industryId, departmentId, previousKind), JSON.stringify([
+        previousKind, industryId, contents.industries.find(item => item.id === industryId)?.identity,
+        departmentId, contents.departments.find(item => item.id === departmentId)?.identity,
+      ]));
     }
     if (controller.getSnapshot().pending) return;
     const departments = departmentIds.filter(id => contents.departments.some(item => item.id === id));
