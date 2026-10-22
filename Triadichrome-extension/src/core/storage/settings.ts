@@ -50,11 +50,16 @@ export async function changePlanSettings(bytes: Uint8Array, change: PlanChange, 
   if (change.type === "previous-import") return (await edit(bytes, db => {
     const seen = new Set<string>();
     if (!change.patches.length) throw new Error("変更する金額がありません。");
+    const accounts = new Map((db.exec("SELECT id, code, name, attribute FROM accounts")[0]?.values ?? []).map(([id, ...fields]) => [Number(id), fields]));
     for (const patch of change.patches) {
       const key = `${patch.previousKind}:${patch.industryId}:${patch.departmentId}:${patch.accountId}:${patch.month}`;
       if (seen.has(key) || !isKindId(patch.previousKind) || !Number.isInteger(patch.month) || patch.month < 1 || patch.month > 12) throw new Error("取り込み対象が重複しているか、月が正しくありません。");
       seen.add(key);
-      if (!db.exec("SELECT id FROM industries WHERE id = ?", [patch.industryId]).length || !db.exec("SELECT id FROM departments WHERE id = ?", [patch.departmentId]).length || !db.exec("SELECT id FROM accounts WHERE id = ?", [patch.accountId]).length) throw new Error("取り込み対象のマスタが見つかりません。");
+      const account = accounts.get(patch.accountId);
+      if (!db.exec("SELECT id FROM industries WHERE id = ?", [patch.industryId]).length || !db.exec("SELECT id FROM departments WHERE id = ?", [patch.departmentId]).length || !account) throw new Error("取り込み対象のマスタが見つかりません。");
+      if (!patch.account || account[0] !== patch.account.accountCode || account[1] !== patch.account.accountName || account[2] !== patch.account.accountType) {
+        throw new Error("出力後にマスタが変更されています。フォーマットを出力し直してください。");
+      }
       if (classificationIdentity(db, "industries", patch.industryId) !== patch.industryIdentity ||
         classificationIdentity(db, "departments", patch.departmentId) !== patch.departmentIdentity) throw new Error("確認後に業種・部署が作り直されています。フォーマットを出力し直してください。");
       if (!db.exec("SELECT 1 FROM department_industries WHERE department_id = ? AND industry_id = ?", [patch.departmentId, patch.industryId]).length) throw new Error("部署に設定されている業種を選択してください。");

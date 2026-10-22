@@ -1,4 +1,5 @@
 import { amountToYen } from "./amounts";
+import type { Account } from "./accountMaster";
 export const kindIds = [1, 2] as const;
 export type KindId = typeof kindIds[number];
 export type MonthAmounts = Partial<Record<number, string>>;
@@ -36,5 +37,5 @@ export function hasInvalidAmountInput(source: AmountSource): boolean {
 export const INITIAL_KINDS = [{ id: 1, kindName: "一次予算" }, { id: 2, kindName: "確定予算" }] as const;
 export type Kind = { id: number; kindName: string };
 export type PreviousInput = { previousKind: PreviousKind; invalidNumbers?: boolean; industryId: number; departmentId: number; rows: { accountId: number; amounts: MonthAmounts }[] };
-export type PreviousPatch = { previousKind: PreviousKind; industryIdentity: string; departmentIdentity: string; industryId: number; departmentId: number; accountId: number; month: number; before: string; after: string };
+export type PreviousPatch = { previousKind: PreviousKind; industryIdentity: string; departmentIdentity: string; industryId: number; departmentId: number; accountId: number; account: Pick<Account, "accountCode" | "accountName" | "accountType">; month: number; before: string; after: string };
 export type PlanChange = { type: "previous-selection"; screen: "cost-table" | "expansion-table"; previousKind: PreviousKind } | { type: "previous"; input: PreviousInput } | { type: "previous-import"; patches: PreviousPatch[] } | { type: "selection"; screen: KindScreen; selected: KindId[] };

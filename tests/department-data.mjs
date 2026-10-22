@@ -65,6 +65,7 @@ export async function verifyDepartmentData(api, { excel = false } = {}) {
   const exportContents = await readPlanContents(linked);
   let excelBytes;
   let patches = [{ previousKind: 1, industryId: 1, departmentId: 1, accountId: exportContents.accounts[0].id, month: 4,
+    account: { accountCode: exportContents.accounts[0].accountCode, accountName: exportContents.accounts[0].accountName, accountType: exportContents.accounts[0].accountType },
     industryIdentity: exportContents.industries.find(item => item.id === 1).identity,
     departmentIdentity: exportContents.departments.find(item => item.id === 1).identity, before: "0", after: "1" }];
   if (excel) {

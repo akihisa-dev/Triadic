@@ -120,7 +120,8 @@ export function readPreviousWorkbook(wb: ExcelJS.Workbook, contents: PreviousWor
       const original = String(meta.getCell(r, mi + 7).value);
       const before = amountsByKey.get(key) ?? "0";
       if (amountToYen(before) !== amountToYen(original)) fail("出力後に前年金額が変更されています。最新のフォーマットを出力し直してください。");
-      if (amountToYen(before) !== amountToYen(after)) patches.push({ ...pair, previousKind, industryIdentity: industryIdentity as string, departmentIdentity: departmentIdentity as string, accountId: accountId as number, month, before, after });
+      if (amountToYen(before) !== amountToYen(after)) patches.push({ ...pair, previousKind, industryIdentity: industryIdentity as string, departmentIdentity: departmentIdentity as string, accountId: accountId as number,
+        account: { accountCode: account!.accountCode, accountName: account!.accountName, accountType: account!.accountType }, month, before, after });
     });
   }
   if (!sheets.size || wb.worksheets.some(s => s.name !== metaName && !sheets.has(s.name))) fail("前年入力フォーマットのシート構成が正しくありません。");

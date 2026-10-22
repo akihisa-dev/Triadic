@@ -3,11 +3,13 @@ import ExcelJS from "exceljs";
 import { verifyPreviousWorkbookBoundary, verifyPreviousWorkbookProcessing } from "./previous-workbook-boundary.mjs";
 import { verifyPreviousWorkbookExport } from "./previous-workbook-export.mjs";
 import { verifyReportWorkbooks } from "./report-workbook.mjs";
+import { verifyPreviousImportAccount } from "./previous-import-account.mjs";
 
 async function roundtrip(wb) {
   const loaded = new ExcelJS.Workbook(); await loaded.xlsx.load(await wb.xlsx.writeBuffer()); return loaded;
 }
 export async function verifySpreadsheetIO(api) {
+  await verifyPreviousImportAccount(api);
   const bytes = await api.createSamplePlan(2026), plan = await api.readPlanContents(bytes);
   const patchesForNames = [{ industryId: 1, departmentId: 2, accountId: 3, month: 4, before: '0', after: '0.001' },
     { industryId: 2, departmentId: 1, accountId: 1, month: 5, before: '1', after: '-2' }];
