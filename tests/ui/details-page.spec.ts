@@ -53,8 +53,7 @@ test("明細は展開表の直下にあり、明細から各編集画面を開�
   await expect(app.locator(".details-table tbody tr")).toHaveCount(6);
 });
 
-test("小窓は必須名・取消・Esc・変換中Enterを扱い、保存せず明細を追加する", async ({ app, page }, testInfo) => {
-  await page.goto("/tests/ui/preview.html?data=empty&scenario=save-failure");
+test("小窓は必須名・取消・Esc・変換中Enterを扱い、保存して明細を追加する", async ({ app, page }, testInfo) => {
   await openDetails(app);
   const add = app.getByRole("button", { name: "＋ 明細を追加", exact: true });
   await add.click();
@@ -82,16 +81,16 @@ test("小窓は必須名・取消・Esc・変換中Enterを扱い、保存せず
   await page.screenshot({ path: `/tmp/triadichrome-detail-create-${testInfo.project.name}.png` });
   await next.click();
   await expect(app.getByRole("heading", { name: "名称のみ", exact: true })).toBeVisible();
-  await expect(app.getByRole("button", { name: "操作を取り消す", exact: true })).toBeDisabled();
+  await expect(app.getByRole("button", { name: "操作を取り消す", exact: true })).toBeEnabled();
   await app.getByRole("button", { name: "一覧に戻る", exact: true }).click();
   await expect(app.getByRole("button", { name: "名称のみを開く", exact: true })).toBeVisible();
 });
 
-test("明細はファイルを閉じて開き直すと破棄される", async ({ app }) => {
+test("明細はファイルを閉じて開き直しても復元される", async ({ app }) => {
   await openDetails(app);
-  await addDetail(app, "画面内だけの明細");
+  await addDetail(app, "保存済み明細");
   await app.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "閉じる", exact: true }).click();
   await openDetails(app);
-  await expect(app.locator(".details-table tbody tr")).toHaveCount(0);
+  await expect(app.getByRole("button", { name: "保存済み明細を開く", exact: true })).toBeVisible();
 });

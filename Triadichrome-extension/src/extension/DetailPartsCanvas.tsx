@@ -182,7 +182,17 @@ export function DetailPartsCanvas({ parts, disabled, onChange }: Props) {
     if (!disabled && !gesture.current) latest.current.onChange(parts.filter(part => part.id !== id));
   }
   function editPart(id: string, update: (part: DetailPart) => DetailPart) {
-    if (!latest.current.disabled && !gesture.current) latest.current.onChange(latest.current.parts.map(part => part.id === id ? update(part) : part));
+    if (latest.current.disabled) return;
+    const apply = (part: DetailPart) => part.id === id ? update(part) : part;
+    // A completed image read may arrive during a drag. Retain it in both the saved base and the gesture.
+    const moving = gesture.current;
+    if (moving) {
+      moving.base = moving.base.map(apply);
+      moving.origin = apply(moving.origin); moving.current = apply(moving.current);
+      if (moving.destination) moving.destination = apply(moving.destination);
+      moving.signature = "";
+    }
+    latest.current.onChange(latest.current.parts.map(apply));
   }
   const width = Math.max(size.width * 2, 1200, ...display.map(part => part.x + part.width + size.width));
   const height = Math.max(size.height * 2, 900, ...display.map(part => part.y + part.height + size.height));

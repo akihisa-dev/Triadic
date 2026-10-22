@@ -1,3 +1,4 @@
+import type { DetailChange } from "../../core/domain/detailDocuments";
 import type { HistoryComparison } from "../../core/domain/historyDifference";
 import type { ExpansionCategoryChange } from "../../core/domain/expansionCategoryMaster";
 import { type KindId, type PlanChange } from "../../core/domain/kinds";
@@ -18,13 +19,14 @@ export type Page = "spreadsheet-io" | "data-history" | "previous-input" | "home"
 export type Screen = {
   page: Page;
   detailKind?: KindId;
-  selectedDetailId?: number;
+  selectedDetailId?: string;
   selectedInitiative: Pick<Initiative, "id" | "fiscalYear"> | null;
   detailOrigin: "home" | "initiative-list" | "expansion-table" | "cost-table";
 };
 
 export type HomePageProps = {
   windows?: WindowPlanSession | undefined;
+  onChangeDetail: (change: DetailChange) => Promise<PlanContents>;
   onChangePlan: (change: PlanChange) => Promise<PlanContents>;
   fileName: string;
   initialContents: PlanContents;

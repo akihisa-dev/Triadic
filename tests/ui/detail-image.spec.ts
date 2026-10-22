@@ -62,7 +62,7 @@ test('画像をドラッグ追加し、選択・比率維持・差替・画面�
   await expect(part).toHaveCount(0);
 });
 
-test('取消・非対応形式・破損では元画像を保持し、ファイル終了で破棄する', async ({ app }) => {
+test('取消・非対応形式・破損では元画像を保持し、ファイル終了後も復元する', async ({ app }) => {
   await openEditor(app);
   await app.getByRole('button', { name: '画像パーツを追加', exact: true }).press('Enter');
   const part = app.locator('.detail-part'), input = part.locator('input[type=file]');
@@ -83,5 +83,6 @@ test('取消・非対応形式・破損では元画像を保持し、ファイ�
   await app.getByRole('alertdialog').getByRole('button', { name: '閉じる', exact: true }).click();
   await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
   await app.getByRole('navigation', { name: 'メインナビゲーション' }).getByRole('button', { name: '明細', exact: true }).click();
-  await expect(app.locator('.details-table tbody tr')).toHaveCount(0);
+  await app.getByRole('button', { name: '画像の根拠を開く', exact: true }).click();
+  await expect(app.getByRole('img', { name: image.name })).toHaveAttribute('src', src!);
 });

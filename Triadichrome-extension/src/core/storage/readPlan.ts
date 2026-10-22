@@ -1,3 +1,4 @@
+import { listDetailDocuments } from "./detailDocuments";
 import { listExpansionCategories } from "./expansionCategoryMaster";
 import type { Database } from "./sqliteRuntime";
 import { openTriadicDatabase, openBusinessSnapshot } from "./triadicDatabase";
@@ -46,7 +47,7 @@ export function listInitiatives(db: Database, fiscalYear: number, initiativeId?:
 export function readContents(db: Database): PlanContents {
   const settings = readPlanSettings(db);
   const accounts = listAccounts(db);
-  const contents: PlanContents = { ...settings, accounts, initiatives: listInitiatives(db, settings.fiscalYear),
+  const contents: PlanContents = { ...settings, detailDocuments: listDetailDocuments(db), accounts, initiatives: listInitiatives(db, settings.fiscalYear),
     aggregations: listAggregations(db), expansions: listExpansions(db), expansionCategories: listExpansionCategories(db), industries: listIndustries(db), departments: listDepartments(db), periodTypes: listPeriodTypes(db), kinds: INITIAL_KINDS.map(kind => ({ ...kind })) };
   return contents;
 }

@@ -277,3 +277,26 @@ test("応答のない別画面を30秒で案内し、明細を保持して履歴
   await confirmation.getByRole("button", { name: "キャンセル", exact: true }).click();
   await expect(copy.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true })).toHaveText("中止後も残る文章");
 });
+
+test('明細と画像を同じ編集画面へ複製し、文章・配置・削除と取消を全画面へ反映する',async({page})=>{
+  await navigate(page,'明細');
+  await page.getByRole('button',{name:'全パーツの保存確認を開く',exact:true}).click();
+  const copy=await duplicate(page);
+  await expect(copy.getByRole('heading',{name:'全パーツの保存確認',exact:true})).toBeVisible();
+  const image=copy.getByRole('img',{name:'確認用.png',exact:true});
+  await expect(image).toBeVisible();
+  await expect.poll(()=>image.evaluate((e:HTMLImageElement)=>e.naturalWidth)).toBe(8);
+  await page.bringToFront();
+  await page.getByRole('button',{name:'パーツ 1のテキストを編集',exact:true}).dblclick();
+  await page.getByRole('textbox',{name:'パーツ 1の説明文'}).fill('複数画面で共有する根拠');
+  await page.getByRole('textbox',{name:'パーツ 1の説明文'}).press('Escape');
+  await expect(copy.getByRole('button',{name:'パーツ 1のテキストを編集',exact:true})).toHaveText('複数画面で共有する根拠');
+  await copy.bringToFront();
+  await copy.locator('.detail-part').nth(1).focus(); await copy.locator('.detail-part').nth(1).press('ArrowRight');
+  await expect.poll(()=>page.locator('.detail-part').nth(1).getAttribute('style')).toEqual(await copy.locator('.detail-part').nth(1).getAttribute('style'));
+  await copy.locator('.detail-part').nth(1).focus(); await copy.locator('.detail-part').nth(1).press('Delete');
+  await expect(page.locator('.detail-part')).toHaveCount(3);
+  await copy.getByRole('button',{name:'操作を取り消す',exact:true}).click();
+  await expect(page.getByRole('img',{name:'確認用.png',exact:true})).toBeVisible();
+  await copy.close();
+});

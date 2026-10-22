@@ -6,16 +6,23 @@ import { AGGREGATION_SQL } from "./aggregationSchema";
 export const TRIADIC_FILE_EXTENSION = ".triadic";
 export const TRIADIC_MIME_TYPE = "application/vnd.triadichrome+sqlite";
 export const TRIADIC_FORMAT_ID = "triadichrome";
-export const TRIADIC_FORMAT_VERSION = 27;
+export const TRIADIC_FORMAT_VERSION = 28;
 const revision = "INTEGER NOT NULL DEFAULT 0 CHECK (typeof(revision) = 'integer' AND revision >= 0)";
 const amount = "INTEGER NOT NULL DEFAULT 0 CHECK (typeof(amount_yen) = 'integer' AND amount_yen BETWEEN -9007199254740991 AND 9007199254740991)";
 const month = "INTEGER NOT NULL CHECK (typeof(month) = 'integer' AND month BETWEEN 1 AND 12)";
-export const BUSINESS_TABLES = ["triadic_metadata", "document_info", "accounts", "expansions", "expansion_categories", "expansion_category_assignments", "industries", "departments", "department_industries", "period_types", "aggregation_groups", "aggregation_members", "master_order", "initiatives", "initiative_rows", "initiative_amounts", "previous_amounts", "kind_selections"] as const;
+export const BUSINESS_TABLES = ["triadic_metadata", "document_info", "accounts", "expansions", "expansion_categories", "expansion_category_assignments", "industries", "departments", "department_industries", "period_types", "aggregation_groups", "aggregation_members", "master_order", "initiatives", "initiative_rows", "initiative_amounts", "previous_amounts", "kind_selections", "detail_documents"] as const;
 export const TRIADIC_SCHEMA_SQL = `
 PRAGMA foreign_keys = ON;
 PRAGMA user_version = ${TRIADIC_FORMAT_VERSION};
 CREATE TABLE triadic_metadata (key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL);
 INSERT INTO triadic_metadata VALUES ('format_id', '${TRIADIC_FORMAT_ID}'), ('format_version', '${TRIADIC_FORMAT_VERSION}'), ('container', 'sqlite');
+CREATE TABLE detail_documents (
+ id TEXT PRIMARY KEY NOT NULL,
+ name TEXT NOT NULL CHECK (typeof(name) = 'text' AND length(trim(name)) > 0),
+ parts_json TEXT NOT NULL CHECK (typeof(parts_json) = 'text'),
+ revision INTEGER NOT NULL DEFAULT 0 CHECK (typeof(revision) = 'integer' AND revision BETWEEN 0 AND 9007199254740991),
+ position INTEGER NOT NULL CHECK (typeof(position) = 'integer' AND position BETWEEN 0 AND 9007199254740991)
+);
 CREATE TABLE document_info (
  id INTEGER PRIMARY KEY CHECK (id = 1),
  fiscal_year INTEGER NOT NULL CHECK (typeof(fiscal_year) = 'integer' AND fiscal_year BETWEEN 1 AND 9998),

@@ -13,19 +13,21 @@ export function registerAutoSave(controller: Controller) {
   return () => { unsubscribe(); controllers.delete(controller); notify(); };
 }
 export async function flushAutoSaves() {
-  for (const controller of controllers) {
-    // An older save may still be publishing and scheduling the latest input.
-    while (controller.getSnapshot().saving) await new Promise<void>(resolve => {
-      const unsubscribe = controller.subscribe(() => {
+  do {
+    for (const controller of controllers) {
+      // An older save may still be publishing and scheduling the latest input.
+      while (controller.getSnapshot().saving) await new Promise<void>(resolve => {
+        const unsubscribe = controller.subscribe(() => {
+          if (!controller.getSnapshot().saving) { unsubscribe(); resolve(); }
+        });
         if (!controller.getSnapshot().saving) { unsubscribe(); resolve(); }
       });
-      if (!controller.getSnapshot().saving) { unsubscribe(); resolve(); }
-    });
-    while (controller.getSnapshot().pending) {
-      if (controller.isComposing()) throw new Error("日本語の変換を確定してください。入力は保持しています。");
-      await controller.flush();
-      const state = controller.getSnapshot();
-      if (state.error) throw new Error(state.error);
+      while (controller.getSnapshot().pending) {
+        if (controller.isComposing()) throw new Error("日本語の変換を確定してください。入力は保持しています。");
+        await controller.flush();
+        const state = controller.getSnapshot();
+        if (state.error) throw new Error(state.error);
+      }
     }
-  }
+  } while ([...controllers].some(controller => controller.getSnapshot().pending));
 }

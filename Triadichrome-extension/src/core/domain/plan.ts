@@ -1,3 +1,4 @@
+import type { DetailDocument } from "./detailDocuments";
 import type { ExpansionCategory } from "./expansionCategoryMaster";
 import type { InitiativeMonth } from "./calendar";
 import type { KindOverrides, KindInvalidAmounts, PlanSettings, Kind } from "./kinds";
@@ -23,4 +24,4 @@ export type Initiative = {
   /** Derived monetary values are integer yen; input rows remain decimal thousands. */
   months: Partial<Record<InitiativeMonth, { sales: number | null; expense: number; profit: number | null }>>;
 };
-export type PlanContents = PlanSettings & { accounts: Account[]; initiatives: Initiative[]; aggregations: Aggregation[]; expansions: Expansion[]; expansionCategories: ExpansionCategory[]; industries: Industry[]; departments: Department[]; periodTypes: PeriodType[]; kinds: Kind[]; };
+export type PlanContents = PlanSettings & { detailDocuments: DetailDocument[]; accounts: Account[]; initiatives: Initiative[]; aggregations: Aggregation[]; expansions: Expansion[]; expansionCategories: ExpansionCategory[]; industries: Industry[]; departments: Department[]; periodTypes: PeriodType[]; kinds: Kind[]; };

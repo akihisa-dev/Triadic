@@ -1,3 +1,4 @@
+import type { DetailPart } from "../tables/detailParts";
 import type { HistoryDifference, HistoryComparison } from "../domain/historyDifference";
 import { compareHistoryIncome } from "../tables/historyIncomeImpact";
 import { readContents } from "./readPlan";
@@ -15,11 +16,12 @@ const labels: Record<string, string> = {
   fiscal_year: "基準年度", name: "名称", note: "備考", code: "コード", attribute: "科目属性", display_name: "表示名",
   expansion_id: "展開", expansion_category_id: "展開区分", department_id: "部署", industry_id: "業種", period_type_id: "期間",
   previous_kind: "基準前年", account_id: "勘定科目", parent_id: "所属先の集計", sign: "集計の加減", position: "表示順", sort_order: "表示順",
+
   required_key: "必須集計", start_month_rule: "開始年月の規則", first_kind: "比較対象1", second_kind: "比較対象2",
 };
 const sections: Record<string, string> = { document_info: "基本情報", accounts: "勘定科目マスタ", expansions: "展開マスタ",
   expansion_categories: "展開区分マスタ", industries: "業種マスタ", departments: "部署マスタ", period_types: "期間マスタ",
-  aggregation_groups: "集計マスタ", initiatives: "施策", initiative_rows: "施策の科目行", kind_selections: "表示設定" };
+  aggregation_groups: "集計マスタ", detail_documents: "明細", initiatives: "施策", initiative_rows: "施策の科目行", kind_selections: "表示設定" };
 const references: Record<string, string> = { expansion_id: "expansions", expansion_category_id: "expansion_categories", department_id: "departments",
   industry_id: "industries", period_type_id: "period_types", account_id: "accounts", parent_id: "aggregation_groups" };
 const words: Record<string, string> = { sales: "売上", cost: "売上原価", expense: "費用", profit: "利益", expenses: "費用集計",
@@ -63,13 +65,24 @@ function* items(db: Database): Generator<[string, Item]> {
   for (const [table, section] of Object.entries(sections)) for (const row of tables.get(table)!) {
     const fields: Record<string, Value> = {};
     for (const [field, raw] of Object.entries(row)) {
-      if (["id", "identity", "revision", "created_at", "updated_at", "initiative_id", "screen"].includes(field)) continue;
+      if (["id", "identity", "revision", "created_at", "updated_at", "initiative_id", "screen", "parts_json"].includes(field)) continue;
       fields[labels[field] ?? field] = fieldValue(field, raw);
     }
     const owner = table === "initiative_rows" ? rowFor("initiatives", row.initiative_id!) : undefined;
     const subject = table === "initiative_rows" ? `${owner?.name} / ${name("accounts", row.account_id!)} / ${Number(row.sort_order) + 1}行目`
       : table === "kind_selections" ? words[String(row.screen)]! : table === "document_info" ? "計画" : String(row.name);
     yield put([table, owner?.identity ?? "", row.identity ?? row.id ?? row.screen], section, subject, fields);
+  }
+  for (const row of tables.get("detail_documents")!) {
+    for (const part of JSON.parse(String(row.parts_json)) as DetailPart[]) {
+      const fields: Record<string, Value> = {
+        位置とサイズ: value([part.x, part.y, part.width, part.height], `${part.x}, ${part.y} / ${part.width}×${part.height}`),
+      };
+      if (part.kind === "text") fields.文章 = value(part.text, part.text);
+      else if (part.kind === "image") fields.画像 = value([part.name, part.src], part.name || "未選択");
+      else fields.表の内容 = value(part.cells, part.cells.map(cells => cells.join(" / ")).join("\n"));
+      yield put(["detail_parts", row.id, part.id], "明細パーツ", String(row.name), fields);
+    }
   }
   for (const row of tables.get("department_industries")!) yield put(["department_industries", identity("departments", row.department_id!), identity("industries", row.industry_id!)],
     "部署の所属業種", name("departments", row.department_id!), { 所属業種: value(identity("industries", row.industry_id!), name("industries", row.industry_id!)) });

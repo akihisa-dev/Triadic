@@ -10,6 +10,7 @@ const initiativeDraft = (item: Initiative): InitiativeEntryDraft => ({ name: ite
 
 /** A focus change can arrive ahead of the previous window's save publication. Apply only this window's edits. */
 export function reconcileWindowCommand(command: PlanCommand, base: PlanContents, current: PlanContents): PlanCommand {
+  if (command.type === "detail") return command;
   if (command.type === "initiative.update") {
     const before = base.initiatives.find(item => item.id === command.id);
     const saved = current.initiatives.find(item => item.id === command.id);

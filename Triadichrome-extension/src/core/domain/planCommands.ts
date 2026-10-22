@@ -1,3 +1,4 @@
+import { validateDetailDocument, type DetailChange } from "./detailDocuments";
 import { validateExpansionCategoryChange, type ExpansionCategoryChange } from "./expansionCategoryMaster";
 import { validateAccountChange, type AccountChange } from "./accountMaster";
 import { changedAggregations, type AggregationChange } from "./aggregationMaster";
@@ -9,6 +10,7 @@ import { validateInitiative } from "./initiativeRules";
 import type { InitiativeEntryDraft, PlanContents } from "./plan";
 import type { PlanChange } from "./kinds";
 export type PlanCommand =
+  | { type: "detail"; change: DetailChange }
   | { type: "account"; change: AccountChange } | { type: "aggregation"; change: AggregationChange }
   | { type: "expansion-category"; change: ExpansionCategoryChange }
   | { type: "expansion"; change: ExpansionChange } | { type: "industry"; change: IndustryChange }
@@ -17,6 +19,7 @@ export type PlanCommand =
   | { type: "initiative.register"; draft: InitiativeEntryDraft }
   | { type: "initiative.update"; id: number; draft: InitiativeEntryDraft };
 export function isAutomatic(command: PlanCommand): boolean {
+  if (command.type === "detail") return command.change.type === "update";
   if (command.type === "initiative.update") return true;
   if (command.type === "initiative.register") return false;
   if (command.type === "settings") return command.change.type === "previous";
@@ -25,6 +28,7 @@ export function isAutomatic(command: PlanCommand): boolean {
 /** Validate before opening the OS picker. SQLite validates against the latest saved copy again. */
 export function validatePlanCommand(plan: PlanContents, command: PlanCommand): void {
   switch (command.type) {
+    case "detail": return validateDetailDocument(command.change.document);
     case "account": return validateAccountChange(plan.accounts, command.change);
     case "aggregation": void changedAggregations(plan.aggregations, plan.accounts, command.change); return;
     case "expansion-category": return validateExpansionCategoryChange(plan.expansionCategories, command.change);

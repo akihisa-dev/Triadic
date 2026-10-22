@@ -1,3 +1,4 @@
+import { changeDetailDocument } from "./detailDocuments";
 import { editDatabase } from "./transaction";
 import { changeExpansionCategoryMaster } from "./expansionCategoryMaster";
 import type { PlanCommand } from "../domain/planCommands";
@@ -11,6 +12,7 @@ import { registerInitiative, updateInitiative } from "./initiatives";
 import { changePlanSettings } from "./settings";
 export async function applyPlanCommand(bytes: Uint8Array, command: PlanCommand, fiscalYear: number, edit = editDatabase): Promise<Uint8Array> {
   switch (command.type) {
+    case "detail": return changeDetailDocument(bytes, command.change, edit);
     case "account": return (await changeAccountMaster(bytes, command.change, edit)).bytes;
     case "aggregation": return changeAggregationMaster(bytes, command.change);
     case "expansion-category": return changeExpansionCategoryMaster(bytes, command.change, edit);

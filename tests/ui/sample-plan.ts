@@ -1,7 +1,5 @@
-// 明細の画像は tests/ui/detail-image.spec.ts で選択・差替・縦横比・取消・破損・非対応形式・移動・伸縮・削除・画面往復・終了時破棄を確認する。画面内だけに保持し、保存データとサンプル内容は変更しない。
-// 明細の横向き・縦向き12か月表は tests/detail-parts.test.mjs と tests/ui/detail-parts.spec.ts で12か月が収まる初期・最小寸法と共通月見出し・項目操作・削除確認・入力と改行・貼り付け上限と項目追加・見出し固定・一時保持を確認する。保存データは追加しない。
-// 明細の名前だけの新規作成・表形式一覧・画面往復・取消・終了時の破棄は tests/ui/details-page.spec.ts で確認する。保存データは追加しない。
-// 明細のテキストパーツは tests/detail-parts.test.mjs と tests/ui/detail-parts.spec.ts で文章入力・改行・編集終了・長文スクロール・文章の一時保持・辺と角を共有する隣接配置・内部の衝突・移動中の吸着・24pxのドット格子・青い移動先表示と境界での揺れ抑制・右下の斜め伸縮・追加取消・削除・一時保持・自動スクロールを確認する。保存データ項目は追加しない。
+// 明細の画像・文章・表・配置の保存と再読込・取消・履歴・別名保存・競合・失敗保護は tests/detail-document-storage.test.mjs と tests/ui/detail-persistence.spec.ts で確認する。
+import { changeDetailDocument } from "../../Triadichrome-extension/src/core/storage/detailDocuments";
 // 複数ウィンドウの同期・表示条件/位置の複製・共有取消・全保存先切替・履歴集約は既存の施策/月額/3時点履歴を使い、tests/window-session.mjs と tests/ui/multi-window.spec.ts で確認する。保存データは追加しない。
 // 集計の登録時の集計名・表示名の個別指定、空白拒否・保存失敗・再読込は tests/ui/aggregations.spec.ts で確認する。既存の保存項目を使用し、サンプル内容は変えない。
 // 集計と全子孫をまとめる並べ替え・浮遊表示・所属と加減の保持は tests/aggregation-layout.mjs と tests/ui/aggregation-drop.spec.ts で確認する。保存項目は増やさない。
@@ -78,7 +76,6 @@ import { accountTypes } from "../../Triadichrome-extension/src/core/domain/accou
 
 // All amount literals are in thousands of yen; 0.001 represents one yen.
 // Previous amounts span every industry/department pair; varying sales verify full totals and department/industry filters.
-// 明細カードは tests/ui/details-page.spec.ts で追加小窓・取消・必須名・一覧/編集/履歴の往復・ファイル終了時の破棄・狭幅を確認する。カードは画面内だけに保持し、保存項目とサンプル内容は変更しない。
 // Shared by the preview and the generated .triadic sample, using the app's own validation.
 export const LARGE_SAMPLE_INITIATIVES = PORTFOLIO_COUNT;
 export const SAMPLE_MAX_BYTES = 50_000_000;
@@ -226,6 +223,14 @@ export async function createSamplePlan(fiscalYear = currentFiscalYear(), large =
       return database.export();
     } finally { database.close(); }
   };
+  bytes = await changeDetailDocument(bytes, { type: "create", document: {
+    id: "00000000-0000-4000-8000-000000000001", name: "全パーツの保存確認", revision: 0, parts: [
+      { id: "sample-text", kind: "text", x: 0, y: 0, width: 168, height: 96, text: "見積と月別の算定根拠\n保存・取消・履歴を確認" },
+      { id: "sample-image", kind: "image", x: 168, y: 0, width: 336, height: 240, name: "確認用.png", src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAECAYAAACzzX7wAAAAG0lEQVR4AWM0ytvynwEPYGIgAJgYCAAmBgIAAC5JAlut5VLxAAAAAElFTkSuQmCC" },
+      { id: "sample-horizontal", kind: "table-horizontal", x: 0, y: 240, width: 1200, height: 192, cells: [["単価", ...Array.from({ length: 12 }, (_, index) => String(index + 1))]] },
+      { id: "sample-vertical", kind: "table-vertical", x: 1200, y: 0, width: 336, height: 456, cells: [["人数", ...Array(12).fill("2")]] },
+    ],
+  } });
   bytes = await stable(bytes);
   const initiative = (await readPlanContents(bytes)).initiatives[0]!;
   const draft: InitiativeEntryDraft = { ...initiative, fiscalYear: String(fiscalYear) };

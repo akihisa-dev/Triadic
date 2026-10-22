@@ -1,3 +1,4 @@
+import { listDetailDocuments } from "./detailDocuments";
 import { validateMasterPresentation } from "./masterPresentation";
 import { initializeSqlite, type Database } from "./sqliteRuntime";
 import { listAggregations } from "./aggregations";
@@ -114,6 +115,7 @@ function assertDatabase(db: Database, documentType: DocumentType): void {
     if (db.exec(`SELECT identity FROM ${table} WHERE typeof(identity) != 'text' OR length(identity) != 32 OR identity GLOB '*[^0-9a-f]*'`).length
       || db.exec(`SELECT identity FROM ${table} GROUP BY identity HAVING COUNT(*) > 1`).length) invalid();
   }
+  listDetailDocuments(db);
   validateMasterPresentation(db);
   if (db.exec("SELECT position FROM aggregation_members WHERE typeof(position) != 'integer' OR position NOT BETWEEN 0 AND 9007199254740991").length) invalid();
   validateAggregations(listAggregations(db), new Set((db.exec("SELECT id FROM accounts")[0]?.values ?? []).map(([id]) => Number(id))));

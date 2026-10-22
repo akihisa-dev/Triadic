@@ -1,3 +1,4 @@
+import { usePendingTask } from "./usePendingTask";
 import { useEffect, useRef, useState } from "react";
 
 /** Decode locally before replacing the existing image. Nothing is uploaded or persisted. */
@@ -23,6 +24,7 @@ export function DetailImagePart({ src, name, disabled, index, editing, onEditing
   onEditingChange: (editing: boolean) => void;
   onChange: (image: { src: string; name: string }) => void;
 }) {
+  const task = usePendingTask();
   const input = useRef<HTMLInputElement>(null);
   const view = useRef<HTMLDivElement>(null);
   const request = useRef(0);
@@ -71,7 +73,7 @@ export function DetailImagePart({ src, name, disabled, index, editing, onEditing
       onChange={event => {
         const file = event.currentTarget.files?.[0];
         event.currentTarget.value = "";
-        void select(file);
+        void task.run(() => select(file));
       }} />
     {error && <p className="detail-image-error" role="alert">{error}</p>}
   </div>;

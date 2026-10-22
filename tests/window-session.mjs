@@ -54,10 +54,10 @@ export async function verifyWindowSession(api) {
     await a.request("reserve", "detail-ticket", unfinished);
     const detailCopy = peer(); await detailCopy.request("join", group, "detail-ticket");
     const cloned = detailCopy.latest().info.initialView;
-    assert.equal(cloned.screen.page, "details");
-    assert.equal(cloned.screen.selectedDetailId, undefined);
+    assert.equal(cloned.screen.page, "detail-editor");
+    assert.equal(cloned.screen.selectedDetailId, 9);
     assert.deepEqual(cloned.values, view.values, "表示条件だけを引き継ぐ");
-    assert.deepEqual(cloned.scroll, [], "存在しない明細のスクロールを復元しない");
+    assert.deepEqual(cloned.scroll, view.scroll, "保存された明細の表示位置を複製する");
     assert.equal(unfinished.values["details:documents"][0].parts[0].text, "保持する文章");
     detailCopy.disconnect();
     await a.request("reserve", "ticket", view);
