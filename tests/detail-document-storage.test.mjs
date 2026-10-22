@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { withNodeBundle } from '../scripts/node-bundle.mjs';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 const image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAECAYAAACzzX7wAAAAG0lEQVR4AWM0ytvynwEPYGIgAJgYCAAmBgIAAC5JAlut5VLxAAAAAElFTkSuQmCC';
 const doc = (id = '00000000-0000-4000-8000-000000000001') => ({ id, name: '画像を含む根拠', revision: 0, parts: [
@@ -8,9 +10,12 @@ const doc = (id = '00000000-0000-4000-8000-000000000001') => ({ id, name: '画�
   { id: 'image', kind: 'image', x: 168, y: 0, width: 336, height: 240, src: image, name: '見積.png' },
   { id: 'table', kind: 'table-horizontal', x: 0, y: 240, width: 1200, height: 192, cells: [['単価', ...Array.from({length: 12}, (_, i) => String(i))]] },
   { id: 'vertical', kind: 'table-vertical', x: 1200, y: 0, width: 336, height: 456, cells: [['人数', ...Array(12).fill('2\n人')]] },
+  { id: 'reference', kind: 'initiative-reference', x: 504, y: 0, width: 336, height: 120, initiativeIdentity: '3'.repeat(32) },
+  { id: 'assumption', kind: 'assumption', x: 840, y: 0, width: 336, height: 144, label: '単価差', value: '0010.00', unit: '円／件' },
+  { id: 'heading', kind: 'heading', x: 504, y: 120, width: 336, height: 96, text: '算定根拠 <見出し>' },
 ] });
 
-test('画像・文章・表・配置を保存し、取消・履歴・別名保存・競合・失敗でもデータを保つ', async () => {
+test('全7種類のパーツを保存し、取消・履歴・別名保存・競合・失敗でもデータを保つ', async () => {
  await withNodeBundle('tests/core-api.ts', async api => {
   let stored = await api.createTriadicDatabase(2026), writes = 0, fail = false;
   const handle = { name: 'detail.triadic', async getFile() { return new File([stored], this.name); }, async createWritable() {
@@ -27,7 +32,7 @@ test('画像・文章・表・配置を保存し、取消・履歴・別名保�
   await session.travelOperation(-1,destination);
   assert.deepEqual(session.getSnapshot().contents.detailDocuments,[doc()]);
   await session.travelOperation(1,destination);
-  assert.equal(session.getSnapshot().contents.detailDocuments[0].parts.length,3);
+  assert.equal(session.getSnapshot().contents.detailDocuments[0].parts.length,6);
   await assert.rejects(change('update',{...doc(),name:'古い編集'}),/別の画面/);
   const current = session.getSnapshot().contents.detailDocuments[0];
   const before = stored.slice(), beforeSnapshot = session.getSnapshot();
@@ -40,9 +45,13 @@ test('画像・文章・表・配置を保存し、取消・履歴・別名保�
   const status = session.getSnapshot().history;
   const past = await session.preview(status.entries[0].id,destination);
   assert.equal(past.detailDocuments[0].name,'保存済み');
+  assert.deepEqual(past.detailDocuments[0].parts,update.parts);
   const comparison = await session.compareHistory(status.entries.at(-1).id);
   assert.ok(JSON.stringify(comparison).includes('明細'));
   assert.ok(!JSON.stringify(comparison).includes('data:image'),'画像の内容を履歴差分の文言へ出さない');
+  for (const value of ['参照先がありません', '単価差', '0010.00', '円／件', '算定根拠 <見出し>']) {
+    assert.ok(JSON.stringify(comparison).includes(value), `履歴差分に${value}を含む`);
+  }
   await session.restore(status.entries.at(-1).id,destination);
   assert.deepEqual(session.getSnapshot().contents.detailDocuments,[],'明細作成前へ復元');
   const cloneDoc = doc('00000000-0000-4000-8000-000000000002'); await change('create',cloneDoc);
@@ -72,6 +81,13 @@ test('不正な画像参照・明細構造と旧形式を拒否し、元バイ�
     {...doc(),parts:[{...doc().parts[1],src:'data:image/svg+xml;base64,PHN2Zy8+'}]},
     {...doc(),parts:[{...doc().parts[1],src:'data:image/png;base64,AAAA'}]},
     {...doc(),parts:[{...doc().parts[2],cells:[['only one']]}]},
+    {...doc(),parts:[{...doc().parts[4],initiativeIdentity:1}]},
+    {...doc(),parts:[{...doc().parts[4],initiativeIdentity:'missing'}]},
+    {...doc(),parts:[{...doc().parts[4],initiativeIdentity:undefined}]},
+    {...doc(),parts:[{...doc().parts[5],value:10}]},
+    {...doc(),parts:[{...doc().parts[5],unit:null}]},
+    {...doc(),parts:[{...doc().parts[6],text:null}]},
+    {...doc(),parts:[{...doc().parts[6],unknown:'extra'}]},
   ]) await assert.rejects(api.changeDetailDocument(bytes,{type:'create',document}),/明細/);
   const db=await api.openTriadicDatabase(bytes); db.run('PRAGMA user_version = 27'); const old=db.export(); db.close();
   await assert.rejects(api.openTriadicDatabase(old),/保存形式/);
@@ -91,5 +107,23 @@ test('画像の読込完了後に発生した編集も、画面移動前の保�
   const stopImage=api.registerAutoSave(controller(()=>imagePending,async()=>{await Promise.resolve();events.push('image');editPending=true;imagePending=false}));
   try {await api.flushAutoSaves();assert.deepEqual(events,['image','save']);assert.equal(editPending,false)}
   finally{stopImage();stopEditor()}
+ });
+});
+
+test('施策参照は改名に追従し、削除・番号再利用・過去閲覧を区別する', async () => {
+ await withNodeBundle('Triadichrome-extension/src/extension/DetailInitiativePart.tsx', async ({DetailInitiativePart}) => {
+  const original={id:1,identity:'3'.repeat(32),name:'元の施策'};
+  const render=(initiatives,extra={})=>renderToStaticMarkup(createElement(DetailInitiativePart,{
+    identity:original.identity,initiatives,disabled:false,navigationBlocked:false,index:0,editing:false,
+    onEditingChange:()=>{},onChange:()=>{},onOpen:()=>{},...extra,
+  }));
+  assert.match(render([original]),/元の施策/);
+  assert.match(render([{...original,name:'改名後'}]),/改名後/);
+  assert.match(render([]),/参照先がありません/);
+  const recreated=render([{...original,identity:'4'.repeat(32),name:'番号が同じ別施策'}]);
+  assert.match(recreated,/参照先がありません/); assert.doesNotMatch(recreated,/番号が同じ別施策/);
+  const past=render([original],{disabled:true});
+  assert.match(past,/元の施策/); assert.doesNotMatch(past,/変更|<select|disabled=""/);
+  assert.match(render([original],{identity:null}),/施策を選択/);
  });
 });

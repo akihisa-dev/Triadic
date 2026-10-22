@@ -5,6 +5,7 @@ import { useAutoSave, type AutoSaveProps } from "./useAutoSave";
 import { AutoSaveStatus } from "./AutoSaveStatus";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
 import type { DetailDocument, DetailDraft } from "../core/domain/detailDocuments";
+import type { Initiative } from "../core/domain/plan";
 import { DetailPartsCanvas } from "./DetailPartsCanvas";
 
 
@@ -79,8 +80,9 @@ function DetailCreateDialog({ disabled, onCancel, onCreate, returnFocus }: {
   </dialog>, document.body);
 }
 
-export function DetailEditorPage({ document, disabled, onBack, onSave, onPendingChange, onPrepareSave }: AutoSaveProps & {
+export function DetailEditorPage({ document, disabled, onBack, onSave, onPendingChange, onPrepareSave, initiatives, onOpenInitiative }: AutoSaveProps & {
   document: DetailDocument | undefined; disabled: boolean; onBack: () => void; onSave: (document: DetailDocument) => Promise<void>;
+  initiatives: readonly Initiative[]; onOpenInitiative: (initiative: Initiative) => void;
 }) {
   const readOnly = useHistoryReadOnly();
   const baseline = useRef(document);
@@ -108,6 +110,7 @@ export function DetailEditorPage({ document, disabled, onBack, onSave, onPending
     </div>
     <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave} />
     <DetailPartsCanvas key={document?.id} parts={draft?.parts ?? []} disabled={disabled || readOnly || !document}
+      initiatives={initiatives} navigationBlocked={disabled} onOpenInitiative={onOpenInitiative}
       onChange={parts => { if (draft && !readOnly) controller.change({ name: draft.name, parts }); }} />
   </main>;
 }

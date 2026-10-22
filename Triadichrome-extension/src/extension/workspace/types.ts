@@ -21,7 +21,7 @@ export type Screen = {
   detailKind?: KindId;
   selectedDetailId?: string;
   selectedInitiative: Pick<Initiative, "id" | "fiscalYear"> | null;
-  detailOrigin: "home" | "initiative-list" | "expansion-table" | "cost-table";
+  detailOrigin: "home" | "initiative-list" | "expansion-table" | "cost-table" | "detail-editor";
 };
 
 export type HomePageProps = {

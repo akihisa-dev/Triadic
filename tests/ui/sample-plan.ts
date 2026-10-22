@@ -225,16 +225,20 @@ export async function createSamplePlan(fiscalYear = currentFiscalYear(), large =
       return database.export();
     } finally { database.close(); }
   };
+  bytes = await stable(bytes);
+  const initiative = (await readPlanContents(bytes)).initiatives[0]!;
   bytes = await changeDetailDocument(bytes, { type: "create", document: {
     id: "00000000-0000-4000-8000-000000000001", name: "全パーツの保存確認", revision: 0, parts: [
       { id: "sample-text", kind: "text", x: 0, y: 0, width: 168, height: 96, text: "見積と月別の算定根拠\n保存・取消・履歴を確認" },
       { id: "sample-image", kind: "image", x: 168, y: 0, width: 336, height: 240, name: "確認用.png", src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAECAYAAACzzX7wAAAAG0lEQVR4AWM0ytvynwEPYGIgAJgYCAAmBgIAAC5JAlut5VLxAAAAAElFTkSuQmCC" },
       { id: "sample-horizontal", kind: "table-horizontal", x: 0, y: 240, width: 1200, height: 192, cells: [["単価", ...Array.from({ length: 12 }, (_, index) => String(index + 1))]] },
       { id: "sample-vertical", kind: "table-vertical", x: 1200, y: 0, width: 336, height: 456, cells: [["人数", ...Array(12).fill("2")]] },
+      { id: "sample-reference", kind: "initiative-reference", x: 504, y: 0, width: 336, height: 120, initiativeIdentity: initiative.identity! },
+      { id: "sample-assumption", kind: "assumption", x: 840, y: 0, width: 336, height: 144, label: "単価差", value: "10", unit: "円／件" },
+      { id: "sample-heading", kind: "heading", x: 504, y: 120, width: 336, height: 96, text: "算定根拠" },
     ],
   } });
   bytes = await stable(bytes);
-  const initiative = (await readPlanContents(bytes)).initiatives[0]!;
   const draft: InitiativeEntryDraft = { ...initiative, fiscalYear: String(fiscalYear) };
   const historic = (amount: string) => ({ ...draft, note: large ? `直販契約の年間計画。4月の見込額は${amount}千円。代理店販売・原価・広告費・出張費は年間の契約計画に従う。` : "履歴確認用の過去の状態", rows: draft.rows.map((row, index) => index === 0 ? { ...row, amounts: { ...row.amounts, 4: amount } } : row) });
   const initial = await stable(await updateInitiative(bytes, initiative.id, fiscalYear, historic("100")));

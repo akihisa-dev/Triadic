@@ -4,7 +4,7 @@ import type { FrameLocator } from '@playwright/test';
 async function details(app: FrameLocator) {
   await app.getByRole('navigation', {name:'メインナビゲーション'}).getByRole('button',{name:'明細',exact:true}).click();
   await app.getByRole('button',{name:'全パーツの保存確認を開く',exact:true}).click();
-  await expect(app.locator('.detail-part')).toHaveCount(4);
+  await expect(app.locator('.detail-part')).toHaveCount(7);
 }
 async function text(app: FrameLocator, value: string) {
   await app.getByRole('button',{name:'パーツ 1のテキストを編集',exact:true}).dblclick();
@@ -31,7 +31,14 @@ test('画像・文章・表・配置を自動保存し、閉じて再開・取�
   const location=await imagePart.getAttribute('style');
   await app.getByRole('button',{name:'別名で保存',exact:true}).click();
   await expect(app.locator('.home-file-name')).toHaveText('画面テスト のコピー.triadic');
-  await imagePart.hover(); await imagePart.getByRole('button',{name:'パーツ 2を削除',exact:true}).click();
+  await expect(imagePart).toHaveAttribute('aria-disabled','false');
+  // Leaving the save button collapses the sidebar and moves the canvas.
+  await app.getByRole('heading',{name:'全パーツの保存確認',exact:true}).hover();
+  await settleMotion(app.locator('body'));
+  await imagePart.hover();
+  const remove = imagePart.getByRole('button',{name:'パーツ 2を削除',exact:true});
+  await expect(remove).toHaveCSS('opacity','1');
+  await remove.click();
   await expect(img).toHaveCount(0);
   await app.getByRole('button',{name:'操作を取り消す',exact:true}).click();
   await expect(img).toHaveAttribute('src',src!);

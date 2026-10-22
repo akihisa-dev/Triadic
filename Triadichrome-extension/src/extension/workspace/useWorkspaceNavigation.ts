@@ -35,7 +35,8 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
     requestNavigation({
       page: "initiative-detail",
       detailKind: kind ?? 1,
-      detailOrigin: page === "cost-table" ? "cost-table" : page === "home" ? "home" : page === "expansion-table" ? "expansion-table" : "initiative-list",
+      ...(page === "detail-editor" && screen.selectedDetailId ? { selectedDetailId: screen.selectedDetailId } : {}),
+      detailOrigin: page === "detail-editor" ? "detail-editor" : page === "cost-table" ? "cost-table" : page === "home" ? "home" : page === "expansion-table" ? "expansion-table" : "initiative-list",
       selectedInitiative: { id: initiative.id, fiscalYear: initiative.fiscalYear },
     });
   };

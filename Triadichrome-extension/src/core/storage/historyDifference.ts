@@ -73,12 +73,21 @@ function* items(db: Database): Generator<[string, Item]> {
       : table === "kind_selections" ? words[String(row.screen)]! : table === "document_info" ? "計画" : String(row.name);
     yield put([table, owner?.identity ?? "", row.identity ?? row.id ?? row.screen], section, subject, fields);
   }
+  const initiativeNames = new Map(tables.get("initiatives")!.map(row => [row.identity, String(row.name)]));
   for (const row of tables.get("detail_documents")!) {
     for (const part of JSON.parse(String(row.parts_json)) as DetailPart[]) {
       const fields: Record<string, Value> = {
         位置とサイズ: value([part.x, part.y, part.width, part.height], `${part.x}, ${part.y} / ${part.width}×${part.height}`),
       };
       if (part.kind === "text") fields.文章 = value(part.text, part.text);
+      else if (part.kind === "heading") fields.見出し = value(part.text, part.text);
+      else if (part.kind === "assumption") {
+        fields.項目名 = value(part.label, part.label);
+        fields.値 = value(part.value, part.value);
+        fields.単位 = value(part.unit, part.unit);
+      } else if (part.kind === "initiative-reference") {
+        fields.参照施策 = value(part.initiativeIdentity, part.initiativeIdentity === null ? "未選択" : initiativeNames.get(part.initiativeIdentity) ?? "参照先がありません");
+      }
       else if (part.kind === "image") fields.画像 = value([part.name, part.src], part.name || "未選択");
       else fields.表の内容 = value(part.cells, part.cells.map(cells => cells.join(" / ")).join("\n"));
       yield put(["detail_parts", row.id, part.id], "明細パーツ", String(row.name), fields);

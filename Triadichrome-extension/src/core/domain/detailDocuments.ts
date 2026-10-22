@@ -35,9 +35,15 @@ export function validateDetailDocument(value: unknown): asserts value is DetailD
       || part.width < minimum.width || part.height < minimum.height || !Number.isSafeInteger(part.x + part.width) || !Number.isSafeInteger(part.y + part.height)) invalid();
     const common = ["id", "x", "y", "width", "height", "kind"];
     let fields: string[];
-    if (part.kind === "text") {
+    if (part.kind === "text" || part.kind === "heading") {
       if (typeof part.text !== "string") invalid();
       fields = ["text"];
+    } else if (part.kind === "assumption") {
+      if (typeof part.label !== "string" || typeof part.value !== "string" || typeof part.unit !== "string") invalid();
+      fields = ["label", "value", "unit"];
+    } else if (part.kind === "initiative-reference") {
+      if (part.initiativeIdentity !== null && (typeof part.initiativeIdentity !== "string" || !/^[0-9a-f]{32}$/.test(part.initiativeIdentity))) invalid();
+      fields = ["initiativeIdentity"];
     } else if (part.kind === "image") {
       if (typeof part.src !== "string" || typeof part.name !== "string") invalid();
       validateDetailImage(part.src, part.name); fields = ["src", "name"];
