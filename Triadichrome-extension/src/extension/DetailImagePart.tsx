@@ -1,5 +1,5 @@
 import { usePendingTask } from "./usePendingTask";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 /** Decode locally before replacing the existing image. Nothing is uploaded or persisted. */
 export async function readDetailImage(file: File): Promise<{ src: string; name: string }> {
@@ -31,8 +31,9 @@ export function DetailImagePart({ src, name, disabled, index, editing, onEditing
   const latest = useRef({ disabled, onChange, onEditingChange });
   latest.current = { disabled, onChange, onEditingChange };
   const [error, setError] = useState("");
-  useEffect(() => () => { request.current++; }, []);
-  useEffect(() => { if (disabled) request.current++; }, [disabled]);
+  useLayoutEffect(() => () => { request.current++; }, []);
+  // Busy operations wait for accepted reads. Only replacement or removal invalidates their result.
+  useLayoutEffect(() => { request.current++; }, [src, name]);
   useEffect(() => {
     if (editing && !disabled) input.current?.click();
   }, [editing, disabled]);
@@ -46,16 +47,12 @@ export function DetailImagePart({ src, name, disabled, index, editing, onEditing
     element.addEventListener("cancel", cancel);
     return () => element.removeEventListener("cancel", cancel);
   }, []);
-  async function select(file?: File) {
-    const current = ++request.current;
-    finish();
-    if (!file || latest.current.disabled) return;
-    setError("");
+  async function select(file: File, current: number) {
     try {
       const image = await readDetailImage(file);
-      if (current === request.current && !latest.current.disabled) latest.current.onChange(image);
+      if (current === request.current) latest.current.onChange(image);
     } catch (reason) {
-      if (current === request.current && !latest.current.disabled) setError(reason instanceof Error ? reason.message : "画像を読み込めませんでした。");
+      if (current === request.current) setError(reason instanceof Error ? reason.message : "画像を読み込めませんでした。");
     }
   }
   return <div ref={view} className="detail-image-part" role="button" tabIndex={disabled ? -1 : 0}
@@ -73,7 +70,11 @@ export function DetailImagePart({ src, name, disabled, index, editing, onEditing
       onChange={event => {
         const file = event.currentTarget.files?.[0];
         event.currentTarget.value = "";
-        void task.run(() => select(file));
+        finish();
+        if (!file || latest.current.disabled) return;
+        const current = ++request.current;
+        setError("");
+        void task.run(() => select(file, current));
       }} />
     {error && <p className="detail-image-error" role="alert">{error}</p>}
   </div>;

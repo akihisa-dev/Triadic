@@ -200,8 +200,8 @@ export function DetailPartsCanvas({ parts, disabled, onChange, initiatives, navi
   function remove(id: string) {
     if (!disabled && !gesture.current) latest.current.onChange(parts.filter(part => part.id !== id));
   }
-  function editPart(id: string, update: (part: DetailPart) => DetailPart) {
-    if (latest.current.disabled) return;
+  function editPart(id: string, update: (part: DetailPart) => DetailPart, acceptedImage = false) {
+    if ((latest.current.disabled && !acceptedImage) || !latest.current.parts.some(part => part.id === id)) return;
     const apply = (part: DetailPart) => part.id === id ? update(part) : part;
     // A completed image read may arrive during a drag. Retain it in both the saved base and the gesture.
     const moving = gesture.current;
@@ -245,7 +245,7 @@ export function DetailPartsCanvas({ parts, disabled, onChange, initiatives, navi
             onChange={assumption => editPart(part.id, current => current.kind === "assumption" ? { ...current, ...assumption } : current)} />
             : part.kind === "image" ? <DetailImagePart src={part.src} name={part.name} disabled={disabled} index={index} editing={editingId === part.id}
             onEditingChange={editing => setEditingId(editing ? part.id : null)}
-            onChange={image => editPart(part.id, current => current.kind === "image" ? { ...current, ...image } : current)} />
+            onChange={image => editPart(part.id, current => current.kind === "image" ? { ...current, ...image } : current, true)} />
             : part.kind === "table-horizontal" || part.kind === "table-vertical" ? <DetailTablePart cells={part.cells} horizontal={part.kind === "table-horizontal"} disabled={disabled} index={index} editing={editingId === part.id}
             onEditingChange={editing => setEditingId(editing ? part.id : null)}
             onChange={cells => editPart(part.id, current => (current.kind === "table-horizontal" || current.kind === "table-vertical") ? { ...current, cells } : current)} />

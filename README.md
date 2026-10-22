@@ -136,6 +136,8 @@ Period and optional aggregation deletions compare the confirmed business fields 
 
 Detail save retries retain the revision associated with the unfinished input. A conflict remains rejected on retry and after further typing; discarding the input adopts the latest saved detail. A successful save advances the revision for input entered while saving.
 
+Accepted detail image reads finish and save before Save As, undo, navigation, or history actions continue. Cancelling Save As retains the image; reselecting, replacing, or deleting the image invalidates older reads.
+
 New file creation reserves the selected destination in the shared session before writing. A file already open, loading, or reserved for another save/create is rejected without changing its contents. Opens arriving during creation wait and read the newly saved plan. An unused existing file can still be replaced explicitly. Failed creation releases the reservation and permits retry.
 
 ### Home and disclosure of calculations and data
@@ -692,6 +694,8 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 期間・任意集計の削除は、確認時の業務項目を保存時にも照合します。同じ番号で別の対象が作られた場合や対象が変更された場合は書き込まず拒否し、現在の対象を選び直して確認できます。無関係のマスタ更新だけでは拒否しません。
 
 明細の保存失敗では、入力内容と編集開始時の更新番号を一緒に保持します。競合後の再試行・追加入力でも保存済みの他画面の変更を上書きせず拒否し、「入力を取り消す」で最新の保存内容を表示します。自分の保存が成功した場合は、保存中の追加入力を新しい更新番号で続けて保存します。
+
+選択済みの明細画像は、読込と保存が完了してから別名保存・操作取消・画面移動・履歴移動へ進みます。別名保存のキャンセルでも画像を保持します。画像の再選択・置換・パーツ削除では、古い読込結果を適用しません。
 
 新規作成は書き込み前に、共有セッションで保存先を予約します。別ウィンドウで使用中・読込中、または別の保存・作成の予約中のファイルは、内容を変更せず拒否します。作成中に同じファイルを開く操作は完了を待ち、新しく保存した内容を読み込みます。未使用の既存ファイルは明示して置き換えられます。失敗時は予約を解除し、再試行できます。
 
