@@ -18,6 +18,7 @@ export type Page = "spreadsheet-io" | "data-history" | "previous-input" | "home"
 export type Screen = {
   page: Page;
   detailKind?: KindId;
+  detailVisit?: string;
   selectedInitiative: Pick<Initiative, "id" | "fiscalYear"> | null;
   detailOrigin: "home" | "initiative-list" | "expansion-table" | "cost-table";
 };

@@ -1,4 +1,19 @@
 import { test, expect, selectClassification } from './fixtures';
+test('検索で表示中の同じ施策を選び直すと一次予算で開く',async({page,app})=>{
+  await page.goto('/tests/ui/preview.html?data=full');
+  await app.getByRole('button',{name:'ファイルを開く',exact:true}).click();
+  await app.getByRole('navigation',{name:'メインナビゲーション'}).getByRole('button',{name:'施策一覧',exact:true}).click();
+  await app.getByRole('button',{name:'確定予算の手修正',exact:true}).click();
+  await app.getByRole('tab',{name:'確定予算',exact:true}).click();
+  await expect(app.getByRole('tab',{name:'確定予算',exact:true})).toHaveAttribute('aria-selected','true');
+  await expect(app.getByRole('spinbutton',{name:'売上高 4月の金額',exact:true}).first()).toHaveValue('120');
+  await app.getByRole('button',{name:'施策を検索',exact:true}).click();
+  const dialog=app.getByRole('dialog',{name:'施策を検索',exact:true});
+  await dialog.getByRole('searchbox',{name:'施策名・備考',exact:true}).fill('確定予算の手修正');
+  await dialog.getByRole('button',{name:'確定予算の手修正',exact:true}).click();
+  await expect(app.getByRole('tab',{name:'一次予算',exact:true})).toHaveAttribute('aria-selected','true');
+  await expect(app.getByRole('spinbutton',{name:'売上高 4月の金額',exact:true}).first()).toHaveValue('100');
+});
 for(const dataset of ['full','signed-categories-large']) for(const screen of ['施策一覧','展開表']) for(const kind of ['一次予算','確定予算']){
   test(`${dataset}の${screen}から${kind}を引き継いで詳細を開く`,async({page,app})=>{
     await page.goto(`/tests/ui/preview.html?data=${dataset}`);

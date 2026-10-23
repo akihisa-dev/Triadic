@@ -27,7 +27,7 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   const isSidebarOpen = sidebar.expanded;
   const collapseSidebar = sidebar.collapse;
   const screens = useScreenHistory<Screen>(initialView?.screen ?? { page: "home", selectedInitiative: null, detailOrigin: "initiative-list" },
-    (left, right) => left.page === right.page && left.selectedInitiative?.id === right.selectedInitiative?.id && left.detailOrigin === right.detailOrigin && left.detailKind === right.detailKind);
+    (left, right) => left.page === right.page && left.selectedInitiative?.id === right.selectedInitiative?.id && left.detailOrigin === right.detailOrigin && left.detailKind === right.detailKind && left.detailVisit === right.detailVisit);
   const screen = screens.current;
   const { selectedInitiative } = screen;
   const navigate = screens.navigate;

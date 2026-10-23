@@ -34,6 +34,7 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
     dismissNotice();
     requestNavigation({
       page: "initiative-detail",
+      detailVisit: crypto.randomUUID(),
       detailKind: kind ?? 1,
       detailOrigin: page === "cost-table" ? "cost-table" : page === "home" ? "home" : page === "expansion-table" ? "expansion-table" : "initiative-list",
       selectedInitiative: { id: initiative.id, fiscalYear: initiative.fiscalYear },
