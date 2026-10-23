@@ -26,6 +26,7 @@ export function AccountMasterPage({ accounts, groups, usedAccountIds, isSaving, 
   const [dragged,setDragged] = useState<MasterRow | null>(null);
   const [drop,setDrop] = useState<{key:string;before:boolean} | null>(null);
   const elements = useRef(new Map<string,HTMLTableRowElement>());
+  const keyboardFocus = useRef<{ key: string; button: HTMLButtonElement } | null>(null);
   const positions = useRef<Map<string,number> | null>(null);
   const focus = (row: MasterRow) => requestAnimationFrame(() => elements.current.get(masterRowKey(row))?.querySelector<HTMLButtonElement>("[data-edit]")?.focus({preventScroll:true}));
   const changeAccount = (change:AccountChange) => onChange({...change,presentationOrder:rows});
@@ -48,6 +49,13 @@ export function AccountMasterPage({ accounts, groups, usedAccountIds, isSaving, 
   const {notice,dismiss,save} = useMasterOperation<Operation>({onChange:perform,onSuccess:operation => { if(operation.change.type === "add") setAdding(empty()); setDeleting(null); },onFailure:() => {positions.current=null;setDeleting(null);},successMessage:() => "マスタを保存しました。",cancelledMessage:() => "保存をキャンセルしました。元の内容を保っています。"});
   const disabled = readOnly || isSaving || editing !== null;
   useLayoutEffect(() => {
+    if (disabled || !keyboardFocus.current) return;
+    const { key, button } = keyboardFocus.current;
+    keyboardFocus.current = null;
+    if (document.activeElement !== document.body && document.activeElement !== button) return;
+    elements.current.get(key)?.querySelector<HTMLButtonElement>(".account-drag-handle:not(:disabled)")?.focus({ preventScroll: true });
+  }, [disabled, accounts, groups]);
+  useLayoutEffect(() => {
     if (!positions.current) return;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
     for (const [key,element] of elements.current) {
@@ -64,6 +72,7 @@ export function AccountMasterPage({ accounts, groups, usedAccountIds, isSaving, 
     if(order.every((item,index) => masterRowKey(item) === masterRowKey(rows[index]!))) return;
     positions.current=new Map([...elements.current].map(([key,element]) => [key,element.getBoundingClientRect().top]));
     void save({kind:"group",change:{type:"reorder",order}});
+    return true;
   };
   const rename = (draft:Draft,name:string) => ({...draft,name,displayName:draft.displayName.trim() === draft.name.trim() ? name : draft.displayName});
   const end = () => {if(editing) focus(editing);controller.end();dismiss();};
@@ -87,7 +96,7 @@ export function AccountMasterPage({ accounts, groups, usedAccountIds, isSaving, 
         const draft=editing && masterRowKey(editing) === key ? editing : null;
         const cannotDelete=account.inUse || usedAccountIds.has(account.id);
         return <tr key={key} ref={element => {if(element) elements.current.set(key,element);else elements.current.delete(key);}} className={`${draft ? "master-row-editing" : ""} ${drop?.key === key ? drop.before ? "drop-before" : "drop-after" : ""}`} onDragOver={event => {if(!dragged || disabled) return;event.preventDefault();setDrop({key,before:event.clientY < event.currentTarget.getBoundingClientRect().top+event.currentTarget.getBoundingClientRect().height/2});}} onDrop={event => {event.preventDefault();if(dragged && drop) reorder(dragged,row,drop.before);setDragged(null);setDrop(null);}} onKeyDown={event => {if(draft && event.key === "Escape" && !autoSave.pending){event.preventDefault();event.stopPropagation();end();}}}>
-          <td><button type="button" className="text-button account-drag-handle" aria-label={`${name}を並べ替え`} disabled={disabled} draggable={!disabled} onDragStart={event => {event.dataTransfer.effectAllowed="move";event.dataTransfer.setData("text/plain",key);setDragged(row);}} onDragEnd={() => {setDragged(null);setDrop(null);}} onKeyDown={event => {if(event.key !== "ArrowUp" && event.key !== "ArrowDown") return;event.preventDefault();const target=accountRows[index+(event.key === "ArrowUp" ? -1 : 1)];if(target) reorder(row,target,event.key === "ArrowUp");}}>⠿</button></td>
+          <td><button type="button" className="text-button account-drag-handle" aria-label={`${name}を並べ替え`} disabled={disabled} draggable={!disabled} onDragStart={event => {event.dataTransfer.effectAllowed="move";event.dataTransfer.setData("text/plain",key);setDragged(row);}} onDragEnd={() => {setDragged(null);setDrop(null);}} onKeyDown={event => {if(event.key !== "ArrowUp" && event.key !== "ArrowDown") return;event.preventDefault();const target=accountRows[index+(event.key === "ArrowUp" ? -1 : 1)];if(target && reorder(row,target,event.key === "ArrowUp")) keyboardFocus.current={key,button:event.currentTarget};}}>⠿</button></td>
           <td className="account-code">{draft ? <input autoFocus aria-label={`${name}の科目コード`} value={draft.code} inputMode="numeric" onChange={event => controller.change({...draft,code:event.target.value})}/> : account.accountCode}</td>
           <th scope="row">{draft ? <input aria-label={`${name}の名称`} value={draft.name} onChange={event => controller.change(rename(draft,event.target.value))}/> : name}</th>
           <td>{draft ? <input aria-label={`${name}の表示名`} value={draft.displayName} onChange={event => controller.change({...draft,displayName:event.target.value})}/> : account.displayName ?? name}</td>

@@ -73,6 +73,14 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
   }, [byGroup, controller, editing?.id]);
   const [deleting, setDeleting] = useState<Aggregation | null>(null);
   const disabled = readOnly || isSaving || busy || editing !== null;
+  const keyboardFocus = useRef<{ key: string; button: HTMLButtonElement } | null>(null);
+  useLayoutEffect(() => {
+    if (disabled || !keyboardFocus.current) return;
+    const { key, button } = keyboardFocus.current;
+    keyboardFocus.current = null;
+    if (document.activeElement !== document.body && document.activeElement !== button) return;
+    table.current?.querySelector<HTMLButtonElement>(`[data-row="${key}"], [data-pool-row="${key}"]`)?.querySelector<HTMLButtonElement>(".aggregation-drag-handle:not(:disabled)")?.focus({ preventScroll: true });
+  }, [disabled, order]);
   const movingRow = dragged ?? (liftedKey ? byRow.get(liftedKey) : null);
   const draggedAccount = movingRow?.kind === "account" ? byAccount.get(movingRow.id) : null;
   const draggedGroup = movingRow?.kind === "group" ? byGroup.get(movingRow.id) : null;
@@ -213,7 +221,7 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
           if (event.key === "Delete" || event.key === "Backspace") { event.preventDefault(); attach(row, null); }
           if (event.key === "ArrowUp" || event.key === "ArrowDown") {
             event.preventDefault(); const next = shiftedMasterRows(order, groups, row, event.key === "ArrowUp" ? -1 : 1);
-            if (next) void perform({ type: "reorder", order: next });
+            if (next) { keyboardFocus.current = { key, button: event.currentTarget }; void perform({ type: "reorder", order: next }); }
           }
         }} onClick={event => { event.stopPropagation(); if (consumeClick.current) { consumeClick.current = false; return; } if (dragged && group && masterRowKey(dragged) !== key) attach(dragged, group); else setDragged(current => current && masterRowKey(current) === key ? null : row); }}>⠿</button></td>
       <th scope="row" onDoubleClick={() => { if (group) editGroup(group); }}>{editing?.id === group?.id && editing ? <div className="aggregation-inline-edit" onKeyDown={event => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); void finishEdit(); } if (event.key === "Escape" && !autoSave.pending) controller.end(); }}>
