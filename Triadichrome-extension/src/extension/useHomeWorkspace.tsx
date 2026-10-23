@@ -62,7 +62,7 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   const searchBlocked = navigationBlocked || editPending || isSaving || historyBusy;
   const historyEntered = useRef(screen.page === "data-history");
   const { discardRequest, setDiscardRequest, openInitiative, requestNavigation, setPage, startInitiative, duplicateInitiative, recoverInitiative } = useWorkspaceNavigation(
-    screens, contents, preview !== null, navigationBlocked, saving, { initiativeDraft, setInitiativeDraft }, dismissNotice, async next => {
+    screens, contents, preview !== null, navigationBlocked, editPending, saving, { initiativeDraft, setInitiativeDraft }, dismissNotice, async next => {
       await flushAutoSaves();
       if (next.page === "data-history" && !historyEntered.current) {
         await windows?.enterHistory(); historyEntered.current = true;

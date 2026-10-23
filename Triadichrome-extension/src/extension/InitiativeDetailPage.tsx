@@ -29,10 +29,11 @@ type Props = AutoSaveProps & {
   onOpenMaster: () => void;
   onDuplicate?: () => void;
   duplicationBlocked?: boolean;
+  sourceMissing?: boolean;
   onRecoverDraft?: (draft: InitiativeEntryDraft, references: InitiativeDraftReferences, release: () => void) => void;
 };
 
-export function InitiativeDetailPage({ initiative, accounts, expansions, expansionCategories, departments, periodTypes, industries, initialKind, backLabel = "施策一覧", onUpdate, onBack, onOpenMaster, onPendingChange, onPrepareSave, onDuplicate, duplicationBlocked = false, onRecoverDraft }: Props) {
+export function InitiativeDetailPage({ initiative, accounts, expansions, expansionCategories, departments, periodTypes, industries, initialKind, backLabel = "施策一覧", onUpdate, onBack, onOpenMaster, onPendingChange, onPrepareSave, onDuplicate, duplicationBlocked = false, sourceMissing = false, onRecoverDraft }: Props) {
   const readOnly = useHistoryReadOnly();
   const autoSave = useAutoSave(onUpdate, onPendingChange);
   const { controller, draft, revision } = autoSave;
@@ -45,9 +46,10 @@ export function InitiativeDetailPage({ initiative, accounts, expansions, expansi
       controller.syncSaved({ ...initiativeDraft(initiative),
         rows: initiative.rows.length ? initiative.rows : [{ id: emptyRow.current, accountId: null, amounts: {} }] }, `${initiative.id}:${initiative.identity ?? ""}`);
     }
+    if (sourceMissing && !controller.hasSourceChange()) controller.syncSaved(initiativeDraft(initiative), `${initiative.id}:deleted`);
     if (!controller.hasSourceChange()) source.current = { initiative,
       references: autoSave.pending && source.current ? source.current.references : { accounts, expansions, expansionCategories, departments, periodTypes, industries } };
-  }, [controller, initiative, revision, autoSave.pending, accounts, expansions, expansionCategories, departments, periodTypes, industries]);
+  }, [controller, initiative, revision, autoSave.pending, sourceMissing, accounts, expansions, expansionCategories, departments, periodTypes, industries]);
   if (!draft) return null;
   return <InitiativeEntryPage initialKind={initialKind ?? 1} draft={draft} onDraftChange={value => controller.change(value)} accounts={accounts} expansions={expansions} expansionCategories={expansionCategories} departments={departments} periodTypes={periodTypes} industries={industries}
     isSaving={false} onOpenMaster={onOpenMaster} onRegister={() => {}} editing={{

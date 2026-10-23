@@ -9,7 +9,7 @@ import type { useScreenHistory } from "../useScreenHistory";
 import type { Page, Screen } from "./types";
 import { latestNavigation } from "./latestNavigation";
 export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHistory<Screen>>, contents: PlanContents,
-  preview: boolean, navigationBlocked: boolean, saving: RefObject<boolean>,
+  preview: boolean, navigationBlocked: boolean, editPending: boolean, saving: RefObject<boolean>,
   draft: Pick<ReturnType<typeof useRetainedInitiativeDraft>, "initiativeDraft" | "setInitiativeDraft">, dismissNotice: () => void,
   beforeNavigate: (next: Screen) => Promise<void> = async () => {}, onError: (error: unknown) => void = () => {}) {
   const screen = screens.current;
@@ -26,9 +26,11 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
   const latestContents = useRef(contents);
   latestContents.current = contents;
   useEffect(() => {
-    screens.prune(entry => entry.page !== "initiative-detail" || initiatives.some(item => item.id === entry.selectedInitiative?.id),
+    if (screen.page === "initiative-detail" && editPending &&
+      !initiatives.some(item => item.id === screen.selectedInitiative?.id && item.fiscalYear === screen.selectedInitiative?.fiscalYear)) return;
+    screens.prune(entry => entry.page !== "initiative-detail" || initiatives.some(item => item.id === entry.selectedInitiative?.id && item.fiscalYear === entry.selectedInitiative?.fiscalYear),
       { page: "home", selectedInitiative: null, detailOrigin: "initiative-list" });
-  }, [initiatives, screens.prune]);
+  }, [initiatives, screens.prune, screen.page, screen.selectedInitiative?.id, screen.selectedInitiative?.fiscalYear, editPending]);
   const openInitiative = (initiative: Initiative, kind?: KindId) => {
     if (navigationState.current.blocked || navigationState.current.page !== page) return;
     dismissNotice();
