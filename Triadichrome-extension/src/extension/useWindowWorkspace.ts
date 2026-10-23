@@ -4,16 +4,9 @@ import { WindowViewContext, captureWindowScroll, restoreWindowScroll } from "./w
 import { cloneWindowView } from "./windowViewClone";
 import type { WindowPlanSession } from "./WindowPlanSession";
 import type { HomeWorkspace } from "./useHomeWorkspace";
-import type { Page } from "./workspace/types";
+import { pageMetadata } from "./pageMetadata";
 
-const labels: Record<Page, string> = {
-  home: "Home", "initiative-list": "施策一覧", "initiative-entry": "施策入力", "initiative-detail": "施策詳細",
-  "cost-table": "総原価表", "expansion-table": "展開表", "previous-input": "前年入力", "spreadsheet-io": "入出力",
-  "data-history": "履歴", master: "マスタ", "account-master": "勘定科目マスタ", "aggregation-master": "集計マスタ",
-  "expansion-master": "展開マスタ", "expansion-category-master": "展開区分マスタ", "industry-master": "業種マスタ",
-  "department-master": "部署マスタ", "period-master": "期間マスタ", "kind-master": "種別マスタ",
-  "account-type-master": "科目属性マスタ", "amount-item-master": "金額項目マスタ",
-};
+
 const defaultInfo = { number: 1, peers: 1, settling: false };
 const noopSubscribe = () => () => {};
 
@@ -24,7 +17,7 @@ export function useWindowWorkspace(session: WindowPlanSession | undefined, works
   latest.current = workspace;
   const [discardLabels, setDiscardLabels] = useState<string | null>(null);
   const confirm = useRef<((accepted: boolean) => void) | null>(null);
-  const pageLabel = labels[workspace.screen.page];
+  const pageLabel = pageMetadata[workspace.screen.page].name;
   const label = `ウィンドウ${info.number} · ${pageLabel}`;
   useEffect(() => {
     document.title = `${label} — ${workspace.fileName} — Triadichrome`;

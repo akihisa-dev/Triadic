@@ -1,3 +1,4 @@
+import { pageMetadata } from "./pageMetadata";
 import { version as appVersion } from "../../../package.json";
 import appIcon from "../../../branding/logo-512.png?no-inline";
 import { SidebarIcon } from "./SidebarIcon";
@@ -118,7 +119,7 @@ export function WorkspaceSidebar({ workspace }: { workspace: HomeWorkspace }) {
               <SidebarIcon name="previous" /><span className="sidebar-label">前年入力</span>
             </button>
             <button className="sidebar-item" type="button" aria-label="入出力" disabled={navigationBlocked} aria-current={page === "spreadsheet-io" ? "page" : undefined} onClick={() => setPage("spreadsheet-io")}><SidebarIcon name="io" /><span className="sidebar-label">入出力</span></button>
-            <button className="sidebar-item" type="button" aria-label="マスタ" disabled={navigationBlocked} aria-current={page === "master" || page === "aggregation-master" || page === "account-master" || page === "expansion-master" || page === "expansion-category-master" || page === "industry-master" || page === "department-master" || page === "period-master" || page === "kind-master" || page === "account-type-master" || page === "amount-item-master" ? "page" : undefined} onClick={() => setPage("master")}>
+            <button className="sidebar-item" type="button" aria-label="マスタ" disabled={navigationBlocked} aria-current={page === "master" || pageMetadata[page].master ? "page" : undefined} onClick={() => setPage("master")}>
               <SidebarIcon name="master" />
               <span className="sidebar-label">マスタ</span>
             </button>

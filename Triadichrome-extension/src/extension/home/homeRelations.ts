@@ -1,19 +1,21 @@
-export const nodes = [
-  { page: "aggregation-master", name: "集計マスタ", icon: "master", x: 900, y: -210, master: true },
-  { page: "amount-item-master", name: "金額項目マスタ", icon: "master", x: 320, y: 0, master: true },
-  { page: "account-type-master", name: "科目属性マスタ", icon: "master", x: 320, y: -126, master: true },
-  { page: "account-master", name: "勘定科目マスタ", icon: "master", x: 640, y: -42, master: true },
-  { page: "industry-master", name: "業種マスタ", icon: "master", x: 0, y: 42, master: true },
-  { page: "department-master", name: "部署マスタ", icon: "master", x: 0, y: 210, master: true },
-  { page: "period-master", name: "期間マスタ", icon: "master", x: 320, y: 504, master: true },
-  { page: "expansion-category-master", name: "展開区分マスタ", icon: "master", x: 640, y: 546, master: true },
-  { page: "expansion-master", name: "展開マスタ", icon: "master", x: 1020, y: 448, master: true },
-  { page: "kind-master", name: "種別マスタ", icon: "master", x: 0, y: 378, master: true },
-  { page: "previous-input", name: "前年入力", icon: "previous", x: 1200, y: -70, master: false },
-  { page: "initiative-list", name: "施策一覧", icon: "list", x: 640, y: 252, master: false },
-  { page: "cost-table", name: "総原価表", icon: "cost", x: 1020, y: 56, master: false },
-  { page: "expansion-table", name: "展開表", icon: "expansion", x: 1120, y: 252, master: false },
-] as const;
+import { pageMetadata } from "../pageMetadata";
+
+export const nodes = ([
+  { page: "aggregation-master", x: 900, y: -210 },
+  { page: "amount-item-master", x: 320, y: 0 },
+  { page: "account-type-master", x: 320, y: -126 },
+  { page: "account-master", x: 640, y: -42 },
+  { page: "industry-master", x: 0, y: 42 },
+  { page: "department-master", x: 0, y: 210 },
+  { page: "period-master", x: 320, y: 504 },
+  { page: "expansion-category-master", x: 640, y: 546 },
+  { page: "expansion-master", x: 1020, y: 448 },
+  { page: "kind-master", x: 0, y: 378 },
+  { page: "previous-input", x: 1200, y: -70 },
+  { page: "initiative-list", x: 640, y: 252 },
+  { page: "cost-table", x: 1020, y: 56 },
+  { page: "expansion-table", x: 1120, y: 252 },
+] as const).map(node => ({ ...node, ...pageMetadata[node.page] }));
 
 export type HomeDestination = typeof nodes[number]["page"];
 export const relationKinds = [

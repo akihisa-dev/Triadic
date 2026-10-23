@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-type SidebarIconName = "io" | "history" | "home" | "previous" | "entry" | "list" | "cost" | "expansion" | "master" | "file" | "close-file" | "save-as";
+export type SidebarIconName = "io" | "history" | "home" | "previous" | "entry" | "list" | "cost" | "expansion" | "master" | "file" | "close-file" | "save-as";
 
 // Each silhouette expresses the destination, even when the labels are collapsed.
 const shapes: Record<SidebarIconName, ReactNode> = {
