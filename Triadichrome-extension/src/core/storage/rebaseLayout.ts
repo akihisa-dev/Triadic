@@ -5,7 +5,6 @@ const businessKeys: Record<string, readonly string[]> = {
   previous_amounts: ["previous_kind", "account_id", "industry_id", "department_id", "month"],
 };
 const ignored: Record<string, readonly string[]> = {
-  detail_documents: ["revision"],
   previous_amounts: ["id", "revision"], initiative_rows: ["sort_order", "revision"],
   aggregation_members: ["position"], master_order: ["position"], initiatives: ["revision"],
 };

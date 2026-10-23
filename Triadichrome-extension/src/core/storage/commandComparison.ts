@@ -5,7 +5,6 @@ type Target = { table: string; where?: string; params?: SqlValue[] };
 /** Enumerate stored side effects, including membership/order. Derived values and write counters are excluded. */
 function targets(command: PlanCommand): Target[] {
   switch (command.type) {
-    case "detail": return [{ table: "detail_documents", where: "id = ?", params: [command.change.document.id] }];
     case "initiative.register": return [];
     case "initiative.update": return [
       { table: "initiatives", where: "id = ?", params: [command.id] },

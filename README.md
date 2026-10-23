@@ -97,7 +97,7 @@ Save As and conflict recovery both reject destinations used by another open/load
 ### Current scope and limitations
 
 - The app runs as a Chrome extension and handles local files for which you grant read/write permission. It does not transmit plans externally or synchronize across browsers.
-- The storage format is 29. Formats 28 and earlier, and unknown formats, are rejected without migration or overwriting. When a file changes externally, independent changes to other rows are automatically merged with your edits. Overlapping row changes or inconsistent changes are not overwritten; you can save the entire entered plan to another file and continue. Cancellation or failure preserves input and the original file. Applying external changes clears earlier undo history, leaving only your current edit undoable. Save As copies the saved plan, masters, and history to another .triadic file and continues editing there. It preserves undo/redo and switches the filename and Continue reference only after a successful write. Category assignments and initiative category references also compare the category contents when merging. An ID reused after undo or history restoration cannot silently receive old references. Concurrent renaming and a new assignment/reference are rejected; ordinary renaming preserves existing references.
+- The storage format is 30. All files in format 29 or earlier are rejected, whether or not they contain details. Unknown formats are also rejected without migration or overwriting. When a file changes externally, independent changes to other rows are automatically merged with your edits. Overlapping row changes or inconsistent changes are not overwritten; you can save the entire entered plan to another file and continue. Cancellation or failure preserves input and the original file. Applying external changes clears earlier undo history, leaving only your current edit undoable. Save As copies the saved plan, masters, and history to another .triadic file and continues editing there. It preserves undo/redo and switches the filename and Continue reference only after a successful write. Category assignments and initiative category references also compare the category contents when merging. An ID reused after undo or history restoration cannot silently receive old references. Concurrent renaming and a new assignment/reference are rejected; ordinary renaming preserves existing references.
 - After successfully saving a conflict to another file, the displayed filename and “Continue” reference point to that file for normal editing, undo, history, and recording on closure. Cancellation or write failure leaves references unchanged. Failure to remember the reference on the device is reported; the current screen can still resume from the successful destination.
 - Excel export covers the three tables and calculation inputs; import accepts the previous-year template exported by the app. Arbitrary Excel workbooks and edits to exported three-table workbooks cannot be imported into the plan. Recalculation in an actual Excel installation has not been verified.
 - Input that fails to save remains on screen, but recovery after tab closure, reload, or forced termination is not guaranteed. Changes to the same file from multiple screens or external apps are detected to stop overwriting.
@@ -118,35 +118,13 @@ Undo is unavailable during unsaved editing, unregistered initiative input, savin
 
 The entry screen and shared header display the version beside the app name. It is read from the root `package.json` and follows version updates.
 
-Image parts can be dragged from the parts pool. Double-click or press Enter/Space to select or replace a local PNG, JPEG, or WebP. Images fit inside the part with their aspect ratio preserved and support the existing move, resize, and delete controls. Cancellation or load failure keeps the previous image. Images, filenames, text, tables, order, positions and sizes are automatically saved inside the same .triadic file and restored when reopened. Undo/redo, history, Save As and all windows include saved details. Deleted images can remain in history or copied files. No data is transmitted externally. No additional permissions are required.
-
 ### File entry and sidebar
-
-“Details” (明細), immediately below Breakdown table, shows a table with a Detail name column, using the same row style as the initiative list. “Add detail” opens a dialog; enter only a required name, then choose “Next” to add an entry and open its full-screen editor. Cancel/Esc adds nothing. Selecting a detail name reopens the editor; “Back to list” returns. The editor has a fixed right-hand parts pool. Drag its text part repeatedly into the scrollable workspace, move parts by their interiors, and resize horizontally, vertically, or diagonally with a single rounded hover handle at the bottom-right corner. Hover × deletes. Parts start at 168×96px, have a 72×72px minimum, settle positions and dimensions to 24px increments, and can share edges or corners without a gap while avoiding interior overlap. A faint 24px dot grid shows placement positions. While moving or adding from the pool, a translucent blue outline shows the final position and size. It holds its position until movement passes a cell midpoint by 4px, then moves smoothly; dropping commits the indicated position. Moving parts are gently attracted toward nearby grid positions, then settle smoothly on release; displaced neighbours also finish on the grid. Pointer tracking, settlement, and displacement of neighbouring parts animate smoothly. Dragging near an edge scrolls in both directions; Esc, outside drops, and leaving the screen cancel uncommitted changes. Details and layouts are saved automatically after 600ms without edits. Navigation, closing, undo and history wait for pending saves and image reads. Failures preserve input with retry/discard actions. Past viewing displays that snapshot’s details as read-only. Double-click a text part to edit plain text; Enter inserts a line break. Clicking outside or pressing Esc keeps the text and ends editing. Long text scrolls inside the fixed-size part. Empty parts show a faint “Double-click to enter” hint. Text is saved together with its layout. Details are optional evidence for initiatives; missing details do not mark an initiative as incomplete. Explanation-only documents and direct initiative input remain available.
-
-The parts pool contains 文章 (body/heading), 入力値, 月別表, 計算, 内訳表, 施策への反映, and 画像. Body/heading and horizontal/vertical table modes switch within their editors while preserving content and references. Dragging a sample creates an empty part; sample content is not copied. The monthly table starts horizontally and can be switched to vertical. Each item has a stable identifier. Both use the same April-to-March labels as the cost and breakdown tables, without totals. Horizontal tables put editable item names at the left and months in columns; vertical tables put names at the top and months in rows. Three empty items are created; only items can be added or deleted (minimum one, with confirmation for populated items). Month and item headers stay visible while scrolling. Horizontal tables scroll without squeezing month cells. Double-click edits plain text, Enter moves down, Shift+Enter inserts a line break, and outside clicks/Esc keep the content and end editing. Paste adds missing items, but a paste exceeding the twelve-month range is rejected in full without modifying data. Quoted multiline cells are supported. Initial and minimum sizes are 1200×192px horizontally and 336×456px vertically, showing all twelve months with single-line values even while editing. Scroll the workspace when the part exceeds the viewport; contents and layout are saved in the .triadic file.
-
-Numeric inputs carry a name, value and unit. Calculation parts select existing input, monthly-row, breakdown, or calculation values and apply arithmetic or a sum. Scalars broadcast across monthly operands; Sum aggregates all selected months into a scalar. Breakdown parts calculate quantity × unit price in yen and expose each item and the total. Decimal inputs allow 16 integer digits and 6 fractional digits; intermediate results use exact fractions, with preview limited to six decimals (… means more digits).
-
-To link a value, add **施策への反映**, choose the source, saved initiative, account row, budget kind, yen/thousand-yen unit, and months. Monthly sources map to selected matching fiscal months; blank unselected months do not block them; a scalar is repeated in explicitly selected months, never automatically divided by 12. One source may own each target cell. Initial-budget updates preserve explicit confirmed overrides. If a confirmed link starts with invalid input, its inherited amount is captured before applying any initial-budget outputs. Missing input, missing references, cycles, zero division, fractional yen and overflow retain the last saved initiative amount and show the cause. Source and target amounts save/undo together. Selecting the initiative cell’s **明細** button offers **反映元の明細を開く** and **直接入力へ切り替える**; disconnecting keeps the current amount and frees only that month. Locked cells reject direct entry and range paste, and linked zero rows cannot be reassigned or deleted. Duplicating/recovering an initiative copies its amounts without its links. Opening or merging files validates active source/target consistency.
-
-The generated full-feature sample includes “明細の値を施策へ反映” with an active March link. Its input can be changed, cleared, undone and disconnected; other months remain directly editable. “全パーツの保存確認” also contains a monthly calculation and a quantity/price breakdown. These cases are covered by `tests/detail-document-storage.test.mjs` and the detail UI tests.
 
 Implemented screens include the `.triadic` entry screen, Home, previous-year input, initiative input/list/details, cost summary, breakdown table, masters, and account, aggregation, breakdown-category, industry, department, period, and budget-kind masters. Entry supports “Continue,” “Open file,” “New,” and file drops. The previous plan is above separate open/new areas. The open-file area says “Drop a .triadic file here”; dragging a file highlights the whole area with a pale blue background, blue dashed border, and “Drop here to open.” Choose the new file's year in a vertical slot, defaulting to the current April-based fiscal year with its date range shown. Numbers flow vertically, spin with wheel/drag momentum, then decelerate to a year position. Focus at drag start does not shift the page. Up/down keys and clicks on adjacent years move one year at a time; OS reduced-motion settings suppress inertia.
 
-The sidebar normally forms a 64px icon rail. Hovering shows item names and the filename; leaving collapses it. Keyboard focus within the rail also expands it. Opening with the top-left hamburger keeps it open after the pointer leaves or the screen changes. The hamburger, close button, or Esc returns to the rail. Expansion smoothly pushes the main panel aside; even on narrow screens it is limited to 280px and half the viewport width. Rail icons also open Home, Initiative list, Cost summary, Breakdown table, Details, Previous-year input, Import/export, Masters, History, and Close file. Touch uses buttons rather than hover. Opening a file starts on Home with the rail collapsed.
-
-All detail parts and their references are saved in the same .triadic file, shared across windows, and included in undo, history and Save As. Past viewing allows navigation within that snapshot and prevents editing.
+The sidebar normally forms a 64px icon rail. Hovering shows item names and the filename; leaving collapses it. Keyboard focus within the rail also expands it. Opening with the top-left hamburger keeps it open after the pointer leaves or the screen changes. The hamburger, close button, or Esc returns to the rail. Expansion smoothly pushes the main panel aside; even on narrow screens it is limited to 280px and half the viewport width. Rail icons also open Home, Initiative list, Cost summary, Breakdown table, Previous-year input, Import/export, Masters, History, and Close file. Touch uses buttons rather than hover. Opening a file starts on Home with the rail collapsed.
 
 Period and optional aggregation deletions compare the confirmed business fields again when saving. Reusing an ID or changing the target makes the old confirmation fail without writing; select the current target and confirm again. Unrelated master changes do not invalidate it.
-
-Detail save retries retain the revision associated with the unfinished input. A conflict remains rejected on retry and after further typing; discarding the input adopts the latest saved detail. A successful save advances the revision for input entered while saving.
-
-Accepted detail image reads finish and save before Save As, undo, navigation, or history actions continue. Cancelling Save As retains the image; reselecting, replacing, or deleting the image invalidates older reads.
-
-Moving, resizing, or adding detail parts preserves shared text, table, and image changes received during the gesture. A concurrent layout change cancels the gesture and displays the latest saved layout; Escape also keeps shared changes.
-
-A detail table item deletion confirmation expires if its rows, contents, or orientation change. Select the item again against the current table; unrelated text changes and cancelling the dialog leave the table intact.
 
 New file creation reserves the selected destination in the shared session before writing. A file already open, loading, or reserved for another save/create is rejected without changing its contents. Opens arriving during creation wait and read the newly saved plan. An unused existing file can still be replaced explicitly. Failed creation releases the reservation and permits retry.
 
@@ -464,8 +442,8 @@ After changes, rebuild and reload on the extensions page. Distribute `dist/Triad
 
 ## Structure
 
-- `Triadichrome-extension/src/core/domain/`: Types/rules for amounts, fiscal year, kinds, classifications, initiatives, and details; independent of SQL/Chrome APIs. `aggregationOrder.ts` manages child-to-parent traversal shared by cost-summary calculations and initial master order, prioritizing saved order.
-- `Triadichrome-extension/src/core/tables/`: Display calculations for cost summary, breakdown, details, aggregation graph, and bulk input-table operations.
+- `Triadichrome-extension/src/core/domain/`: Types/rules for amounts, fiscal year, kinds, classifications, initiatives; independent of SQL/Chrome APIs. `aggregationOrder.ts` manages child-to-parent traversal shared by cost-summary calculations and initial master order, prioritizing saved order.
+- `Triadichrome-extension/src/core/tables/`: Display calculations for cost summary, breakdown, aggregation graph, and bulk input-table operations.
 - `Triadichrome-extension/src/core/storage/`: Direct SQLite creation, validation, loading, updates, history. `transaction.ts` handles updates on copies and connection cleanup.
 - `Triadichrome-extension/src/core/autoSave.ts`: Input waiting, Japanese composition, additional input during saving, retries.
 - `Triadichrome-extension/src/extension/PlanSession.ts`: Prepares history display information before file commit, then updates save baseline/undo history. Owns saved-plan authority and serializes saving, permission preparation, history, and closing; publishes to the screen only after successful file commit.
@@ -651,14 +629,11 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 「操作を取り消す」は、このファイルを開いている間の直近100操作を戻す機能です。「履歴」はファイルに残した過去の状態を閲覧・復元する機能で、開き直した後も利用できます。時点履歴は最初の未記録の変更の保存成功から5分後と、正常なファイル終了時・過去閲覧への移動時に記録します。保持期限はなく、必要に応じて削除します。詳しくは[データの履歴](#データの履歴)を参照してください。
 
-
 総原価表の科目・設定済み集計の金額から内訳を開けます。月別・期間計・比較差額と部署・業種の条件に合わせ、前年額と施策の科目行別の増減、集計の加減符号を確認できます。施策名から編集へ進み、「総原価表へ戻る」で元の分類・スクロール位置へ戻ります。利益率・未設定集計は対象外です。過去閲覧では編集できません。内訳と合計は円単位で計算し、各表示だけ整数千円に丸めるため、表示値の足し算と合計が一致しない場合があります。同じ計画の表示中は科目・月別の候補を再利用し、対象外の施策行を期間切り替えや再表示ごとに走査しません。200行を超える内訳は行の高さを測って表示範囲の周辺だけを描画し、名称の折り返し、相殺後0の行、全体の合計と施策への移動を維持します。内訳は保存せず、保存形式・追加権限・外部送信に変更はありません。
 
 共通ヘッダーの「施策を検索」で、保存済みの施策名・備考から詳細へ移動できます。全半角・英字の大小を区別せず、空白で区切った複数語をすべて含む施策を登録順・50件ずつ表示します。検索語なしは全件です。結果を選ぶか、入力欄のEnterで表示ページの先頭を開きます。日本語変換の確定では移動しません。閉じる・Escで元の画面と検索ボタンへ戻り、検索語は破棄します。検索で一覧の表示条件や予算を変更せず、未保存編集・保存中・確認待ちは検索できません。登録前の施策入力は保持し、検索から別の施策を開いても画面の戻る操作で再開できます。過去閲覧では選んだ時点の施策を閲覧専用で開きます。検索は端末内だけで行い、保存形式・権限・外部送信は変更しません。
 
 施策詳細の「複製して新規作成」で、保存済みの分類・備考・科目行と一次／確定予算を新規入力へ引き継げます。名前には重複しない「（コピー）」を付け、手修正0・同額手修正・引き継ぎを保持します。内容を調整して「登録」するまではファイルや予算に追加しません。元の施策は変更せず、保持中の登録前入力は確認後だけ置き換えます。未保存・保存中・過去閲覧中は使えず、登録失敗や取消では入力を保持します。登録前の入力は画面内だけに保持し、ファイル終了で破棄します。保存形式・権限・外部送信に変更はありません。
-
-
 
 ### 現在の対応範囲と制限
 
@@ -691,29 +666,9 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 現在の実装は、`.triadic`ファイルを開く入口画面、ホーム画面、前年入力、施策入力・施策一覧・施策詳細画面、総原価表、展開表、マスタ画面、勘定科目マスタ・集計マスタ・展開マスタ・業種マスタ・部署マスタ・期間マスタ・種別マスタ画面です。入口では「続きから」「ファイルを開く」「新規作成」とファイルのドロップを扱います。前回の計画を上段に置き、ファイルを開く操作と新規作成を下段に分けます。「ファイルを開く」欄には「.triadicファイルをここにドロップ」を表示し、ファイルをドラッグ中は欄全体の淡い青の背景・青い破線と「ここにドロップして開く」の見出しで受け入れ先を示します。新規作成の年度は、上下に回すスロットで選びます。初期値は4月始まりの当年度で、対象期間も併記します。数字は上下に流れ、ホイールやドラッグの勢いに応じて回転した後、減速して年度の位置で止まります。ドラッグ開始時のフォーカスでページの位置を変えません。上下キーと前後の年度のクリックは1年ずつ移動し、OSの「動きを減らす」設定では慣性を抑えます。
 
-「展開表」の直下の「明細」では、施策一覧と同じ行の見た目の表形式で明細名を表示します。「明細を追加」で小窓を開き、必須の明細名だけを入力して「次へ」を押すと、明細を追加して編集画面へ移ります。キャンセル・Escでは追加せず、追加ボタンへフォーカスを戻します。表の明細名から編集画面を開け、「一覧に戻る」で戻れます。編集画面の右に固定のパーツプールを置き、テキストパーツを繰り返しドラッグして追加できます。内側で移動し、ホバー時の右下だけの丸みのあるつまみで縦横・斜めに伸縮、「×」で削除します。テキストの初期168×96px・最小72×72px・位置と寸法は24px刻みとします。パーツは辺・角を共有して隙間なく隣接配置でき、内部の重なりだけを避け、背景に薄い24px間隔のドット格子を表示します。移動中とプールからの追加中は、確定する位置と大きさを青い半透明の枠で示します。枠は境界を4px越えるまで切り替えず、切り替え時は滑らかに移動し、表示先へ確定します。移動中も近い配置位置へ軽く吸着し、手を離すと位置とサイズが滑らかに揃います。周囲のパーツも格子位置へ押し出し、重なりを避けて滑らかに動きます。移動・追加では8px以内の浅い重なりでは周囲を動かさず、8pxを超えてめり込んだ場合に押し退けます。浅く重なったまま離す場合は、周囲を動かさず操作中のパーツを重ならない24px格子位置へ収めます。縦横スクロールとドラッグ中の端での自動スクロールに対応します。Esc・領域外ドロップ・画面離脱では確定前の配置を保ちます。明細名・文章・横向き／縦向き12か月表・画像データと元ファイル名・配置・寸法・パーツの順序をdetail_documentsへ保存します。作成は「次へ」で保存に成功した後に編集画面へ進み、失敗時は名前を保持します。編集は入力が600ms止まってから自動保存し、画面移動・閉じる・別名保存・履歴・操作取消の前に保存完了を待ちます。日本語変換中は保存せず、画像の読み込み完了も待ちます。保存失敗は入力を保持し、既存の通知から再試行・入力取消ができます。画像は元ファイルを移動・削除しても表示できます。保存済み明細は同じファイルの全ウィンドウで共有し、複製先も同じ明細画面と位置を開きます。同じ明細の競合は上書きせず拒否し、別明細の変更は統合できます。取り消し・やり直し・時点履歴・別名保存に含め、過去閲覧ではその時点の明細を参照専用で開きます。パーツ削除は次の保存で現在データから除去しますが、取消・時点履歴・別名保存したファイルには残る場合があります。保持期限や自動削除は設けず、利用者がファイルを管理します。追加権限・外部送信はありません。パーツはダブルクリックで装飾なしの説明文を編集でき、Enterで改行、外をクリックまたはEscで入力内容を反映して編集を終えます。長文はパーツ内でスクロールし、空欄には「ダブルクリックで入力」と薄く表示します。文章も配置とともに保存します。明細は施策の任意の根拠として、説明と金額の計算に使えます。明細のない施策も直接入力で利用できます。
-
-パーツプールは名称だけでなく、文章・入力値・月別表・計算・内訳表・施策への反映・画像の見本を縮小表示します。見本をドラッグしても、文章や項目名は引き継がず空のパーツを追加します。月別表は一つのパーツとし、編集中に横向き／縦向きを切り替えられます。項目と値と計算の参照は保持します。展開表・総原価表と共通の4月〜翌年3月を固定表示し、集計欄は付けません。横向きは月を列・項目名を左端、縦向きは月を行・項目名を上端に置きます。項目は空の3件から始まり、編集中のボタンで選択項目の後への追加と削除ができます。最低1項目を保ち、入力済みの項目は確認後に削除します。月の12枠は追加・削除できません。横向きはセルの読み書きに必要な幅を保って横スクロールし、縦向きの列はパーツ幅に追従します。月と項目名の見出しはスクロール中も固定表示します。ダブルクリックで編集し、文字はそのまま表示し、数値の行は計算・施策への反映で参照できます。Enterで下のセルへ移動、Shift＋Enterでセル内改行、外をクリックまたはEscで内容を保持して編集を終えます。貼り付けは起点セルから振り分け、不足する項目だけを追加します。12か月を超える貼り付けは全体を拒否して知らせ、元の内容を保ちます。引用符付きの改行セルにも対応します。初期寸法と最小寸法は横向き1200×192px・縦向き336×456pxとし、通常の1行入力では編集中も12か月すべてをパーツ内に表示します。パーツ全体が画面に収まらない場合は編集領域をスクロールします。内容と配置を自動保存し、ファイルを開き直すと復元します。
-
-サイドバーは普段、幅64pxのアイコンだけのレールです。カーソルを重ねると項目名とファイル名を表示し、外すと折り畳みます。キーボードでレール内へ移動した場合も展開します。画面左上のハンバーガーボタンで開くと、カーソルを外した後や画面を切り替えた後も開いた状態を維持します。ハンバーガーボタン・閉じるボタン・Escキーでレールへ戻せます。展開時はメインパネルを滑らかに押しのけて横に並び、狭い画面でも最大280px、画面幅の半分までに収めます。「Home」「施策一覧」「総原価表」「展開表」「明細」「前年入力」「入出力」「マスタ」「履歴」と「閉じる」はレールのアイコンからも操作できます。タッチ操作ではホバー展開を行わず、ボタンで開閉します。ファイルを開くとレール状態のホームから開始します。
-
-画像パーツはプールの画像の見本から追加し、ダブルクリックまたはEnter・Spaceで端末内のPNG・JPEG・WebPを選択・差し替えできる。初期寸法は336×240px、最小寸法と配置規則はテキストと共通とし、画像は縦横比を保って枠内に収める。移動・右下での伸縮・削除は既存パーツと共通とする。画像の読み込みと表示可能かの検証に成功した後だけ置き換え、選択取消・非対応形式・破損・読み込み失敗では元の画像と配置を保持する。画像データと元ファイル名を同じ.triadicに保存し、閉じて開き直しても表示する。取消・時点履歴・別名保存と複数ウィンドウで共有する。外部送信・追加権限はない。
-
-パーツは「文章・入力値・月別表・計算・内訳表・施策への反映・画像」の7種類です。文章は本文／見出しを選べます。数値の前提条件は入力値に名前・値・単位で記載し、文章の条件は文章パーツへ記載します。計算は参照する値と四則演算・合計を選択し、式と結果を確認します。内訳表は数量×単価（円）と合計を扱います。計算用の入力は整数16桁・小数6桁以内です。結果表示は小数6桁までで、続く桁は「…」を付けます。施策へは途中で丸めず整数円として反映します。
-
-「施策への反映」の「変更」で、明細内の値・保存済み施策・科目行・予算種別・円／千円・対象月を選びます。月別値は選んだ同じ月へ反映し、対象外の空欄月は計算を妨げません。単一値は選択した各月へ同じ値を反映します。年額の自動配分は行いません。明細の値を編集すると施策も更新し、一次予算への反映では確定の手修正を残します。確定への反映を設定した時点で値が未入力の場合は、その時点の引き継ぎ額を保持します。同じセルへの重複反映は保存を拒否します。入力不足・参照消失・循環・0除算・円未満の端数・金額上限超過では、最後に保存された施策の値を保持して原因を表示します。
-
-施策入力の金額欄にある「明細」を選ぶと、反映元を開くか、その月を直接入力へ切り替えられます。切り替え時は現在の金額を残します。反映中のセルへの入力・範囲貼り付けと、反映中の行の科目変更・削除を防ぎます。明細の変更と金額の更新は同じ保存・取消・履歴に含めます。施策の複製は連動を複製せず、その時点の金額を引き継ぎます。説明だけの明細も作成でき、明細なしの施策に警告や未完成表示を付けません。追加権限・外部送信はありません。
+サイドバーは普段、幅64pxのアイコンだけのレールです。カーソルを重ねると項目名とファイル名を表示し、外すと折り畳みます。キーボードでレール内へ移動した場合も展開します。画面左上のハンバーガーボタンで開くと、カーソルを外した後や画面を切り替えた後も開いた状態を維持します。ハンバーガーボタン・閉じるボタン・Escキーでレールへ戻せます。展開時はメインパネルを滑らかに押しのけて横に並び、狭い画面でも最大280px、画面幅の半分までに収めます。「Home」「施策一覧」「総原価表」「展開表」「前年入力」「入出力」「マスタ」「履歴」と「閉じる」はレールのアイコンからも操作できます。タッチ操作ではホバー展開を行わず、ボタンで開閉します。ファイルを開くとレール状態のホームから開始します。
 
 期間・任意集計の削除は、確認時の業務項目を保存時にも照合します。同じ番号で別の対象が作られた場合や対象が変更された場合は書き込まず拒否し、現在の対象を選び直して確認できます。無関係のマスタ更新だけでは拒否しません。
-
-明細の保存失敗では、入力内容と編集開始時の更新番号を一緒に保持します。競合後の再試行・追加入力でも保存済みの他画面の変更を上書きせず拒否し、「入力を取り消す」で最新の保存内容を表示します。自分の保存が成功した場合は、保存中の追加入力を新しい更新番号で続けて保存します。
-
-選択済みの明細画像は、読込と保存が完了してから別名保存・操作取消・画面移動・履歴移動へ進みます。別名保存のキャンセルでも画像を保持します。画像の再選択・置換・パーツ削除では、古い読込結果を適用しません。
-
-明細パーツの移動・伸縮・追加中に届いた文章・表・画像の共有更新を保持して確定します。配置・寸法・パーツ構成も変わった場合は操作を取り消し、最新の配置を表示します。Escで取り消した場合も共有更新を保持します。
-
-明細表の項目削除を確認中に、表の項目・内容・向きが変わった場合は確認を無効にします。最新の表で項目を選び直してください。無関係の文章更新では確認を維持し、キャンセルでは表を変更しません。
 
 新規作成は書き込み前に、共有セッションで保存先を予約します。別ウィンドウで使用中・読込中、または別の保存・作成の予約中のファイルは、内容を変更せず拒否します。作成中に同じファイルを開く操作は完了を待ち、新しく保存した内容を読み込みます。未使用の既存ファイルは明示して置き換えられます。失敗時は予約を解除し、再試行できます。
 
@@ -752,7 +707,6 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 施策一覧は数値列より左側に展開名・期間名・施策名・開始年月をこの順で表示し、見出し・各行とも横スクロール中に固定します。展開名と期間名は所属先マスタの現在の名称を表示し、未選択は空欄にします。狭い画面では固定列を縮め、数値の表示領域を確保します。施策200件以下では通常幅・狭い幅とも長い施策名を折り返し、201件以上では28pxの固定行高で一行に省略します。名称の全文は施策名から開く詳細画面で確認でき、施策名ボタンの読み上げ名にも全文を保持します。備考がある場合も同じ方法で全文を確認できます。
 
 開始年月は期間の分類と月別金額から自動算出し、一次予算と確定予算で別々に読み込み時に導出します。施策一覧では選択中の種別の開始年月を表示します。新規は最初に非0の金額がある当年度の月、期間差は4月から最後に非0の金額がある月までを継続とみなし、その翌月を前年度の開始月とします。途中の0の月も継続として扱います。科目行の正負を相殺する前に判定し、確定予算の手修正0も反映します。全月0、期間未選択・独自分類、期間差が4月以外から始まる・3月まで続く場合は空欄です。改名しても分類の算出規則を維持し、金額・期間の保存後には新しい元データから求めます。開始年月は直接編集できません。
-
 
 各画面の金額欄では単位・精度・比較式の常設注記を表示しません。金額の単位と精度は本書とホームの「計算の仕組み」で確認できます。施策入力・詳細の金額セルは数値だけを表示します。保存形式・単位・精度は変更しません。
 
@@ -821,7 +775,6 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 展開表はスロットで選んだ1〜2種別の月別売上・利益を表示します。2種選択時だけ、選択順に関係なく「確定予算−一次予算」の比較列を表示します。前年は上部の行で扱い、種別の列には加えません。上部は前年・合計・展開計で、合計は前年＋展開計です。展開名ごとに施策をまとめ、施策がない展開も小計0で表示します。各展開名の中は期間マスタ順にまとめ、同じ期間内を区分マスタ順にまとめて区分名も縦結合します。区分未選択は最後の空欄とし、区分内は登録順で表示します。期間未選択の施策は最後に空欄の期間として表示します。施策名から編集へ進み、元の表へ戻れます。展開区分は各施策の選択済み区分の現在のマスタ名を表示し、未選択は空欄です。区分別小計は追加しません。展開名・期間名・展開区分・施策名の4列を左端に固定し、表の領域だけを縦横にスクロールできます。月・種別・売上／利益の3段の列見出しから前年・合計・展開計までをまとめて上端に固定し、縦スクロールでは下の施策行と展開別小計だけが移動します。見出し・金額・小計の列境界をそろえ、長い名称は折り返します。狭い画面では名称列を縮めて表示します。
 
 施策一覧・総原価表・展開表は、表の列見出しより上にスロット式の種別選択を置きます。施策一覧は1種、総原価表・展開表は1〜2種を選び、2つ目だけ未選択にできます。同じ種別の重複選択はできません。初期値は施策一覧が確定予算、他の2表が「一次予算・未選択」です。横並びの候補のクリックと矢印キーによる選択に対応し、選択は画面ごとにファイルへ保存して開き直しても保持します。総原価表は1予算時に「前年・選んだ予算・前年差」の3列、両予算時に「前年・一次予算・確定予算・前年差・一次予算差」の5列を表示します。前年差は表示する予算から前年を引き、両予算時は確定予算を使います。一次予算差は確定予算から一次予算を引きます。保存失敗時は保存済み表示を維持して理由を通知します。過去を開くとその時点の保存済み種別を表示し、現在へ戻ると現在の保存済み種別へ戻します。過去閲覧中は選択を一時的に変更でき、ファイルには保存しません。施策一覧・展開表は業種・部署の全件を表示し、総原価表では部署名・業種名の順に並べたドロップダウンで絞り込みます。施策一覧の4固定列は見出しから並べ替えられます。3画面とも列見出しのフィルターは設けません。
-
 
 施策一覧は表の最下部に月別の売上・費用・利益の合計行を置き、短い一覧でも表の表示領域の下端に置き、長い一覧では縦スクロール中も下端に追従して表示します。施策の行高は広げず、残る高さは合計の上の空白に割り当てます。表示中の種別の全施策を1円単位で合算してから千円表示に丸め、並べ替えで合計行は動きません。空の月は0、属性未設定を含む月の売上・利益の合計は属性未設定です。合計は保存せず、表全体の上限超過は合計部分に理由を表示し、施策名から編集へ進めます。一つの施策内で上限を超える場合はその行の金額欄へ理由を表示し、正常な施策の金額と全施策の編集導線を維持します。この場合は合計を表示しません。一覧用の計算は一覧表示時だけ行い、ホーム・施策編集・種別切り替え・取消・再読込・履歴閲覧を妨げません。
 
@@ -899,7 +852,6 @@ Chromeのファイル選択、新規作成、ファイル参照を取得でき�
 
 履歴の記録・復元・削除も、現在の計画と同じ保存先・許可・競合確認を使います。失敗では元のファイルを保護し、案内と「保存を再試行」を表示します。正常なファイル終了時の記録に失敗した場合は閉じません。ブラウザが閉じる時点での非同期書き込みは保証できないため、タブ終了・再読み込み・強制終了では最後の成功した履歴までが残ります。追加の拡張権限や外部送信はありません。[設計と実装境界](docs/data-history-design.md)、[確認用データの対応表](samples/README.md)を参照してください。
 
-
 ## 部署と業種の組み合わせ
 
 部署マスタでは業種マスタの一つ以上の業種をチェックボックスで設定できます。同じ業種を複数部署へ設定できます。初期の部署A・部署Bには9業種を設定し、新規部署では未選択から登録します。施策の業種候補と前年入力は所属業種に限定し、一つの所属業種は部署選択時に自動選択します。使用中の組み合わせの解除と、部署に設定中の業種の削除は拒否します。前年入力フォーマットの出力・取り込みにも同じ制約を適用します。所属は`department_industries`に保存し、履歴と操作の取り消し・やり直しに含めます。保存失敗では保存済みの所属・金額を保持し、外部送信や自動削除は行いません。保存形式17以前の移行は行わず、元ファイルを変更せずに読み込みを拒否します。
@@ -912,12 +864,11 @@ Chromeのファイル選択、新規作成、ファイル参照を取得でき�
 
 施策・勘定科目・年月と計画金額を同じデータとして持ち、施策一覧・総原価表・展開表はそのデータを異なる視点で表します。集計結果を別の正本として重複保存しません。現在はファイルの新規作成、形式検証を伴う読込、勘定科目マスタ・集計マスタ・展開マスタ・業種マスタ・部署マスタ・期間マスタ・固定種別マスタ・固定科目属性マスタの閲覧、施策・前年入力の保存を実装しています。
 
-保存形式は29です。保存形式28以前の既存ファイルとの互換性は廃止し、新規ファイルから使用します。対応しない旧形式や未知の形式は読み込み時に拒否し、移行や上書きは行いません。新しい形式のファイルは旧アプリで開けません。
+保存形式は30です。明細の有無にかかわらず、保存形式29以前のファイルは開けません。新規ファイルから使用します。対応しない旧形式や未知の形式は読み込み時に拒否し、移行や上書きは行いません。新しい形式のファイルは旧アプリで開けません。
 
 「基本情報」（`document_info`）に基準年度・作成日時・更新日時を保存します。保存データ全体に関する情報だけを扱い、保存形式などは`triadic_metadata`で管理します。一次予算・確定予算の2種別は業務定義で固定します。種別表や施策ごとの年度は保存しません。開始年月は基準年度・期間の算出規則・各科目行の種別別有効月額から読み込み時に導出し、保存列は持ちません。共通属性は`initiatives`、共通科目行は`initiative_rows`へ保存し、追加時から同じ文字列識別子を使います。施策金額は`initiative_amounts`へ科目行・種別ID・月で区別して円の整数を保存します。種別1（一次予算）は12か月、種別2（確定予算）は手修正月だけを保持します。明示した0と一次予算と同額の手修正もレコードとして保持し、未指定月だけ一次予算を引き継ぎます。引き継ぎ値は共通の解決処理から求め、別の保存値へ複製しません。基準前年の金額は`previous_amounts`へ科目・業種・部署・月ごとに保存します。種別選択は`kind_selections`に画面別の順序として保存します。詳細は[月別金額と保存構造](DATA_MODEL.md)と[実装設計](docs/single-year-plan-design.md)を参照してください。外部送信はありません。
 
 マスタの識別子を名称から分離し、名称・コード変更でも対応を維持します。科目と子集計の参照に一意制約を設け、読込・保存時に必須集計・参照・重複・循環を検証します。実ファイルへ書く前にコピー上の処理と形式検証を完了し、保存先の同時書き込みを排他的に確保してから最新内容を照合し、確定まで保持します。同時保存や外部の更新があれば入力を保持して書き込みを止めます。
-
 
 ## 開発
 
@@ -968,13 +919,7 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 
 前年・施策の範囲貼り付けは、クリップボードの解析結果が1行1列なら選択範囲全体への同値入力になります。末尾のLF・CRLFがある場合も同じです。セル内編集時の部分貼り付けは従来どおりです。
 
-明細テーブルでは、日本語変換を確定するEnterでセルを移動しません。通常のEnterは下のセルへの移動、Shift＋Enterはセル内の改行として扱います。
-
 ## 大規模計画の表示と処理
-
-明細テーブルは、入力した行・セルだけを描画し直します。貼り付けも変更した項目だけを作り直し、他の項目の内容と表示を再利用します。両方向の表で、折り返し・項目追加／削除・自動拡張・キー操作・保存と復元は維持します。初回表示と編集開始／終了では全セルを表示するため、大きな表の初回表示や編集切り替えの負荷は残ります。`detail-table-performance.spec.ts`で2,000項目の初回表示・編集開始・1セル更新・貼り付け・終了を計測し、全内容を照合できます。
-
-明細パーツの移動・伸縮時は、近い領域のパーツだけで重なりを判定し、同じ移動先の候補をまとめます。元の配置順・最寄りの押し出し・同距離時の選択・確定時の格子合わせは維持します。大量パーツでも配置全体の計算は行うため、処理時間の一定上限は保証しません。
 
 総原価表の通常行は24px、施策一覧・展開表の通常行は28pxを基準に上下の余白を抑えています。通常表示の長い名称は折り返し、必要な高さを確保します。
 
@@ -1014,13 +959,13 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 
 ファイルごとに処理の順序と計画処理Workerを分け、別ファイルのSQLite解析・保存準備・履歴比較は互いの完了を待たずに進めます。同じ実体のファイルは読み込み中でも同じ担当へまとめ、同じファイル内の保存順序・操作取消・保存先の回復要求を維持します。Workerの故障・再試行もファイルごとに分離します。ファイルを開く処理の失敗や最後のウィンドウの終了時には、受け付け済みの保存を終えてから担当のWorkerを解放します。開いているファイル数に応じてWorkerとSQLiteの使用メモリが増えます。
 
-ヘッダーの「施策を検索」の右にある「ウィンドウを複製」で、同じファイルを同じ画面・予算種別・分類条件・並び順・スクロール位置から別ウィンドウへ開けます。保存前の入力はコピーしません。保存済みの明細と画像も共有し、明細編集画面からの複製先は同じ明細と表示位置を開きます。位置復元はスクロール領域の識別子で照合し、対象要素を再利用します。遅れて表示された領域だけ再探索し、500msまたは利用者の操作開始で復元と監視を終了します。以後の画面移動と表示条件は独立し、アクティブにしたウィンドウでそのまま編集できます。ヘッダーとタイトルの番号・画面名で各ウィンドウを見分けます。
+ヘッダーの「施策を検索」の右にある「ウィンドウを複製」で、同じファイルを同じ画面・予算種別・分類条件・並び順・スクロール位置から別ウィンドウへ開けます。保存前の入力はコピーしません。位置復元はスクロール領域の識別子で照合し、対象要素を再利用します。遅れて表示された領域だけ再探索し、500msまたは利用者の操作開始で復元と監視を終了します。以後の画面移動と表示条件は独立し、アクティブにしたウィンドウでそのまま編集できます。ヘッダーとタイトルの番号・画面名で各ウィンドウを見分けます。
 
 勘定科目・集計の編集欄は、保存結果と他ウィンドウからの更新を受け取り、自分が変更していない項目を最新値へ揃えます。自分の未保存入力と保存中の追加入力は保持します。科目コードや集計名だけの変更で、共有済みの名称・表示名・所属を古い値へ戻しません。入力取消は最新の保存内容へ戻り、完了後の取り消し・やり直しも共有データに追従します。
 
 保存済みのデータと直近100操作の取り消し・やり直しを共有し、自動保存の成功直後に総原価表・展開表などへ反映します。切替直前の保存と次の入力が重なっても、今回変更した部分だけを最新のデータへ合わせます。元のウィンドウを閉じても、残ったウィンドウで作業を続けられます。「閉じる」はそのウィンドウだけ入口へ戻し、「別名で保存」は成功後に全ウィンドウの保存先を切り替えます。
 
-通常の保存待ちは画面移動・取り消し・やり直し・別名保存の中で処理します。各画面の応答待ちは30秒で打ち切り、応答のない番号・画面名と再試行の案内を既存の通知に表示します。履歴集約や取消を強行せず入力を保持し、進行済みの自動保存自体は取り消しません。応答が戻ったら同じ操作から再試行できます。破棄確認や保存先選択への利用者の回答待ちには期限を設けません。期限切れの要求は入力を変更する前に拒否し、遅れた返信は再試行と混在させません。入力不備・保存失敗・未登録入力など、判断が必要な場合だけ理由と対象ウィンドウを示します。「履歴」は自動保存と時点履歴の記録に成功してから一つのウィンドウへ集約し、他を閉じます。未保存の明細編集は履歴への集約前に保存し、保存済み明細は破棄しません。別名保存や操作取消では明細を破棄せず、明細の保存完了もそれらの操作の前に待ちます。未登録入力は破棄確認の「はい」で破棄し、キャンセルや保存失敗では各画面と入力を維持します。履歴画面・過去閲覧中は複製できません。
+通常の保存待ちは画面移動・取り消し・やり直し・別名保存の中で処理します。各画面の応答待ちは30秒で打ち切り、応答のない番号・画面名と再試行の案内を既存の通知に表示します。履歴集約や取消を強行せず入力を保持し、進行済みの自動保存自体は取り消しません。応答が戻ったら同じ操作から再試行できます。破棄確認や保存先選択への利用者の回答待ちには期限を設けません。期限切れの要求は入力を変更する前に拒否し、遅れた返信は再試行と混在させません。入力不備・保存失敗・未登録入力など、判断が必要な場合だけ理由と対象ウィンドウを示します。「履歴」は自動保存と時点履歴の記録に成功してから一つのウィンドウへ集約し、他を閉じます。未登録入力は破棄確認の「はい」で破棄し、キャンセルや保存失敗では各画面と入力を維持します。履歴画面・過去閲覧中は複製できません。
 
 同じファイルは共有Worker（`windowSession.worker.ts`）の一つの`PlanSession`で管理し、ファイル参照の同一性で通常のファイル選択からも共有へ参加します。各ウィンドウの終了は寿命に連動するブラウザのロックと`pagehide`で検出します。保存状態だけの更新では計画本体を再送せず、各画面の計算元の参照を維持します。保存済み内容の小さな変更は項目の差分を同じ通信順で反映し、変わらない計算元の参照を保持します。初回接続・別計画の読込と、差分が1,000項目を超える変更では全体を同期します。差分作成は同じ変更前の計画ごとに共有し、保存成功後の取消・履歴・外部統合も同じ通知を使います。共有データと取消履歴はメモリ内だけで、全ウィンドウ終了後は保持しません。保存形式・拡張権限・依存ライブラリ・外部送信に変更はありません。ファイルの許可要求と保存先選択は利用者が操作した画面で行います。[ファイル許可要求のブラウザ仕様](https://developer.mozilla.org/en-US/docs/Web/API/FileSystemHandle/requestPermission)に従い、共有Workerから新しい許可ダイアログを要求しません。
 
@@ -1089,8 +1034,8 @@ Chrome Web Store用の説明文・プライバシー申告・アイコン・販�
 
 ## 構成
 
-- `Triadichrome-extension/src/core/domain/`：金額・年度・種別・分類・施策・明細の型と規則。SQLやChrome APIへ依存しません。`aggregationOrder.ts`が子集計から親集計へたどる順序を管理し、総原価表の計算とマスタの初期表示順で共有します。保存済みの表示順を優先します。
-- `Triadichrome-extension/src/core/tables/`：総原価表・展開表・明細・集計図の表示用計算と入力表の一括操作。
+- `Triadichrome-extension/src/core/domain/`：金額・年度・種別・分類・施策の型と規則。SQLやChrome APIへ依存しません。`aggregationOrder.ts`が子集計から親集計へたどる順序を管理し、総原価表の計算とマスタの初期表示順で共有します。保存済みの表示順を優先します。
+- `Triadichrome-extension/src/core/tables/`：総原価表・展開表・集計図の表示用計算と入力表の一括操作。
 - `Triadichrome-extension/src/core/storage/`：SQLiteの直接生成・検証・読込・更新・履歴。`transaction.ts`がコピー上の更新と接続解放を担当します。
 - `Triadichrome-extension/src/core/autoSave.ts`：入力待ち、日本語変換、保存中の追加入力、再試行。
 - `Triadichrome-extension/src/extension/PlanSession.ts`：履歴の表示情報をファイル確定前に準備し、確定後は保存基準と操作履歴を更新します。保存済み計画の正本と保存・許可準備・履歴・終了の直列実行。ファイル確定の成功後だけ画面へ公開します。

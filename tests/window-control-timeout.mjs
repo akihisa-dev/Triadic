@@ -57,11 +57,11 @@ export async function verifyWindowControlTimeout(api, bytes) {
     try {
       await healthy.request("open", { name: source.handle.name, handle: source.handle, bytes });
       await frozen.request("open", { name: source.handle.name, handle: source.handle, bytes });
-      await frozen.request("label", "明細入力");
+      await frozen.request("label", "施策入力");
       frozen.hold.add(phase); frozen.hold.add("resume");
       healthy.draft = false;
       const contents = healthy.latest.snapshot.contents;
-      await assert.rejects(within(healthy.request(method, method === "travelOperation" ? -1 : source.handle)), /ウィンドウ2 · 明細入力.*応答.*入力は保持/);
+      await assert.rejects(within(healthy.request(method, method === "travelOperation" ? -1 : source.handle)), /ウィンドウ2 · 施策入力.*応答.*入力は保持/);
       assert.deepEqual(source.bytes, bytes, "応答不能ならファイルを書き換えない");
       assert.equal(frozen.discarded, false); assert.equal(frozen.closed, false); assert.equal(frozen.draft, true);
       assert.deepEqual(healthy.latest.snapshot.contents, contents);

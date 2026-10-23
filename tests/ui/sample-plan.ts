@@ -1,6 +1,3 @@
-// 明細配置: 辺を揃えたパーツを8px以内だけ重ねて相手が動かないこと、8px超で押し退けること、浅い重なりで解放しても重ならないことを確認。
-// 明細の画像・文章・表・配置の保存と再読込・取消・履歴・別名保存・競合・失敗保護は tests/detail-document-storage.test.mjs と tests/ui/detail-persistence.spec.ts で確認する。
-import { changeDetailDocument } from "../../Triadichrome-extension/src/core/storage/detailDocuments";
 // 複数ウィンドウの同期・表示条件/位置の複製・共有取消・全保存先切替・履歴集約は既存の施策/月額/3時点履歴を使い、tests/window-session.mjs と tests/ui/multi-window.spec.ts で確認する。保存データは追加しない。
 // 勘定科目・集計の共有更新と編集中の同期、未保存・保存中の追加入力、完了と取消は tests/ui/shared-editing.html と master-shared-editing.spec.ts で初期マスタを使って検証する。サンプルの保存内容は変えない。
 // 集計の登録時の集計名・表示名の個別指定、空白拒否・保存失敗・再読込は tests/ui/aggregations.spec.ts で確認する。既存の保存項目を使用し、サンプル内容は変えない。
@@ -155,7 +152,7 @@ export async function createSamplePlan(fiscalYear = currentFiscalYear(), large =
     row("消耗品費", { 9: "25" }),
   ]);
   await add("助成金の受入れ", "事業移管に伴う支援金を9月100千円、翌3月50千円で受け入れる。売上・費用と分けて営業外収益へ計上する。", [row("営業外収益", { 9: "100", 3: "50" })]);
-  await add("ゼロと相殺の確認", "5月の請求12.5千円と同額の値引きで売上増減0。4月は明示0、その他の空欄は0として保存。明細には根拠となる正負の行を残す。", [
+  await add("ゼロと相殺の確認", "5月の請求12.5千円と同額の値引きで売上増減0。4月は明示0、その他の空欄は0として保存。科目行には根拠となる正負の金額を残す。", [
     row("売上高", { 4: "0", 5: "12.5" }), row("売上高", { 5: "-12.5" }),
   ]);
   await add("未確定施策の入力準備", "効率化案は検討中のため期間未選択・全月0。未所属費用の科目行を残し、金額決定後の入力と集計所属の変更を試せる準備状態。", [row("未所属費用", {})]);
@@ -227,28 +224,6 @@ export async function createSamplePlan(fiscalYear = currentFiscalYear(), large =
   };
   bytes = await stable(bytes);
   const initiative = (await readPlanContents(bytes)).initiatives[0]!;
-  bytes = await changeDetailDocument(bytes, { type: "create", document: {
-    id: "00000000-0000-4000-8000-000000000001", name: "全パーツの保存確認", revision: 0, parts: [
-      { id: "sample-text", kind: "text", x: 0, y: 0, width: 168, height: 96, text: "見積と月別の算定根拠\n保存・取消・履歴を確認" },
-      { id: "sample-image", kind: "image", x: 168, y: 0, width: 336, height: 240, name: "確認用.png", src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAECAYAAACzzX7wAAAAG0lEQVR4AWM0ytvynwEPYGIgAJgYCAAmBgIAAC5JAlut5VLxAAAAAElFTkSuQmCC" },
-      { id: "sample-horizontal", kind: "table-horizontal", x: 0, y: 624, width: 1200, height: 192, rowIds: ["monthly-item"], unit: "件", cells: [["取扱件数", ...Array.from({ length: 12 }, (_, index) => String(index + 1))]] },
-      { id: "sample-vertical", kind: "table-vertical", x: 1296, y: 0, width: 336, height: 456, rowIds: ["quantity-item"], unit: "人", cells: [["人数", ...Array(12).fill("2")]] },
-      { id: "sample-reference", kind: "initiative-reference", x: 504, y: 0, width: 432, height: 600, initiativeIdentity: initiative.identity! },
-      { id: "sample-assumption", kind: "assumption", x: 960, y: 0, width: 336, height: 144, label: "単価差", value: "10", unit: "円／件" },
-      { id: "sample-heading", kind: "heading", x: 0, y: 264, width: 336, height: 96, text: "算定根拠" },
-      { id: "sample-calculation", kind: "calculation", x: 0, y: 840, width: 432, height: 432, label: "月別の増減", operation: "multiply", operands: [{ partId: "sample-assumption" }, { partId: "sample-horizontal", itemId: "monthly-item" }], unit: "円" },
-      { id: "sample-breakdown", kind: "breakdown", x: 456, y: 840, width: 600, height: 336, label: "備品の見積", items: [{ id: "sample-equipment", label: "備品", quantity: "2", price: "1250" }] },
-    ],
-  } });
-  if (large) {
-    const linked = (await readPlanContents(bytes)).initiatives[1]!;
-    bytes = await changeDetailDocument(bytes, { type: "create", document: { id: "00000000-0000-4000-8000-000000000002", name: "明細の値を施策へ反映", revision: 0, parts: [
-      { id: "linked-value", kind: "assumption", x: 0, y: 0, width: 336, height: 144, label: "3月の契約額", value: linked.rows[0]!.amounts[3]!, unit: "千円" },
-      { id: "linked-output", kind: "initiative-reference", x: 360, y: 0, width: 432, height: 600, initiativeIdentity: linked.identity!, binding: { source: { partId: "linked-value" }, rowId: linked.rows[0]!.id!, kindId: 1, months: [3], unit: "thousand-yen" } },
-      { id: "linked-guide", kind: "text", x: 0, y: 168, width: 336, height: 240, text: "入力値を変えると3月に反映します。空欄や円未満では最後の反映値を保持します。施策側の「明細」から直接入力に切り替えると値を残して連動を解除します。他の月は直接入力できます。" },
-    ] } });
-  }
-  bytes = await stable(bytes);
   const draft: InitiativeEntryDraft = { ...initiative, fiscalYear: String(fiscalYear) };
   const historic = (amount: string) => ({ ...draft, note: large ? `直販契約の年間計画。4月の見込額は${amount}千円。代理店販売・原価・広告費・出張費は年間の契約計画に従う。` : "履歴確認用の過去の状態", rows: draft.rows.map((row, index) => index === 0 ? { ...row, amounts: { ...row.amounts, 4: amount } } : row) });
   const initial = await stable(await updateInitiative(bytes, initiative.id, fiscalYear, historic("100")));

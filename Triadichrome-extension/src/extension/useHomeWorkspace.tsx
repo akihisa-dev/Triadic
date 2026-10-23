@@ -1,4 +1,3 @@
-import type { DetailDocument } from "../core/domain/detailDocuments";
 import type { CostTableView } from "./CostTablePage";
 import { useWorkspaceNavigation } from "./workspace/useWorkspaceNavigation";
 import { useWorkspaceHistory } from "./workspace/useWorkspaceHistory";
@@ -19,7 +18,7 @@ import { flushAutoSaves, subscribeAutoSaveFailures, hasAutoSaveFailure } from ".
 export type { Page, Screen, HomePageProps } from "./workspace/types";
 import type { HomePageProps } from "./workspace/types";
 
-export function useHomeWorkspace({ windows, onChangeDetail, onChangePlan, fileName, initialContents, onChangeMaster, onChangeAggregations, onChangeExpansions, onChangeExpansionCategories, onChangeIndustries, onChangeDepartments, onChangePeriodTypes, onRegisterInitiative, onUpdateInitiative, onPrepareSave, onCloseFile, onSaveAs, dataHistory, historyError, historyBusy, onCompareHistory, onPreviewHistory, onRestoreHistory, onDeleteHistory, onRetryHistory, canUndo, canRedo, operationRevision, onTravelOperation }: HomePageProps) {
+export function useHomeWorkspace({ windows, onChangePlan, fileName, initialContents, onChangeMaster, onChangeAggregations, onChangeExpansions, onChangeExpansionCategories, onChangeIndustries, onChangeDepartments, onChangePeriodTypes, onRegisterInitiative, onUpdateInitiative, onPrepareSave, onCloseFile, onSaveAs, dataHistory, historyError, historyBusy, onCompareHistory, onPreviewHistory, onRestoreHistory, onDeleteHistory, onRetryHistory, canUndo, canRedo, operationRevision, onTravelOperation }: HomePageProps) {
   const initialView = windows?.getWindowSnapshot().initialView;
   const menuButton = useRef<HTMLButtonElement>(null);
   const costTableView = useRef<CostTableView>(initialView?.costTable ?? { industries: [], departments: [], top: 0, left: 0 });
@@ -28,7 +27,7 @@ export function useHomeWorkspace({ windows, onChangeDetail, onChangePlan, fileNa
   const isSidebarOpen = sidebar.expanded;
   const collapseSidebar = sidebar.collapse;
   const screens = useScreenHistory<Screen>(initialView?.screen ?? { page: "home", selectedInitiative: null, detailOrigin: "initiative-list" },
-    (left, right) => left.page === right.page && left.selectedInitiative?.id === right.selectedInitiative?.id && left.detailOrigin === right.detailOrigin && left.detailKind === right.detailKind && left.selectedDetailId === right.selectedDetailId);
+    (left, right) => left.page === right.page && left.selectedInitiative?.id === right.selectedInitiative?.id && left.detailOrigin === right.detailOrigin && left.detailKind === right.detailKind);
   const screen = screens.current;
   const { selectedInitiative } = screen;
   const navigate = screens.navigate;
@@ -44,7 +43,6 @@ export function useHomeWorkspace({ windows, onChangeDetail, onChangePlan, fileNa
     () => navigationBlocked || saving.current, operation => mutation.run(operation), onPreviewHistory, onRestoreHistory,
     () => setInitiativeDraft(createInitiativeDraft(String(currentContents.fiscalYear))), dismissNotice, setNotice);
   const contents = preview?.contents ?? currentContents;
-  const detailDocuments = contents.detailDocuments;
   const assertWritable = () => { if (preview) throw new Error("過去のデータは閲覧専用です。"); };
 
   const mutation = useMutation(assertWritable);
@@ -65,24 +63,6 @@ export function useHomeWorkspace({ windows, onChangeDetail, onChangePlan, fileNa
         await windows?.leaveHistory(); historyEntered.current = false;
       }
     }, showError);
-  const openDetail = (id: string) => {
-    if (navigationBlocked || saving.current || discardRequest || !detailDocuments.some(item => item.id === id)) return;
-    dismissNotice();
-    requestNavigation({ ...screen, page: "detail-editor", selectedDetailId: id });
-  };
-  const createDetail = async (name: string) => {
-    if (navigationBlocked || saving.current || preview || discardRequest || !name.trim()) return;
-    const document: DetailDocument = { id: crypto.randomUUID(), name: name.trim(), parts: [], revision: 0 };
-    await mutation.run(() => onChangeDetail({ type: "create", document }));
-    dismissNotice();
-    requestNavigation({ ...screen, page: "detail-editor", selectedDetailId: document.id });
-  };
-  useEffect(() => {
-    if (screen.page === "detail-editor" && !detailDocuments.some(item => item.id === screen.selectedDetailId) && !isSaving) {
-      const { selectedDetailId: _selectedDetailId, ...rest } = screen;
-      navigate({ ...rest, page: "details" });
-    }
-  }, [detailDocuments, screen, isSaving, navigate]);
   const operationBlocked = navigationBlocked || preview !== null || restoreRequested || discardRequest !== null || hasInitiativeDraftInput(initiativeDraft);
   const saveAs = async () => {
     if (operationBlocked || saveAsMutation.running.current) return;
@@ -166,7 +146,6 @@ export function useHomeWorkspace({ windows, onChangeDetail, onChangePlan, fileNa
 
   return {
     restoreMutation, saveAsMutation, saveAs, setEditPending, openInitiative, menuButton, relationView, costTableView, sidebar, showError, localKinds, localPrevious,
-    detailDocuments, onChangeDetail, openDetail, createDetail,
     isSidebarOpen, screen, initiativeDraft, setInitiativeDraft, preview, setPreview,
     restoreRequested, setRestoreRequested, restoreError, setRestoreError, contents, currentContents,
     notice, dismissNotice, isSaving, operationMutation, navigationBlocked, searchBlocked, discardRequest,

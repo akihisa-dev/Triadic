@@ -12,7 +12,7 @@ const labels: Record<Page, string> = {
   "data-history": "履歴", master: "マスタ", "account-master": "勘定科目マスタ", "aggregation-master": "集計マスタ",
   "expansion-master": "展開マスタ", "expansion-category-master": "展開区分マスタ", "industry-master": "業種マスタ",
   "department-master": "部署マスタ", "period-master": "期間マスタ", "kind-master": "種別マスタ",
-  "account-type-master": "科目属性マスタ", "amount-item-master": "金額項目マスタ", details: "明細", "detail-editor": "明細入力",
+  "account-type-master": "科目属性マスタ", "amount-item-master": "金額項目マスタ",
 };
 const defaultInfo = { number: 1, peers: 1, settling: false };
 const noopSubscribe = () => () => {};

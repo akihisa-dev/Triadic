@@ -171,67 +171,10 @@ test("別画面の集計の未登録入力を別名保存と履歴集約で保�
 });
 
 
-test("明細の文章と表を共有し、複製先でも同じ明細を開く", async ({ page }) => {
-  await navigate(page, "明細");
-  await page.getByRole("button", { name: "＋ 明細を追加", exact: true }).click();
-  await page.getByRole("textbox", { name: "明細名", exact: true }).fill("元画面だけの明細");
-  await page.getByRole("button", { name: "次へ", exact: true }).click();
-  await page.getByRole("button", { name: "文章パーツを追加", exact: true }).press("Enter");
-  await page.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true }).dblclick();
-  await page.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).fill("元画面だけの文章");
-  await page.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).press("Escape");
-  await settleMotion(page.locator("body"));
-  await page.getByRole("button", { name: "月別表パーツを追加", exact: true }).press("Enter");
-  await page.getByRole("table", { name: "パーツ 2の表", exact: true }).getByRole("columnheader", { name: "項目", exact: true }).dblclick();
-  await page.getByRole("textbox", { name: "項目 1の名前", exact: true }).fill("元画面だけのセル");
-  const copy = await duplicate(page);
-  await expect(copy.getByRole("heading", { name: "元画面だけの明細", exact: true })).toBeVisible();
-  await expect(copy.locator(".detail-part")).toHaveCount(2);
-  await expect(copy.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true })).toHaveText("元画面だけの文章");
-  await expect(copy.getByRole("table", { name: "パーツ 2の表", exact: true })).toContainText("元画面だけのセル");
-  await expect(page.getByRole("heading", { name: "元画面だけの明細", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true })).toHaveText("元画面だけの文章");
-  await page.getByRole("table", { name: "パーツ 2の表", exact: true }).getByRole("columnheader", { name: "項目", exact: true }).dblclick();
-  await expect(page.getByRole("textbox", { name: "項目 1の名前", exact: true })).toHaveValue("元画面だけのセル");
-  await page.getByRole("button", { name: "一覧に戻る", exact: true }).click();
-  const listCopy = await duplicate(page);
-  await expect(listCopy.getByRole("heading", { name: "明細", exact: true })).toBeVisible();
-  await expect(listCopy.getByRole("button", { name: "元画面だけの明細を開く", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "元画面だけの明細を開く", exact: true })).toBeVisible();
-});
 
 
-test("別画面の明細を保存して履歴へ集約し、文章とセルを保持する", async ({ page }) => {
-  const detail = await duplicate(page);
-  await navigate(detail, "明細");
-  await detail.getByRole("button", { name: "＋ 明細を追加", exact: true }).click();
-  await detail.getByRole("textbox", { name: "明細名", exact: true }).fill("履歴前に保護する明細");
-  await detail.getByRole("button", { name: "次へ", exact: true }).click();
-  await detail.getByRole("button", { name: "文章パーツを追加", exact: true }).press("Enter");
-  await detail.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true }).dblclick();
-  await detail.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).fill("取消して保持する文章");
-  await detail.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).press("Escape");
-  await settleMotion(detail.locator("body"));
-  await detail.getByRole("button", { name: "月別表パーツを追加", exact: true }).press("Enter");
-  await detail.getByRole("table", { name: "パーツ 2の表", exact: true }).getByRole("columnheader", { name: "項目", exact: true }).dblclick();
-  await detail.getByRole("textbox", { name: "項目 1の名前", exact: true }).fill("取消して保持するセル");
-  await navigate(detail, "Home");
-  const copy = page;
-  // Saved details participate in Save As and history without a draft-discard confirmation.
-  await copy.getByRole("button", { name: "別名で保存", exact: true }).click();
-  await expect(copy.locator(".home-file-name")).toHaveText("ウィンドウ確認 のコピー.triadic");
-  await navigate(copy, "履歴");
-  await expect.poll(() => detail.isClosed()).toBe(true);
-  await expect(copy.getByRole("heading", { name: "履歴", exact: true })).toBeVisible();
-  await expect(copy.getByRole("alertdialog")).toHaveCount(0);
-  await navigate(copy, "明細");
-  await copy.getByRole("button", { name: "履歴前に保護する明細を開く", exact: true }).click();
-  await expect(copy.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true })).toHaveText("取消して保持する文章");
-  await copy.getByRole("table", { name: "パーツ 2の表", exact: true }).getByRole("columnheader", { name: "項目", exact: true }).dblclick();
-  await expect(copy.getByRole("textbox", { name: "項目 1の名前", exact: true })).toHaveValue("取消して保持するセル");
-});
 
-test("応答のない別画面を30秒で案内し、明細を保持して履歴操作を再試行できる", async ({ page, context }, info) => {
+test("応答のない別画面を30秒で案内し、施策の入力を保持して履歴操作を再試行できる", async ({ page, context }, info) => {
   test.setTimeout(60_000);
   // Keep the actual shared worker and withhold only a synthetic peer's flush reply.
   await context.addInitScript(() => {
@@ -252,49 +195,21 @@ test("応答のない別画面を30秒で案内し、明細を保持して履歴
     } });
   });
   const copy = await duplicate(page);
-  await navigate(copy, "明細");
-  await copy.getByRole("button", { name: "＋ 明細を追加", exact: true }).click();
-  await copy.getByRole("textbox", { name: "明細名", exact: true }).fill("応答待ちでも保持");
-  await copy.getByRole("button", { name: "次へ", exact: true }).click();
-  await copy.getByRole("button", { name: "文章パーツを追加", exact: true }).press("Enter");
-  await copy.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true }).dblclick();
-  await copy.getByRole("textbox", { name: "パーツ 1の説明文", exact: true }).fill("中止後も残る文章");
+  await openFirst(copy);
+  const note = copy.getByRole("textbox", { name: "備考", exact: true });
+  await note.fill("中止後も残る備考");
   await copy.evaluate(() => { Reflect.set(window, "holdWindowFlush", true); });
   await navigate(page, "履歴");
   const notice = page.getByRole("alert");
-  await expect(notice).toContainText("ウィンドウ2 · 明細入力から30秒以内に応答", { timeout: 40_000 });
+  await expect(notice).toContainText("ウィンドウ2 · 施策詳細から30秒以内に応答", { timeout: 40_000 });
   await expect(notice).toContainText("入力は保持しています");
   expect(copy.isClosed()).toBe(false);
-  await expect(copy.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true })).toHaveText("中止後も残る文章");
+  await expect(note).toHaveValue("中止後も残る備考");
   await page.screenshot({ path: info.outputPath("window-timeout.png") });
   await copy.evaluate(() => { Reflect.set(window, "holdWindowFlush", false); });
   await navigate(page, "履歴");
   await expect.poll(() => copy.isClosed()).toBe(true);
   await expect(page.getByRole("heading", { name: "履歴", exact: true })).toBeVisible();
-  await navigate(page, "明細");
-  await page.getByRole("button", { name: "応答待ちでも保持を開く", exact: true }).click();
-  await expect(page.getByRole("button", { name: "パーツ 1のテキストを編集", exact: true })).toHaveText("中止後も残る文章");
-});
-
-test('明細と画像を同じ編集画面へ複製し、文章・配置・削除と取消を全画面へ反映する',async({page})=>{
-  await navigate(page,'明細');
-  await page.getByRole('button',{name:'全パーツの保存確認を開く',exact:true}).click();
-  const copy=await duplicate(page);
-  await expect(copy.getByRole('heading',{name:'全パーツの保存確認',exact:true})).toBeVisible();
-  const image=copy.getByRole('img',{name:'確認用.png',exact:true});
-  await expect(image).toBeVisible();
-  await expect.poll(()=>image.evaluate((e:HTMLImageElement)=>e.naturalWidth)).toBe(8);
-  await page.bringToFront();
-  await page.getByRole('button',{name:'パーツ 1のテキストを編集',exact:true}).dblclick();
-  await page.getByRole('textbox',{name:'パーツ 1の説明文'}).fill('複数画面で共有する根拠');
-  await page.getByRole('textbox',{name:'パーツ 1の説明文'}).press('Escape');
-  await expect(copy.getByRole('button',{name:'パーツ 1のテキストを編集',exact:true})).toHaveText('複数画面で共有する根拠');
-  await copy.bringToFront();
-  await copy.locator('.detail-part').nth(1).focus(); await copy.locator('.detail-part').nth(1).press('ArrowRight');
-  await expect.poll(()=>page.locator('.detail-part').nth(1).getAttribute('style')).toEqual(await copy.locator('.detail-part').nth(1).getAttribute('style'));
-  await copy.locator('.detail-part').nth(1).focus(); await copy.locator('.detail-part').nth(1).press('Delete');
-  await expect(page.locator('.detail-part')).toHaveCount(3);
-  await copy.getByRole('button',{name:'操作を取り消す',exact:true}).click();
-  await expect(page.getByRole('img',{name:'確認用.png',exact:true})).toBeVisible();
-  await copy.close();
+  await openFirst(page);
+  await expect(page.getByRole("textbox", { name: "備考", exact: true })).toHaveValue("中止後も残る備考");
 });

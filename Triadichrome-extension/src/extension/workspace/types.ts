@@ -1,4 +1,3 @@
-import type { DetailChange } from "../../core/domain/detailDocuments";
 import type { HistoryComparison } from "../../core/domain/historyDifference";
 import type { ExpansionCategoryChange } from "../../core/domain/expansionCategoryMaster";
 import { type KindId, type PlanChange } from "../../core/domain/kinds";
@@ -14,19 +13,17 @@ import type { DataHistoryStatus, HistoryDeletion } from "../../core/domain/dataH
 import type { WindowPlanSession } from "../WindowPlanSession";
 
 
-export type Page = "spreadsheet-io" | "data-history" | "previous-input" | "home" | "initiative-entry" | "initiative-list" | "initiative-detail" | "cost-table" | "expansion-table" | "details" | "detail-editor" | "master" | "aggregation-master" | "account-master" | "expansion-master" | "expansion-category-master" | "industry-master" | "department-master" | "period-master" | "kind-master" | "account-type-master" | "amount-item-master";
+export type Page = "spreadsheet-io" | "data-history" | "previous-input" | "home" | "initiative-entry" | "initiative-list" | "initiative-detail" | "cost-table" | "expansion-table" | "master" | "aggregation-master" | "account-master" | "expansion-master" | "expansion-category-master" | "industry-master" | "department-master" | "period-master" | "kind-master" | "account-type-master" | "amount-item-master";
 
 export type Screen = {
   page: Page;
   detailKind?: KindId;
-  selectedDetailId?: string;
   selectedInitiative: Pick<Initiative, "id" | "fiscalYear"> | null;
-  detailOrigin: "home" | "initiative-list" | "expansion-table" | "cost-table" | "detail-editor";
+  detailOrigin: "home" | "initiative-list" | "expansion-table" | "cost-table";
 };
 
 export type HomePageProps = {
   windows?: WindowPlanSession | undefined;
-  onChangeDetail: (change: DetailChange) => Promise<PlanContents>;
   onChangePlan: (change: PlanChange) => Promise<PlanContents>;
   fileName: string;
   initialContents: PlanContents;

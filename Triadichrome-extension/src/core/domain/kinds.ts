@@ -1,4 +1,3 @@
-import type { DetailSources } from "./detailDocuments";
 import { amountToYen } from "./amounts";
 import type { Account } from "./accountMaster";
 export const kindIds = [1, 2] as const;
@@ -8,7 +7,7 @@ export type KindOverrides = Partial<Record<KindId, MonthAmounts>>;
 export type InvalidAmountInput = { original: string; inherited: boolean };
 /** Temporary number-input errors, keyed by budget kind and month; never stored in SQLite. */
 export type KindInvalidAmounts = Partial<Record<KindId, Partial<Record<number, InvalidAmountInput>>>>;
-export type AmountSource = { detailSources?: DetailSources; amounts: MonthAmounts; overrides?: KindOverrides; invalidAmounts?: KindInvalidAmounts };
+export type AmountSource = { amounts: MonthAmounts; overrides?: KindOverrides; invalidAmounts?: KindInvalidAmounts };
 export type KindScreen = "initiative-list" | "cost-table" | "expansion-table";
 export type KindSelections = Record<KindScreen, KindId[]>;
 export type PreviousKind = 1 | 2;
@@ -26,7 +25,6 @@ export function resolvedAmount(source: AmountSource, kind: KindId, month: number
   return manual === undefined ? source.amounts[month] || "0" : manual || "0";
 }
 export function canChangeAccountRow(source: AmountSource, saved?: AmountSource): boolean {
-  if (Object.values(source.detailSources ?? {}).some(months => Object.keys(months ?? {}).length)) return false;
   if (hasInvalidAmountInput(source)) return false;
   if (saved && !canChangeAccountRow(saved)) return false;
   try { return kindIds.every(kind => Array.from({ length: 12 }, (_, i) => i + 1).every(month => amountToYen(resolvedAmount(source, kind, month)) === 0)); }

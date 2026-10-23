@@ -1,7 +1,3 @@
-import { detailBindings } from "./detailBindings";
-import { listDetailDocuments } from "./detailDocuments";
-import { detailValueChoices } from "../domain/detailValues";
-import type { DetailPart } from "../tables/detailParts";
 import type { HistoryDifference, HistoryComparison } from "../domain/historyDifference";
 import { compareHistoryIncome } from "../tables/historyIncomeImpact";
 import { readContents } from "./readPlan";
@@ -24,7 +20,7 @@ const labels: Record<string, string> = {
 };
 const sections: Record<string, string> = { document_info: "基本情報", accounts: "勘定科目マスタ", expansions: "展開マスタ",
   expansion_categories: "展開区分マスタ", industries: "業種マスタ", departments: "部署マスタ", period_types: "期間マスタ",
-  aggregation_groups: "集計マスタ", detail_documents: "明細", initiatives: "施策", initiative_rows: "施策の科目行", kind_selections: "表示設定" };
+  aggregation_groups: "集計マスタ", initiatives: "施策", initiative_rows: "施策の科目行", kind_selections: "表示設定" };
 const references: Record<string, string> = { expansion_id: "expansions", expansion_category_id: "expansion_categories", department_id: "departments",
   industry_id: "industries", period_type_id: "period_types", account_id: "accounts", parent_id: "aggregation_groups" };
 const words: Record<string, string> = { sales: "売上", cost: "売上原価", expense: "費用", profit: "利益", expenses: "費用集計",
@@ -68,42 +64,13 @@ function* items(db: Database): Generator<[string, Item]> {
   for (const [table, section] of Object.entries(sections)) for (const row of tables.get(table)!) {
     const fields: Record<string, Value> = {};
     for (const [field, raw] of Object.entries(row)) {
-      if (["id", "identity", "revision", "created_at", "updated_at", "initiative_id", "screen", "parts_json"].includes(field)) continue;
+      if (["id", "identity", "revision", "created_at", "updated_at", "initiative_id", "screen"].includes(field)) continue;
       fields[labels[field] ?? field] = fieldValue(field, raw);
     }
     const owner = table === "initiative_rows" ? rowFor("initiatives", row.initiative_id!) : undefined;
     const subject = table === "initiative_rows" ? `${owner?.name} / ${name("accounts", row.account_id!)} / ${Number(row.sort_order) + 1}行目`
       : table === "kind_selections" ? words[String(row.screen)]! : table === "document_info" ? "計画" : String(row.name);
     yield put([table, owner?.identity ?? "", row.identity ?? row.id ?? row.screen], section, subject, fields);
-  }
-  const initiativeNames = new Map(tables.get("initiatives")!.map(row => [row.identity, String(row.name)]));
-  for (const row of tables.get("detail_documents")!) {
-    const parts = JSON.parse(String(row.parts_json)) as DetailPart[];
-    const choices = detailValueChoices(parts);
-    const referenceName = (ref: unknown) => choices.find(c => JSON.stringify(c.ref) === JSON.stringify(ref))?.label ?? "未選択・参照先なし";
-    for (const part of parts) {
-      const fields: Record<string, Value> = {
-        位置とサイズ: value([part.x, part.y, part.width, part.height], `${part.x}, ${part.y} / ${part.width}×${part.height}`),
-      };
-      if (part.kind === "text") fields.文章 = value(part.text, part.text);
-      else if (part.kind === "heading") fields.見出し = value(part.text, part.text);
-      else if (part.kind === "assumption") {
-        fields.項目名 = value(part.label, part.label);
-        fields.値 = value(part.value, part.value);
-        fields.単位 = value(part.unit, part.unit);
-      } else if (part.kind === "initiative-reference") {
-        if (part.binding) {
-          const b = part.binding, target = tables.get("initiative_rows")!.find(r => r.id === b.rowId);
-          fields.反映設定 = value(b, `${referenceName(b.source)} → ${target ? name("accounts", target.account_id!) : "科目行未選択"} / ${b.kindId === 1 ? "一次予算" : "確定予算"} / ${b.months.map(m => `${m}月`).join("・") || "月未選択"} / ${b.unit === "yen" ? "円" : "千円"}`);
-        }
-        fields.参照施策 = value(part.initiativeIdentity, part.initiativeIdentity === null ? "未選択" : initiativeNames.get(part.initiativeIdentity) ?? "参照先がありません");
-      }
-      else if (part.kind === "image") fields.画像 = value([part.name, part.src], part.name || "未選択");
-      else if (part.kind === "calculation") fields.計算 = value([part.label, part.operation, part.operands, part.unit], `${part.label} / ${{ add: "加算", subtract: "減算", multiply: "乗算", divide: "除算", sum: "合計" }[part.operation]} / ${part.operands.map(referenceName).join("、")} / ${part.unit}`);
-      else if (part.kind === "breakdown") fields.内訳 = value([part.label, part.items], `${part.label} / ${part.items.map(i => `${i.label}: ${i.quantity} × ${i.price}`).join(" / ")}`);
-      else fields.表の内容 = value([part.rowIds, part.unit, part.cells], part.cells.map(cells => cells.join(" / ")).join("\n"));
-      yield put(["detail_parts", row.id, part.id], "明細パーツ", String(row.name), fields);
-    }
   }
   for (const row of tables.get("department_industries")!) yield put(["department_industries", identity("departments", row.department_id!), identity("industries", row.industry_id!)],
     "部署の所属業種", name("departments", row.department_id!), { 所属業種: value(identity("industries", row.industry_id!), name("industries", row.industry_id!)) });
@@ -125,7 +92,6 @@ function* items(db: Database): Generator<[string, Item]> {
       row.previous_kind === 1 ? "前年見込" : "前年実績", `${name("departments", row.department_id!)} / ${name("industries", row.industry_id!)} / ${name("accounts", row.account_id!)}`,
       { [`${row.month}月`]: value(row.amount_yen, yenToAmount(Number(row.amount_yen))) });
   }
-  const detailSources = new Map(detailBindings(db, listDetailDocuments(db)).map(b => [JSON.stringify([b.rowId, b.kindId, b.month]), b.source]));
   const amounts = new Map<string, Scalar>();
   for (const row of amountRows(db, "initiative_amounts")) amounts.set(JSON.stringify([row.row_id, row.kind_id, row.month]), row.amount_yen!);
   for (const row of tables.get("initiative_rows")!) {
@@ -135,8 +101,7 @@ function* items(db: Database): Generator<[string, Item]> {
       const manual = amounts.get(JSON.stringify([row.id, kind, month]));
       const inherited = kind === 2 && manual === undefined;
       const amount = manual ?? amounts.get(JSON.stringify([row.id, 1, month])) ?? 0;
-      const source = detailSources.get(JSON.stringify([row.id, kind, month]));
-      const mode = source ? `${source.error ? "明細の反映待ち" : "明細から反映"}：${source.documentName}` : kind === 1 ? "" : inherited ? "引き継ぎ" : "手修正";
+      const mode = kind === 1 ? "" : inherited ? "引き継ぎ" : "手修正";
       yield put(["initiative_amounts", owner.identity, row.id, kind, month], "施策の月別金額", subject,
         { [`${kind === 1 ? "一次予算" : "確定予算"}・${month}月`]: value([amount, mode], `${yenToAmount(Number(amount))}${mode ? `（${mode}）` : ""}`) });
     }

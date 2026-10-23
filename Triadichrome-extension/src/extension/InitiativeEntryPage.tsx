@@ -1,6 +1,6 @@
 import type { ExpansionCategory } from "../core/domain/expansionCategoryMaster";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
-import { InitiativeAmountGrid, type DetailLinkActions } from "./InitiativeAmountGrid";
+import { InitiativeAmountGrid } from "./InitiativeAmountGrid";
 import { ClassificationSelect } from "./ClassificationSelect";
 import { INITIAL_KINDS } from "../core/domain/kinds";
 import { type KindId } from "../core/domain/kinds";
@@ -28,11 +28,10 @@ type InitiativeEntryPageProps = {
   isSaving: boolean;
   onRegister: () => void;
   onBack?: () => void;
-  detailLinks?: DetailLinkActions | undefined;
   editing?: { savedRows: InitiativeEntryDraft["rows"]; saving: boolean; pending: boolean; before: ReactNode; actions: ReactNode; status: ReactNode; onCompositionStart: () => void; onCompositionEnd: () => void };
 };
 
-export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions, expansionCategories, departments, periodTypes, industries, onOpenMaster, isSaving, onRegister, onBack, editing, detailLinks, initialKind = 1 }: InitiativeEntryPageProps) {
+export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions, expansionCategories, departments, periodTypes, industries, onOpenMaster, isSaving, onRegister, onBack, editing, initialKind = 1 }: InitiativeEntryPageProps) {
   const readOnly = useHistoryReadOnly();
   const [kind, setKind] = useWindowViewState<KindId>("initiative:kind", initialKind);
   const allowedCategories = expansions.find(item => item.id === draft.expansionId)?.categoryIds ?? [];
@@ -111,7 +110,7 @@ export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions
       </div>}
       <div className="kind-tabs" role="tablist" aria-label="入力する種別">{INITIAL_KINDS.map(item => <button key={item.id} id={`kind-tab-${item.id}`} type="button" role="tab" aria-selected={kind === item.id} aria-controls="kind-amount-panel" onClick={() => setKind(item.id)}>{item.kindName}</button>)}</div>
       <div className="initiative-amount-table-container" id="kind-amount-panel" role="tabpanel" aria-labelledby={`kind-tab-${kind}`} aria-label="月別計画金額の入力表" tabIndex={0}>
-        <InitiativeAmountGrid detailLinks={detailLinks} key={kind} draft={draft} kind={kind}
+        <InitiativeAmountGrid key={kind} draft={draft} kind={kind}
           accounts={accounts} savedRows={editing?.savedRows} rowOperationsDisabled={editing?.saving ?? false} isSaving={readOnly || isSaving} onDraftChange={onDraftChange} />
       </div>
       <div className="initiative-row-actions">

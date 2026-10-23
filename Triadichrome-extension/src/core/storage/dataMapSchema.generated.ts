@@ -122,26 +122,6 @@ export const dataMapSchema = [
     ]
   },
   {
-    "name": "detail_documents",
-    "columns": [
-      {
-        "name": "id"
-      },
-      {
-        "name": "name"
-      },
-      {
-        "name": "parts_json"
-      },
-      {
-        "name": "revision"
-      },
-      {
-        "name": "position"
-      }
-    ]
-  },
-  {
     "name": "document_info",
     "columns": [
       {

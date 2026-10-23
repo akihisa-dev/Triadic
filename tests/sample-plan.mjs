@@ -24,7 +24,6 @@ export async function verifySamplePlan(api, { excel = false } = {}) {
   assert.deepEqual(new Set(initiatives.map(item => item.industryId)), new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]));
   assert.deepEqual(new Set(initiatives.map(item => item.periodTypeId)), new Set([1, 2, null]));
   assert.deepEqual(industries.map(item => item.industryName), ["直営自動車", "自動車取扱", "不動産A", "不動産B", "納品代行", "雑作業", "業務費B", "一般管理費", "営業外"]);
-  assert.equal((await readPlanContents(bytes)).detailDocuments[0].parts.length, 9);
   assert.equal(accounts.length, 59);
   assert.equal(aggregations.length, 16);
   assert.equal(initiatives.length, 14);
@@ -116,8 +115,6 @@ export async function verifySamplePlan(api, { excel = false } = {}) {
   await validateTriadicDatabase(largeBytes);
   const large = await readPlanContents(largeBytes);
   assert.deepEqual(large.expansionCategories, plan.expansionCategories, "再生成した実ファイルもデフォルトの区分だけを含む");
-  assert.equal(large.detailDocuments.length, 2);
-  assert.equal(large.initiatives[1].rows[0].detailSources[1][3].documentName, "明細の値を施策へ反映");
   assert.deepEqual(large.departments.map(item => item.departmentName), ["東日本営業部", "西日本営業部"]);
   assert.ok(large.initiatives.every(item => large.departments.find(d => d.id === item.departmentId).industryIds.includes(item.industryId)));
   assert.ok(large.previousAmounts.every(item => large.departments.find(d => d.id === item.departmentId).industryIds.includes(item.industryId)));

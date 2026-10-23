@@ -8,9 +8,8 @@ import { aggregationDeletionKey } from "./aggregationMaster";
 const collections = { account: "accounts", aggregation: "aggregations", expansion: "expansions", "expansion-category": "expansionCategories", department: "departments", industry: "industries", period: "periodTypes" } as const;
 export type WindowCommandBase = Partial<Pick<PlanContents, typeof collections[keyof typeof collections] | "initiatives" | "previousAmounts">>;
 
-/** Capture the same reconciliation baseline without copying unrelated plans or documents. */
+/** Capture the same reconciliation baseline without copying unrelated plans. */
 export function windowCommandBase(command: PlanCommand, contents: PlanContents): WindowCommandBase {
-  if (command.type === "detail") return {};
   if (command.type === "initiative.update") return { initiatives: contents.initiatives.filter(item => item.id === command.id) };
   if (command.type === "settings" && command.change.type === "previous") {
     const { industryId, departmentId, previousKind } = command.change.input;
@@ -32,7 +31,6 @@ const initiativeDraft = (item: Initiative): InitiativeEntryDraft => ({ name: ite
 
 /** A focus change can arrive ahead of the previous window's save publication. Apply only this window's edits. */
 export function reconcileWindowCommand(command: PlanCommand, base: WindowCommandBase, current: PlanContents): PlanCommand {
-  if (command.type === "detail") return command;
   if (command.type === "period" && command.change.type === "delete") {
     const id = command.change.id;
     const before = base.periodTypes?.find(item => item.id === id);

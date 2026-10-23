@@ -21,7 +21,7 @@ export function useWindowViewState<T>(key: string, initial: T): [T, Dispatch<Set
 }
 
 // IDs describe scroll regions, independent of the number/order of table cells.
-const scrollRegions = ["home-page", "home-content", "sidebar-inner", "initiative-entry-page", "initiative-grid-scroll", "initiative-amount-table-container", "initiative-list-container", "previous-grid-container", "account-master-page", "master-data-page", "account-master-list", "aggregation-grid-scroll", "aggregation-pool-scroll", "screen-data-map", "screen-data-columns", "mechanism-map", "grid-selection-total-compact", "detail-canvas-viewport", "detail-part-pool", "detail-part-text", "detail-table-scroll", "detail-table-toolbar", "data-history-list", "io-preview-table"];
+const scrollRegions = ["home-page", "home-content", "sidebar-inner", "initiative-entry-page", "initiative-grid-scroll", "initiative-amount-table-container", "initiative-list-container", "previous-grid-container", "account-master-page", "master-data-page", "account-master-list", "aggregation-grid-scroll", "aggregation-pool-scroll", "screen-data-map", "screen-data-columns", "mechanism-map", "grid-selection-total-compact", "data-history-list", "io-preview-table"];
 const scrollSelector = `.home-page, .home-page :is(${scrollRegions.slice(1).map(name => `.${name}`).join(",")})`;
 function scrollElements() {
   const counts = new Map<string, number>();

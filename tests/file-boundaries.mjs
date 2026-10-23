@@ -32,6 +32,21 @@ export async function verifyFileBoundaries(api) {
     const unsupported = old.export(); old.close();
     await assert.rejects(api.validateTriadicDatabase(unsupported), /保存形式には対応/);
   }
+  // Old files are rejected in full, even when their details table is empty.
+  for (const populated of [false, true]) {
+    const old = await api.openTriadicDatabase(bytes);
+    old.run("CREATE TABLE detail_documents (id INTEGER PRIMARY KEY, name TEXT, parts_json TEXT, revision INTEGER, position INTEGER)");
+    if (populated) old.run("INSERT INTO detail_documents VALUES (1, '旧明細', '[]', 0, 0)");
+    const disguised = old.export();
+    await assert.rejects(api.validateTriadicDatabase(disguised), /許可されていない保存構造/, "番号だけ現形式にしても旧保存項目を受け入れない");
+    old.run("PRAGMA user_version = 29");
+    old.run("UPDATE triadic_metadata SET value = '29' WHERE key = 'format_version'");
+    const unsupported = old.export(); old.close();
+    const original = unsupported.slice();
+    await assert.rejects(api.readPlanContents(unsupported), /保存形式には対応/);
+    await assert.rejects(api.validateTriadicDatabase(unsupported), /保存形式には対応/);
+    assert.deepEqual(unsupported, original, "拒否時に旧明細や計画を変換・削除しない");
+  }
   for (const table of ["data_history", "data_history_state"]) {
     const missing = await api.openTriadicDatabase(bytes); missing.run(`DROP TABLE ${table}`);
     const invalid = missing.export(); missing.close(); await assert.rejects(api.validateTriadicDatabase(invalid));
@@ -39,7 +54,7 @@ export async function verifyFileBoundaries(api) {
   const schema = await api.openTriadicDatabase(bytes);
   try {
     assert.equal(schema.exec("PRAGMA user_version")[0].values[0][0], api.TRIADIC_FORMAT_VERSION);
-    for (const table of ["plan", "budgets", "periods", "kind_types", "details"]) assert.equal(schema.exec("SELECT name FROM sqlite_master WHERE name = ?", [table]).length, 0);
+    for (const table of ["plan", "budgets", "periods", "kind_types", "details", "detail_documents"]) assert.equal(schema.exec("SELECT name FROM sqlite_master WHERE name = ?", [table]).length, 0);
     const info = schema.exec("SELECT id, fiscal_year, created_at, updated_at FROM document_info")[0].values;
     assert.equal(info.length, 1);
     assert.deepEqual(info[0].slice(0, 2), [1, 2026]);

@@ -75,3 +75,31 @@ test('基準サンプルの費用UP5区分は目的・科目・確定改定に�
     await app.getByRole('button',{name:'← 施策一覧へ戻る',exact:true}).click();
   }
 });
+
+
+test('明細の導線を持たず施策の全月を直接編集して保存・取消できる', async ({ page, app }) => {
+  await page.getByLabel('テストデータ').selectOption('large');
+  await expect(page.getByRole('status')).toHaveText('操作できます');
+  await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
+  await app.getByRole('button', { name: 'サイドバーを開く', exact: true }).click();
+  const nav = app.getByRole('navigation', { name: 'メインナビゲーション' });
+  await expect(nav.getByRole('button', { name: '明細', exact: true })).toHaveCount(0);
+  await nav.getByRole('button', { name: '施策一覧', exact: true }).click();
+  await app.getByRole('button', { name: 'サイドバーを閉じる', exact: true }).last().click();
+  await app.getByRole('button', { name: '保守サービスの新規契約', exact: true }).click();
+  await app.getByRole('tab', { name: '一次予算', exact: true }).click();
+  await expect(app.getByRole('button', { name: '明細', exact: true })).toHaveCount(0);
+  const row = app.getByRole('table', { name: '月別計画金額', exact: true }).locator('tbody tr').first();
+  await expect(row.getByRole('spinbutton')).toHaveCount(12);
+  for (const cell of await row.getByRole('spinbutton').all()) await expect(cell).toBeEditable();
+  const march = app.getByRole('spinbutton', { name: 'グループ売上高 3月の金額', exact: true });
+  await expect(march).toHaveValue('160');
+  await march.fill('175');
+  await march.press('Tab');
+  await expect(app.getByRole('button', { name: '操作を取り消す', exact: true })).toBeEnabled();
+  await app.getByRole('button', { name: '← 施策一覧へ戻る', exact: true }).click();
+  await app.getByRole('button', { name: '保守サービスの新規契約', exact: true }).click();
+  await expect(march).toHaveValue('175');
+  await app.getByRole('button', { name: '操作を取り消す', exact: true }).click();
+  await expect(march).toHaveValue('160');
+});

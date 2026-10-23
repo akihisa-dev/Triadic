@@ -18,7 +18,7 @@ export async function verifyWindowSession(api) {
   function peer(hubInstance = hub) {
     let sequence = 0;
     const pending = new Map();
-    const client = { states: [], closed: false, hasDraft: false, hasDetails: false, discard: false, accept: true, flush: async () => {}, recoveryTarget: null, recovered: [] };
+    const client = { states: [], closed: false, hasDraft: false, discard: false, accept: true, flush: async () => {}, recoveryTarget: null, recovered: [] };
     const connection = hubInstance.connect({ postMessage(message) {
       if (message.type === "state") client.states.push(message.contentsPatch ? { ...message, snapshot: { ...message.snapshot, contents: api.applyPlanContentsPatch(client.states.at(-1)?.snapshot.contents, message.contentsPatch) } } : message.preserveContents ? { ...message, snapshot: { ...message.snapshot, contents: client.states.at(-1)?.snapshot.contents ?? null } } : message);
       if (message.type === "result") {
@@ -28,7 +28,7 @@ export async function verifyWindowSession(api) {
       if (message.type === "history-decision" && client.prepared?.transaction === message.transaction) {
         const prepared = client.prepared; client.prepared = null;
         if (message.commit) {
-          if (prepared.discard) { client.hasDraft = false; client.hasDetails = false; client.discard = true; }
+          if (prepared.discard) { client.hasDraft = false; client.discard = true; }
           if (prepared.close) client.closed = true;
         }
       }
@@ -38,7 +38,7 @@ export async function verifyWindowSession(api) {
           let value;
           if (message.action === "flush") await client.flush();
           if (message.action === "recover") { client.recovered.push(message.detail); value = client.recoveryTarget; }
-          if (message.action === "draft") value = client.hasDraft || (message.detail === "history" && client.hasDetails);
+          if (message.action === "draft") value = client.hasDraft;
           if (message.action === "confirm-discard") value = client.accept;
           if (message.action === "discard" || message.action === "close") {
             if (client.prepared?.transaction !== message.detail) client.prepared = { transaction: message.detail };
@@ -61,17 +61,16 @@ export async function verifyWindowSession(api) {
     await a.request("open", { name: original.handle.name, handle: original.handle, bytes });
     const group = a.latest().info.group;
     const view = { screen: { page: "cost-table", selectedInitiative: null, detailOrigin: "initiative-list" }, costTable: { industries: [1], departments: [1], top: 140, left: 300 }, relation: null, values: { "table:kinds": { "cost-table": [2] } }, scroll: [{ key: "table", top: 140, left: 300 }] };
-    const unfinished = { ...view, screen: { ...view.screen, page: "detail-editor", selectedDetailId: 9 }, values: { ...view.values,
-      "details:documents": [{ id: 9, name: "一時明細", parts: [{ text: "保持する文章", cells: [["未保存のセル"]] }] }], "future:draft": "複製しない" } };
-    await a.request("reserve", "detail-ticket", unfinished);
-    const detailCopy = peer(); await detailCopy.request("join", group, "detail-ticket");
-    const cloned = detailCopy.latest().info.initialView;
-    assert.equal(cloned.screen.page, "detail-editor");
-    assert.equal(cloned.screen.selectedDetailId, 9);
+    const unfinished = { ...view, screen: { ...view.screen, page: "initiative-entry" }, values: { ...view.values,
+      "initiative:draft": { name: "未登録の施策" }, "future:draft": "複製しない" } };
+    await a.request("reserve", "draft-ticket", unfinished);
+    const draftCopy = peer(); await draftCopy.request("join", group, "draft-ticket");
+    const cloned = draftCopy.latest().info.initialView;
+    assert.equal(cloned.screen.page, "initiative-entry");
     assert.deepEqual(cloned.values, view.values, "表示条件だけを引き継ぐ");
-    assert.deepEqual(cloned.scroll, view.scroll, "保存された明細の表示位置を複製する");
-    assert.equal(unfinished.values["details:documents"][0].parts[0].text, "保持する文章");
-    detailCopy.disconnect();
+    assert.deepEqual(cloned.scroll, view.scroll, "画面の表示位置を複製する");
+    assert.equal(unfinished.values["initiative:draft"].name, "未登録の施策");
+    draftCopy.disconnect();
     await a.request("reserve", "ticket", view);
     await b.request("join", group, "ticket");
     assert.deepEqual(b.latest().info.initialView, view, "画面・条件・表示位置を複製する");
@@ -154,12 +153,12 @@ export async function verifyWindowSession(api) {
     assert.equal((await api.readPlanContents(original.bytes)).departments[0].departmentName, "共有の編集");
     assert.equal((await api.readPlanContents(copy.bytes)).departments[0].departmentName, "コピー先の編集");
 
-    a.hasDetails = true; b.accept = false;
+    a.hasDraft = true; b.accept = false;
     await assert.rejects(b.request("history"), /キャンセル/);
-    assert.equal(a.hasDetails, true); assert.equal(c.closed, false);
+    assert.equal(a.hasDraft, true); assert.equal(c.closed, false);
     b.accept = true; copy.fail = true;
     await assert.rejects(b.request("history"), /確認用の保存失敗/);
-    assert.equal(a.hasDetails, true, "履歴の保存失敗では未登録入力を破棄しない");
+    assert.equal(a.hasDraft, true, "履歴の保存失敗では未登録入力を破棄しない");
     assert.equal(c.closed, false, "失敗では他のウィンドウを閉じない");
     copy.fail = false;
     await b.request("history");

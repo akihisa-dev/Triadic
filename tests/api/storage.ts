@@ -33,5 +33,3 @@ export { initializeSqlite } from "../../Triadichrome-extension/src/core/storage/
 export { mergeRebaseOrder } from "../../Triadichrome-extension/src/core/storage/rebaseOrder";
 
 export * from "../../Triadichrome-extension/src/core/storage/historyDifference";
-export * from "../../Triadichrome-extension/src/core/storage/detailDocuments";
-export * from "../../Triadichrome-extension/src/core/domain/detailDocuments";

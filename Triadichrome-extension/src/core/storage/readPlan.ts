@@ -1,5 +1,3 @@
-import { detailBindings } from "./detailBindings";
-import { listDetailDocuments } from "./detailDocuments";
 import { listExpansionCategories } from "./expansionCategoryMaster";
 import type { Database } from "./sqliteRuntime";
 import { openTriadicDatabase, openBusinessSnapshot } from "./triadicDatabase";
@@ -36,10 +34,6 @@ export function listInitiatives(db: Database, fiscalYear: number, initiativeId?:
       (overrides[2] ??= {})[Number(month)] = yenToAmount(Number(amount)); row.overrideRevisions![Number(month)] = Number(revision);
     }
   }
-  for (const b of detailBindings(db, listDetailDocuments(db))) {
-    const row = rowsById.get(b.rowId);
-    if (row) ((row.detailSources ??= {})[b.kindId] ??= {})[b.month] = b.source;
-  }
   const rules = new Map(listPeriodTypes(db).map(period => [period.id, period.startMonthRule]));
   return (db.exec(`SELECT id, name, note, expansion_id, expansion_category_id, department_id, period_type_id, industry_id, revision, identity FROM initiatives${initiativeId === undefined ? "" : " WHERE id = ?"} ORDER BY sort_order, id`, params)[0]?.values ?? [])
     .map(([id, name, note, expansion, category, department, period, industry, revision, identity]) => {
@@ -52,7 +46,7 @@ export function listInitiatives(db: Database, fiscalYear: number, initiativeId?:
 export function readContents(db: Database): PlanContents {
   const settings = readPlanSettings(db);
   const accounts = listAccounts(db);
-  const contents: PlanContents = { ...settings, detailDocuments: listDetailDocuments(db), accounts, initiatives: listInitiatives(db, settings.fiscalYear),
+  const contents: PlanContents = { ...settings, accounts, initiatives: listInitiatives(db, settings.fiscalYear),
     aggregations: listAggregations(db), expansions: listExpansions(db), expansionCategories: listExpansionCategories(db), industries: listIndustries(db), departments: listDepartments(db), periodTypes: listPeriodTypes(db), kinds: INITIAL_KINDS.map(kind => ({ ...kind })) };
   return contents;
 }

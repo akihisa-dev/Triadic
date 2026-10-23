@@ -17,7 +17,7 @@ export function validateAccountChange(accounts: Account[], change: AccountChange
   const account = change.type === "add" ? undefined : accounts.find(item => item.id === change.id);
   if (change.type !== "add" && !account) throw new Error("勘定科目が見つかりません。");
   if (change.type === "delete") {
-    if (account?.inUse) throw new Error("施策・明細・集計で使用している勘定科目は削除できません。");
+    if (account?.inUse) throw new Error("施策・前年入力・集計で使用している勘定科目は削除できません。");
     return;
   }
   if (change.displayName !== undefined && !change.displayName.trim()) throw new Error("表示名を入力してください。");

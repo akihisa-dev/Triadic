@@ -8,9 +8,7 @@ import { gridBounds, normalizeGridAmount, clipboardGrid, type GridCell, type Gri
 
 export function canEditInitiativeCell(draft: InitiativeEntryDraft, kind: KindId, cell: GridCell): boolean {
   return isKindId(kind) && Number.isInteger(cell.row) && Number.isInteger(cell.column) && cell.row >= 0 && cell.column >= 0
-    && cell.column < initiativeMonths.length && draft.rows[cell.row]?.accountId != null
-    && !draft.rows[cell.row]?.detailSources?.[kind]?.[initiativeMonths[cell.column]!]
-;
+    && cell.column < initiativeMonths.length && draft.rows[cell.row]?.accountId != null;
 }
 
 function updateInputErrors(row: InitiativeRow, kind: KindId, months: number[], invalidInput?: InvalidAmountInput): InitiativeRow {
@@ -61,11 +59,10 @@ function applyRectangle(draft: InitiativeEntryDraft, kind: KindId, start: GridCe
     || start.row + values.length > draft.rows.length || start.column + width > initiativeMonths.length) {
     throw new Error("入力する範囲が表の外にはみ出します。");
   }
-  // Validate all cells first, including locked months and unassigned account rows.
+  // Validate the whole rectangle before changing any amount.
   const updates = values.map((line, offset) => Object.fromEntries(line.map((text, column) => {
     const cell = { row: start.row + offset, column: start.column + column };
     if (draft.rows[cell.row]!.accountId == null) throw new Error("入力する行の勘定科目を選択してください。");
-    if (!canEditInitiativeCell(draft, kind, cell)) throw new Error("明細から反映中のセルが含まれています。直接入力へ切り替えてから入力してください。");
     return [initiativeMonths[cell.column]!, normalizeGridAmount(text)];
   })));
   return { ...draft, rows: draft.rows.map((row, index) => {
