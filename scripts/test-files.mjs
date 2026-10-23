@@ -82,6 +82,7 @@ import { verifyTableSort } from "../tests/table-sort.mjs";
 import { verifyInitiativeSort } from "../tests/initiative-sort.mjs";
 import { verifyStartMonths } from "../tests/start-months.mjs";
 import { verifyWindowSession } from "../tests/window-session.mjs";
+import { verifyWindowMasterOrder } from "../tests/window-master-order.mjs";
 import { withNodeBundle } from "./node-bundle.mjs";
 import { projectRoot as root } from "./paths.mjs";
 import { scopedTestApi, testScope } from "./test-scope.mjs";
@@ -101,6 +102,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyPreviousBaselines(api);
   await verifyInitiativeDraftReferences(api);
   await verifyWindowSession(api);
+  await verifyWindowMasterOrder(api);
   await verifyDuplicateInitiative(api);
   verifyInitiativeSearch(api);
   await verifyConcurrentInitiative(api);
