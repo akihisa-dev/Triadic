@@ -10,7 +10,7 @@
 
 ## Previous-year forecast and actuals
 
-Previous-year forecast (前年見込) and actuals (前年実績) are independent inputs. Select the shared previous-year baseline (基準前年) before comparison targets in the cost and breakdown tables. Both budgets use that baseline without changing stored amounts. The initial baseline is forecast; each table saves its selection. Copy forecast to actuals for the selected industry/department only, with overwrite confirmation. Import/export identifies each baseline; imported templates update their recorded target. History income comparison also selects a baseline. Storage format 29 rejects older files without migration or rewriting; no new permissions or external transmission are introduced.
+Previous-year forecast (前年見込) and actuals (前年実績) are independent inputs. Select the shared previous-year baseline (基準前年) before comparison targets in the cost and breakdown tables. Both budgets use that baseline without changing stored amounts. The initial baseline is forecast; each table saves its selection. Copy forecast to actuals for the selected industry/department only, with overwrite confirmation. Import/export identifies each baseline; imported templates update their recorded target. History income comparison also selects a baseline. Storage format 30 rejects files in format 29 or earlier without migration or rewriting; no new permissions or external transmission are introduced.
 
 ## English
 
@@ -308,7 +308,7 @@ Plans use dedicated `.triadic` files, initially named `Untitled.triadic`. Each f
 
 Initiatives, accounts, months, and plan amounts are shared data represented differently in the three tables. Aggregation results are not duplicated as a separate authority. Implemented features include creation, validated loading, viewing account/aggregation/category/industry/department/period/fixed-kind/fixed-attribute masters, and saving initiatives/previous-year input.
 
-Storage format is 27. Compatibility with 27 and earlier has been removed; start from new files. Unsupported old or unknown formats are rejected without migration/overwriting. New-format files cannot open in older apps.
+Storage format is 30. Compatibility with 29 and earlier has been removed; start from new files. Unsupported old or unknown formats are rejected without migration/overwriting. New-format files cannot open in older apps.
 
 “Basic information” (`document_info`) stores fiscal year and creation/update timestamps, covering the entire saved document. Format metadata uses `triadic_metadata`. Initial/final budgets are fixed business definitions; kind tables and per-initiative years are not stored. Start year/month derives on loading from fiscal year, period rules, and effective monthly amounts by kind/account row, with no saved column. Common attributes use `initiatives`, common account rows `initiative_rows`, using the same string identifiers from addition onward. `initiative_amounts` stores whole-yen integers by row/kind ID/month. Kind 1 (initial) retains 12 months; kind 2 (final) only overridden months. Explicit 0 and overrides equal to initial values remain records; only unspecified months inherit. Shared resolution computes inheritance without duplicating stored values. Previous-year forecast/actuals use `previous_amounts` by account/industry/department/month. Screen-specific ordered kind choices use `kind_selections`. See [Monthly amounts and storage](DATA_MODEL.md) and [Implementation design](docs/single-year-plan-design.md). Nothing is transmitted externally.
 
@@ -613,7 +613,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 「前年入力」で前年見込／前年実績を切り替えて入力します。前年実績の表示中はコピーアイコンから、選択中の部署・業種の12か月分を前年見込からコピーできます。対象と上書きを確認して実行し、取消可能です。両者は独立し、未入力は0です。
 総原価表・展開表は「基準前年」を比較対象1・2の左で選択します。同じ基準で両予算を計算し、切り替えだけでは入力金額を書き換えません。入出力でも表ごとに基準前年を選び、Excelの前年見出しと計算元を区別します。前年フォーマットは見込／実績を選んで出力し、取り込み時はファイルに記録された側だけを確認・更新します。用途のない旧Excelは出力し直してください。履歴の収支比較でも基準前年を選択できます。
-保存場所・保持期間・削除・外部送信は変わりません。見込・実績・基準選択を同じファイルと履歴に保存し、旧保存形式28以前は移行せず拒否します。失敗・キャンセルでは入力と元ファイルを保持します。
+保存場所・保持期間・削除・外部送信は変わりません。見込・実績・基準選択を同じファイルと履歴に保存し、旧保存形式29以前は移行せず拒否します。失敗・キャンセルでは入力と元ファイルを保持します。
 
 ### 一次予算と確定予算の使い分け
 
@@ -638,7 +638,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 ### 現在の対応範囲と制限
 
 - Chrome拡張機能として動作し、利用者が読み書きを許可したローカルファイルを扱います。計画の外部送信やブラウザ間の同期は行いません。
-- 保存形式は29です。28以前や未知の形式は読み込みを拒否し、移行・上書きは行いません。ファイル更新時は、今回の編集と別の行への変更を自動で合わせて保存します。同じ行の変更や整合しない変更は上書きせず、入力済みの計画全体を別ファイルへ保存して編集を続けられます。キャンセル・保存失敗では入力と元ファイルを保持します。外部変更の反映時には過去の操作取消を初期化し、今回の編集だけを取り消せます。「別名で保存」は保存済みの計画・マスタ・履歴を別の.triadicファイルへ保存し、新しい保存先で編集を続けます。操作取消・やり直しを維持し、ファイル名と「続きから」は書き込み成功後だけ切り替えます。 別ウィンドウが開いている保存先や別計画の保存先切り替え中のファイルは、書き込み前に拒否します。双方の内容と入力を保持し、保存先を開いている画面を閉じるか別の保存先を選び直せます。切り替え中の保存先を開く操作は完了を待ち、同じ担当へ接続します。
+- 保存形式は30です。29以前や未知の形式は読み込みを拒否し、移行・上書きは行いません。ファイル更新時は、今回の編集と別の行への変更を自動で合わせて保存します。同じ行の変更や整合しない変更は上書きせず、入力済みの計画全体を別ファイルへ保存して編集を続けられます。キャンセル・保存失敗では入力と元ファイルを保持します。外部変更の反映時には過去の操作取消を初期化し、今回の編集だけを取り消せます。「別名で保存」は保存済みの計画・マスタ・履歴を別の.triadicファイルへ保存し、新しい保存先で編集を続けます。操作取消・やり直しを維持し、ファイル名と「続きから」は書き込み成功後だけ切り替えます。 別ウィンドウが開いている保存先や別計画の保存先切り替え中のファイルは、書き込み前に拒否します。双方の内容と入力を保持し、保存先を開いている画面を閉じるか別の保存先を選び直せます。切り替え中の保存先を開く操作は完了を待ち、同じ担当へ接続します。
 - 競合から別ファイルへ保存できた場合は、通常の編集・操作取消・履歴操作・終了時の記録を含め、画面のファイル名と「続きから」の参照を保存成功先へ揃えます。キャンセルや書き込み失敗では参照を変更しません。端末内への参照の記憶に失敗した場合は通知し、同じ画面内では成功先から再開できます。
 - Excel出力は三表と計算元を扱い、取り込みはアプリから出力した前年入力フォーマットが対象です。任意のExcelブックや、出力した三表の編集内容を計画へ取り込む機能はありません。Excel実機での再計算は未確認です。
 - 保存に失敗した入力は画面内で保持しますが、タブ終了・再読み込み・強制終了後の復元は保証しません。複数の画面や外部アプリで同じファイルを変更した場合は、外部更新を検出して上書きを止めます。
@@ -846,7 +846,7 @@ Chromeのファイル選択、新規作成、ファイル参照を取得でき�
 
 サイドバーの「マスタ」の下にある「履歴」から、記録日時を選んで過去の状態を閲覧できます。 200件を超える一覧は表示範囲の周辺だけを描画し、スクロールで全履歴を確認できます。全選択・日時指定の削除は画面外を含む全履歴が対象です。各画面は閲覧専用になり、ヘッダーの「現在に戻る」で現在の計画へ戻ります。「この時点に戻す」を確認すると、施策・全種別の金額・前年・マスタ・集計・保存済み設定をまとめて復元します。復元前の状態と新しい履歴も残るので、選び直して復元を取り消せます。
 
-履歴は同じ`.triadic`内に保存します。最初の未記録の変更の保存成功から5分後に記録し、追加の保存で期限を延ばしません。正常にファイルを閉じるときと過去閲覧に入るときも未記録分を残します。登録前・保存失敗中の入力は履歴に含みません。保存形式27の新規ファイルは履歴管理状態を備え、最初の変更前の状態を初回保存時に記録します。閲覧だけでは書き換えません。
+履歴は同じ`.triadic`内に保存します。最初の未記録の変更の保存成功から5分後に記録し、追加の保存で期限を延ばしません。正常にファイルを閉じるときと過去閲覧に入るときも未記録分を残します。登録前・保存失敗中の入力は履歴に含みません。現行形式の新規ファイルは履歴管理状態を備え、最初の変更前の状態を初回保存時に記録します。閲覧だけでは書き換えません。
 
 自動削除や保持期限はありません。履歴一覧のチェックで複数件を選んで削除するか、端末時刻の日時を指定して、それより前を一括削除できます。確認後の削除は取り消せず、現在の計画は変わりません。削除確認では対象件数と範囲、取り消せない旨を常に表示し、削除失敗の理由を併記します。取り消して別の削除確認を開いた際は、前回の操作エラーを引き継ぎません。全体の状態を記録するため容量は増えます。削除後はファイル内の不要領域を詰めます。選択の照合と各行のチェックは共有するID集合で判定し、一覧・選択が同じ間は判定結果を再利用します。消えた履歴は削除対象から除き、新しい履歴は自動選択しません。選択状態は画面内だけで保持します。
 
