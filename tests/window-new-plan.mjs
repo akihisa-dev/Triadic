@@ -1,3 +1,4 @@
+import { connectWindowSession } from "./window-transport.mjs";
 import assert from 'node:assert/strict';
 
 export async function verifyWindowNewPlan(api) {
@@ -9,11 +10,8 @@ export async function verifyWindowNewPlan(api) {
     return session;
   });
   function client() {
-    const session = new api.WindowPlanSession(); session.started = Promise.resolve();
-    const connection = hub.connect({ postMessage: message => queueMicrotask(() => { void session.receive(message); }) });
-    session.port = { postMessage: message => queueMicrotask(() => connection.receive(message)) };
-    session.registerControls({ draft: () => false, discard: () => {}, close: () => {}, confirmDiscard: async () => true });
-    connections.push(connection); return session;
+    const connection = connectWindowSession(api, hub);
+    connections.push(connection); return connection.session;
   }
   function file() {
     let stored = initial.slice();
@@ -77,5 +75,5 @@ export async function verifyWindowNewPlan(api) {
     await assert.rejects(h.create(file().handle, 2028), /現在のファイルを閉じ/);
     assert.equal(hub.saveTargets.size, 0);
     console.log('PASS: 新規作成の使用中・読込中・別名保存/新規作成予約中の保存先を保護、待機読込・失敗・再試行・未使用ファイル置換を検証');
-  } finally { gates.forEach(item => item.release()); connections.forEach(connection => connection.disconnect()); }
+  } finally { gates.forEach(item => item.release()); connections.forEach(connection => connection.dispose()); }
 }

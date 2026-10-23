@@ -1,3 +1,4 @@
+import { connectWindowSession } from "./window-transport.mjs";
 import assert from 'node:assert/strict';
 
 export async function verifyWindowMasterDelete(api) {
@@ -9,11 +10,8 @@ export async function verifyWindowMasterDelete(api) {
   };
   const hub = new api.WindowSessionHub(), connections = [];
   const peer = () => {
-    const session = new api.WindowPlanSession(); session.started = Promise.resolve();
-    const connection = hub.connect({ postMessage: message => queueMicrotask(() => { void session.receive(message); }) });
-    session.port = { postMessage: message => queueMicrotask(() => connection.receive(message)) };
-    session.registerControls({ draft: () => false, discard: () => {}, close: () => {}, confirmDiscard: async () => true });
-    connections.push(connection); return session;
+    const connection = connectWindowSession(api, hub);
+    connections.push(connection); return connection.session;
   };
   const a = peer(), b = peer();
   try {
@@ -51,5 +49,5 @@ export async function verifyWindowMasterDelete(api) {
       rows: [{ id: 'delete-guard-row', accountId: contents.accounts[0].id, amounts: { 4: '1' } }] } });
     await assert.rejects(a.dispatch({ type: 'period', change: { type: 'delete', id: period.id, deletionKey: api.periodDeletionKey(period) } }), /使用中/);
     console.log('PASS: 期間・任意集計の二画面削除確認、番号再利用、対象変更、再試行、通常削除、使用中の拒否');
-  } finally { for (const connection of connections) connection.disconnect(); }
+  } finally { for (const connection of connections) connection.dispose(); }
 }

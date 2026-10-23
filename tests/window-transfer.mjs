@@ -1,3 +1,4 @@
+import { connectWindowSession } from "./window-transport.mjs";
 import assert from "node:assert/strict";
 
 export async function verifyWindowTransfer(api) {
@@ -9,21 +10,7 @@ export async function verifyWindowTransfer(api) {
       close: async () => { stored = next; }, abort: async () => {},
     }; } };
   function client() {
-    const session = new api.WindowPlanSession(), sent = [], received = [];
-    session.started = Promise.resolve();
-    const connection = hub.connect({ postMessage(message) {
-      received.push(message);
-      const copied = message.type === "state" ? { ...message, snapshot: structuredClone(message.snapshot), info: structuredClone(message.info), ...(message.contentsPatch ? { contentsPatch: structuredClone(message.contentsPatch) } : {}) }
-        : message.type === "result" ? structuredClone(message) : message;
-      queueMicrotask(() => { void session.receive(copied); });
-    } });
-    session.port = { postMessage(message) {
-      sent.push(message);
-      const copied = message.type === "request" && message.method === "dispatch" ? structuredClone(message) : message;
-      queueMicrotask(() => connection.receive(copied));
-    } };
-    session.registerControls({ draft: () => false, discard() {}, close() {}, confirmDiscard: async () => true });
-    const item = { session, sent, received, disconnect: connection.disconnect }; clients.push(item); return item;
+    const item = connectWindowSession(api, hub); clients.push(item); return item;
   }
   const a = client(), b = client(), size = value => Buffer.byteLength(JSON.stringify(value));
   const contents = () => a.session.getSnapshot().contents;
@@ -47,6 +34,9 @@ export async function verifyWindowTransfer(api) {
   try {
     for (const peer of [a, b]) await peer.session.open({ name: handle.name, handle, bytes });
     assert.ok(a.received.some(message => message.type === "state" && message.snapshot.contents?.initiatives.length > 1), "初回は全量同期");
+    assert.notEqual(a.session.getSnapshot().contents, b.session.getSnapshot().contents, "各画面は複製された内容を受け取る");
+    assert.notEqual(a.session.getSnapshot().contents.initiatives[0].rows, b.session.getSnapshot().contents.initiatives[0].rows, "入れ子の入力行も参照共有しない");
+    assert.notEqual(a.sent[0].args[0].bytes, bytes, "送信されたバイト列は入力元と独立する");
     const department = contents().departments[0];
     const departmentRequest = await edit({ type: "department", change: { type: "update", id: department.id, departmentName: "通信確認部署" } }, "部署名");
     assert.deepEqual(Object.keys(departmentRequest.args[1]), ["departments"]);
@@ -100,5 +90,5 @@ export async function verifyWindowTransfer(api) {
     finish(); assert.deepEqual(await first, operationResult, "返信前に新しい状態が届いても操作の返り値を正確に復元");
     assert.deepEqual(contents().kindSelections["cost-table"], [1], "結果復元で共有状態を巻き戻さない");
     console.log("PASS: 要求/結果/stateの内容量、初回同期、更新順序、同時編集、同一性、保存失敗と再試行", measurements);
-  } finally { for (const peer of clients) peer.disconnect(); }
+  } finally { for (const peer of clients) peer.dispose(); }
 }

@@ -1,15 +1,11 @@
+import { connectWindowSession } from "./window-transport.mjs";
 import assert from "node:assert/strict";
 
 export async function verifyWindowSaveAs(api, bytes) {
   const hub = new api.WindowSessionHub(), connections = [];
   function windowSession() {
-    const session = new api.WindowPlanSession();
-    // Only the browser transport/lifetime is replaced; requests and controls are production code.
-    session.started = Promise.resolve();
-    const connection = hub.connect({ postMessage: message => queueMicrotask(() => { void session.receive(message); }) });
-    session.port = { postMessage: message => queueMicrotask(() => connection.receive(message)) };
-    session.registerControls({ draft: () => false, discard: () => {}, close: () => {}, confirmDiscard: async () => true });
-    connections.push(connection); return session;
+    const connection = connectWindowSession(api, hub);
+    connections.push(connection); return connection.session;
   }
   function file(name, initial) {
     let stored = initial.slice();
@@ -67,5 +63,5 @@ export async function verifyWindowSaveAs(api, bytes) {
     await b.travelOperation(-1);
     assert.deepEqual((await api.readPlanContents(target.bytes)).kindSelections["cost-table"], [1]);
     console.log("PASS: WindowPlanSession→Hubの別名保存で選択直後の基準、待機中の外部更新拒否、取消・失敗・再試行・共有取消を検証");
-  } finally { release?.(); for (const connection of connections) connection.disconnect(); }
+  } finally { release?.(); for (const connection of connections) connection.dispose(); }
 }
