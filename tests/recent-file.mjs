@@ -1,6 +1,22 @@
 import assert from "node:assert/strict";
 
-export async function verifyRecentFile({ readRecentFile }) {
+export async function verifyRecentFile({ readRecentFile, hasFileWritePermission, requestFileWritePermission }) {
+  for (const status of ["granted", "prompt", "denied"]) {
+    for (const answer of ["granted", "denied"]) {
+      const calls = [];
+      const candidate = {
+        async queryPermission(options) { calls.push(["query", options.mode]); return status; },
+        async requestPermission(options) { calls.push(["request", options.mode]); return answer; },
+      };
+      assert.equal(await hasFileWritePermission(candidate), status === "granted");
+      assert.deepEqual(calls, [["query", "readwrite"]], "自動処理は許可を要求しない");
+      calls.length = 0;
+      assert.equal(await requestFileWritePermission(candidate), status === "granted" || answer === "granted");
+      assert.deepEqual(calls, status === "granted" ? [["query", "readwrite"]] : [["query", "readwrite"], ["request", "readwrite"]]);
+    }
+  }
+  await assert.rejects(requestFileWritePermission({ async queryPermission() { return "prompt"; },
+    async requestPermission() { throw new DOMException("cancel", "AbortError"); } }), { name: "AbortError" });
   let reads = 0;
   let requests = 0;
   let permission = "granted";

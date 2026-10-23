@@ -39,3 +39,4 @@ export { diffPlanContents, applyPlanContentsPatch } from "../../Triadichrome-ext
 export { bindPlanProcessing, processPlan } from "../../Triadichrome-extension/src/extension/planProcessing";
 export { latestNavigation } from "../../Triadichrome-extension/src/extension/workspace/latestNavigation";
 export { processWorkbookExport } from "../../Triadichrome-extension/src/extension/workbookExportProcessing";
+export { hasFileWritePermission, requestFileWritePermission } from "../../Triadichrome-extension/src/extension/filePermission";

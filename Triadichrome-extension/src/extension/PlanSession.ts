@@ -1,3 +1,4 @@
+import { hasFileWritePermission, requestFileWritePermission } from "./filePermission";
 import { emptyDataHistory, type DataHistoryStatus, type HistoryDeletion } from "../core/domain/dataHistory";
 import { deleteDataHistory, readDataHistory, readSavedPlan, readHistorySnapshot, recordDataHistory, restoreDataHistory, applyOperationSnapshot, readSnapshotContents } from "./planProcessing";
 import type { PlanContents } from "../core/domain/plan";
@@ -71,9 +72,7 @@ export class PlanSession {
     const prepare = async () => {
       const handle = current.handle ?? await destination();
       if (!handle.name.toLowerCase().endsWith(".triadic")) throw new Error("拡張子は.triadicにしてください。");
-      const permission = handle as FileSystemFileHandle & { requestPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState> };
-      const query = handle as FileSystemFileHandle & { queryPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState> };
-      if (permission.requestPermission && (!query.queryPermission || await query.queryPermission({ mode: "readwrite" }) !== "granted") && await permission.requestPermission({ mode: "readwrite" }) !== "granted") throw new Error("ファイルへの保存を許可してください。");
+      if (!await requestFileWritePermission(handle)) throw new Error("ファイルへの保存を許可してください。");
       return { handle, ...(!current.handle ? { destinationBytes: new Uint8Array(await (await handle.getFile()).arrayBuffer()) } : {}) };
     };
     const prepared = prepare();
@@ -91,9 +90,7 @@ export class PlanSession {
       if (source.handle && (!handle.isSameEntry || await handle.isSameEntry(source.handle))) {
         throw new Error("元のファイルとは別の保存先を選択してください。元のファイルと入力は保持しています。");
       }
-      const permission = handle as FileSystemFileHandle & { requestPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState> };
-      const query = handle as FileSystemFileHandle & { queryPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState> };
-      if (permission.requestPermission && (!query.queryPermission || await query.queryPermission({ mode: "readwrite" }) !== "granted") && await permission.requestPermission({ mode: "readwrite" }) !== "granted") throw new Error("ファイルへの保存を許可してください。");
+      if (!await requestFileWritePermission(handle)) throw new Error("ファイルへの保存を許可してください。");
       return { handle, expected };
     });
     void selected.catch(() => {});
@@ -136,9 +133,9 @@ export class PlanSession {
     return this.serialize(async () => {
       const current = this.current();
       if (automatic) {
-        const handle = current.handle as (FileSystemFileHandle & { queryPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState> }) | undefined;
+        const handle = current.handle;
         if (!handle) throw new Error("「保存を再試行」から保存先を選択してください。");
-        if (handle.queryPermission && await handle.queryPermission({ mode: "readwrite" }) !== "granted") throw new Error("「保存を再試行」からファイルへの保存を許可してください。");
+        if (!await hasFileWritePermission(handle)) throw new Error("「保存を再試行」からファイルへの保存を許可してください。");
       }
       const saved = await operation(current, destination);
       if (saved === current) return planContents(current);
@@ -184,8 +181,8 @@ export class PlanSession {
     const current = this.current();
     const status = await readDataHistory(current.bytes);
     if (!status.dirtySince) return current;
-    const handle = current.handle as (FileSystemFileHandle & { queryPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState> }) | undefined;
-    if (!handle || (handle.queryPermission && await handle.queryPermission({ mode: "readwrite" }) !== "granted")) throw new Error("「保存を再試行」からファイルへの保存を許可してください。");
+    const handle = current.handle;
+    if (!handle || (!await hasFileWritePermission(handle))) throw new Error("「保存を再試行」からファイルへの保存を許可してください。");
     const bytes = await recordDataHistory(current.bytes, new Date().toISOString(), true);
     const saved = await writePlanChange(current, handle, bytes, { historyPrepared: true, recovery: this.recovery });
     await this.acceptSaved(saved);

@@ -1,3 +1,4 @@
+import { requestFileWritePermission } from "./filePermission";
 import { applyPlanContentsPatch } from "../core/domain/planContentsPatch";
 import { windowCommandBase } from "../core/domain/windowCommand";
 import { emptyDataHistory, type HistoryDeletion } from "../core/domain/dataHistory";
@@ -174,10 +175,7 @@ export class WindowPlanSession implements SessionAccess {
   async open(plan: Pick<OpenPlan, "name" | "bytes" | "handle">) { await this.request("open", plan); }
   async create(handle: FileSystemFileHandle, fiscalYear: number) { await this.request("create", handle, fiscalYear); }
   async prepareSave(_destination: () => Promise<FileSystemFileHandle>) {
-    const handle = this.handle as FileSystemFileHandle & { queryPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState>; requestPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState> };
-    if (handle?.requestPermission && await handle.queryPermission?.({ mode: "readwrite" }) !== "granted") {
-      if (await handle.requestPermission({ mode: "readwrite" }) !== "granted") throw new Error("ファイルへの保存を許可してください。");
-    }
+    if (this.handle && !await requestFileWritePermission(this.handle)) throw new Error("ファイルへの保存を許可してください。");
     await this.request("prepareSave");
   }
   async dispatch(command: PlanCommand, _destination: () => Promise<FileSystemFileHandle>): Promise<PlanContents> {

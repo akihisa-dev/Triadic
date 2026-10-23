@@ -1,3 +1,4 @@
+import { requestFileWritePermission, type PermissionFileHandle } from "./filePermission";
 const DATABASE = "triadichrome-recent-file";
 const STORE = "files";
 const LAST_FILE = "last";
@@ -50,19 +51,10 @@ export async function rememberRecentFile(handle: FileSystemFileHandle | null): P
   await accessStore("readwrite", store => handle ? store.put(handle, LAST_FILE) : store.delete(LAST_FILE));
 }
 
-type WritableHandle = FileSystemFileHandle & {
-  queryPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState>;
-  requestPermission?: (options: { mode: "readwrite" }) => Promise<PermissionState>;
-};
-
 // Call only from the user's click: checking startup history must not request access.
-export async function readRecentFile(handle: WritableHandle): Promise<File> {
+export async function readRecentFile(handle: PermissionFileHandle): Promise<File> {
   try {
-    if (handle.queryPermission && await handle.queryPermission({ mode: "readwrite" }) !== "granted") {
-      if (!handle.requestPermission || await handle.requestPermission({ mode: "readwrite" }) !== "granted") {
-        throw new DOMException("読み書きが許可されていません。", "NotAllowedError");
-      }
-    }
+    if (!await requestFileWritePermission(handle)) throw new DOMException("読み書きが許可されていません。", "NotAllowedError");
     return await handle.getFile();
   } catch (failure) {
     if (failure instanceof DOMException) {
