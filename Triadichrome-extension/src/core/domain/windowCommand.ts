@@ -25,7 +25,7 @@ export function windowCommandBase(command: PlanCommand, contents: PlanContents):
       accounts: contents.accounts, previousAmounts: contents.previousAmounts.filter(item => item.industryId === industryId && item.departmentId === departmentId && item.previousKind === previousKind) };
   }
   if (command.type !== "settings" && (command.change.type === "update"
-    || (command.type === "period" && command.change.type === "delete"))) {
+    || ((command.type === "period" || command.type === "department" || command.type === "industry") && command.change.type === "delete"))) {
     const key = collections[command.type], id = command.change.id;
     return { [key]: contents[key].filter(item => item.id === id) };
   }
@@ -64,6 +64,12 @@ export function reconcileWindowCommand(command: PlanCommand, base: WindowCommand
     const before = base.periodTypes?.find(item => item.id === id);
     if (!before) throw new Error("削除対象の期間が変更されています。対象を選び直してください。");
     return { ...command, change: { ...command.change, deletionKey: command.change.deletionKey ?? periodDeletionKey(before) } };
+  }
+  if ((command.type === "department" || command.type === "industry") && command.change.type === "delete") {
+    const key = collections[command.type], id = command.change.id;
+    const before = base[key]?.find(item => item.id === id);
+    if (!before?.identity) throw new Error("削除対象が変更されています。対象を選び直してください。");
+    return { ...command, change: { ...command.change, deletionKey: command.change.deletionKey ?? before.identity } };
   }
   if (command.type === "aggregation" && command.change.type === "delete") {
     const id = command.change.id;

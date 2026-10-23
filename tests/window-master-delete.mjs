@@ -41,6 +41,24 @@ export async function verifyWindowMasterDelete(api) {
       assert.equal(rows().some(row => row.id === current.id), false, '最新の確認は無関係の変更後も正常削除');
       assert.equal(rows().some(row => (row.periodName ?? row.name) === '無関係な追加'), true);
     }
+    for (const type of ['department','industry']) {
+      const collection=type === 'department'?'departments':'industries';
+      const create=name=>({type,change:type === 'department'
+        ? {type:'add',departmentName:name,industryIds:[a.getSnapshot().contents.industries[0].id]}
+        : {type:'add',industryCode:name === '削除前'?'899':'898',industryName:name}});
+      await b.dispatch(create('削除前'));
+      const target=a.getSnapshot().contents[collection].at(-1);
+      const stale={type,change:{type:'delete',id:target.id,deletionKey:target.identity}};
+      await b.dispatch({type,change:{type:'delete',id:target.id}});
+      await b.dispatch(create('再作成後'));
+      const replacement=a.getSnapshot().contents[collection].find(row=>row.id===target.id);
+      assert.ok(replacement);assert.notEqual(replacement.identity,target.identity);
+      const previous=stored.slice(), count=writes;
+      await assert.rejects(a.dispatch(stale),/削除対象.*変更/);
+      assert.equal(writes,count);assert.deepEqual(stored,previous);
+      await a.dispatch({type,change:{type:'delete',id:target.id,deletionKey:replacement.identity}});
+      assert.equal(a.getSnapshot().contents[collection].some(row=>row.id===target.id),false);
+    }
     const period = a.getSnapshot().contents.periodTypes[0], group = a.getSnapshot().contents.aggregations.find(row => row.required);
     await assert.rejects(a.dispatch({ type: 'aggregation', change: { type: 'delete', id: group.id, deletionKey: api.aggregationDeletionKey(group) } }), /必須集計/);
     const contents = a.getSnapshot().contents;
