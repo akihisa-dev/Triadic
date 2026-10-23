@@ -15,6 +15,7 @@ import { useWorkspaceCommands } from "./workspace/useWorkspaceCommands";
 import { useWorkspaceOperations } from "./workspace/useWorkspaceOperations";
 import { useWindowViewState } from "./windowView";
 import { flushAutoSaves, subscribeAutoSaveFailures, hasAutoSaveFailure } from "./flushAutoSaves";
+import type { SpreadsheetOperation } from "./spreadsheetOperation";
 export type { Page, Screen, HomePageProps } from "./workspace/types";
 import type { HomePageProps } from "./workspace/types";
 
@@ -52,6 +53,8 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   const mutation = useMutation(assertWritable);
   const { busy: isSaving, running: saving } = mutation;
   const [editPending, setEditPending] = useState(false);
+  const ioController = useRef<SpreadsheetOperation | null>(null);
+  const setIOController = useCallback((controller: SpreadsheetOperation | null) => { ioController.current = controller; }, []);
   const operationMutation = useMutation(assertWritable);
   const saveAsMutation = useMutation(assertWritable);
   const saveFailed = useSyncExternalStore(subscribeAutoSaveFailures, hasAutoSaveFailure);
@@ -151,7 +154,7 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   }, [isSidebarOpen, closeSidebar]);
 
   return {
-    restoreMutation, saveAsMutation, saveAs, setEditPending, openInitiative, menuButton, relationView, costTableView, sidebar, showError, localKinds, localPrevious,
+    restoreMutation, saveAsMutation, saveAs, setEditPending, ioController, setIOController, openInitiative, menuButton, relationView, costTableView, sidebar, showError, localKinds, localPrevious,
     isSidebarOpen, screen, initiativeDraft, setInitiativeDraft, preview, setPreview,
     restoreRequested, setRestoreRequested, restoreError, setRestoreError, contents, currentContents,
     notice, dismissNotice, isSaving, operationMutation, navigationBlocked, searchBlocked, discardRequest,

@@ -25,8 +25,8 @@ function download(bytes: Uint8Array, name: string) {
   document.body.append(link); link.click(); link.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-export type SpreadsheetIOProps = { contents: PlanContents; busy: boolean; onChangePlan: (change: PlanChange) => Promise<void>; onPrepareSave: () => Promise<void>; onPendingChange: (pending: boolean) => void };
-export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave, onPendingChange }: SpreadsheetIOProps) {
+export type SpreadsheetIOProps = { contents: PlanContents; busy: boolean; onChangePlan: (change: PlanChange) => Promise<void>; onPrepareSave: () => Promise<void>; onPendingChange: (pending: boolean) => void; onController?: (controller: SpreadsheetOperation | null) => void };
+export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave, onPendingChange, onController }: SpreadsheetIOProps) {
   const readOnly = useHistoryReadOnly();
   const [tables, setTables] = useState<ExportTable[]>(["cost-table", "expansion-table", "initiative-list"]);
   const [selections, setSelections] = useState<KindSelections>(() => ({ "cost-table": [1], "expansion-table": [1], "initiative-list": [2] }));
@@ -45,6 +45,7 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
   pendingCallback.current = onPendingChange;
   const [controller] = useState(() => new SpreadsheetOperation(pending => pendingCallback.current(pending)));
   const operationState = useSyncExternalStore(controller.subscribe, controller.getSnapshot);
+  useEffect(() => { onController?.(controller); return () => onController?.(null); }, [controller, onController]);
   useEffect(() => () => controller.dispose(), [controller]);
   const working = spreadsheetWorking(operationState);
   const exportType = operationState.phase === "exporting" ? operationState.exportType : null;

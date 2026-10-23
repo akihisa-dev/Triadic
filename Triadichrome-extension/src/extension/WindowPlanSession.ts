@@ -12,7 +12,7 @@ import { flushAutoSaves } from "./flushAutoSaves";
 import { recoverFileConflict } from "./fileConflict";
 import { hubRequest } from "./windowProtocol";
 
-type Controls = { draft: (history: boolean) => boolean; discard: () => void; confirmDiscard: (labels: string) => Promise<boolean>; close: () => void };
+type Controls = { draft: (history: boolean) => boolean; processing?: () => boolean; discard: () => void; confirmDiscard: (labels: string) => Promise<boolean>; close: () => void };
 const emptySnapshot: SessionSnapshot = { contents: null, name: "", history: emptyDataHistory, busy: false, historyError: "", canUndo: false, canRedo: false, operationRevision: 0 };
 
 /** A window owns only its view and drafts; the shared worker owns the document. */
@@ -140,6 +140,7 @@ export class WindowPlanSession implements SessionAccess {
     switch (action) {
       case "flush":
       case "flush-input": {
+        if (this.controls?.processing?.()) throw new Error("入出力の処理中です。完了または中止してから再試行してください。確認待ちの内容は保持しています。");
         if (action === "flush") this.updateInfo({ settling: true });
         this.flushDepth++;
         // Rapidly crossing focus changes must not make two windows wait for each other's save.

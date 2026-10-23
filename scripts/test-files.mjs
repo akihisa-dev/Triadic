@@ -84,6 +84,7 @@ import { verifyStartMonths } from "../tests/start-months.mjs";
 import { verifyWindowSession } from "../tests/window-session.mjs";
 import { verifyWindowMasterOrder } from "../tests/window-master-order.mjs";
 import { verifyWindowRegisterReferences } from "../tests/window-register-references.mjs";
+import { verifyWindowSpreadsheetHistory } from "../tests/window-spreadsheet-history.mjs";
 import { withNodeBundle } from "./node-bundle.mjs";
 import { projectRoot as root } from "./paths.mjs";
 import { scopedTestApi, testScope } from "./test-scope.mjs";
@@ -105,6 +106,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   await verifyWindowSession(api);
   await verifyWindowMasterOrder(api);
   await verifyWindowRegisterReferences(api);
+  await verifyWindowSpreadsheetHistory(api);
   await verifyDuplicateInitiative(api);
   verifyInitiativeSearch(api);
   await verifyConcurrentInitiative(api);

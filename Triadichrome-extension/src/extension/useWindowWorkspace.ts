@@ -29,9 +29,14 @@ export function useWindowWorkspace(session: WindowPlanSession | undefined, works
     return;
   }, [session]);
   useLayoutEffect(() => session?.registerControls({
-    draft: _history => hasInitiativeDraftInput(latest.current.initiativeDraft) || [...document.querySelectorAll<HTMLInputElement>("form input:not([type=checkbox]):not([type=radio]):not([type=hidden]), form textarea")].some(input => input.value.trim() !== ""),
+    processing: () => {
+      const phase = latest.current.ioController.current?.getSnapshot().phase;
+      return phase === "reading" || phase === "saving" || phase === "exporting";
+    },
+    draft: _history => latest.current.ioController.current?.getSnapshot().phase === "preview" || hasInitiativeDraftInput(latest.current.initiativeDraft) || [...document.querySelectorAll<HTMLInputElement>("form input:not([type=checkbox]):not([type=radio]):not([type=hidden]), form textarea")].some(input => input.value.trim() !== ""),
     discard: () => {
       latest.current.setInitiativeDraft(createInitiativeDraft(String(latest.current.currentContents.fiscalYear)));
+      latest.current.ioController.current?.cancelPreview();
     },
     confirmDiscard: labels => new Promise(resolve => { confirm.current = resolve; setDiscardLabels(labels); }),
     close: () => { /* The session closes this window after every input has been settled. */ },

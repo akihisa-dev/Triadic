@@ -4,6 +4,35 @@ import { currentFiscalYear } from "../../Triadichrome-extension/src/core/domain/
 import { readFile } from "node:fs/promises";
 import { test, expect } from "./fixtures";
 
+test('別ウィンドウの前年取り込み確認を履歴で破棄する前に確認する', async ({page}) => {
+  test.setTimeout(120_000);
+  await page.goto('/tests/ui/multi-window.html');
+  await page.getByRole('button',{name:'ファイルを開く',exact:true}).click();
+  const popup=page.waitForEvent('popup');
+  await page.getByRole('button',{name:'ウィンドウを複製',exact:true}).click();
+  const copy=await popup;
+  await copy.getByRole('navigation',{name:'メインナビゲーション'}).getByRole('button',{name:'入出力',exact:true}).click();
+  await copy.getByRole('checkbox',{name:'直営自動車・部署A',exact:true}).check();
+  const fileDownload=copy.waitForEvent('download');
+  await copy.getByRole('button',{name:'フォーマットを出力',exact:true}).click();
+  const downloaded=await fileDownload;
+  const workbook=new ExcelJS.Workbook();
+  await workbook.xlsx.load(await readFile((await downloaded.path())!) as unknown as ExcelJS.Buffer);
+  workbook.worksheets[0]!.getCell('C4').value=1;
+  await copy.locator('input[type="file"]').setInputFiles({name:'確認待ち.xlsx',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',buffer:Buffer.from(await workbook.xlsx.writeBuffer())});
+  const preview=copy.getByRole('region',{name:'前年金額の変更確認'});
+  await expect(preview.getByRole('heading')).toContainText('変更内容');
+  await page.getByRole('navigation',{name:'メインナビゲーション'}).getByRole('button',{name:'履歴',exact:true}).click();
+  const dialog=page.getByRole('alertdialog',{name:'履歴を開きますか？',exact:true});
+  await expect(dialog).toContainText('確認待ちの内容');
+  await dialog.getByRole('button',{name:'キャンセル',exact:true}).click();
+  await expect(preview).toBeVisible();
+  await page.getByRole('navigation',{name:'メインナビゲーション'}).getByRole('button',{name:'履歴',exact:true}).click();
+  await dialog.getByRole('button',{name:'はい',exact:true}).click();
+  await expect.poll(()=>copy.isClosed()).toBe(true);
+  await expect(page.getByRole('heading',{name:'履歴',exact:true})).toBeVisible();
+});
+
 test("330科目17組の前年変更確認で全名称・値・保存失敗後の確認内容を保持する", async ({ page, app }) => {
   test.setTimeout(120_000);
   await page.goto("/tests/ui/preview.html?data=previous-export-limit");
