@@ -1,7 +1,9 @@
+import { reportSourceSheet, reportSourceReference, reportSourceMonthColumns, reportSourceHelperColumn, reportSourceRange } from "./reportSourceColumns";
 import type ExcelJS from "exceljs";
 import { amountToYen } from "../domain/amounts";
 export type MonetaryCell = { cell: ExcelJS.Cell; expression: string; yen: number | null };
 const columnNumber = (name: string) => [...name].reduce((value, character) => value * 26 + character.charCodeAt(0) - 64, 0);
+const sourceRangePattern = new RegExp(`${reportSourceReference.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\$([A-Z]+):\\$([A-Z]+)`, "g");
 export function roundedThousands(yen: number): number {
   const value = BigInt(yen), absolute = value < 0n ? -value : value;
   return Number((value < 0n ? -1n : 1n) * ((absolute + 500n) / 1000n));
@@ -10,12 +12,11 @@ export function roundedThousands(yen: number): number {
 /** Three signed integer pieces keep each SUM within Excel's 15 significant digits,
  * even at the worksheet row limit. Monetary arithmetic never uses rounded cells. */
 export function installPreciseCalculations(wb: ExcelJS.Workbook, money: MonetaryCell[]): void {
-  const source = wb.getWorksheet("計算元")!;
-  const sourceColumn = (column: number, component: number) => 25 + component * 12 + column - 9;
+  const source = wb.getWorksheet(reportSourceSheet)!;
   // Parse the integer part before converting text to numbers, preserving 1-yen
   // precision beyond Excel's 15 significant digits. No normalization formula cell.
   const height = source.rowCount;
-  for (let column = 9; column <= 20; column++) {
+  for (const column of reportSourceMonthColumns) {
     const address = `${source.getColumn(column).letter}2`;
     const signedText = `${address}&""`;
     const sign = `IF(LEFT(${signedText},1)="-",-1,1)`;
@@ -24,7 +25,7 @@ export function installPreciseCalculations(wb: ExcelJS.Workbook, money: Monetary
     const low = `IF(ISNUMBER(${address}),INT(MOD(ABS(${address})*1000,1000)+0.5),VALUE(LEFT(MID(${address},${point}+1,3)&"000",3)))`;
     const values = Array.from({ length: Math.max(0, height - 1) }, (_, index) => BigInt(amountToYen(String(source.getCell(index + 2, column).value ?? "0"))));
     for (let component = 0; component < 3; component++) {
-      const helper = sourceColumn(column, component);
+      const helper = reportSourceHelperColumn(column, component);
       source.getColumn(helper).hidden = true;
       source.getCell(1, helper).value = `${source.getCell(1, column).text}：円整数の分割${component + 1}`;
       if (height < 2) continue;
@@ -41,11 +42,11 @@ export function installPreciseCalculations(wb: ExcelJS.Workbook, money: Monetary
     const addresses = new Set(cells.map(record => record.cell.address));
     const ref = (cell: ExcelJS.Cell, component: number) => ws.getCell(Number(cell.row), Number(cell.col) + width * (component + 1)).address;
     const translate = (expression: string, component: number) => expression
-      .replace(/'計算元'!\$([A-Z]+):\$([A-Z]+)/g, (match, first: string, last: string) => {
+      .replace(sourceRangePattern, (match, first: string, last: string) => {
         const column = columnNumber(first);
-        if (column < 9 || column > 20 || first !== last) return match;
-        const helper = source.getColumn(sourceColumn(column, component)).letter;
-        return `'計算元'!$${helper}:$${helper}`;
+        if (!reportSourceMonthColumns.includes(column) || first !== last) return match;
+        const helper = source.getColumn(reportSourceHelperColumn(column, component)).letter;
+        return reportSourceRange(helper);
       })
       .replace(/(\$?)([A-Z]+)(\$?)(\d+)\b/g, (match, absoluteColumn: string, column: string, absoluteRow: string, row: string) =>
         addresses.has(`${column}${row}`) ? `${absoluteColumn}${ws.getColumn(columnNumber(column) + width * (component + 1)).letter}${absoluteRow}${row}` : match);

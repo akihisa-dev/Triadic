@@ -1,3 +1,4 @@
+import { reportSourceSheet, reportSourceColumns, reportSourceColumn, reportSourceMonthColumn, reportSourceMonthColumns, reportSourceRange, reportSourceRow, reportSourceAmounts } from "./reportSourceColumns";
 import { font, fill, sheet, finish, workbook } from "./workbookLayout";
 import ExcelJS from "exceljs";
 import { excelAmount } from "./excelAmounts";
@@ -44,8 +45,8 @@ const lookup = <T,>(index: ReadonlyMap<number, T>, id: number | null | undefined
 
 /** Keep the original single source sheet; hidden identifiers avoid ambiguous names. */
 function sources(wb: ExcelJS.Workbook, contents: PlanContents, filter: ClassificationFilter, masters: ReturnType<typeof indexReportMasters>) {
-  const ws = wb.addWorksheet("計算元");
-  ws.addRow(["区分", "業種", "部署", "施策", "種別", "科目コード", "科目名", "科目属性", ...initiativeMonths.map(m => `${m}月`), "科目ID", "施策ID", "種別ID", "総原価対象"]);
+  const ws = wb.addWorksheet(reportSourceSheet);
+  ws.addRow(reportSourceColumns.map(column => column.header));
   const included = (industry: number | null, department: number | null) =>
     (filter.industries === null || (industry !== null && filter.industries.includes(industry))) &&
     (filter.departments === null || (department !== null && filter.departments.includes(department)));
@@ -57,35 +58,40 @@ function sources(wb: ExcelJS.Workbook, contents: PlanContents, filter: Classific
   for (const records of classified.values()) {
     const value = records[0]!;
     const account = masters.accounts.get(value.accountId);
-    ws.addRow(["前年", masters.industries.get(value.industryId)?.industryName,
-      masters.departments.get(value.departmentId)?.departmentName, "", previousKindName(value.previousKind),
-      account?.accountCode, account?.accountName, account?.accountType,
-      ...initiativeMonths.map(m => excelAmount(records.find(v => v.month === m)?.amount ?? "0")),
-      value.accountId, 0, -value.previousKind, included(value.industryId, value.departmentId) ? 1 : 0]);
+    ws.addRow(reportSourceRow({ category: "前年", industry: masters.industries.get(value.industryId)?.industryName,
+      department: masters.departments.get(value.departmentId)?.departmentName, initiative: "", kind: previousKindName(value.previousKind),
+      accountCode: account?.accountCode, accountName: account?.accountName, accountType: account?.accountType,
+      ...reportSourceAmounts(month => excelAmount(records.find(value => value.month === month)?.amount ?? "0")),
+      accountId: value.accountId, initiativeId: 0, kindId: -value.previousKind, included: included(value.industryId, value.departmentId) ? 1 : 0 }));
   }
   for (const item of contents.initiatives.filter(i => i.fiscalYear === contents.fiscalYear)) {
     const industryName = lookup(masters.industries, item.industryId)?.industryName;
     const departmentName = lookup(masters.departments, item.departmentId)?.departmentName;
     for (const kind of [1, 2] as const) for (const input of item.rows) {
       const account = lookup(masters.accounts, input.accountId);
-      ws.addRow(["施策", industryName,
-        departmentName, item.name, masters.kinds.get(kind)?.kindName,
-        account?.accountCode, account?.accountName, account?.accountType,
-        ...initiativeMonths.map(m => excelAmount(resolvedAmount(input, kind, m))), input.accountId, item.id, kind,
-        included(item.industryId ?? null, item.departmentId ?? null) ? 1 : 0]);
+      ws.addRow(reportSourceRow({ category: "施策", industry: industryName,
+        department: departmentName, initiative: item.name, kind: masters.kinds.get(kind)?.kindName,
+        accountCode: account?.accountCode, accountName: account?.accountName, accountType: account?.accountType,
+        ...reportSourceAmounts(month => excelAmount(resolvedAmount(input, kind, month))), accountId: input.accountId, initiativeId: item.id, kindId: kind,
+        included: included(item.industryId ?? null, item.departmentId ?? null) ? 1 : 0 }));
     }
   }
-  ws.columns.forEach((column, index) => { column.width = index < 8 ? 20 : 14; if (index >= 8 && index < 20) column.numFmt = '#,##0.###'; if (index >= 20) column.hidden = true; });
+  ws.columns.forEach((column, index) => {
+    const role = reportSourceColumns[index]!.role;
+    column.width = role === "description" ? 20 : 14;
+    if (role === "amount") column.numFmt = '#,##0.###';
+    if (role === "identifier") column.hidden = true;
+  });
   ws.eachRow((row, index) => {
     if (index === 1) return;
-    for (let column = 9; column <= 20; column++) {
+    for (const column of reportSourceMonthColumns) {
       const cell = row.getCell(column);
       if (typeof cell.value === "string") cell.numFmt = "@";
     }
   });
-  ws.views = [{ state: "frozen", xSplit: 8, ySplit: 1 }];
+  ws.views = [{ state: "frozen", xSplit: reportSourceMonthColumns[0]! - 1, ySplit: 1 }];
   ws.getRow(1).font = { ...font, bold: true }; ws.getRow(1).fill = fill;
-  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: Math.max(2, ws.rowCount), column: 20 } };
+  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: Math.max(2, ws.rowCount), column: reportSourceMonthColumns.at(-1)! } };
   return { ws };
 }
 // Combine adjacent cells into ranges, preserving separated month blocks.
@@ -130,9 +136,9 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
   const filtered = filterPlan({ ...contents, previousKind: previousSelections["cost-table"] }, options.costFilter);
   const expansionTable = options.tables.includes("expansion-table") ? buildKindExpansionTable({ ...contents, previousKind: previousSelections["expansion-table"] }, options.selections["expansion-table"], "registered") : null;
   const unfiltered = sources(wb, contents, options.costFilter, masters);
-  const range = (col: number) => `'計算元'!$${unfiltered.ws.getColumn(col).letter}:$${unfiltered.ws.getColumn(col).letter}`;
+  const range = (col: number) => reportSourceRange(unfiltered.ws.getColumn(col).letter);
   const conditionalSum = (month: number, criteria: [number, number | string][]) =>
-    `SUMIFS(${range(9 + initiativeMonths.indexOf(month as typeof initiativeMonths[number]))},${criteria.flatMap(([col, value]) => [range(col), typeof value === "number" ? String(value) : `"${value}"`]).join(",")})`;
+    `SUMIFS(${range(reportSourceMonthColumn(month as typeof initiativeMonths[number]))},${criteria.flatMap(([col, value]) => [range(col), typeof value === "number" ? String(value) : `"${value}"`]).join(",")})`;
   if (options.tables.includes("cost-table")) {
     const selected = [...options.selections["cost-table"]].sort((a, b) => a - b);
     const table = buildPeriodCostComparison(filtered, selected);
@@ -175,8 +181,8 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
           const definition = masters.aggregations.get(row.id)!;
           expression = `${sum(definition.members.filter(m => m.sign === 1).map(m => at(rowMap.get(`${m.kind}:${m.id}`)!)))}-${sum(definition.members.filter(m => m.sign === -1).map(m => at(rowMap.get(`${m.kind}:${m.id}`)!)))}`;
         } else {
-          const prior = conditionalSum(period.months[0]!, [[21, row.id], [23, -previousSelections["cost-table"]], [24, 1]]);
-          expression = vi === 0 ? prior : `${prior}+${conditionalSum(period.months[0]!, [[21, row.id], [23, selected[vi - 1]!], [24, 1]])}`;
+          const prior = conditionalSum(period.months[0]!, [[reportSourceColumn("accountId"), row.id], [reportSourceColumn("kindId"), -previousSelections["cost-table"]], [reportSourceColumn("included"), 1]]);
+          expression = vi === 0 ? prior : `${prior}+${conditionalSum(period.months[0]!, [[reportSourceColumn("accountId"), row.id], [reportSourceColumn("kindId"), selected[vi - 1]!], [reportSourceColumn("included"), 1]])}`;
         }
         if (row.kind === "ratio" && vi > selected.length) expression = `IF(OR(${at(r, selected.length)}="",${at(r, vi === selected.length + 1 ? 0 : 1)}=""),"",${expression})`;
         formula(cell, expression, row.kind === "ratio" && row.configured ? value ?? "" : value, row.kind !== "ratio");
@@ -193,8 +199,8 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
     const parts = attributes.flatMap(attribute => {
       const sign = accountEffectsYen(1, attribute)[metric];
       if (!sign) return [];
-      const criteria: [number, string | number][] = [[23, kind], [8, attribute]];
-      if (itemId !== null) criteria.push([22, itemId]);
+      const criteria: [number, string | number][] = [[reportSourceColumn("kindId"), kind], [reportSourceColumn("accountType"), attribute]];
+      if (itemId !== null) criteria.push([reportSourceColumn("initiativeId"), itemId]);
       return [`${sign < 0 ? "-" : "+"}${conditionalSum(month, criteria)}`];
     });
     return parts.join("").replace(/^\+/, "") || "0";
