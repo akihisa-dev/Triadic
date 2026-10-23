@@ -9,8 +9,14 @@ test("施策の選択合計は矩形・入力・取消・種別に追従する",
   const before = await page.locator(".initiative-amount-table input").evaluateAll(inputs => inputs.map(input => (input as HTMLInputElement).value));
   await april.click();
   await expect(total).toHaveText("選択範囲の合計0");
+  await expect(page.locator('.grid-selection-description[role="status"]')).toContainText('1行目 売上高 4月から1行目 売上高 4月まで、1セルを選択');
   await april.press("Shift+ArrowRight");
   await expect(total).toHaveText("選択範囲の合計0.002");
+  await expect(page.locator('.grid-selection-description[role="status"]')).toContainText('1行目 売上高 4月から1行目 売上高 5月まで、2セルを選択');
+  const duplicate = page.locator('.initiative-amount-table input[data-column="0"]');
+  await expect(duplicate.nth(1)).toHaveAttribute('aria-description','2行目');
+  await expect(duplicate.nth(2)).toHaveAttribute('aria-description','3行目');
+  expect(await duplicate.nth(1).getAttribute('aria-label')).toBe(await duplicate.nth(2).getAttribute('aria-label'));
   await may.press("Shift+ArrowDown");
   await expect(total).toHaveText("選択範囲の合計0.001");
   expect(await page.locator(".initiative-amount-table input").evaluateAll(inputs => inputs.map(input => (input as HTMLInputElement).value))).toEqual(before);
@@ -37,6 +43,7 @@ test("前年は科目のみを合計し、不正入力の訂正に追従する",
   await april.click();
   await april.press("Shift+ArrowDown");
   await expect(total).toHaveText("選択範囲の合計（科目のみ）300");
+  await expect(page.locator('.grid-selection-description[role="status"]')).toContainText(/4月まで、2セルを選択/);
   await april.fill("-0.001");
   await expect(total).toContainText("199.999");
   await april.fill("-");

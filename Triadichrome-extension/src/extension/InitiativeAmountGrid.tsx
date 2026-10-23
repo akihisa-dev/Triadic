@@ -36,6 +36,13 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
   })), [rows, kind, accountsById]);
   const totals = useMemo(() => initiativeAmountTotals({ rows, invalidNumbers: Boolean(invalidNumbers) }, kind, accounts), [rows, invalidNumbers, kind, accounts]);
   const selectedTotal = useMemo(() => initiativeSelectionTotal(draft, kind, selection), [draft, kind, selection]);
+  const selectionDescription = bounds && selectedTotal ? (() => {
+    const first = draft.rows[bounds.top], last = draft.rows[bounds.bottom];
+    if (!first || !last) return "";
+    const name = (row: typeof first) => accountsById.get(row.accountId!)?.accountName ?? "科目未選択";
+    const count = draft.rows.slice(bounds.top, bounds.bottom + 1).filter(row => row.accountId !== null).length * (bounds.right - bounds.left + 1);
+    return `${bounds.top + 1}行目 ${name(first)} ${months[bounds.left]}月から${bounds.bottom + 1}行目 ${name(last)} ${months[bounds.right]}月まで、${count}セルを選択`;
+  })() : "";
   useEffect(() => { setSelection(null); setEditing(false); }, [draft.rows.length]);
   const valueAt = (cell: GridCell, source = draft) => {
     const row = source.rows[cell.row]!;
@@ -55,7 +62,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
   };
   return <>
     <StatusNotice message={error || totals.error || selectedTotal?.error || ""} error {...(error ? { onDismiss: () => setError("") } : {})} />
-    <GridSelectionTotal total={selectedTotal} compact />
+    <GridSelectionTotal total={selectedTotal} compact selectionDescription={selectionDescription} />
     <div className="initiative-grid-scroll">
         <table ref={table} className="initiative-amount-table" aria-label="月別計画金額">
           <thead>
@@ -124,6 +131,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                       ref={input => { if (input) input.setCustomValidity(invalidInput ? "金額に有効な数値を入力してください。"
                         : input.value === "" || isValidAmount(input.value) ? "" : "金額は千円単位・小数点以下3桁までで入力してください。"); }}
                       aria-label={`${accountName} ${month}月の金額`}
+                      aria-description={`${index + 1}行目`}
                       aria-invalid={Boolean(invalidInput) || value !== "" && !isValidAmount(value)}
                       disabled={readOnly || isSaving || !canEditInitiativeCell(draft, kind, cell)} value={value}
                       {...events.input}

@@ -74,6 +74,12 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
   const salesIndex = rows.findIndex(row => row.kind === "group" && row.id === salesGroupId);
   const rowIds = useMemo(() => rows.map(row => row.kind === "account" ? row.id : null), [rows]);
   const selectedTotal = useMemo(() => previousSelectionTotal(draft, rowIds, selection), [draft, rowIds, selection]);
+  const selectionDescription = bounds && selectedTotal ? (() => {
+    const selected = rows.slice(bounds.top, bounds.bottom + 1).map((row, offset) => ({ row, index: bounds.top + offset })).filter(item => item.row.kind === "account");
+    if (!selected.length) return "";
+    const first = selected[0]!, last = selected.at(-1)!;
+    return `${first.index + 1}行目 ${first.row.name} ${initiativeMonths[bounds.left]}月から${last.index + 1}行目 ${last.row.name} ${initiativeMonths[bounds.right]}月まで、${selected.length * (bounds.right - bounds.left + 1)}セルを選択`;
+  })() : "";
   // Cached row elements keep handlers, so cross-row operations read current input/selection.
   const latest = useRef({ grid, draft, onChange, rows, rowIds, inputsByAccount, calculationFailed });
   latest.current = { grid, draft, onChange, rows, rowIds, inputsByAccount, calculationFailed };
@@ -149,7 +155,7 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
   };
   return <>
     <StatusNotice message={error || cellError || (calculationFailed || periodAmounts.failed ? "金額の合計が正確に計算できる範囲を超えています。分類を絞るか金額を修正してください。" : "")} error onDismiss={() => { setError(""); setCellErrors({}); }} />
-    <GridSelectionTotal total={selectedTotal} accountsOnly />
+    <GridSelectionTotal total={selectedTotal} accountsOnly selectionDescription={selectionDescription} />
     <div className="previous-grid-container" role="region" aria-label="前年の月別金額" tabIndex={0}>
       <table ref={table} className={`initiative-list-table cost-table previous-grid${freezeHeader ? "" : " cost-header-scroll"}`} aria-label="前年入力の月別金額">
         <thead>

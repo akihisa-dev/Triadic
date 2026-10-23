@@ -2,3 +2,4 @@
 .grid-selection-total strong { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 .grid-selection-total-compact { height: 26px; flex-wrap: nowrap; white-space: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
 .grid-selection-total-compact > * { flex-shrink: 0; }
+.grid-selection-description { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
