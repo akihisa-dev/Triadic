@@ -20,8 +20,50 @@ test.beforeEach(async ({ page, app }, testInfo) => {
       } });
     });
   }
+  if (testInfo.title.startsWith("登録中の移動")) {
+    await app.locator("body").evaluate(() => {
+      const target = window as unknown as Window & { showOpenFilePicker: () => Promise<FileSystemFileHandle[]>; registrationGate?: { started: boolean; release: () => void } };
+      const original = target.showOpenFilePicker;
+      target.showOpenFilePicker = async () => {
+        const handles = await original(), handle = handles[0]!;
+        const create = handle.createWritable.bind(handle);
+        let release!: () => void;
+        const gate = new Promise<void>(resolve => { release = resolve; });
+        target.registrationGate = { started: false, release };
+        Object.defineProperty(handle, "createWritable", { value: async () => {
+          const writable = await create(), close = writable.close.bind(writable);
+          Object.defineProperty(writable, "close", { value: async () => {
+            target.registrationGate!.started = true;
+            await gate;
+            return close();
+          } });
+          return writable;
+        } });
+        return handles;
+      };
+    });
+  }
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await expect(app.getByRole("main", { name: "ホーム", exact: true })).toBeVisible();
+});
+
+test("登録中の移動後は保存完了しても現在の画面を保つ", async ({ app }) => {
+  await openInitiativeEntry(app);
+  await app.getByRole("textbox", { name: "施策名", exact: true }).fill("移動中に登録した施策");
+  await selectClassification(app.getByRole("combobox", { name: "展開名", exact: true }), "コスト");
+  await selectClassification(app.getByRole("combobox", { name: "部署名", exact: true }), "部署A");
+  await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
+  await app.getByRole("combobox", { name: "1行目の勘定科目" }).focus();
+  await app.getByRole("combobox", { name: "1行目の勘定科目" }).selectOption({ label: "売上高" });
+  await app.getByRole("button", { name: "登録", exact: true }).click();
+  await expect.poll(() => app.locator("body").evaluate(() => (window as unknown as { registrationGate?: { started: boolean } }).registrationGate?.started)).toBe(true);
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
+  await expect(app.getByRole("main", { name: "ホーム", exact: true })).toBeVisible();
+  await app.locator("body").evaluate(() => (window as unknown as { registrationGate: { release: () => void } }).registrationGate.release());
+  await expect(app.getByRole("button", { name: "施策を検索", exact: true })).toBeEnabled();
+  await expect(app.getByRole("main", { name: "ホーム", exact: true })).toBeVisible();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "施策一覧", exact: true }).click();
+  await expect(app.getByRole("button", { name: "移動中に登録した施策", exact: true })).toBeVisible();
 });
 
 test("入口を一覧へ統一し、空欄なら確認なしで戻り、登録成功後に一覧で確認できる", async ({ app }) => {

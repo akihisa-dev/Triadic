@@ -38,6 +38,10 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
     if (!(failure instanceof DOMException && failure.name === "AbortError")) setNotice({ message: failure instanceof Error ? failure.message : "処理できませんでした。入力は保持しています。", error: true });
   };
   const { initiativeDraft, setInitiativeDraft, saveReferencedMaster, usedAccountIds } = useRetainedInitiativeDraft(currentContents, setNotice);
+  const latestNavigation = useRef(screens.snapshot());
+  const latestDraft = useRef(initiativeDraft);
+  latestNavigation.current = screens.snapshot();
+  latestDraft.current = initiativeDraft;
   const { preview, setPreview, restoreRequested, setRestoreRequested, restoreError, setRestoreError, restoreMutation,
     resetScreens, previewEntry, returnToCurrent, restorePreview } = useWorkspaceHistory(screens,
     () => navigationBlocked || saving.current, operation => mutation.run(operation), onPreviewHistory, onRestoreHistory,
@@ -115,11 +119,13 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
     { initiativeDraft, setInitiativeDraft, saveReferencedMaster, usedAccountIds }, selectedInitiative);
   const register = async () => {
     if (saving.current) return;
+    const startingNavigation = latestNavigation.current;
+    const submittedDraft = initiativeDraft;
     dismissNotice();
     try {
-      await mutation.run(async () => { await onRegisterInitiative(initiativeDraft); });
-      setInitiativeDraft(createInitiativeDraft(initiativeDraft.fiscalYear));
-      navigate({ ...screen, page: "initiative-list" });
+      await mutation.run(async () => { await onRegisterInitiative(submittedDraft); });
+      if (latestDraft.current === submittedDraft) setInitiativeDraft(createInitiativeDraft(submittedDraft.fiscalYear));
+      if (latestNavigation.current === startingNavigation) navigate({ ...screen, page: "initiative-list" });
       setNotice({ message: "施策を登録しました。", error: false });
     } catch (error) {
       const cancelled = error instanceof DOMException && error.name === "AbortError";
