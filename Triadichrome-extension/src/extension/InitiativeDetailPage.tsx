@@ -12,6 +12,7 @@ import { AutoSaveStatus } from "./AutoSaveStatus";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
 import { useAutoSave, type AutoSaveProps } from "./useAutoSave";
 import type { InitiativeDraftReferences } from "../core/domain/initiativeDraftReferences";
+import { initiativeDraft } from "../core/domain/initiativeDraft";
 
 type Props = AutoSaveProps & {
   initiative: Initiative;
@@ -41,8 +42,8 @@ export function InitiativeDetailPage({ initiative, accounts, expansions, expansi
   useLayoutEffect(() => {
     if (received.current !== initiative || !controller.getSnapshot().draft) {
       received.current = initiative;
-      controller.syncSaved({ name: initiative.name, note: initiative.note, expansionId: initiative.expansionId, expansionCategoryId: initiative.expansionCategoryId ?? null, departmentId: initiative.departmentId ?? null, periodTypeId: initiative.periodTypeId ?? null, industryId: initiative.industryId ?? null,
-      fiscalYear: initiative.fiscalYear === null ? "" : String(initiative.fiscalYear), rows: initiative.rows.length ? initiative.rows : [{ id: emptyRow.current, accountId: null, amounts: {} }] }, `${initiative.id}:${initiative.identity ?? ""}`);
+      controller.syncSaved({ ...initiativeDraft(initiative),
+        rows: initiative.rows.length ? initiative.rows : [{ id: emptyRow.current, accountId: null, amounts: {} }] }, `${initiative.id}:${initiative.identity ?? ""}`);
     }
     if (!controller.hasSourceChange()) source.current = { initiative,
       references: autoSave.pending && source.current ? source.current.references : { accounts, expansions, expansionCategories, departments, periodTypes, industries } };

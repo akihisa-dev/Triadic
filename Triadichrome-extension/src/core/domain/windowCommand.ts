@@ -1,5 +1,6 @@
 import type { PlanCommand } from "./planCommands";
-import type { Initiative, InitiativeEntryDraft, PlanContents } from "./plan";
+import type { PlanContents } from "./plan";
+import { initiativeDraft } from "./initiativeDraft";
 import { reconcileSavedDraft } from "../reconcileSavedDraft";
 import { createPreviousInput } from "./previousAmounts";
 import { periodDeletionKey } from "./periodMaster";
@@ -23,11 +24,6 @@ export function windowCommandBase(command: PlanCommand, contents: PlanContents):
   }
   return {};
 }
-
-const initiativeDraft = (item: Initiative): InitiativeEntryDraft => ({ name: item.name, note: item.note,
-  fiscalYear: item.fiscalYear === null ? "" : String(item.fiscalYear), expansionId: item.expansionId,
-  expansionCategoryId: item.expansionCategoryId ?? null, departmentId: item.departmentId ?? null,
-  industryId: item.industryId ?? null, periodTypeId: item.periodTypeId ?? null, rows: item.rows });
 
 /** A focus change can arrive ahead of the previous window's save publication. Apply only this window's edits. */
 export function reconcileWindowCommand(command: PlanCommand, base: WindowCommandBase, current: PlanContents): PlanCommand {
