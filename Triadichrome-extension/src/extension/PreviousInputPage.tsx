@@ -8,17 +8,17 @@ import { type PlanContents } from "../core/domain/plan";
 import { filterPlan } from "../core/tables/planTables";
 import { PreviousAmountGrid } from "./PreviousAmountGrid";
 import "./PreviousInputPage.css";
-import type { PreviousKind, PreviousInput } from "../core/domain/kinds";
+import type { PreviousInput } from "../core/domain/kinds";
 import { useAutoSave, type AutoSaveProps } from "./useAutoSave";
 import { AutoSaveStatus } from "./AutoSaveStatus";
 
 type Props = AutoSaveProps & { contents: PlanContents; onSave: (input: PreviousInput) => Promise<void> };
 export function PreviousInputPage({ contents, onSave, onPendingChange, onPrepareSave }: Props) {
   const readOnly = useHistoryReadOnly();
-  const [previousKind, setPreviousKind] = useWindowViewState<PreviousKind>("previous:kind", 1);
+  const [previousKind, setPreviousKind] = useWindowViewState("previous:kind", 1);
   const [copyRequested, setCopyRequested] = useState(false);
-  const [industryIds, setIndustries] = useWindowViewState<number[]>("previous:industries", []);
-  const [departmentIds, setDepartments] = useWindowViewState<number[]>("previous:departments", []);
+  const [industryIds, setIndustries] = useWindowViewState("previous:industries", []);
+  const [departmentIds, setDepartments] = useWindowViewState("previous:departments", []);
   const industryId = industryIds.length === 1 ? industryIds[0]! : null;
   const departmentId = departmentIds.length === 1 ? departmentIds[0]! : null;
   const validPair = industryId !== null && departmentId !== null && contents.departments.some(item => item.id === departmentId && item.industryIds.includes(industryId));

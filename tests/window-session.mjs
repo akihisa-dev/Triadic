@@ -60,7 +60,12 @@ export async function verifyWindowSession(api) {
   try {
     await a.request("open", { name: original.handle.name, handle: original.handle, bytes });
     const group = a.latest().info.group;
-    const view = { screen: { page: "cost-table", selectedInitiative: null, detailOrigin: "initiative-list" }, costTable: { industries: [1], departments: [1], top: 140, left: 300 }, relation: null, values: { "table:kinds": { "cost-table": [2] } }, scroll: [{ key: "table", top: 140, left: 300 }] };
+    const view = { screen: { page: "cost-table", selectedInitiative: null, detailOrigin: "initiative-list" }, costTable: { industries: [1], departments: [1], top: 140, left: 300 }, relation: null, values: {
+      "table:kinds": { "initiative-list": [1], "cost-table": [2], "expansion-table": [1, 2] },
+      "table:previous": { "cost-table": 2, "expansion-table": 1 },
+      "initiative-list:sort": { column: "name", direction: "descending" }, "initiative:kind": 2,
+      "previous:kind": 1, "previous:industries": [2, 1], "previous:departments": [1], "home:mode": "process",
+    }, scroll: [{ key: "table", top: 140, left: 300 }] };
     const unfinished = { ...view, screen: { ...view.screen, page: "initiative-entry" }, values: { ...view.values,
       "initiative:draft": { name: "未登録の施策" }, "future:draft": "複製しない" } };
     await a.request("reserve", "draft-ticket", unfinished);

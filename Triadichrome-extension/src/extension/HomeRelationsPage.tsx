@@ -23,7 +23,7 @@ export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
   return <main className="home-relations" aria-label="ホーム">
     <header className="home-relations-heading"><h1>Home</h1>
       <div className="home-relations-mode" role="group" aria-label="ホームの表示">
-        {[["relations", "関連図"], ["data", "画面とデータ"], ["calculation", "計算の仕組み"], ["process", "処理の流れ"]].map(([id, name]) =>
+        {([["relations", "関連図"], ["data", "画面とデータ"], ["calculation", "計算の仕組み"], ["process", "処理の流れ"]] as const).map(([id, name]) =>
           <button key={id} type="button" aria-pressed={mode === id} onClick={() => setMode(id!)}>{name}</button>)}
       </div>
     </header>

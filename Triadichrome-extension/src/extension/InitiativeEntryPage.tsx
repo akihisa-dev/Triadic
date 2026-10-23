@@ -33,7 +33,7 @@ type InitiativeEntryPageProps = {
 
 export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions, expansionCategories, departments, periodTypes, industries, onOpenMaster, isSaving, onRegister, onBack, editing, initialKind = 1 }: InitiativeEntryPageProps) {
   const readOnly = useHistoryReadOnly();
-  const [kind, setKind] = useWindowViewState<KindId>("initiative:kind", initialKind);
+  const [kind, setKind] = useWindowViewState("initiative:kind", initialKind);
   const allowedCategories = expansions.find(item => item.id === draft.expansionId)?.categoryIds ?? [];
   const allowedIndustries = departments.find(item => item.id === draft.departmentId)?.industryIds ?? [];
   return (

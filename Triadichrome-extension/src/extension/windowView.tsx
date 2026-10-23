@@ -2,20 +2,21 @@ import { createContext, useContext, useLayoutEffect, useState, type Dispatch, ty
 import type { CostTableView } from "./CostTablePage";
 import type { RelationView } from "./HomeRelationsPage";
 import type { Screen } from "./workspace/types";
+import type { WindowViewState, WindowViewValues } from "./windowViewState";
 
 export type WindowView = {
   screen: Screen;
   costTable: CostTableView;
   relation: RelationView | null;
-  values: Record<string, unknown>;
+  values: WindowViewValues;
   scroll: { key: string; top: number; left: number }[];
 };
-export const WindowViewContext = createContext<Record<string, unknown> | null>(null);
+export const WindowViewContext = createContext<WindowViewValues | null>(null);
 
 /** Only display choices enter a clone; saved data and unfinished inputs do not. */
-export function useWindowViewState<T>(key: string, initial: T): [T, Dispatch<SetStateAction<T>>] {
+export function useWindowViewState<K extends keyof WindowViewState>(key: K, initial: WindowViewState[K]): [WindowViewState[K], Dispatch<SetStateAction<WindowViewState[K]>>] {
   const values = useContext(WindowViewContext);
-  const [value, setValue] = useState<T>(() => values && key in values ? values[key] as T : initial);
+  const [value, setValue] = useState<WindowViewState[K]>(() => values?.[key] !== undefined ? values[key] : initial);
   useLayoutEffect(() => { if (values) values[key] = value; return () => { if (values) delete values[key]; }; }, [values, key, value]);
   return [value, setValue];
 }

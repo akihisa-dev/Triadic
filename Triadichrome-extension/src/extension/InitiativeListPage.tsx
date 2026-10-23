@@ -33,7 +33,7 @@ type InitiativeListPageProps = {
 
 export function InitiativeListPage({ selection, selectedKind, initiatives, accounts, expansions, periodTypes, fiscalYear, onAddInitiative, onOpenInitiative, navigationBlocked }: InitiativeListPageProps) {
   const readOnly = useHistoryReadOnly();
-  const [sort, setSort] = useWindowViewState<InitiativeSort | null>("initiative-list:sort", null);
+  const [sort, setSort] = useWindowViewState("initiative-list:sort", null);
   const [focusedId, setFocusedId] = useState<number | null>(null);
   const container = useRef<HTMLDivElement>(null);
   const expansionNames = useMemo(() => new Map(expansions.map(item => [item.id, item.expansionName])), [expansions]);
