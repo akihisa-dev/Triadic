@@ -88,7 +88,7 @@ export async function verifyWindowTransfer(api) {
     let entered, finish, once = true, operationResult;
     const enteredPromise = new Promise(resolve => { entered = resolve; }), finishPromise = new Promise(resolve => { finish = resolve; });
     hub.request = async (...args) => {
-      const hold = args[1] === "dispatch" && once;
+      const hold = args[1].method === "dispatch" && once;
       if (hold) once = false;
       const result = await originalRequest(...args);
       if (hold) { operationResult = structuredClone(result); entered(); await finishPromise; }

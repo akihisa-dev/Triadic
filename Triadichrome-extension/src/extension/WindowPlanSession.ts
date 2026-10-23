@@ -4,13 +4,13 @@ import { windowCommandBase } from "../core/domain/windowCommand";
 import { emptyDataHistory, type HistoryDeletion } from "../core/domain/dataHistory";
 import type { PlanCommand } from "../core/domain/planCommands";
 import type { PlanContents } from "../core/domain/plan";
-import type { HistoryComparison } from "../core/domain/historyDifference";
 import type { OpenPlan } from "./planFile";
 import type { SessionSnapshot } from "./PlanSession";
-import type { HubMessage, SessionAccess, WindowControl, WindowInfo } from "./windowProtocol";
+import type { HubArgs, HubMethod, HubResult, HubRequest, HubMessage, SessionAccess, WindowControl, WindowInfo } from "./windowProtocol";
 import type { WindowView } from "./windowView";
 import { flushAutoSaves } from "./flushAutoSaves";
 import { recoverFileConflict } from "./fileConflict";
+import { hubRequest } from "./windowProtocol";
 
 type Controls = { draft: (history: boolean) => boolean; discard: () => void; confirmDiscard: (labels: string) => Promise<boolean>; close: () => void };
 const emptySnapshot: SessionSnapshot = { contents: null, name: "", history: emptyDataHistory, busy: false, historyError: "", canUndo: false, canRedo: false, operationRevision: 0 };
@@ -76,7 +76,7 @@ export class WindowPlanSession implements SessionAccess {
     catch (failure) { this.snapshot = { ...this.snapshot, historyError: failure instanceof Error ? failure.message : "ウィンドウを開けませんでした。" }; this.listeners.forEach(listener => listener()); }
     if (ticket) { hash.delete("view"); history.replaceState(null, "", `${location.pathname}${location.search}#${hash}`); }
     window.addEventListener("pagehide", () => {
-      this.port?.postMessage({ type: "request", id: ++this.sequence, method: "detach", args: [] });
+      this.port?.postMessage({ type: "request", id: ++this.sequence, method: "detach", args: [] } satisfies HubRequest);
       this.releaseLock?.(); this.port?.close();
     }, { once: true });
     window.addEventListener("blur", () => { void flushAutoSaves().catch(() => {}); });
@@ -84,16 +84,16 @@ export class WindowPlanSession implements SessionAccess {
       if (this.info.peers > 1 && this.info.group) this.activation = this.call("activate").catch(() => {});
     });
   }
-  private call<T = unknown>(method: string, ...args: unknown[]): Promise<T> {
-    return new Promise<T>((resolve, reject) => {
+  private call<M extends HubMethod>(method: M, ...args: HubArgs<M>): Promise<HubResult<M>> {
+    return new Promise<HubResult<M>>((resolve, reject) => {
       if (this.failure) { reject(this.failure); return; }
       const id = ++this.sequence;
-      this.pending.set(id, { resolve: value => resolve(value as T), reject });
-      try { this.port!.postMessage({ type: "request", id, method, args }); }
+      this.pending.set(id, { resolve: value => resolve(value as HubResult<M>), reject });
+      try { this.port!.postMessage(hubRequest(id, method, ...args)); }
       catch (failure) { this.pending.delete(id); reject(failure); }
     });
   }
-  private async request<T = unknown>(method: string, ...args: unknown[]): Promise<T> { await this.start(); return this.call<T>(method, ...args); }
+  private async request<M extends HubMethod>(method: M, ...args: HubArgs<M>): Promise<HubResult<M>> { await this.start(); return this.call(method, ...args); }
   private async receive(message: HubMessage) {
     if (message.type === "result") {
       const request = this.pending.get(message.id);
@@ -194,14 +194,14 @@ export class WindowPlanSession implements SessionAccess {
     const selected = destination();
     return selected.then(async handle => {
       const expected = new Uint8Array(await (await handle.getFile()).arrayBuffer());
-      return this.request<PlanContents>("saveAs", handle, expected);
+      return this.request("saveAs", handle, expected);
     });
   }
-  travelOperation(direction: -1 | 1, _destination: () => Promise<FileSystemFileHandle>) { return this.request<PlanContents>("travelOperation", direction); }
+  travelOperation(direction: -1 | 1, _destination: () => Promise<FileSystemFileHandle>) { return this.request("travelOperation", direction); }
   async checkpoint(force: boolean, _destination: () => Promise<FileSystemFileHandle>) { await this.request("checkpoint", force); }
-  preview(id: number, _destination: () => Promise<FileSystemFileHandle>) { return this.request<PlanContents>("preview", id); }
-  compareHistory(id: number) { return this.request<HistoryComparison>("compareHistory", id); }
-  restore(id: number, _destination: () => Promise<FileSystemFileHandle>) { return this.request<PlanContents>("restore", id); }
+  preview(id: number, _destination: () => Promise<FileSystemFileHandle>) { return this.request("preview", id); }
+  compareHistory(id: number) { return this.request("compareHistory", id); }
+  restore(id: number, _destination: () => Promise<FileSystemFileHandle>) { return this.request("restore", id); }
   async deleteHistory(deletion: HistoryDeletion, _destination: () => Promise<FileSystemFileHandle>) { await this.request("deleteHistory", deletion); }
   async close(_destination: () => Promise<FileSystemFileHandle>) { await this.request("close"); }
   async enterHistory() { await this.request("history"); }

@@ -3,11 +3,11 @@ import { cloneWindowView } from "./windowViewClone";
 import type { Recovery } from "./fileConflict";
 import { PlanSession } from "./PlanSession";
 import type { OpenPlan } from "./planFile";
-import type { ClientReply, HubMessage, HubRequest, WindowControl, WindowInfo } from "./windowProtocol";
+import type { ClientReply, HubMessage, HubRequest, HubMethod, HubResult, WindowControl, WindowInfo } from "./windowProtocol";
 import type { WindowView } from "./windowView";
 import { emptyDataHistory } from "../core/domain/dataHistory";
 import { scheduleHistoryCheckpoint } from "./historyCheckpoint";
-import { reconcileWindowCommand, type WindowCommandBase } from "../core/domain/windowCommand";
+import { reconcileWindowCommand } from "../core/domain/windowCommand";
 import type { PlanContents } from "../core/domain/plan";
 import { createNewPlanFile } from "./newPlanFile";
 
@@ -39,7 +39,7 @@ export class WindowSessionHub {
           if (message.error) pending.reject(new Error(message.error)); else pending.resolve(message.value);
           return;
         }
-        void this.request(peer, message.method, message.args).then(value => {
+        void this.request(peer, message).then(value => {
           // State and result use the same ordered port. Reconstruct this operation's exact result
           // against the last published contents, even if a newer operation was already published.
           const contentsPatch = message.method === "dispatch" && peer.publishedContents
@@ -259,10 +259,10 @@ export class WindowSessionHub {
     group.actionTail = task.then(() => {}, () => {});
     return task;
   }
-  private async request(peer: Peer, method: string, args: unknown[]): Promise<unknown> {
+  private async request(peer: Peer, { method, args }: HubRequest): Promise<HubResult<HubMethod>> {
     switch (method) {
       case "join": {
-        const [groupId, ticket] = args as [string | null, string | null];
+        const [groupId, ticket] = args;
         if (groupId) {
           const group = this.groups.get(groupId);
           if (!group) throw new Error("このファイルは既に閉じられています。「ファイルを開く」から開き直してください。");
@@ -273,18 +273,18 @@ export class WindowSessionHub {
           this.attach(peer, group, reserved?.view ?? null);
           if (ticket) this.removeTicket(ticket);
         }
-        return this.info(peer);
+        return this.info(peer) satisfies HubResult<typeof method>;
       }
       case "reserve": {
         const group = this.requireGroup(peer);
         if (group.historyPreparing || group.historyOwner) throw new Error("履歴の閲覧中はウィンドウを複製できません。");
-        const [ticket, view] = args as [string, WindowView];
+        const [ticket, view] = args;
         this.removeTicket(ticket);
         const timer = setTimeout(() => this.removeTicket(ticket), this.reservationTimeoutMs);
         this.tickets.set(ticket, { group, view: cloneWindowView(view), expiresAt: Date.now() + this.reservationTimeoutMs, timer }); return;
       }
-      case "cancel-reserve": this.removeTicket(args[0] as string); return;
-      case "label": peer.label = args[0] as string; return;
+      case "cancel-reserve": this.removeTicket(args[0]); return;
+      case "label": peer.label = args[0]; return;
       case "leave-history": { const group = this.requireGroup(peer); if (group.historyOwner === peer) group.historyOwner = null; return; }
       case "activate": {
         const group = this.requireGroup(peer);
@@ -302,7 +302,7 @@ export class WindowSessionHub {
         try {
           let group: Group;
           if (method === "create") {
-            const [handle, fiscalYear] = args as [FileSystemFileHandle, number];
+            const [handle, fiscalYear] = args;
             releaseTarget = await this.reserveSaveTarget(null, handle);
             if (!this.peers.has(peer)) return;
             await createNewPlanFile(handle, fiscalYear);
@@ -311,7 +311,7 @@ export class WindowSessionHub {
             group = this.newGroup({ name: handle.name, handle, bytes });
             group.openingPeers++;
           } else {
-            group = await this.selectGroup(args[0] as Pick<OpenPlan, "name" | "bytes" | "handle">);
+            group = await this.selectGroup(args[0]);
           }
           openingGroup = group;
           await group.opened;
@@ -329,12 +329,12 @@ export class WindowSessionHub {
         return;
       }
       case "history": return this.coordinate(peer, group => this.enqueue(peer, async () => { await group.session.checkpoint(true, destinationMissing); }), true);
-      case "travelOperation": return this.coordinate(peer, group => this.enqueue(peer, () => group.session.travelOperation(args[0] as -1 | 1, destinationMissing)));
+      case "travelOperation": return this.coordinate(peer, group => this.enqueue(peer, () => group.session.travelOperation(args[0], destinationMissing))) satisfies Promise<HubResult<typeof method>>;
       case "saveAs": {
-        const group = this.requireGroup(peer), handle = args[0] as FileSystemFileHandle;
-        const expected = args[1] as Uint8Array;
+        const group = this.requireGroup(peer), handle = args[0];
+        const expected = args[1];
         const release = await this.reserveSaveTarget(group, handle);
-        try { return await this.coordinate(peer, group => this.enqueue(peer, () => group.session.saveAs(async () => handle, expected))); }
+        try { return await this.coordinate(peer, group => this.enqueue(peer, () => group.session.saveAs(async () => handle, expected))) satisfies HubResult<typeof method>; }
         finally { release(); }
       }
       case "close": {
@@ -353,18 +353,18 @@ export class WindowSessionHub {
         return this.enqueue(peer, async () => {
           switch (method) {
             case "dispatch": {
-              const command = args[0] as Parameters<PlanSession["dispatch"]>[0];
-              const base = args[1] as WindowCommandBase | null | undefined;
+              const command = args[0];
+              const base = args[1];
               const current = group.session.getSnapshot().contents!;
-              return group.session.dispatch(base ? reconcileWindowCommand(command, base, current) : command, destinationMissing);
+              return group.session.dispatch(base ? reconcileWindowCommand(command, base, current) : command, destinationMissing) satisfies Promise<HubResult<typeof method>>;
             }
-            case "prepareSave": return group.session.prepareSave(destinationMissing);
-            case "checkpoint": return group.session.checkpoint(args[0] as boolean, destinationMissing);
-            case "preview": return group.session.preview(args[0] as number, destinationMissing);
-            case "compareHistory": return group.session.compareHistory(args[0] as number);
-            case "restore": return group.session.restore(args[0] as number, destinationMissing);
-            case "deleteHistory": return group.session.deleteHistory(args[0] as Parameters<PlanSession["deleteHistory"]>[0], destinationMissing);
-            default: throw new Error("不明なウィンドウ操作です。");
+            case "prepareSave": return group.session.prepareSave(destinationMissing) satisfies Promise<HubResult<typeof method>>;
+            case "checkpoint": return group.session.checkpoint(args[0], destinationMissing) satisfies Promise<HubResult<typeof method>>;
+            case "preview": return group.session.preview(args[0], destinationMissing) satisfies Promise<HubResult<typeof method>>;
+            case "compareHistory": return group.session.compareHistory(args[0]) satisfies Promise<HubResult<typeof method>>;
+            case "restore": return group.session.restore(args[0], destinationMissing) satisfies Promise<HubResult<typeof method>>;
+            case "deleteHistory": return group.session.deleteHistory(args[0], destinationMissing) satisfies Promise<HubResult<typeof method>>;
+            default: { method satisfies never; throw new Error("不明なウィンドウ操作です。"); }
           }
         });
       }
