@@ -6,12 +6,17 @@ import { createPreviousInput } from "./previousAmounts";
 import { periodDeletionKey } from "./periodMaster";
 import { aggregationDeletionKey } from "./aggregationMaster";
 import { orderedMasterRows } from "./masterRows";
+import { reconcileInitiativeDraftReferences } from "./initiativeDraftReferences";
 
 const collections = { account: "accounts", aggregation: "aggregations", expansion: "expansions", "expansion-category": "expansionCategories", department: "departments", industry: "industries", period: "periodTypes" } as const;
 export type WindowCommandBase = Partial<Pick<PlanContents, typeof collections[keyof typeof collections] | "initiatives" | "previousAmounts">>;
 
 /** Capture the same reconciliation baseline without copying unrelated plans. */
 export function windowCommandBase(command: PlanCommand, contents: PlanContents): WindowCommandBase {
+  if (command.type === "initiative.register") return {
+    accounts: contents.accounts, expansions: contents.expansions, expansionCategories: contents.expansionCategories,
+    periodTypes: contents.periodTypes, departments: contents.departments, industries: contents.industries,
+  };
   if (command.type === "account" || command.type === "aggregation") return { accounts: contents.accounts, aggregations: contents.aggregations };
   if (command.type === "initiative.update") return { initiatives: contents.initiatives.filter(item => item.id === command.id) };
   if (command.type === "settings" && command.change.type === "previous") {
@@ -19,7 +24,7 @@ export function windowCommandBase(command: PlanCommand, contents: PlanContents):
     return { industries: contents.industries.filter(item => item.id === industryId), departments: contents.departments.filter(item => item.id === departmentId),
       accounts: contents.accounts, previousAmounts: contents.previousAmounts.filter(item => item.industryId === industryId && item.departmentId === departmentId && item.previousKind === previousKind) };
   }
-  if (command.type !== "initiative.register" && command.type !== "settings" && (command.change.type === "update"
+  if (command.type !== "settings" && (command.change.type === "update"
     || (command.type === "period" && command.change.type === "delete"))) {
     const key = collections[command.type], id = command.change.id;
     return { [key]: contents[key].filter(item => item.id === id) };
@@ -29,6 +34,16 @@ export function windowCommandBase(command: PlanCommand, contents: PlanContents):
 
 /** A focus change can arrive ahead of the previous window's save publication. Apply only this window's edits. */
 export function reconcileWindowCommand(command: PlanCommand, base: WindowCommandBase, current: PlanContents): PlanCommand {
+  if (command.type === "initiative.register") {
+    const before = {
+      accounts: base.accounts ?? [], expansions: base.expansions ?? [], expansionCategories: base.expansionCategories ?? [],
+      periodTypes: base.periodTypes ?? [], departments: base.departments ?? [], industries: base.industries ?? [],
+    };
+    if (reconcileInitiativeDraftReferences(command.draft, before, current) !== command.draft) {
+      throw new Error("施策の選択先が別のデータに変更されています。入力を保持しました。分類と科目を選び直してください。");
+    }
+    return command;
+  }
   if (command.type === "account" || command.type === "aggregation") {
     const originalOrder = orderedMasterRows(base.accounts ?? [], base.aggregations ?? []);
     const latestOrder = orderedMasterRows(current.accounts, current.aggregations);
