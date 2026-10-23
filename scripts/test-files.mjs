@@ -1,3 +1,4 @@
+import { verifySpreadsheetOperation } from "../tests/spreadsheet-operation.mjs";
 import { verifyPreviousGridTable } from "../tests/previous-grid-table.mjs";
 import { verifyPreviousBaselines } from "../tests/previous-baselines.mjs";
 import { verifyAggregationLayout } from "../tests/aggregation-layout.mjs";
@@ -96,6 +97,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
     await verifySamplePlan(api, { excel });
     return;
   }
+  verifySpreadsheetOperation(api);
   await verifyPreviousBaselines(api);
   await verifyInitiativeDraftReferences(api);
   await verifyWindowSession(api);

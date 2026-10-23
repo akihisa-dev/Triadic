@@ -40,3 +40,5 @@ export { bindPlanProcessing, processPlan } from "../../Triadichrome-extension/sr
 export { latestNavigation } from "../../Triadichrome-extension/src/extension/workspace/latestNavigation";
 export { processWorkbookExport } from "../../Triadichrome-extension/src/extension/workbookExportProcessing";
 export { hasFileWritePermission, requestFileWritePermission } from "../../Triadichrome-extension/src/extension/filePermission";
+
+export { SpreadsheetOperation, spreadsheetWorking } from "../../Triadichrome-extension/src/extension/spreadsheetOperation";

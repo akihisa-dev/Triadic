@@ -32,7 +32,7 @@
     "description": "6ad5e38695f8cdaf6baf0d32ad061ad8a259535503342e4045125b530b96da6e"
   },
   "open": {
-    "implementation": "a3221b8f1290ec78afe98a75e2978cb768da5ec6978730c6a3dd39894606f04a",
+    "implementation": "5c66a31f894a45e638552e0e09fe2a7910d7c6bb73753ecbcbb7a05cbaa56e3b",
     "description": "8d01fd68c18f9e4a3256e8dd401c5275fbc236bdfaf33c5bb55c01674f790a3e"
   },
   "save": {
@@ -52,7 +52,7 @@
     "description": "f1f427fce2212e6cf9fddf5308ef30794853f527f3f0daa42492a4629aefb1d4"
   },
   "storage": {
-    "implementation": "983f1eacfb8c5d80281b78a9c64e401a5925a178dd92aac342343823a6011fe7",
+    "implementation": "854d90f407775cf6fba39b732aa54cdb6d906476b98f6ff5672efbb945e9e5f7",
     "description": "7a9ff02faab78f0b3a9899cd3d5117a67b541f6ca504ead25c451c5762a4448b"
   },
   "validation": {
@@ -64,7 +64,7 @@
     "description": "30b827fc38c32c0a0a729c8f3b34e19adb8bc476419176462301c7d9b710c035"
   },
   "spreadsheet": {
-    "implementation": "ccf91cc628bd49b2e7c5cc4d566d7c7e17566156b117e1b47fb335b0cef7bcdc",
+    "implementation": "86c23dfa6fb4acafb88d6998614d5d782e5f266ebbfbacc0673c1a824c92c025",
     "description": "a20a6ad6d5c441f649b5683dedb5ecacaf6d0f4dea0bf39f36254d658e76f6b3"
   },
   "initiative-sort": {
@@ -80,11 +80,11 @@
     "description": "3905bd9e163d8e964824ab9a7a34d2e51c48fbcd64dbe7de200dc2bc75195f9a"
   },
   "department-industries": {
-    "implementation": "8e994a2206c0c665f56e9091f334acfcff004b8a8ac3e8cde99b8b5c74bb5219",
+    "implementation": "a15040f13dd48e2ee7f2417683622886e1b0930f87792a8155168703674bc89a",
     "description": "d7bf89508107dee42b5ef476809121b0cb2e2aa5163f6c3b6a06f4ed2cff24cf"
   },
   "expansion-categories": {
-    "implementation": "870930961584db961a333e2bb38555177df56f359b28280e3c863663b5e7b6fd",
+    "implementation": "d89a44d86947bf32afb9822176f47a099986413d59584ec2837c9a339c33e897",
     "description": "ceb6e6617047d5f2dd2526d70e9604f5b9d48ddf02312d4c0c297f6df9e4bb12"
   },
   "cost-breakdown": {
@@ -100,7 +100,7 @@
     "description": "7d25ee848ea3f0b60b0af9920d4d8929cc77aef713e42a6088bead96adc1d011"
   },
   "duplicate-initiative": {
-    "implementation": "7eb2027444e1ed3f22180b974c806b6b874f90adcf5cde67930761427204f5af",
+    "implementation": "8923b8fff5e255056ff859fd7c229dab687cfe2fb2bac8e8099d55141c7016d8",
     "description": "10525cc703a2eaff73ff4a6c469f163cad65e1e9c390f6eb5cf60a3c285ec1f4"
   },
   "initiative-search": {
@@ -120,7 +120,7 @@
     "description": "73e6095f3f2c223c465e8f078162f9e7cc7ee7ae1449c6bd2d8c0cad9294d7dc"
   },
   "previous-baseline": {
-    "implementation": "b74fce419d649c12ca74e4f52b8b82b6a55e697cfaf10901846d3bb8f6e2fd88",
+    "implementation": "cd6f4ec0148a783ec7ed49b93b56e816e6932b9a4f76072868a8614a4a357264",
     "description": "3ed0dd26dd6efec88023cf45cfe96bbdd5e2740eb308a3d7854f001f86bbe7cb"
   }
 }

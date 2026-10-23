@@ -1,9 +1,10 @@
+import { SpreadsheetOperation, spreadsheetWorking, type SpreadsheetOperationState } from "./spreadsheetOperation";
 import { PreviousKindSelection } from "./PreviousKindSelection";
 import { MeasuredTableBody } from "./MeasuredTableBody";
 import { processWorkbookExport, type WorkbookExport } from "./workbookExportProcessing";
 import { previousKindName, type PreviousKind, type PreviousSelections } from "../core/domain/kinds";
 import { processPreviousWorkbook } from "./previousWorkbookProcessing";
-import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type DragEvent } from "react";
 import type { PlanContents } from "../core/domain/plan";
 import type { KindSelections, PlanChange, PreviousPatch } from "../core/domain/kinds";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
@@ -40,51 +41,49 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
     setClassificationSelection(currentSelection);
   }
   const { industries, departments, pairs } = currentSelection;
-  const [working, setWorking] = useState(false);
-  const running = useRef(false);
-  const exporting = useRef<AbortController | null>(null);
-  const [exportType, setExportType] = useState<WorkbookExport["type"] | null>(null);
-  useEffect(() => () => exporting.current?.abort(), []);
-  const previewPending = useRef(false);
+  const pendingCallback = useRef(onPendingChange);
+  pendingCallback.current = onPendingChange;
+  const [controller] = useState(() => new SpreadsheetOperation(pending => pendingCallback.current(pending)));
+  const operationState = useSyncExternalStore(controller.subscribe, controller.getSnapshot);
+  useEffect(() => () => controller.dispose(), [controller]);
+  const working = spreadsheetWorking(operationState);
+  const exportType = operationState.phase === "exporting" ? operationState.exportType : null;
+  const patches = operationState.phase === "preview" || operationState.phase === "saving" ? operationState.patches : null;
+  const retry = (operationState.phase === "preview" || operationState.phase === "saving") && operationState.retry;
   const [notice, setNotice] = useState("");
   const [error, setError] = useState(false);
   const revision = useSavedOperationRevision();
   const dismiss = useCallback(() => { setNotice(""); setError(false); }, []);
   useEffect(dismiss, [revision, dismiss]);
-  const [patches, setPatches] = useState<PreviousPatch[] | null>(null);
   const previewRows = useMemo(() => patches ? previousPatchPresentation(contents, patches) : [],
     [patches, contents.industries, contents.departments, contents.accounts]);
-  const [retry, setRetry] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const previewContainer = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
   const disabled = busy || working || patches !== null;
-  const operation = async (action: () => Promise<void>) => {
-    if (running.current) return;
-    running.current = true; setWorking(true); onPendingChange(true); setNotice(""); setError(false);
-    try { await action(); } catch (failure) {
+  const operation = async <T extends SpreadsheetOperationState,>(state: T | null, action: (state: T) => Promise<PreviousPatch[] | void>) => {
+    if (!state) return;
+    setNotice(""); setError(false);
+    try { controller.complete(state, await action(state) ?? undefined); } catch (failure) {
+      controller.fail(state);
       const cancelled = failure instanceof DOMException && failure.name === "AbortError";
       setNotice(cancelled ? "出力を中止しました。" : failure instanceof Error ? failure.message : "処理できませんでした。"); setError(!cancelled);
     }
-    finally { running.current = false; setWorking(false); onPendingChange(previewPending.current); }
   };
-  const exportFile = (request: WorkbookExport, name: string, message: string) => operation(async () => {
-    const controller = new AbortController(); exporting.current = controller; setExportType(request.type);
-    try {
-      const bytes = await processWorkbookExport(request, controller.signal);
-      if (!controller.signal.aborted) { download(bytes, name); setNotice(message); }
-    } finally { exporting.current = null; setExportType(null); }
+  const exportFile = (request: WorkbookExport, name: string, message: string) => operation(controller.beginExport(request.type), async state => {
+    const bytes = await processWorkbookExport(request, state.controller.signal);
+    if (!state.controller.signal.aborted) { download(bytes, name); setNotice(message); }
   });
   const importFiles = async (files: File[]) => {
     if (!files.length || disabled || readOnly) return;
-    await operation(async () => {
+    await operation(controller.beginReading(), async () => {
       if (files.length !== 1) throw new Error("取り込みファイルは一つずつ選択してください。");
       const file = files[0]!;
       if (!/\.xlsx$/i.test(file.name)) throw new Error("前年入力フォーマットのExcelファイル（.xlsx）を選択してください。");
       if (file.size > previousWorkbookLimits.compressedBytes) throw new Error("取り込みファイルは20MB以下にしてください。");
       const changes = await processPreviousWorkbook(new Uint8Array(await file.arrayBuffer()), contents);
       if (!changes.length) { setNotice("変更する金額がありません。"); return; }
-      previewPending.current = true; setPatches(changes); setRetry(false);
+      return changes;
     });
   };
   const drag = (event: DragEvent<HTMLElement>) => {
@@ -109,7 +108,7 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
       </div>)}
       <div className="form-actions"><button type="button" className="primary-button" disabled={disabled || !tables.length} onClick={() => { void exportFile({ type: "report", contents,
         options: { tables, selections, previousSelections, costFilter: { industries: industries.length ? industries : null, departments: departments.length ? departments : null } } }, `${contents.fiscalYear}年度予算.xlsx`, "表を出力しました。"); }}>選んだ表を出力</button>
-        {exportType === "report" && <button type="button" className="secondary-button" onClick={() => exporting.current?.abort()}>中止</button>}</div>
+        {exportType === "report" && <button type="button" className="secondary-button" onClick={() => controller.abortExport()}>中止</button>}</div>
     </section>
     <section className={`io-panel io-previous-panel${dragging && !disabled && !readOnly ? " is-drag-active" : ""}`} aria-labelledby="io-previous-title"
       onDragEnter={drag} onDragOver={drag}
@@ -130,7 +129,7 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
       </div>
       <div className="form-actions">
         <button type="button" className="secondary-button" disabled={disabled || !pairs.length} onClick={() => { void exportFile({ type: "previous", contents, pairs, previousKind }, `${contents.fiscalYear}年度_${previousKindName(previousKind)}入力.xlsx`, "前年入力フォーマットを出力しました。"); }}>フォーマットを出力</button>
-        {exportType === "previous" && <button type="button" className="secondary-button" onClick={() => exporting.current?.abort()}>中止</button>}
+        {exportType === "previous" && <button type="button" className="secondary-button" onClick={() => controller.abortExport()}>中止</button>}
         <button type="button" className="primary-button" disabled={disabled || readOnly} onClick={() => input.current?.click()}>フォーマットを取り込む</button>
         <input ref={input} type="file" accept=".xlsx" hidden onChange={event => { const files = Array.from(event.target.files ?? []); event.target.value = ""; void importFiles(files); }} />
       </div>
@@ -140,10 +139,9 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
           <MeasuredTableBody rows={previewRows} container={previewContainer} columns={6} rowKey={({ patch: p }) => `${p.previousKind}:${p.industryId}:${p.departmentId}:${p.accountId}:${p.month}`} render={({ patch: p, industryName, departmentName, accountName }) => <tr>
             <td>{industryName}</td><td>{departmentName}</td><td>{accountName}</td><td>{p.month}月</td><td>{p.before}</td><td>{p.after}</td>
           </tr>} /></table></div>
-        <div className="form-actions"><button type="button" className="secondary-button" disabled={working || busy} onClick={() => { previewPending.current = false; onPendingChange(false); setPatches(null); setRetry(false); setNotice(""); }}>キャンセル</button>
-          <button type="button" className="primary-button" disabled={working || busy || readOnly} onClick={() => { void operation(async () => {
-            try { await onPrepareSave(); await onChangePlan({ type: "previous-import", patches }); previewPending.current = false; setPatches(null); setRetry(false); setNotice("前年金額を取り込みました。"); }
-            catch (failure) { setRetry(true); throw failure; }
+        <div className="form-actions"><button type="button" className="secondary-button" disabled={working || busy} onClick={() => { controller.cancelPreview(); setNotice(""); }}>キャンセル</button>
+          <button type="button" className="primary-button" disabled={working || busy || readOnly} onClick={() => { void operation(controller.beginSaving(), async state => {
+            await onPrepareSave(); await onChangePlan({ type: "previous-import", patches: state.patches }); setNotice("前年金額を取り込みました。");
           }); }}>{retry ? "保存を再試行して取り込む" : "確認した内容を取り込む"}</button></div>
       </div>}
     </section>
