@@ -38,16 +38,20 @@ export function applyKindSelection(db: Database, screen: KindScreen, selected: K
   validateKindSelection(screen, selected);
   db.run("UPDATE kind_selections SET first_kind = ?, second_kind = ? WHERE screen = ?", [selected[0]!, selected[1] ?? null, screen]);
 }
-export async function saveKindSelection(bytes: Uint8Array, screen: KindScreen, selected: KindId[], edit = editDatabase): Promise<Uint8Array> {
-  return (await edit(bytes, db => applyKindSelection(db, screen, selected))).bytes;
+export async function saveKindSelection(bytes: Uint8Array, screen: KindScreen, selected: KindId[]): Promise<Uint8Array> {
+  return (await editDatabase(bytes, db => applyKindSelection(db, screen, selected))).bytes;
 }
-export async function changePlanSettings(bytes: Uint8Array, change: PlanChange, edit = editDatabase): Promise<Uint8Array> {
+export async function changePlanSettings(bytes: Uint8Array, change: PlanChange): Promise<Uint8Array> {
+  return (await editDatabase(bytes, db => applyPlanSettings(db, change))).bytes;
+}
+
+export function applyPlanSettings(db: Database, change: PlanChange): void {
   if (change.type === "previous-selection") {
     if (!["cost-table", "expansion-table"].includes(change.screen) || !isKindId(change.previousKind)) throw new Error("基準前年が正しくありません。");
-    return (await edit(bytes, db => { db.run("UPDATE kind_selections SET previous_kind = ? WHERE screen = ?", [change.previousKind, change.screen]); })).bytes;
+    db.run("UPDATE kind_selections SET previous_kind = ? WHERE screen = ?", [change.previousKind, change.screen]); return;
   }
-  if (change.type === "previous") return savePreviousAmounts(bytes, change.input, edit);
-  if (change.type === "previous-import") return (await edit(bytes, db => {
+  if (change.type === "previous") return applyPreviousAmounts(db, change.input);
+  if (change.type === "previous-import") {
     const seen = new Set<string>();
     if (!change.patches.length) throw new Error("変更する金額がありません。");
     const accounts = new Map((db.exec("SELECT id, code, name, attribute FROM accounts")[0]?.values ?? []).map(([id, ...fields]) => [Number(id), fields]));
@@ -69,28 +73,31 @@ export async function changePlanSettings(bytes: Uint8Array, change: PlanChange, 
       db.run(`INSERT INTO previous_amounts (account_id, industry_id, department_id, month, amount_yen, previous_kind) VALUES (?, ?, ?, ?, ?, ?)
         ON CONFLICT (account_id, industry_id, department_id, month, previous_kind) DO UPDATE SET amount_yen = excluded.amount_yen, revision = previous_amounts.revision + 1`, [patch.accountId, patch.industryId, patch.departmentId, patch.month, amount, patch.previousKind]);
     }
-  })).bytes;
-  return saveKindSelection(bytes, change.screen, change.selected, edit);
+    return;
+  }
+  applyKindSelection(db, change.screen, change.selected);
 }
-export async function savePreviousAmounts(bytes: Uint8Array, input: PreviousInput, edit = editDatabase): Promise<Uint8Array> {
+export async function savePreviousAmounts(bytes: Uint8Array, input: PreviousInput): Promise<Uint8Array> {
+  return (await editDatabase(bytes, db => applyPreviousAmounts(db, input))).bytes;
+}
+
+export function applyPreviousAmounts(db: Database, input: PreviousInput): void {
   if (!isKindId(input.previousKind)) throw new Error("前年の種類が正しくありません。");
   if (input.invalidNumbers) throw new Error("金額に有効な数値を入力してください。");
   if (new Set(input.rows.map(row => row.accountId)).size !== input.rows.length) throw new Error("同じ勘定科目が重複しています。");
-  return (await edit(bytes, db => {
-    if (!db.exec("SELECT id FROM industries WHERE id = ?", [input.industryId]).length) throw new Error("業種名を選択してください。");
-    if (!db.exec("SELECT id FROM departments WHERE id = ?", [input.departmentId]).length) throw new Error("部署名を選択してください。");
-    if (!db.exec("SELECT 1 FROM department_industries WHERE department_id = ? AND industry_id = ?", [input.departmentId, input.industryId]).length) throw new Error("部署に設定されている業種を選択してください。");
-    for (const row of input.rows) {
-      if (!db.exec("SELECT id FROM accounts WHERE id = ?", [row.accountId]).length) throw new Error("勘定科目が見つかりません。");
-      for (const [month, text] of Object.entries(row.amounts)) {
-        const monthNumber = Number(month);
-        if (!Number.isInteger(monthNumber) || monthNumber < 1 || monthNumber > 12) throw new Error("月が正しくありません。");
-        const amount = amountToYen(text || "0");
-        const saved = db.exec("SELECT amount_yen FROM previous_amounts WHERE account_id = ? AND industry_id = ? AND department_id = ? AND month = ? AND previous_kind = ?", [row.accountId, input.industryId, input.departmentId, monthNumber, input.previousKind])[0]?.values[0]?.[0] ?? 0;
-        if (amount === saved) continue;
-        db.run(`INSERT INTO previous_amounts (account_id, industry_id, department_id, month, amount_yen, previous_kind) VALUES (?, ?, ?, ?, ?, ?)
-          ON CONFLICT (account_id, industry_id, department_id, month, previous_kind) DO UPDATE SET amount_yen = excluded.amount_yen, revision = previous_amounts.revision + 1`, [row.accountId, input.industryId, input.departmentId, monthNumber, amount, input.previousKind]);
-      }
+  if (!db.exec("SELECT id FROM industries WHERE id = ?", [input.industryId]).length) throw new Error("業種名を選択してください。");
+  if (!db.exec("SELECT id FROM departments WHERE id = ?", [input.departmentId]).length) throw new Error("部署名を選択してください。");
+  if (!db.exec("SELECT 1 FROM department_industries WHERE department_id = ? AND industry_id = ?", [input.departmentId, input.industryId]).length) throw new Error("部署に設定されている業種を選択してください。");
+  for (const row of input.rows) {
+    if (!db.exec("SELECT id FROM accounts WHERE id = ?", [row.accountId]).length) throw new Error("勘定科目が見つかりません。");
+    for (const [month, text] of Object.entries(row.amounts)) {
+      const monthNumber = Number(month);
+      if (!Number.isInteger(monthNumber) || monthNumber < 1 || monthNumber > 12) throw new Error("月が正しくありません。");
+      const amount = amountToYen(text || "0");
+      const saved = db.exec("SELECT amount_yen FROM previous_amounts WHERE account_id = ? AND industry_id = ? AND department_id = ? AND month = ? AND previous_kind = ?", [row.accountId, input.industryId, input.departmentId, monthNumber, input.previousKind])[0]?.values[0]?.[0] ?? 0;
+      if (amount === saved) continue;
+      db.run(`INSERT INTO previous_amounts (account_id, industry_id, department_id, month, amount_yen, previous_kind) VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT (account_id, industry_id, department_id, month, previous_kind) DO UPDATE SET amount_yen = excluded.amount_yen, revision = previous_amounts.revision + 1`, [row.accountId, input.industryId, input.departmentId, monthNumber, amount, input.previousKind]);
     }
-  })).bytes;
+  }
 }

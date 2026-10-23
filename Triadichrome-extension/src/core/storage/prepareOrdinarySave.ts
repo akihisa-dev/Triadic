@@ -1,11 +1,10 @@
 import type { PlanCommand } from "../domain/planCommands";
-import { applyPlanCommand } from "./planCommands";
+import { applyPlanCommandToDatabase } from "./planCommands";
 import { prepareCommandComparison } from "./commandComparison";
 import { createBusinessSnapshot } from "./dataHistory";
 import { openTriadicDatabase } from "./triadicDatabase";
 import { finishPreparedSave } from "./prepareSave";
 import { readContents } from "./readPlan";
-import type { editDatabase } from "./transaction";
 type OrdinaryPreparation = { bytes: Uint8Array; operation: null }
   | Awaited<ReturnType<typeof finishPreparedSave<ReturnType<typeof readContents>>>>;
 
@@ -17,8 +16,7 @@ export async function prepareOrdinarySave(bytes: Uint8Array, command: PlanComman
     let changed: boolean;
     database.run("BEGIN");
     try {
-      const edit: typeof editDatabase = async (_bytes, change) => ({ bytes, result: change(database) });
-      await applyPlanCommand(bytes, command, fiscalYear, edit);
+      applyPlanCommandToDatabase(database, command, fiscalYear);
       changed = comparison.changed();
       if (changed) database.run("UPDATE document_info SET updated_at = ? WHERE id = 1", [new Date().toISOString()]);
       database.run(changed ? "COMMIT" : "ROLLBACK");

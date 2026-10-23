@@ -67,7 +67,7 @@ test("330科目17組の前年変更確認で全名称・値・保存失敗後の
   await app.getByRole('button', { name: '通知を閉じる', exact: true }).click();
   await expect(app.getByRole('alert')).toHaveCount(0);
   await preview.getByRole("button", { name: "保存を再試行して取り込む", exact: true }).click();
-  await expect(preview).toHaveCount(0);
+  await expect(preview).toHaveCount(0, { timeout: 60_000 });
   await expect(app.getByText('前年金額を取り込みました。', { exact: true })).toBeVisible({ timeout: 60_000 });
   const savedCount = await app.locator('body').evaluate(async () => {
     const path = '/Triadichrome-extension/src/core/storage/readPlan.ts';

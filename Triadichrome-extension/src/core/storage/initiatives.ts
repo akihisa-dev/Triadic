@@ -15,20 +15,22 @@ import { editDatabase } from "./transaction";
 const listNames = (database: Database, except?: number) => (database.exec("SELECT id, name FROM initiatives")[0]?.values ?? [])
   .filter(([id]) => id !== except).map(([, name]) => ({ name: String(name) }));
 /** Register 12 fixed months per input row on a private database copy. */
-export async function registerInitiative(bytes: Uint8Array, draft: InitiativeEntryDraft, edit = editDatabase): Promise<Uint8Array> {
-  return (await edit(bytes, database => {
-    validateInitiative(draft, listAccounts(database), listNames(database), listExpansions(database), listDepartments(database), listPeriodTypes(database), listIndustries(database));
-    if (Number(draft.fiscalYear) !== readFiscalYear(database)) throw new Error("年度はファイルの基準年度と同じにしてください。");
-    database.run(`INSERT INTO initiatives (name, note, expansion_id, expansion_category_id, department_id, period_type_id, industry_id, sort_order)
-      VALUES (?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM initiatives))`, [draft.name.trim(), draft.note, draft.expansionId, draft.expansionCategoryId ?? null, draft.departmentId ?? null, draft.periodTypeId ?? null, draft.industryId ?? null]);
-    const id = Number(database.exec("SELECT last_insert_rowid()")[0]!.values[0]![0]);
-    for (const [index, row] of draft.rows.entries()) {
-      if (row.accountId === null) continue;
-      const rowId = row.id ?? crypto.randomUUID();
-      database.run("INSERT INTO initiative_rows (id, initiative_id, account_id, sort_order) VALUES (?, ?, ?, ?)", [rowId, id, row.accountId, index]);
-      writeAmounts(database, rowId, row);
-    }
-  })).bytes;
+export async function registerInitiative(bytes: Uint8Array, draft: InitiativeEntryDraft): Promise<Uint8Array> {
+  return (await editDatabase(bytes, database => applyInitiativeRegistration(database, draft))).bytes;
+}
+
+export function applyInitiativeRegistration(database: Database, draft: InitiativeEntryDraft): void {
+  validateInitiative(draft, listAccounts(database), listNames(database), listExpansions(database), listDepartments(database), listPeriodTypes(database), listIndustries(database));
+  if (Number(draft.fiscalYear) !== readFiscalYear(database)) throw new Error("年度はファイルの基準年度と同じにしてください。");
+  database.run(`INSERT INTO initiatives (name, note, expansion_id, expansion_category_id, department_id, period_type_id, industry_id, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM initiatives))`, [draft.name.trim(), draft.note, draft.expansionId, draft.expansionCategoryId ?? null, draft.departmentId ?? null, draft.periodTypeId ?? null, draft.industryId ?? null]);
+  const id = Number(database.exec("SELECT last_insert_rowid()")[0]!.values[0]![0]);
+  for (const [index, row] of draft.rows.entries()) {
+    if (row.accountId === null) continue;
+    const rowId = row.id ?? crypto.randomUUID();
+    database.run("INSERT INTO initiative_rows (id, initiative_id, account_id, sort_order) VALUES (?, ?, ?, ?)", [rowId, id, row.accountId, index]);
+    writeAmounts(database, rowId, row);
+  }
 }
 
 /** The absence of a confirmed record means inheritance; explicit zero/same values stay records. */
@@ -47,36 +49,38 @@ function writeAmounts(db: Database, rowId: string, source: AmountSource): void {
   }
 }
 
-export async function updateInitiative(bytes: Uint8Array, id: number, previousYear: number | null, draft: InitiativeEntryDraft, edit = editDatabase): Promise<Uint8Array> {
-  return (await edit(bytes, database => {
-    const fiscalYear = readFiscalYear(database);
-    const initiatives = listInitiatives(database, fiscalYear, id);
-    const original = initiatives.find(item => item.id === id && item.fiscalYear === previousYear);
-    if (!original) throw new Error("更新する施策が見つかりません。");
-    if (Number(draft.fiscalYear) !== fiscalYear) throw new Error("年度はファイルの基準年度と同じにしてください。");
-    validateInitiative(draft, listAccounts(database), listNames(database, id), listExpansions(database), listDepartments(database), listPeriodTypes(database), listIndustries(database), true);
-    const ids = draft.rows.flatMap(row => row.id === undefined ? [] : [row.id]);
-    if (new Set(ids).size !== ids.length || ids.some(rowId => { const owner = database.exec("SELECT initiative_id FROM initiative_rows WHERE id = ?", [rowId])[0]?.values[0]?.[0]; return owner !== undefined && owner !== id; })) throw new Error("勘定科目行の識別子が正しくありません。");
-    const originalRowsById = new Map(original.rows.map(row => [row.id, row]));
-    const draftRowsById = new Map(draft.rows.filter(row => row.id !== undefined).map(row => [row.id, row]));
-    for (const row of original.rows) {
-      const next = draftRowsById.get(row.id);
-      if ((!next || next.accountId !== row.accountId) && !canChangeAccountRow(row)) throw new Error("全種別・全月の金額が0の行だけ勘定科目を変更・削除できます。");
-    }
-    database.run("UPDATE initiatives SET name = ?, note = ?, expansion_id = ?, expansion_category_id = ?, department_id = ?, period_type_id = ?, industry_id = ?, revision = revision + 1 WHERE id = ?", [draft.name.trim(), draft.note, draft.expansionId, draft.expansionCategoryId ?? null, draft.departmentId ?? null, draft.periodTypeId ?? null, draft.industryId ?? null, id]);
-    for (const row of original.rows) if (!draftRowsById.has(row.id) || draftRowsById.get(row.id)!.accountId === null) {
-      database.run("DELETE FROM initiative_amounts WHERE row_id = ?", [row.id!]);
-      database.run("DELETE FROM initiative_rows WHERE id = ?", [row.id!]);
-    }
-    for (const [index, row] of draft.rows.entries()) {
-      if (row.accountId === null) continue;
-      let rowId = row.id;
-      if (rowId === undefined || !originalRowsById.has(rowId)) {
-        rowId ??= crypto.randomUUID();
-        database.run("INSERT INTO initiative_rows (id, initiative_id, account_id, sort_order) VALUES (?, ?, ?, ?)", [rowId, id, row.accountId, index]);
-        writeAmounts(database, rowId, { amounts: {} });
-      } else database.run("UPDATE initiative_rows SET account_id = ?, sort_order = ?, revision = revision + 1 WHERE id = ? AND initiative_id = ?", [row.accountId, index, rowId, id]);
-      writeAmounts(database, rowId, row);
-    }
-  })).bytes;
+export async function updateInitiative(bytes: Uint8Array, id: number, previousYear: number | null, draft: InitiativeEntryDraft): Promise<Uint8Array> {
+  return (await editDatabase(bytes, database => applyInitiativeUpdate(database, id, previousYear, draft))).bytes;
+}
+
+export function applyInitiativeUpdate(database: Database, id: number, previousYear: number | null, draft: InitiativeEntryDraft): void {
+  const fiscalYear = readFiscalYear(database);
+  const initiatives = listInitiatives(database, fiscalYear, id);
+  const original = initiatives.find(item => item.id === id && item.fiscalYear === previousYear);
+  if (!original) throw new Error("更新する施策が見つかりません。");
+  if (Number(draft.fiscalYear) !== fiscalYear) throw new Error("年度はファイルの基準年度と同じにしてください。");
+  validateInitiative(draft, listAccounts(database), listNames(database, id), listExpansions(database), listDepartments(database), listPeriodTypes(database), listIndustries(database), true);
+  const ids = draft.rows.flatMap(row => row.id === undefined ? [] : [row.id]);
+  if (new Set(ids).size !== ids.length || ids.some(rowId => { const owner = database.exec("SELECT initiative_id FROM initiative_rows WHERE id = ?", [rowId])[0]?.values[0]?.[0]; return owner !== undefined && owner !== id; })) throw new Error("勘定科目行の識別子が正しくありません。");
+  const originalRowsById = new Map(original.rows.map(row => [row.id, row]));
+  const draftRowsById = new Map(draft.rows.filter(row => row.id !== undefined).map(row => [row.id, row]));
+  for (const row of original.rows) {
+    const next = draftRowsById.get(row.id);
+    if ((!next || next.accountId !== row.accountId) && !canChangeAccountRow(row)) throw new Error("全種別・全月の金額が0の行だけ勘定科目を変更・削除できます。");
+  }
+  database.run("UPDATE initiatives SET name = ?, note = ?, expansion_id = ?, expansion_category_id = ?, department_id = ?, period_type_id = ?, industry_id = ?, revision = revision + 1 WHERE id = ?", [draft.name.trim(), draft.note, draft.expansionId, draft.expansionCategoryId ?? null, draft.departmentId ?? null, draft.periodTypeId ?? null, draft.industryId ?? null, id]);
+  for (const row of original.rows) if (!draftRowsById.has(row.id) || draftRowsById.get(row.id)!.accountId === null) {
+    database.run("DELETE FROM initiative_amounts WHERE row_id = ?", [row.id!]);
+    database.run("DELETE FROM initiative_rows WHERE id = ?", [row.id!]);
+  }
+  for (const [index, row] of draft.rows.entries()) {
+    if (row.accountId === null) continue;
+    let rowId = row.id;
+    if (rowId === undefined || !originalRowsById.has(rowId)) {
+      rowId ??= crypto.randomUUID();
+      database.run("INSERT INTO initiative_rows (id, initiative_id, account_id, sort_order) VALUES (?, ?, ?, ?)", [rowId, id, row.accountId, index]);
+      writeAmounts(database, rowId, { amounts: {} });
+    } else database.run("UPDATE initiative_rows SET account_id = ?, sort_order = ?, revision = revision + 1 WHERE id = ? AND initiative_id = ?", [row.accountId, index, rowId, id]);
+    writeAmounts(database, rowId, row);
+  }
 }

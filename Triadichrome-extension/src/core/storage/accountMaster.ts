@@ -22,32 +22,35 @@ export async function readAccountMaster(bytes: Uint8Array): Promise<Account[]> {
   finally { database.close(); }
 }
 
-export async function changeAccountMaster(bytes: Uint8Array, change: AccountChange, edit = editDatabase) {
-  return await edit(bytes, database => {
-    const before = listAccounts(database);
-    const presentation = readMasterPresentation(database);
-    const order = change.presentationOrder ?? presentation.order;
-    if (change.presentationOrder) validateMasterOrder(change.presentationOrder,before,listAggregations(database));
-    validateAccountChange(before, change);
-    if (change.type === "delete") {
-      database.run("DELETE FROM accounts WHERE id = ?", [change.id]);
-    } else if (change.type !== "reorder") {
-      const code = change.accountCode.trim();
-      const name = change.accountName.trim();
-      if (change.type === "add") {
-        database.run(`INSERT INTO accounts (code, name, attribute) VALUES (?, ?, ?)`, [code, name, change.accountType]);
-      } else {
-        database.run("UPDATE accounts SET code = ?, name = ?, attribute = ? WHERE id = ?", [code, name, change.accountType, change.id]);
-      }
+export async function changeAccountMaster(bytes: Uint8Array, change: AccountChange) {
+  return editDatabase(bytes, database => applyAccountChange(database, change))
+    .then(({ bytes, result }) => ({ bytes, accounts: result }));
+}
+
+export function applyAccountChange(database: Database, change: AccountChange): Account[] {
+  const before = listAccounts(database);
+  const presentation = readMasterPresentation(database);
+  const order = change.presentationOrder ?? presentation.order;
+  if (change.presentationOrder) validateMasterOrder(change.presentationOrder,before,listAggregations(database));
+  validateAccountChange(before, change);
+  if (change.type === "delete") {
+    database.run("DELETE FROM accounts WHERE id = ?", [change.id]);
+  } else if (change.type !== "reorder") {
+    const code = change.accountCode.trim();
+    const name = change.accountName.trim();
+    if (change.type === "add") {
+      database.run(`INSERT INTO accounts (code, name, attribute) VALUES (?, ?, ?)`, [code, name, change.accountType]);
+    } else {
+      database.run("UPDATE accounts SET code = ?, name = ?, attribute = ? WHERE id = ?", [code, name, change.accountType, change.id]);
     }
-    if (change.type === "add" || change.type === "update") {
-      const current = change.type === "update" ? before.find(item => item.id === change.id) : undefined;
-      const id = current?.id ?? Number(database.exec("SELECT last_insert_rowid()")[0]?.values[0]?.[0]);
-      const display = change.displayName?.trim() ?? (current?.displayName && current.displayName !== current.accountName ? current.displayName : change.accountName.trim());
-      database.run("UPDATE accounts SET display_name = ? WHERE id = ?", [display === change.accountName.trim() ? null : display, id]);
-    }
-    if (change.type === "reorder") { let cursor=0; reconcileMasterOrder(database,order.map(row => row.kind === "account" ? {...row,id:change.ids[cursor++]!} : row)); }
-    else reconcileMasterOrder(database,order);
-    return listAccounts(database);
-  }).then(({ bytes, result }) => ({ bytes, accounts: result }));
+  }
+  if (change.type === "add" || change.type === "update") {
+    const current = change.type === "update" ? before.find(item => item.id === change.id) : undefined;
+    const id = current?.id ?? Number(database.exec("SELECT last_insert_rowid()")[0]?.values[0]?.[0]);
+    const display = change.displayName?.trim() ?? (current?.displayName && current.displayName !== current.accountName ? current.displayName : change.accountName.trim());
+    database.run("UPDATE accounts SET display_name = ? WHERE id = ?", [display === change.accountName.trim() ? null : display, id]);
+  }
+  if (change.type === "reorder") { let cursor=0; reconcileMasterOrder(database,order.map(row => row.kind === "account" ? {...row,id:change.ids[cursor++]!} : row)); }
+  else reconcileMasterOrder(database,order);
+  return listAccounts(database);
 }
