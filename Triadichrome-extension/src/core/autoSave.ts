@@ -1,4 +1,4 @@
-import { reconcileSavedDraft } from "./reconcileSavedDraft";
+import { DraftAccountConflictError, reconcileSavedDraft } from "./reconcileSavedDraft";
 export type AutoSaveState<T> = {
   draft: T | null;
   pending: boolean;
@@ -44,7 +44,15 @@ export class AutoSave<T> {
     this.replacement = null;
     this.identity = identity;
     if (this.state.saving) { this.incoming = draft; return; }
-    const current = this.saved === null || this.state.draft === null ? draft : reconcileSavedDraft(this.saved, this.state.draft, draft);
+    let current: T;
+    try { current = this.saved === null || this.state.draft === null ? draft : reconcileSavedDraft(this.saved, this.state.draft, draft); }
+    catch (error) {
+      if (!(error instanceof DraftAccountConflictError)) throw error;
+      this.replacement = { draft, identity };
+      this.cancelTimer();
+      this.publish({ ...this.state, pending: true, error: error.message });
+      return;
+    }
     this.saved = draft;
     const pending = !this.equal(current, draft);
     if (!pending) clearTimeout(this.timer);
@@ -80,7 +88,14 @@ export class AutoSave<T> {
       }
       const persisted = this.incoming ?? draft;
       this.incoming = null;
-      const latest = reconcileSavedDraft(draft, this.state.draft!, persisted);
+      let latest: T;
+      try { latest = reconcileSavedDraft(draft, this.state.draft!, persisted); }
+      catch (error) {
+        if (!(error instanceof DraftAccountConflictError)) throw error;
+        this.replacement = { draft: persisted, identity: this.identity };
+        this.publish({ ...this.state, pending: true, saving: false, error: error.message });
+        return error.message;
+      }
       this.saved = persisted;
       const pending = !this.equal(latest, persisted);
       this.publish({ ...this.state, draft: latest, pending, saving: false, error: "" });

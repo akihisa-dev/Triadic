@@ -6,6 +6,7 @@ export * from "../../Triadichrome-extension/src/core/domain/expansionCategoryMas
 export * from "../../Triadichrome-extension/src/core/domain/masterRows";
 export * from "../../Triadichrome-extension/src/core/tables/costComparison";
 export * from "../../Triadichrome-extension/src/core/autoSave";
+export * from "../../Triadichrome-extension/src/core/reconcileSavedDraft";
 export * from "../../Triadichrome-extension/src/core/domain/accountEffects";
 export * from "../../Triadichrome-extension/src/core/domain/accountMaster";
 export * from "../../Triadichrome-extension/src/core/domain/accountTypes";

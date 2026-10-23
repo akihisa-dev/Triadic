@@ -1,6 +1,14 @@
 const equal = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 const record = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value);
 
+export class DraftAccountConflictError extends Error {
+  constructor() { super("科目と金額が別々に変更されています。入力を保持しました。内容を確認してからやり直してください。"); }
+}
+
+function changedMoney(before: Record<string, unknown>, after: Record<string, unknown>) {
+  return ["amounts", "overrides", "invalidAmounts"].some(key => !equal(before[key], after[key]));
+}
+
 /** Apply only edits made since submission over the values actually committed to the file. */
 export function reconcileSavedDraft<T>(submitted: T, pending: T, persisted: T): T {
   const merge = (base: unknown, local: unknown, saved: unknown): unknown => {
@@ -21,6 +29,12 @@ export function reconcileSavedDraft<T>(submitted: T, pending: T, persisted: T): 
       return order.map(id => merge(original!.get(id), edited!.get(id), committed!.get(id))).filter(value => value !== undefined);
     }
     if (record(base) && record(local) && record(saved)) {
+      // A row's amount must never be silently attached to a different account.
+      if (base.id !== undefined && base.accountId !== undefined &&
+        ((!equal(base.accountId, local.accountId) && changedMoney(base, saved)) ||
+         (!equal(base.accountId, saved.accountId) && changedMoney(base, local)))) {
+        throw new DraftAccountConflictError();
+      }
       return Object.fromEntries([...new Set([...Object.keys(base), ...Object.keys(local), ...Object.keys(saved)])]
         .map(key => [key, merge(base[key], local[key], saved[key])]).filter(([, value]) => value !== undefined));
     }
