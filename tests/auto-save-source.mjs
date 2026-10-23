@@ -84,5 +84,30 @@ export async function verifyAutoSaveSource(api) {
     await Promise.all([firstFlush, secondFlush]);
     assert.deepEqual(commits, ['最初', '保存中の追加入力']); assert.equal(concurrent.getSnapshot().pending, false);
   } finally { unregister(); concurrent.cancelTimer(); }
+  for (const waiters of [2, 3]) for (const message of ['入力不備', '書き込み拒否']) for (const correctImmediately of [false, true]) {
+    let release, attempts = 0;
+    const failing = new api.AutoSave(async () => {
+      attempts++;
+      if (attempts === 1) { await new Promise(resolve => { release = resolve; }); throw new Error(message); }
+    }, 100000);
+    const remove = api.registerAutoSave(failing);
+    const stop = failing.subscribe(() => {
+      if (correctImmediately && failing.getSnapshot().error) failing.change('訂正済み');
+    });
+    try {
+      failing.begin('元'); failing.change('不正な入力');
+      const pending = Array.from({ length: waiters }, () => api.flushAutoSaves());
+      release();
+      const results = await Promise.allSettled(pending);
+      assert.equal(attempts, 1, '同じ失敗を待った要求は保存を再試行しない');
+      assert.ok(results.every(result => result.status === 'rejected' && result.reason.message === message));
+      assert.equal(failing.getSnapshot().pending, true);
+      assert.equal(failing.getSnapshot().draft, correctImmediately ? '訂正済み' : '不正な入力');
+      // A new, explicit request can retry after the failed callers have all settled.
+      if (!correctImmediately) failing.change('訂正済み');
+      await api.flushAutoSaves();
+      assert.equal(attempts, 2); assert.equal(failing.getSnapshot().pending, false);
+    } finally { stop(); remove(); failing.cancelTimer(); }
+  }
   console.log('PASS: 編集元の作成識別子保護、遅延保存の成功/失敗、最新入力の回収、参照再確認、独立登録と取消やり直し');
 }

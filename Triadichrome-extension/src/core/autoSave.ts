@@ -17,6 +17,7 @@ export class AutoSave<T> {
   private timer: ReturnType<typeof setTimeout> | undefined;
   private listeners = new Set<() => void>();
   private composing = false;
+  private savingResult: Promise<string> | null = null;
   constructor(private save: (draft: T) => Promise<void>, private delay = 600) {}
   getSnapshot = () => this.state;
   isComposing = () => this.composing;
@@ -54,10 +55,19 @@ export class AutoSave<T> {
     this.publish({ ...this.state, draft, pending: !!this.replacement || this.state.saving || !this.equal(draft, this.saved), error: this.replacement ? this.replacementError : "" });
     if (this.state.pending && !this.composing && !this.replacement) this.timer = setTimeout(() => { void this.flush(); }, this.delay);
   }
-  async flush() {
+  async flush() { await this.flushResult(); }
+  /** All waiters observe the outcome of the same attempt, even if input changes immediately afterward. */
+  flushResult(): Promise<string> {
     clearTimeout(this.timer);
-    if (this.replacement || this.composing || this.state.saving || !this.state.pending || this.state.draft === null) return;
-    const draft = this.state.draft;
+    if (this.savingResult) return this.savingResult;
+    if (this.replacement || this.composing || !this.state.pending || this.state.draft === null) return Promise.resolve(this.state.error);
+    let complete!: (error: string) => void;
+    const result = new Promise<string>(resolve => { complete = resolve; });
+    this.savingResult = result;
+    void this.saveDraft(this.state.draft).then(error => { this.savingResult = null; complete(error); });
+    return result;
+  }
+  private async saveDraft(draft: T): Promise<string> {
     this.incoming = null;
     this.publish({ ...this.state, saving: true, error: "" });
     try {
@@ -66,7 +76,7 @@ export class AutoSave<T> {
       if (this.replacement) {
         this.incoming = null;
         this.publish({ ...this.state, pending: true, saving: false, error: this.replacementError });
-        return;
+        return this.replacementError;
       }
       const persisted = this.incoming ?? draft;
       this.incoming = null;
@@ -75,9 +85,12 @@ export class AutoSave<T> {
       const pending = !this.equal(latest, persisted);
       this.publish({ ...this.state, draft: latest, pending, saving: false, error: "" });
       if (pending && !this.composing) this.timer = setTimeout(() => { void this.flush(); }, this.delay);
+      return "";
     } catch (error) {
       clearTimeout(this.timer);
-      this.publish({ ...this.state, pending: true, saving: false, error: this.replacement ? this.replacementError : error instanceof Error ? error.message : "自動保存できませんでした。" });
+      const message = this.replacement ? this.replacementError : error instanceof Error ? error.message : "自動保存できませんでした。";
+      this.publish({ ...this.state, pending: true, saving: false, error: message });
+      return message;
     }
   }
   fail(error: unknown) {

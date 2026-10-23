@@ -9,9 +9,9 @@ export async function verifyAutoSave(api) {
   queue.change({ value: "first" });
   const first = queue.flush();
   queue.change({ value: "latest" });
-  await queue.flush();
+  const sameAttempt = queue.flush();
   assert.equal(writes.length, 1, "同時書き込みしない");
-  complete(); await first;
+  complete(); await Promise.all([first, sameAttempt]);
   assert.equal(queue.getSnapshot().draft.value, "latest");
   assert.equal(queue.getSnapshot().pending, true);
   const next = queue.flush(); complete(); await next;
