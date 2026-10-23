@@ -50,7 +50,7 @@ async function repository(t) {
   for (const name of Object.keys(env)) if (name.startsWith("GIT_")) delete env[name];
   Object.assign(env, { GIT_CONFIG_GLOBAL: devNull, GIT_CONFIG_NOSYSTEM: "1" });
   const run = (command, args, options = {}) => spawnSync(command, args, {
-    cwd: root, env, encoding: "utf8", ...options,
+    cwd: root, encoding: "utf8", ...options, env: { ...env, ...options.env },
   });
   const git = (...args) => {
     const result = run("git", args);
@@ -180,13 +180,23 @@ test("pre-pushはブラウザ不要の検証を呼び出し、成功・失敗を
   await writeFile(path.join(bin, "npm"), '#!/bin/sh\nprintf "%s\\n" "$@" > "$TRIADICHROME_HOOK_TEST_LOG"\nexit "$TRIADICHROME_HOOK_TEST_EXIT"\n', { mode: 0o755 });
   for (const exitCode of [0, 7]) {
     const result = repo.run("sh", [".githooks/pre-push"], {
-      env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}`, TRIADICHROME_HOOK_TEST_LOG: log, TRIADICHROME_HOOK_TEST_EXIT: String(exitCode) },
+      env: { PATH: `${bin}${path.delimiter}${process.env.PATH}`, TRIADICHROME_HOOK_TEST_LOG: log, TRIADICHROME_HOOK_TEST_EXIT: String(exitCode) },
     });
     assert.equal(result.status, exitCode);
     assert.equal(await readFile(log, "utf8"), "run\nverify\n");
   }
 });
 
+
+test("親のGit環境があってもpre-pushの成功・失敗を独立したリポジトリで検証する", async t => {
+  const outer = await repository(t);
+  const result = spawnSync(process.execPath, ["--test", "--test-name-pattern=^pre-pushはブラウザ不要", fileURLToPath(import.meta.url)], {
+    cwd: projectRoot, encoding: "utf8",
+    env: { ...process.env, GIT_DIR: path.join(outer.root, ".git"), GIT_WORK_TREE: outer.root, GIT_INDEX_FILE: path.join(outer.root, ".git/index") },
+  });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.equal(outer.git("status", "--porcelain"), "");
+});
 
 test("distの拡張機能を通常追加でき、配布ZIPと一時ファイルは除外する", async t => {
   const repo = await repository(t);
