@@ -119,5 +119,19 @@ export async function verifyWindowControlTimeout(api, bytes) {
   assert.equal(discarded, false); assert.equal(closed, false);
   assert.ok(replies.every(reply => /期限/.test(reply.error)));
   assert.equal(session.getWindowSnapshot().settling, false);
+  const failed = new api.WindowPlanSession();
+  const contents = { marker: '保存済み内容' };
+  failed.snapshot = { ...failed.getSnapshot(), contents, busy: true };
+  failed.info = { ...failed.getWindowSnapshot(), settling: true };
+  let rejected;
+  failed.pending.set(1, { resolve: () => assert.fail('故障後に成功しない'), reject: error => { rejected = error; } });
+  failed.failWorker();
+  assert.match(rejected.message,/入力を控えてからページを再読み込み/);
+  assert.equal(failed.getSnapshot().busy,false,'Worker故障で処理中表示を解除する');
+  assert.equal(failed.getWindowSnapshot().settling,false);
+  assert.equal(failed.getSnapshot().contents,contents,'保存済みの表示内容は保持');
+  assert.equal(failed.pending.size,0);
+  await failed.receive({ type: 'state', snapshot: { ...failed.getSnapshot(), busy: true, historyError: '' }, info: failed.getWindowSnapshot() });
+  assert.equal(failed.getSnapshot().busy,false,'故障後の遅れた通知で処理中に戻さない');
   console.log("PASS: flush・draft・resumeの未応答、保存・取消・履歴の有限中止、遅延返信、入力とファイル保持、再試行、期限切れ要求の拒否");
 }

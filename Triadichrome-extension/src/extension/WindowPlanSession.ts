@@ -55,13 +55,7 @@ export class WindowPlanSession implements SessionAccess {
   private async initialize() {
     const worker = this.createTransport?.() ?? new SharedWorker(new URL("./windowSession.worker.ts", import.meta.url), { type: "module", name: "triadichrome-documents" });
     this.port = worker.port;
-    worker.onerror = () => {
-      const error = new Error("ウィンドウ間の処理を続けられませんでした。未保存の入力は保持しています。保存済みのファイルから開き直してください。");
-      this.failure = error; this.updateInfo({ settling: false });
-      for (const request of this.pending.values()) request.reject(error);
-      this.pending.clear(); this.snapshot = { ...this.snapshot, historyError: error.message };
-      this.listeners.forEach(listener => listener());
-    };
+    worker.onerror = () => this.failWorker();
     this.port.onmessage = event => { void this.receive(event.data as HubMessage); };
     this.port.start();
     const lock = `triadichrome-window:${crypto.randomUUID()}`;
@@ -84,6 +78,14 @@ export class WindowPlanSession implements SessionAccess {
       if (this.info.peers > 1 && this.info.group) this.activation = this.call("activate").catch(() => {});
     });
   }
+  private failWorker() {
+    if (this.failure) return;
+    const error = new Error("ウィンドウ間の処理を続けられませんでした。未保存の入力を控えてからページを再読み込みし、保存済みファイルを開き直して処理結果を確認してください。");
+    this.failure = error; this.updateInfo({ settling: false });
+    for (const request of this.pending.values()) request.reject(error);
+    this.pending.clear(); this.snapshot = { ...this.snapshot, busy: false, historyError: error.message };
+    this.listeners.forEach(listener => listener());
+  }
   private call<M extends HubMethod>(method: M, ...args: HubArgs<M>): Promise<HubResult<M>> {
     return new Promise<HubResult<M>>((resolve, reject) => {
       if (this.failure) { reject(this.failure); return; }
@@ -95,6 +97,7 @@ export class WindowPlanSession implements SessionAccess {
   }
   private async request<M extends HubMethod>(method: M, ...args: HubArgs<M>): Promise<HubResult<M>> { await this.start(); return this.call(method, ...args); }
   private async receive(message: HubMessage) {
+    if (this.failure) return;
     if (message.type === "result") {
       const request = this.pending.get(message.id);
       if (!request) return;
