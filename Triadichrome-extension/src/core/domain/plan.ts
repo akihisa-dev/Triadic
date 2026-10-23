@@ -20,7 +20,5 @@ export type Initiative = {
   rows: InitiativeRow[];
   revision: number;
   startYearMonths: InitiativeStartMonths;
-  /** Derived monetary values are integer yen; input rows remain decimal thousands. */
-  months: Partial<Record<InitiativeMonth, { sales: number | null; expense: number; profit: number | null }>>;
 };
 export type PlanContents = PlanSettings & { accounts: Account[]; initiatives: Initiative[]; aggregations: Aggregation[]; expansions: Expansion[]; expansionCategories: ExpansionCategory[]; industries: Industry[]; departments: Department[]; periodTypes: PeriodType[]; kinds: Kind[]; };

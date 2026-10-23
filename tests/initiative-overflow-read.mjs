@@ -6,7 +6,7 @@ export async function verifyInitiativeOverflowRead(api) {
     const original = bytes.slice();
     await api.validateTriadicDatabase(bytes);
     const contents = await api.readPlanContents(bytes);
-    assert.deepEqual(contents.initiatives[0].months, {}, '読込は表示用の集計を実行しない');
+    assert.equal('months' in contents.initiatives[0], false, '読込は表示用の集計を実行しない');
     assert.equal(api.resolvedAmount(contents.initiatives[0].rows[0], kind, 4), '5000000000000');
     assert.throws(() => api.initiativesForKind(contents.initiatives, contents.accounts, kind), /範囲を超え/);
     assert.deepEqual(bytes, original, '読込は元の金額を変更しない');

@@ -24,7 +24,7 @@ function Preview() {
     <button onClick={() => setKind(kind === 1 ? 2 : 1)}>{kind === 1 ? "確定予算へ" : "一次予算へ"}</button>
     <button onClick={() => setFixed(!fixed)}>属性を切替</button>
     <button onClick={() => setList(!list)}>{list ? "入力へ" : "一覧へ"}</button>
-    {list ? <InitiativeListPage selection={null} selectedKind={kind} initiatives={[{ ...draft, id: 1, fiscalYear: 2026, revision: 0, startYearMonths: {1: "", 2: ""}, months: {} }]}
+    {list ? <InitiativeListPage selection={null} selectedKind={kind} initiatives={[{ ...draft, id: 1, fiscalYear: 2026, revision: 0, startYearMonths: {1: "", 2: ""} }]}
       accounts={accounts} expansions={[]} periodTypes={[]} fiscalYear="2026" onAddInitiative={() => setList(false)} onOpenInitiative={() => setList(false)} navigationBlocked={false}/>
       : <div className="initiative-amount-table-container"><InitiativeAmountGrid draft={draft} kind={kind} accounts={accounts} isSaving={false} onDraftChange={setDraft}/></div>}
   </main>;

@@ -21,7 +21,8 @@ export async function verifyExpansionCategories(api) {
   const saved = await api.readPlanContents(bytes);
   assert.equal(saved.initiatives[0].expansionCategoryId, 1);
   assert.equal(saved.initiatives[1].expansionCategoryId, null);
-  assert.deepEqual(saved.initiatives[0].months, saved.initiatives[1].months, "区分で金額計算は変わらない");
+  const projected = api.initiativesForKind(saved.initiatives, saved.accounts, 1);
+  assert.deepEqual(projected[0].months, projected[1].months, "区分で金額計算は変わらない");
   await assert.rejects(assign(bytes, 1, [2]), /使用/);
   const snapshot = await api.createBusinessSnapshot(bytes);
   bytes = await api.changeExpansionCategoryMaster(bytes, { type: "update", id: 1, categoryName: "改名後" });

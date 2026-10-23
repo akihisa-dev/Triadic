@@ -2,12 +2,14 @@ import type { Account } from "../domain/accountMaster";
 import type { KindId } from "../domain/kinds";
 import type { Initiative } from "../domain/plan";
 import { initiativesForKind } from "./initiatives";
-import { initiativeTotals } from "./initiativeTotals";
+import { initiativeTotals, type CalculatedInitiative } from "./initiativeTotals";
 
+export type InitiativeListRow = (CalculatedInitiative & { calculation: "ready" })
+  | (Initiative & { calculation: "failed"; error: string });
 export type InitiativeListView = {
-  source: Initiative[];
+  source: InitiativeListRow[];
   errors: ReadonlyMap<number, string>;
-  totals: Initiative["months"] | null;
+  totals: CalculatedInitiative["months"] | null;
   totalError: string | null;
 };
 
@@ -21,22 +23,23 @@ export function createInitiativeListView(initiatives: Initiative[], accounts: Ac
     const cached = views.get(kind);
     if (cached) return cached;
     const errors = new Map<number, string>();
-    let source: Initiative[];
-    try { source = initiativesForKind(current, accounts, kind); }
+    let source: InitiativeListRow[];
+    try { source = initiativesForKind(current, accounts, kind).map(item => ({ ...item, calculation: "ready" })); }
     catch {
       // Preserve normal rows and the edit link for each failed initiative.
       source = current.map(item => {
-        try { return initiativesForKind([item], accounts, kind)[0]!; }
+        try { return { ...initiativesForKind([item], accounts, kind)[0]!, calculation: "ready" }; }
         catch (failure) {
-          errors.set(item.id, failure instanceof Error ? failure.message : "金額を表示できませんでした。");
-          return item;
+          const error = failure instanceof Error ? failure.message : "金額を表示できませんでした。";
+          errors.set(item.id, error);
+          return { ...item, calculation: "failed", error };
         }
       });
     }
-    let totals: Initiative["months"] | null = null;
+    let totals: CalculatedInitiative["months"] | null = null;
     let totalError: string | null = null;
     if (!errors.size) {
-      try { totals = initiativeTotals(source); }
+      try { totals = initiativeTotals(source.filter(item => item.calculation === "ready")); }
       catch (failure) { totalError = failure instanceof Error ? failure.message : "合計を表示できませんでした。"; }
     }
     const view = { source, errors, totals, totalError };

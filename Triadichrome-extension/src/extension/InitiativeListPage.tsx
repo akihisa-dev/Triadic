@@ -103,7 +103,7 @@ export function InitiativeListPage({ selection, selectedKind, initiatives, accou
               }} onClick={() => onOpenInitiative(item, selectedKind)}>{item.name}{unclassifiedIds.has(item.id) && <span className="initiative-attribute-hint"> · 属性未設定</span>}</button>
           </th>
           <td className="initiative-list-fixed initiative-list-start">{item.startYearMonths[selectedKind]}</td>
-          {errors.has(item.id) ? <td colSpan={36} role="alert" style={{ textAlign: "left" }}>{errors.get(item.id)} 施策を開いて金額を修正してください。</td> : initiativeMonths.map(month => <Fragment key={month}>
+          {item.calculation === "failed" ? <td colSpan={36} role="alert" style={{ textAlign: "left" }}>{item.error} 施策を開いて金額を修正してください。</td> : initiativeMonths.map(month => <Fragment key={month}>
             {amountItems.map((metric, index) => <td key={metric.id} className={index === amountItems.length - 1 ? "initiative-month-end" : undefined}>{amountText(item.months[month]?.[metric.id])}</td>)}
           </Fragment>)}
         </tr>} />{!virtual && <tr className="initiative-list-fill" aria-hidden="true"><td colSpan={40} /></tr>}</tbody>

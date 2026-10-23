@@ -47,7 +47,7 @@ export async function verifyIndustryData(api) {
   const beforeUpdate = (await readPlanContents(assigned)).initiatives[0];
   assigned = await api.updateInitiative(assigned, beforeUpdate.id, 2026, { ...draft, industryId: 2 });
   assert.equal((await readPlanContents(assigned)).initiatives[0].industryId, 2);
-  assert.deepEqual((await readPlanContents(assigned)).initiatives[0].months, beforeUpdate.months);
+  assert.deepEqual(api.initiativesForKind((await readPlanContents(assigned)).initiatives, contents.accounts, 1)[0].months, api.initiativesForKind([beforeUpdate], contents.accounts, 1)[0].months);
   await assert.rejects(api.updateInitiative(assigned, beforeUpdate.id, 2026, { ...draft, industryId: null }), /業種名/);
 
   let stored = bytes;

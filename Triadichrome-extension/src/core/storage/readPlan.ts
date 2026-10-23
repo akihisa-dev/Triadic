@@ -40,7 +40,7 @@ export function listInitiatives(db: Database, fiscalYear: number, initiativeId?:
       const rows = rowsByOwner.get(Number(id)) ?? [];
       const rule = period === null ? null : rules.get(Number(period)) ?? null;
       return { id: Number(id), identity: String(identity), name: String(name), note: String(note), expansionId: Number(expansion), expansionCategoryId: category === null ? null : Number(category), departmentId: Number(department), periodTypeId: period === null ? null : Number(period), industryId: Number(industry), fiscalYear, revision: Number(revision),
-        startYearMonths: { 1: deriveStartYearMonth(fiscalYear, rule, rows, 1), 2: deriveStartYearMonth(fiscalYear, rule, rows, 2) }, rows, months: {} };
+        startYearMonths: { 1: deriveStartYearMonth(fiscalYear, rule, rows, 1), 2: deriveStartYearMonth(fiscalYear, rule, rows, 2) }, rows };
     });
 }
 export function readContents(db: Database): PlanContents {

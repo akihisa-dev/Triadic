@@ -1,9 +1,10 @@
 import { checkedYen } from "../domain/amounts";
 import { initiativeMonths } from "../domain/calendar";
-import type { Initiative } from "../domain/plan";
+import type { InitiativeForMetrics, MonthlyMetrics } from "./initiatives";
+export type CalculatedInitiative = InitiativeForMetrics<keyof MonthlyMetrics>;
 
 /** Sum original integer yen; a missing account attribute remains unresolved. */
-export function initiativeTotals(initiatives: Initiative[]): Initiative["months"] {
+export function initiativeTotals(initiatives: CalculatedInitiative[]): CalculatedInitiative["months"] {
   return Object.fromEntries(initiativeMonths.map(month => {
     const sum = (key: "sales" | "expense" | "profit") => {
       let total = 0n;

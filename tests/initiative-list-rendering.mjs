@@ -32,6 +32,9 @@ export async function verifyInitiativeListRendering(api) {
   assert.equal(viewForKind(2), confirmedView);
   assert.equal(primaryView.errors.size, 0);
   assert.deepEqual(primaryView.totals, api.initiativeTotals(api.initiativesForKind(contents.initiatives, accounts, 1)));
+  assert.equal(confirmedView.source[0].calculation, 'failed');
+  assert.equal('months' in confirmedView.source[0], false);
+  assert.equal(confirmedView.source[1].calculation, 'ready');
   assert.equal(confirmedView.errors.size, 1, '上限超過した施策を種別ごとに隔離する');
   assert.equal(confirmedView.totals, null, '一部の施策を除外した不完全な合計を出さない');
   assert.equal(confirmedView.source[1].months[4].sales, 2000);

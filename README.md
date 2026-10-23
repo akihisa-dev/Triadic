@@ -1039,7 +1039,7 @@ Chrome Web Store用の説明文・プライバシー申告・アイコン・販�
 ## 構成
 
 - `Triadichrome-extension/src/core/domain/`：金額・年度・種別・分類・施策の型と規則。SQLやChrome APIへ依存しません。`aggregationOrder.ts`が子集計から親集計へたどる順序を管理し、総原価表の計算とマスタの初期表示順で共有します。保存済みの表示順を優先します。
-- `Triadichrome-extension/src/core/tables/`：総原価表・展開表・集計図の表示用計算と入力表の一括操作。
+- `Triadichrome-extension/src/core/tables/`：総原価表・展開表・集計図の表示用計算と入力表の一括操作。保存から読み出す施策には月別計算値を持たせず、必要な指標を計算した型だけを集計へ渡します。一覧の計算失敗行は元の入力とエラーを保持し、成功行と型で区別します。
 - `Triadichrome-extension/src/core/storage/`：SQLiteの直接生成・検証・読込・更新・履歴。各`apply...`関数は呼び出し元が所有する検証済み接続だけを更新し、ファイル操作・接続の生成や解放は行いません。バイト列を受け取る公開関数は`transaction.ts`でコピー上の更新・書き出し・接続解放を行います。通常保存の準備は開いた接続へ変更を直接適用し、変更なしでは元のバイト列・更新日時・履歴を保持します。
 - `Triadichrome-extension/src/core/autoSave.ts`：入力待ち、日本語変換、保存中の追加入力、再試行。
 - `Triadichrome-extension/src/extension/PlanSession.ts`：履歴の表示情報をファイル確定前に準備し、確定後は保存基準と操作履歴を更新します。保存済み計画の正本と保存・許可準備・履歴・終了の直列実行。ファイル確定の成功後だけ画面へ公開します。

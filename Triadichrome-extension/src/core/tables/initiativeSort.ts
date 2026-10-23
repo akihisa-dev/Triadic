@@ -5,8 +5,8 @@ export type InitiativeSort = { column: "expansion" | "period" | "name" | "start"
 const names = new Intl.Collator("ja", { numeric: true });
 
 /** Sort a view without changing the saved registration order. Empty values stay last. */
-export function sortInitiatives(source: Initiative[], sort: InitiativeSort | null, kind: KindId,
-  expansionNames: ReadonlyMap<number, string>, periodNames: ReadonlyMap<number, string>): Initiative[] {
+export function sortInitiatives<T extends Initiative>(source: T[], sort: InitiativeSort | null, kind: KindId,
+  expansionNames: ReadonlyMap<number, string>, periodNames: ReadonlyMap<number, string>): T[] {
   if (!sort) return source;
   const value = (item: Initiative) => {
     switch (sort.column) {

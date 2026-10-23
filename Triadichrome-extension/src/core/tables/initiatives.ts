@@ -8,8 +8,9 @@ import type { Account } from "../domain/accountMaster";
 export function initiativeRowsForKind(initiative: Initiative, kind: KindId) {
   return initiative.rows.map(row => ({ ...row, amounts: Object.fromEntries(initiativeMonths.map(month => [month, resolvedAmount(row, kind, month)])) }));
 }
-type MonthlyMetrics = NonNullable<Initiative["months"][InitiativeMonth]>;
-export type InitiativeForMetrics<K extends keyof MonthlyMetrics> = Omit<Initiative, "months"> & {
+/** Derived monetary values are integer yen; saved input remains decimal thousands. */
+export type MonthlyMetrics = { sales: number | null; expense: number; profit: number | null };
+export type InitiativeForMetrics<K extends keyof MonthlyMetrics> = Initiative & {
   months: Partial<Record<InitiativeMonth, Pick<MonthlyMetrics, K>>>;
 };
 /** Validate only the metrics needed by this table; exact intermediate sums stay in BigInt. */
