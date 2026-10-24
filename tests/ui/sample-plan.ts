@@ -1,3 +1,4 @@
+// Enter・Shift+Enter後の上書きは tests/ui/grid-enter-replace.spec.ts で施策新規/詳細・前年の両種別、不正入力・変換確定を確認する。
 // 複数ウィンドウの同期・表示条件/位置の複製・共有取消・全保存先切替・履歴集約は既存の施策/月額/3時点履歴を使い、tests/window-session.mjs と tests/ui/multi-window.spec.ts で確認する。保存データは追加しない。
 // 勘定科目・集計の共有更新と編集中の同期、未保存・保存中の追加入力、完了と取消は tests/ui/shared-editing.html と master-shared-editing.spec.ts で初期マスタを使って検証する。サンプルの保存内容は変えない。
 // 集計の登録時の集計名・表示名の個別指定、空白拒否・保存失敗・再読込は tests/ui/aggregations.spec.ts で確認する。既存の保存項目を使用し、サンプル内容は変えない。
