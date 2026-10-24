@@ -1,4 +1,4 @@
-import { test, expect, openInitiativeEntry, settleMotion } from "./fixtures";
+import { selectAccount, test, expect, openInitiativeEntry, settleMotion } from "./fixtures";
 
 test("施策の選択合計は矩形・入力・取消・種別に追従する", async ({ page }) => {
   await page.goto("/tests/ui/budget-hints.html");
@@ -73,7 +73,7 @@ for (const registered of [false, true]) {
       await openInitiativeEntry(app);
       const account = app.getByRole("combobox", { name: "1行目の勘定科目", exact: true });
       await account.focus();
-      await account.selectOption({ label: "売上高" });
+      await selectAccount(account, { label: "売上高" });
     }
     const amount = app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true });
     const total = app.locator(".grid-selection-total");

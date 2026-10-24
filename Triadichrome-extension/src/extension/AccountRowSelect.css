@@ -1,0 +1,25 @@
+.initiative-amount-table input.account-row-select {
+  min-width: 100%;
+  width: auto;
+  border-color: var(--line);
+  background: var(--surface);
+  text-align: left;
+  font-variant-numeric: normal;
+}
+.account-row-options {
+  position: fixed;
+  z-index: 1000;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 400;
+  box-shadow: 0 4px 12px #0002;
+}
+.account-row-option, .account-row-empty { padding: 7px 8px; overflow-wrap: anywhere; }
+.account-row-option { cursor: pointer; }
+.account-row-option-active { background: var(--soft); outline: 1px solid var(--control-line); outline-offset: -1px; }
+.account-row-option[aria-selected="true"] { font-weight: 600; }
+.account-row-empty { color: var(--muted); }

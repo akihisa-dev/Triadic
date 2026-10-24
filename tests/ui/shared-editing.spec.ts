@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { selectAccount, test, expect } from "./fixtures";
 
 test.beforeEach(async ({ page, app }) => {
   await page.goto("/tests/ui/shared-editing.html");
@@ -29,7 +29,7 @@ test("同じ番号の別施策へ旧入力を保存せず、入力を回収し�
   await app.getByRole("button", { name: "登録", exact: true }).click();
   await expect(app.getByRole("alert")).toContainText("勘定科目を一つ以上");
   const account = app.getByRole("combobox", { name: "1行目の勘定科目", exact: true });
-  await account.focus(); await account.selectOption({ label: "売上高" });
+  await account.focus(); await selectAccount(account, { label: "売上高" });
   await app.getByRole("button", { name: "登録", exact: true }).click();
   await expect(app.getByRole("button", { name: "引き継ぐ施策", exact: true })).toBeVisible();
   expect((await read()).initiatives[0]).toEqual(original);

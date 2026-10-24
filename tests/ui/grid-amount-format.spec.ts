@@ -1,4 +1,4 @@
-import { test, expect, settleMotion, selectClassification, openInitiativeEntry } from "./fixtures";
+import { selectAccount, test, expect, settleMotion, selectClassification, openInitiativeEntry } from "./fixtures";
 for (const surface of ["entry", "detail", "previous"]) {
   test(`${surface}の金額は表示だけ桁区切りし編集中の小数精度と取消を保持する`, async ({ page, app }) => {
     if (surface === "previous") await page.setViewportSize({ width: Math.max(600, page.viewportSize()!.width), height: 1400 });
@@ -12,7 +12,7 @@ for (const surface of ["entry", "detail", "previous"]) {
       await openInitiativeEntry(app);
       await settleMotion(app.locator("body"));
       await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).focus();
-      await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).selectOption("1");
+      await selectAccount(app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }), "1");
     } else {
       await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "施策一覧", exact: true }).click();
       await app.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();

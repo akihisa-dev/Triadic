@@ -76,3 +76,13 @@ export async function openInitiativeEntry(target: FrameLocator | Page) {
   await target.getByRole("button", { name: "施策を追加", exact: true }).click();
   await expect(target.getByRole("heading", { name: "施策入力", exact: true })).toBeVisible();
 }
+
+// Choose an account through the searchable field, without changing the draft while typing.
+export async function selectAccount(slot: Locator, choice: string | { label: string }) {
+  await slot.click();
+  const list = slot.locator("xpath=ancestor::body").getByRole("listbox", { name: await slot.getAttribute("aria-label") ?? "", exact: true });
+  const option = typeof choice === "string" ? list.locator(`[role="option"][data-account-id="${choice}"]`)
+    : list.getByRole("option", { name: choice.label, exact: true });
+  await option.click();
+  await expect(slot).toHaveAttribute("aria-expanded", "false");
+}

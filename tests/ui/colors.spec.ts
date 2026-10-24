@@ -1,4 +1,4 @@
-import { openInitiativeEntry, test, expect, settleMotion, attachImage, selectClassification } from "./fixtures";
+import { selectAccount, openInitiativeEntry, test, expect, settleMotion, attachImage, selectClassification } from "./fixtures";
 import { installCloneableFiles } from "./cloneable-files";
 import type { FrameLocator, Locator } from "@playwright/test";
 
@@ -83,12 +83,10 @@ test("施策の文字・金額・科目・分類に青い編集枠が付き、�
   }
   const account = app.getByRole("combobox", { name: "1行目の勘定科目", exact: true });
   await account.focus();
-  const value = await account.locator("option").nth(1).getAttribute("value");
-  await account.focus();
-  await account.selectOption(value!);
+  await selectAccount(account, { label: "売上高" });
   await account.focus();
   await expect(account).toHaveCSS("outline-color", blue);
-  const amount = app.locator(".initiative-amount-table input").first();
+  const amount = app.locator(".initiative-amount-table input[data-row]").first();
   await expectEditingColor(amount);
   await expect(app.locator('.kind-tabs [aria-selected="true"]')).toHaveCSS("border-bottom-color", blue);
   await expect(app.locator('.kind-tabs [aria-selected="true"]')).toHaveCSS("background-color", soft);

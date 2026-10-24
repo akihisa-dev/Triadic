@@ -1,4 +1,4 @@
-import { openInitiativeEntry, test, expect, selectClassification } from "./fixtures";
+import { selectAccount, openInitiativeEntry, test, expect, selectClassification } from "./fixtures";
 
 for (const failFirst of [false, true]) test(`所属変更${failFirst ? "の保存失敗と再試行" : "の成功"}で保持中の施策へ単一業種を反映する`, async ({ page, app }) => {
   await page.getByLabel("テストデータ", { exact: true }).selectOption("defaults");
@@ -26,7 +26,7 @@ for (const failFirst of [false, true]) test(`所属変更${failFirst ? "の保�
   await app.getByRole("textbox", { name: "施策名", exact: true }).fill("所属変更後の施策");
   await app.getByRole("textbox", { name: "備考", exact: true }).fill("保持する備考");
   const account = app.getByRole("combobox", { name: "1行目の勘定科目", exact: true });
-  await account.focus(); await account.selectOption("1");
+  await account.focus(); await selectAccount(account, "1");
   const amount = app.getByRole("table", { name: "月別計画金額", exact: true }).getByRole("spinbutton").first();
   await amount.fill("123.456");
   const master = app.getByRole("complementary", { name: "メニュー" }).getByRole("button", { name: "マスタ", exact: true });

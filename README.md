@@ -144,6 +144,8 @@ When entering or editing an initiative, the “Breakdown subcategory” field be
 
 ### Registering initiatives and entering monthly amounts
 
+The existing account field accepts text to filter account names by partial match. Opening it shows all choices; click a choice or use arrow keys and Enter to confirm. Typing alone does not change the account or amounts. Esc, Tab, or leaving the field restores the selected name. Japanese input composition does not confirm a choice. Search stays in memory with no storage-format, permission, or network changes.
+
 Select monthly ranges by dragging or Shift+arrows. Copy uses tabs and line breaks; paste supports multiple rows/months, and one value fills the selected range. Ctrl/Command+Enter fills it with the value being edited; Delete/Backspace sets it to 0. Arrows, Enter, and Tab move between cells; F2 or double-click edits within a cell. Bulk input containing rows without accounts, cells outside the table, or invalid amounts is rejected entirely, preserving amounts. Input outside the initial budget creates overrides for each month in the range. Incomplete numeric input such as “-” or “1e” retains its invalid state and starting value by kind, account row, and month. Switching kinds, editing another cell, pasting, or clearing elsewhere does not release the save block. Only correcting that cell, explicitly clearing it, or canceling with Esc clears its invalid state. Cancellation restores its original amount, inheritance, and explicit override of 0. This temporary state is not saved to the plan. Ordinary blank cells mean 0.
 
 “Add initiative” in the list opens full-screen input and returns to the list after successful registration. Sidebar and Home lead to the list. Returning through the input back button, sidebar, or navigation history asks to discard entered input. Cancel or Esc preserves it; adding after discarding starts empty. Empty input returns without confirmation. Moving to master settings and canceling/failing a save preserve input.
@@ -689,6 +691,8 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 使用中の割当は解除できず、割当中の区分は削除できません。区分名の編集・登録済み施策の選択変更は自動保存し、保存失敗では入力と保存済み内容を保持します。区分・割当・選択は同じ.triadicファイル、時点履歴、操作取消に含めます。区分で金額と集計方法を変更しません。
 
 ### 施策の登録と月別金額の入力
+
+施策入力・詳細の勘定科目は既存の選択欄へ文字を入力して科目名の部分一致で候補を絞れます。開いた直後は全候補を表示し、上下キーとEnter、または候補のクリックで確定します。検索文字だけでは科目と金額を変更せず、Esc・Tab・欄外への移動では元の選択へ戻します。日本語変換の確定キーでは選択を確定しません。検索は画面内だけで、保存形式・権限・外部送信を変更しません。
 
 施策の月別金額はドラッグ・Shift＋矢印で範囲を選択できます。コピーはタブ・改行区切り、貼り付けは複数行・複数月に対応し、1つの値は選択範囲全体へ入ります。Ctrl／Command＋Enterで編集中の値を範囲へ入力し、Delete／Backspaceで選択範囲を0にします。矢印・Enter・Tabでセルを移動し、F2またはダブルクリックでセル内を編集できます。科目未選択行・表外・不正金額を含む一括入力は全体を拒否し、既存の金額を維持します。一次予算以外への入力は、範囲内の各月の手修正として保持します。数値として扱えない「-」「1e」などの未完の入力は、種別・科目行・月ごとに不正状態と入力開始時の値を保持します。種別切替や別セルの入力・貼付・消去では保存の制止を解除せず、元セルの訂正・明示的な消去・Escでの取消をしたときだけそのセルを解除します。取消では元の値、引き継ぎ、手修正0を戻します。この一時情報は計画ファイルへ保存しません。通常の空欄は0として扱います。
 

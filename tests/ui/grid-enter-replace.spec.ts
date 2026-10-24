@@ -1,4 +1,4 @@
-import { test, expect, settleMotion, selectClassification, openInitiativeEntry } from "./fixtures";
+import { selectAccount, test, expect, settleMotion, selectClassification, openInitiativeEntry } from "./fixtures";
 for (const surface of ["entry", "detail", "previous"]) for (const kind of [1, 2]) {
   test(`${surface}種別${kind}でEnter・Shift+Enter後の入力は値全体を置き換える`, async ({ page, app }) => {
     if (surface === "previous") await page.setViewportSize({ width: Math.max(600, page.viewportSize()!.width), height: 1400 });
@@ -14,10 +14,10 @@ for (const surface of ["entry", "detail", "previous"]) for (const kind of [1, 2]
         await openInitiativeEntry(app);
         await settleMotion(app.locator("body"));
         await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).focus();
-        await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).selectOption("1");
+        await selectAccount(app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }), "1");
         await app.getByRole("button", { name: "＋ 勘定科目を追加", exact: true }).click();
         await app.getByRole("combobox", { name: "2行目の勘定科目", exact: true }).focus();
-        await app.getByRole("combobox", { name: "2行目の勘定科目", exact: true }).selectOption("1");
+        await selectAccount(app.getByRole("combobox", { name: "2行目の勘定科目", exact: true }), "1");
       } else {
         await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "施策一覧", exact: true }).click();
         await app.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();

@@ -1,4 +1,4 @@
-import { openInitiativeEntry, test, expect, selectClassification, settleMotion } from "./fixtures";
+import { selectAccount, openInitiativeEntry, test, expect, selectClassification, settleMotion } from "./fixtures";
 import type { Locator } from "@playwright/test";
 
 async function paste(cell: Locator, text: string) {
@@ -21,10 +21,10 @@ test.beforeEach(async ({ page, app }) => {
   await app.getByRole("heading", { name: "施策入力", exact: true }).click();
   await settleMotion(app.locator("body"));
   await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).focus();
-  await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).selectOption("1");
+  await selectAccount(app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }), "1");
   await app.getByRole("button", { name: "＋ 勘定科目を追加", exact: true }).click();
   await app.getByRole("combobox", { name: "2行目の勘定科目", exact: true }).focus();
-  await app.getByRole("combobox", { name: "2行目の勘定科目", exact: true }).selectOption("1");
+  await selectAccount(app.getByRole("combobox", { name: "2行目の勘定科目", exact: true }), "1");
 });
 
 test("複数行・月の貼り付け、範囲コピー・同値入力・消去と引き継ぎ", async ({ page, app }, testInfo) => {
@@ -178,7 +178,7 @@ test("金額項目の3合計は入力と種別に追従する", async ({ app }) 
   await expect(sales.getByRole("cell").first()).toHaveText("25");
   await app.getByRole("button", { name: "＋ 勘定科目を追加", exact: true }).click();
   await app.getByRole("combobox", { name: "3行目の勘定科目", exact: true }).focus();
-  await app.getByRole("combobox", { name: "3行目の勘定科目", exact: true }).selectOption({ label: "旅費" });
+  await selectAccount(app.getByRole("combobox", { name: "3行目の勘定科目", exact: true }), { label: "旅費" });
   await expect(footer.getByRole("row")).toHaveCount(3);
   await expect(footer.getByRole("row", { name: /^費用合計/ }).getByRole("cell").first()).toHaveText("0");
   await expect(footer.getByRole("rowheader", { name: "売上原価合計", exact: true })).toHaveCount(0);
@@ -193,7 +193,7 @@ test("上部全体と月見出しを新規・登録済みの両方で固定す�
   for (let row = 3; row <= 14; row++) {
     await app.getByRole("button", { name: "＋ 勘定科目を追加", exact: true }).click();
     const account = app.getByRole("combobox", { name: `${row}行目の勘定科目`, exact: true });
-    await account.focus(); await account.selectOption("1");
+    await account.focus(); await selectAccount(account, "1");
   }
   await app.getByRole("textbox", { name: "施策名", exact: true }).fill("ヘッダー固定確認");
   for (const [name, value] of [["展開名", "コスト"], ["部署名", "部署A"], ["業種名", "直営自動車"]] as const) {

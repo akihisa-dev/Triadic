@@ -1,4 +1,4 @@
-import { openInitiativeEntry, test, expect, selectClassification, settleMotion, attachImage } from "./fixtures";
+import { selectAccount, openInitiativeEntry, test, expect, selectClassification, settleMotion, attachImage } from "./fixtures";
 
 test("展開名ごとの集計・並び順・編集からの移動と再読込を確認する", async ({ page, app }, testInfo) => {
   await page.goto("/tests/ui/preview.html");
@@ -75,7 +75,7 @@ test("新規施策の展開名を必須にして保存し、失敗した変更�
   await selectClassification(app.getByRole("combobox", { name: "部署名", exact: true }), "部署A");
   await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
   await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).focus();
-  await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).selectOption({ label: "売上高" });
+  await selectAccount(app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }), { label: "売上高" });
   await app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).fill("123.456");
   await app.getByRole("button", { name: "登録", exact: true }).click();
   await app.getByRole("button", { name: "展開割り当て確認", exact: true }).click();

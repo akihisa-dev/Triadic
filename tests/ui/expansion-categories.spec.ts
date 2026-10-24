@@ -1,4 +1,4 @@
-import { openInitiativeEntry, test, expect } from "./fixtures";
+import { selectAccount, openInitiativeEntry, test, expect } from "./fixtures";
 
 test("展開区分を展開で絞り、共通区分を保持し、未選択でも登録できる", async ({ page, app }) => {
   await page.getByLabel("テストデータ", { exact: true }).selectOption("defaults");
@@ -28,7 +28,7 @@ test("展開区分を展開で絞り、共通区分を保持し、未選択で�
   await app.getByRole("combobox", { name: "部署名", exact: true }).selectOption("1");
   await app.getByRole("combobox", { name: "業種名", exact: true }).selectOption("1");
   await app.getByRole("textbox", { name: "施策名", exact: true }).fill("展開区分の確認");
-  const account = app.getByRole("combobox", { name: "1行目の勘定科目" }); await account.focus(); await account.selectOption("1");
+  const account = app.getByRole("combobox", { name: "1行目の勘定科目" }); await account.focus(); await selectAccount(account, "1");
   await app.getByRole("button", { name: "登録", exact: true }).click();
   await app.getByRole("button", { name: "展開区分の確認", exact: true }).click();
   await expect(category).toHaveValue("");

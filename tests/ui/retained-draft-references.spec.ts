@@ -1,4 +1,4 @@
-import { test, expect, openInitiativeEntry, selectClassification } from './fixtures';
+import { selectAccount, test, expect, openInitiativeEntry, selectClassification } from './fixtures';
 
 for (const source of ['selection', 'master', 'retry']) test(`未登録施策を保持した${source}保存で部署が再作成されても入力先を付け替えない`, async ({ page, app }) => {
   await page.goto('/tests/ui/preview.html?data=defaults');
@@ -34,7 +34,7 @@ for (const source of ['selection', 'master', 'retry']) test(`未登録施策を�
   await selectClassification(app.getByRole('combobox', { name: '部署名', exact: true }), '部署B');
   await selectClassification(app.getByRole('combobox', { name: '業種名', exact: true }), '直営自動車');
   const account = app.getByRole('combobox', { name: '1行目の勘定科目', exact: true });
-  await account.focus(); await account.selectOption('1');
+  await account.focus(); await selectAccount(account, '1');
   const amount = app.getByRole('spinbutton', { name: '売上高 4月の金額', exact: true }).first();
   await amount.fill('123.456');
   const menu = app.getByRole('navigation', { name: 'メインナビゲーション' });
@@ -117,7 +117,7 @@ for (const replacement of ['account', 'industry']) test(`外部${replacement}変
   await selectClassification(app.getByRole('combobox', { name: '部署名', exact: true }), '部署B');
   await selectClassification(app.getByRole('combobox', { name: '業種名', exact: true }), '不動産B');
   const account = app.getByRole('combobox', { name: '1行目の勘定科目', exact: true });
-  await account.focus(); await account.selectOption('1');
+  await account.focus(); await selectAccount(account, '1');
   await app.getByRole('spinbutton', { name: '売上高 4月の金額', exact: true }).fill('123.456');
   const menu = app.getByRole('navigation', { name: 'メインナビゲーション' });
   await menu.getByRole('button', { name: '総原価表', exact: true }).click();
@@ -126,7 +126,7 @@ for (const replacement of ['account', 'industry']) test(`外部${replacement}変
   await app.getByRole('button', { name: '前の画面に戻る', exact: true }).click();
   if (replacement === 'account') {
     await expect(account).toHaveValue(''); await expect(account).toBeEnabled();
-    await account.focus(); await account.selectOption('1');
+    await account.focus(); await selectAccount(account, '1');
     await expect(app.getByRole('spinbutton', { name: '改名した売上高 4月の金額', exact: true })).toHaveValue('123.456');
   } else {
     const industry = app.getByRole('combobox', { name: '業種名', exact: true });

@@ -1,4 +1,4 @@
-import { openInitiativeEntry, test, expect, settleMotion } from "./fixtures";
+import { selectAccount, openInitiativeEntry, test, expect, settleMotion } from "./fixtures";
 
 test("分類をドロップダウンで選択し、登録・自動保存後も保持する", async ({ page, app }) => {
   await page.getByLabel("テストデータ", { exact: true }).selectOption("defaults");
@@ -33,7 +33,7 @@ test("分類をドロップダウンで選択し、登録・自動保存後も�
     expect(await app.locator("html").evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
   }
   await app.getByRole("combobox", { name: "1行目の勘定科目" }).focus();
-  await app.getByRole("combobox", { name: "1行目の勘定科目" }).selectOption("1");
+  await selectAccount(app.getByRole("combobox", { name: "1行目の勘定科目" }), "1");
   await register.click();
   await app.getByRole("button", { name: "分類選択確認", exact: true }).click();
   await expect(expansion.locator("option:checked")).toHaveText("料金改定");

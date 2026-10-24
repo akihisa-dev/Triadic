@@ -1,6 +1,6 @@
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { openInitiativeEntry, test, expect, selectClassification, settleMotion } from "./fixtures";
+import { selectAccount, openInitiativeEntry, test, expect, selectClassification, settleMotion } from "./fixtures";
 
 test("更新を自動保存して再読込でき、失敗・入力不備で入力を残せる", async ({ app, page }, testInfo) => {
   await app.locator("body").evaluate(() => {
@@ -33,7 +33,7 @@ test("更新を自動保存して再読込でき、失敗・入力不備で入�
   await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
   await app.getByRole("textbox", { name: "施策名", exact: true }).fill("保存する施策");
   await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).focus();
-  await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).selectOption({ label: "売上高" });
+  await selectAccount(app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }), { label: "売上高" });
   await app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).fill("100");
   await app.getByRole("button", { name: "登録", exact: true }).click();
   await app.getByRole("button", { name: "保存する施策", exact: true }).click();
@@ -138,13 +138,13 @@ test("既存の全月0行を空欄・未選択に戻すと再表示で旧科目�
     await input.fill("");
   }
   await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).focus();
-  await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).selectOption("");
+  await selectAccount(app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }), "");
   const back = app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true });
   await expect(back).toBeEnabled();
   await expect(app.getByRole("alert")).toHaveCount(0);
   await back.click();
   await app.getByRole("button", { name: "科目変更と削除の確認", exact: true }).click();
-  await expect(app.getByRole("combobox", { name: "1行目の勘定科目", exact: true })).toHaveValue("1");
+  await expect(app.getByRole("combobox", { name: "1行目の勘定科目", exact: true })).toHaveValue("売上高");
   await expect(app.getByRole("combobox", { name: "2行目の勘定科目", exact: true })).toHaveCount(0);
 });
 
@@ -281,7 +281,7 @@ for (const [kind, operation, failure] of [
     await expect(account).toBeEnabled();
     await expect(remove).toBeEnabled();
     if (operation === "削除") await remove.click();
-    else { await account.focus(); await account.selectOption({ label: "旅費" }); }
+    else { await account.focus(); await selectAccount(account, { label: "旅費" }); }
     await expect(back).toBeEnabled();
     await expect(app.getByRole("alert")).toHaveCount(0);
     await back.click();

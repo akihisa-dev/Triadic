@@ -1,4 +1,4 @@
-import { openInitiativeEntry, test, expect, selectClassification, settleMotion, attachImage } from "./fixtures";
+import { selectAccount, openInitiativeEntry, test, expect, selectClassification, settleMotion, attachImage } from "./fixtures";
 
 test("一つの勘定科目を複数行で選択し、金額を行ごとに保持する", async ({ app }) => {
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
@@ -19,7 +19,7 @@ test("一つの勘定科目を複数行で選択し、金額を行ごとに保�
     if (index > 1) await add.click();
     await expect(add).toBeDisabled();
     await app.getByRole("combobox", { name: `${index}行目の勘定科目` }).focus();
-    await app.getByRole("combobox", { name: `${index}行目の勘定科目` }).selectOption({ label: "消耗品費" });
+    await selectAccount(app.getByRole("combobox", { name: `${index}行目の勘定科目` }), { label: "消耗品費" });
     await expect(add).toBeEnabled();
   }
   const april = app.getByRole("spinbutton", { name: "消耗品費 4月の金額", exact: true });
@@ -36,7 +36,7 @@ test("一つの勘定科目を複数行で選択し、金額を行ごとに保�
   await expect(april.nth(0)).toHaveValue("0");
   await expect(april.nth(1)).toHaveValue("-25.5");
   await expect(april.nth(2)).toHaveValue("0");
-  await expect(app.getByRole("combobox", { name: /行目の勘定科目/ }).locator("option:checked")).toHaveText(Array(3).fill("消耗品費"));
+  expect(await app.getByRole("combobox", { name: /行目の勘定科目/ }).evaluateAll(nodes => nodes.map(node => (node as HTMLInputElement).value))).toEqual(Array(3).fill("消耗品費"));
 });
 
 test("マスタから科目を管理し、施策で選択して再読込できる", async ({ page, app }, testInfo) => {
@@ -87,11 +87,11 @@ test("マスタから科目を管理し、施策で選択して再読込でき�
   await expect(select).toHaveValue("");
   await expect(app.getByRole("table", { name: "月別計画金額", exact: true }).getByRole("spinbutton").first()).toBeDisabled();
   await select.focus();
-  await select.selectOption({ label: "売上高" });
+  await selectAccount(select, { label: "売上高" });
   await app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).fill("123.5");
   await app.getByRole("button", { name: "＋ 勘定科目を追加", exact: true }).click();
   await app.getByRole("combobox", { name: "2行目の勘定科目" }).focus();
-  await expect(app.getByRole("combobox", { name: "2行目の勘定科目" }).locator("option", { hasText: "売上高" })).toBeEnabled();
+  await expect(app.getByRole("listbox").getByRole("option", { name: "売上高", exact: true })).toBeEnabled();
   await master.click();
   await app.getByRole("button", { name: /^勘定科目マスタ/ }).click();
   await expect(app.getByRole("button", { name: "売上高を削除" })).toBeDisabled();
@@ -135,7 +135,7 @@ test("マスタから科目を管理し、施策で選択して再読込でき�
   await selectClassification(app.getByRole("combobox", { name: "部署名", exact: true }), "部署A");
   await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
   await expect(app.getByRole("spinbutton", { name: "売上 4月の金額", exact: true })).toHaveValue("123.5");
-  await expect(select.locator("option:checked")).toHaveText("売上");
+  await expect(select).toHaveValue("売上");
   await app.getByRole("button", { name: "閉じる" }).click();
   await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();

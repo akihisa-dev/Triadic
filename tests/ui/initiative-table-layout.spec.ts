@@ -1,4 +1,4 @@
-import { openInitiativeEntry, test, expect, settleMotion } from "./fixtures";
+import { selectAccount, openInitiativeEntry, test, expect, settleMotion } from "./fixtures";
 
 test("施策の月別入力を罫線付きのコンパクトな表で表示する", async ({ page, app }) => {
   await page.getByLabel("テストデータ", { exact: true }).selectOption("defaults");
@@ -12,7 +12,7 @@ test("施策の月別入力を罫線付きのコンパクトな表で表示す�
   const row = table.locator("tbody tr").first();
   const layout = await row.evaluate(element => {
     const cell = element.querySelector("td")!;
-    const select = element.querySelector("select")!;
+    const select = element.querySelector('[role="combobox"]')!;
     const remove = element.querySelector("button")!;
     return {
       border: getComputedStyle(cell).borderRightWidth,
@@ -26,7 +26,7 @@ test("施策の月別入力を罫線付きのコンパクトな表で表示す�
   expect(layout.height).toBeLessThan(50);
   expect(layout.aligned).toBe(true);
   await table.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).focus();
-  await table.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).selectOption({ label: "売上高" });
+  await selectAccount(table.getByRole("combobox", { name: "1行目の勘定科目", exact: true }), { label: "売上高" });
   const amount = table.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true });
   await amount.fill("123.456");
   await expect(amount).toHaveValue("123.456");
@@ -41,17 +41,21 @@ test("狭い画面でも長い科目名をコードなしで全文表示し、�
   const table = app.getByRole("table", { name: "月別計画金額", exact: true });
   const select = table.getByRole("combobox", { name: "1行目の勘定科目", exact: true });
   await select.focus();
-  await select.selectOption({ label: "固定資産減価償却費" });
+  await select.fill("減価");
+  await expect(app.getByRole("listbox").getByRole("option")).toHaveText(["固定資産減価償却費"]);
+  await settleMotion(app.locator("body"));
+  await page.screenshot({ path: `/tmp/triadichrome-account-field-${page.viewportSize()!.width}.png` });
+  await selectAccount(select, { label: "固定資産減価償却費" });
   await app.getByRole("button", { name: "＋ 勘定科目を追加", exact: true }).click();
   const shortName = table.getByRole("combobox", { name: "2行目の勘定科目", exact: true });
   await shortName.focus();
-  await shortName.selectOption({ label: "旅費" });
+  await selectAccount(shortName, { label: "旅費" });
   await table.getByRole("columnheader", { name: "勘定科目", exact: true }).click();
   await page.setViewportSize({ width: 375, height: 800 });
   await settleMotion(app.locator("body"));
-  await expect(select.locator("option:checked")).toHaveText("固定資産減価償却費");
+  await expect(select).toHaveValue("固定資産減価償却費");
   const dimensions = await select.evaluate(node => {
-    const select = node as HTMLSelectElement;
+    const select = node as HTMLInputElement;
     const style = getComputedStyle(select);
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d")!;
@@ -61,7 +65,7 @@ test("狭い画面でも長い科目名をコードなしで全文表示し、�
     const container = select.closest(".initiative-grid-scroll")!;
     return {
       available: select.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 20,
-      text: context.measureText(select.selectedOptions[0]!.textContent!).width,
+      text: context.measureText(select.value).width,
       contained: select.getBoundingClientRect().right <= remove.getBoundingClientRect().left
         && remove.getBoundingClientRect().right <= cell.getBoundingClientRect().right,
       horizontalScroll: container.scrollWidth > container.clientWidth,
@@ -86,5 +90,5 @@ test("狭い画面でも長い科目名をコードなしで全文表示し、�
   await lastMonth.fill("12.345");
   await expect(lastMonth).toHaveValue("12.345");
   await expect(select).toBeDisabled();
-  await expect(select.locator("option:checked")).toHaveText("固定資産減価償却費");
+  await expect(select).toHaveValue("固定資産減価償却費");
 });

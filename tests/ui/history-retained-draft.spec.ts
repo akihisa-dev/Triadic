@@ -1,4 +1,4 @@
-import { test, expect, openInitiativeEntry, selectClassification } from './fixtures';
+import { selectAccount, test, expect, openInitiativeEntry, selectClassification } from './fixtures';
 
 test('履歴入口の取消では未登録入力を保持し、破棄の承認後だけ履歴へ進む', async ({ page, app }) => {
   await page.goto('/tests/ui/preview.html?data=full');
@@ -12,7 +12,7 @@ test('履歴入口の取消では未登録入力を保持し、破棄の承認�
   for (const [label, value] of [['展開名', '料金改定'], ['部署名', '部署A'], ['業種名', '直営自動車'], ['期間名', '新規']] as const)
     await selectClassification(app.getByRole('combobox', { name: label, exact: true }), value);
   const account = app.getByRole('combobox', { name: '1行目の勘定科目', exact: true });
-  await account.focus(); await account.selectOption('1');
+  await account.focus(); await selectAccount(account, '1');
   const april = app.getByRole('spinbutton', { name: '売上高 4月の金額', exact: true });
   await april.fill('123.456');
   const may = app.getByRole('spinbutton', { name: '売上高 5月の金額', exact: true });

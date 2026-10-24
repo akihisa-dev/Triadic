@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test("確定予算のセルにフォーカス・ホバーしても点線や比較の吹き出しを表示しない", async ({ page }) => {
   await page.goto("/tests/ui/budget-hints.html");
-  const cells = page.locator(".initiative-amount-table input");
+  const cells = page.locator(".initiative-amount-table input[data-row]");
   const before = await cells.evaluateAll(inputs => inputs.map(input => (input as HTMLInputElement).value));
   for (const month of [4, 5, 6]) {
     const cell = page.getByRole("spinbutton", { name: `売上高 ${month}月の金額`, exact: true });

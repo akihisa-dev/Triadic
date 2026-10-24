@@ -1,4 +1,4 @@
-import { test, expect, openInitiativeEntry, selectClassification } from "./fixtures";
+import { selectAccount, test, expect, openInitiativeEntry, selectClassification } from "./fixtures";
 import type { FrameLocator, Locator } from "@playwright/test";
 
 const cell = (app: FrameLocator, month: number) => app.getByRole("spinbutton", { name: `売上高 ${month}月の金額`, exact: true });
@@ -49,7 +49,7 @@ test.beforeEach(async ({ page, app }) => {
     await selectClassification(app.getByRole("combobox", { name, exact: true }), value);
   }
   await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).focus();
-  await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).selectOption("1");
+  await selectAccount(app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }), "1");
   await cell(app, 4).fill("10"); await cell(app, 5).fill("5");
   await app.getByRole("tab", { name: "確定予算", exact: true }).click();
   await cell(app, 4).fill("20"); await cell(app, 5).fill("6");
@@ -146,7 +146,7 @@ test("新規登録でも別種別の不正入力を訂正するまで保存し�
   await app.getByRole("textbox", { name: "施策名", exact: true }).fill("新規の不正入力");
   for (const [name, value] of [["展開名", "コスト"], ["部署名", "部署A"], ["業種名", "直営自動車"]] as const) await selectClassification(app.getByRole("combobox", { name, exact: true }), value);
   await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).focus();
-  await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).selectOption("1");
+  await selectAccount(app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }), "1");
   await badInput(cell(app, 4), "-");
   await app.getByRole("tab", { name: "確定予算", exact: true }).click(); await cell(app, 5).fill("8");
   const before = await savedBytes(app);
