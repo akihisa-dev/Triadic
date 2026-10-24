@@ -1,0 +1,31 @@
+/* Use the table's available space, including changes from the sidebar. */
+:is(.initiative-overview-page, .expansion-table-page) .initiative-list-container {
+  container: plan-table / inline-size;
+}
+
+@container plan-table (max-width: 650px) {
+  .initiative-overview-page .initiative-list-table {
+    --initiative-name-width: clamp(64px, 35cqw, 144px);
+  }
+  .initiative-overview-page .initiative-list-fixed:not(.initiative-list-name) {
+    position: static;
+  }
+  .initiative-overview-page .initiative-list-name { left: 0; }
+  .initiative-overview-page .initiative-total-label {
+    clip-path: inset(0 calc(100% - var(--initiative-name-width)) 0 0);
+  }
+
+  .expansion-table {
+    --expansion-name-width: clamp(64px, 35cqw, 144px);
+  }
+  .expansion-table :is(.expansion-group, .expansion-period, .expansion-category) {
+    position: static;
+  }
+  .expansion-table .expansion-name { left: 0; }
+  /* Keep total/subtotal labels in the same narrow name column, without
+     covering amounts with the background of their original colspan. */
+  .expansion-table :is(.expansion-summary, .expansion-subtotal-name) {
+    left: 0;
+    clip-path: inset(0 calc(100% - var(--expansion-name-width)) 0 0);
+  }
+}

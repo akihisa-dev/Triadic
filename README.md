@@ -160,7 +160,7 @@ Blank rows without selected accounts are not saved. An existing all-kinds/all-mo
 
 The period master manages only period names, initially “期間差” (carryover period) and “新規” (new). It rejects whitespace-only and duplicate names and supports registration, inline autosave editing, and confirmed deletion. Period selection is optional beside department in initiative input and autosaves after registration. Periods used by current input or registered initiatives cannot be deleted; renaming preserves references. Selecting a period does not change the fiscal year, monthly amounts, or calculations.
 
-The initiative list places breakdown category, period, initiative name, and start year/month to the left of numeric columns, fixing their headers and cells during horizontal scrolling. Category/period names reflect the current master names; unselected values are blank. Narrow screens shrink fixed columns to leave room for amounts. Long initiative names wrap at 200 or fewer initiatives; at 201 or more, both wide and narrow screens use 28px rows and single-line truncation. Open an initiative to read its full name in the detail view; its button retains the full accessible name regardless of notes.
+The initiative list places breakdown category, period, initiative name, and start year/month to the left of numeric columns, fixing their headers and cells during horizontal scrolling when the table viewport exceeds 650px. At 650px or less, only the initiative name stays fixed; classifications and start month scroll horizontally so amounts remain readable beside the name. Category/period names reflect the current master names; unselected values are blank. Narrow screens shrink fixed columns to leave room for amounts. Long initiative names wrap at 200 or fewer initiatives; at 201 or more, both wide and narrow screens use 28px rows and single-line truncation. Open an initiative to read its full name in the detail view; its button retains the full accessible name regardless of notes.
 
 Start year/month is automatically derived from the period classification and monthly amounts, separately for initial/final budgets at load time. The list shows the selected kind's result. “New” uses the first nonzero month in the current fiscal year. “Carryover period” treats April through the last nonzero month as continuous and uses the following month in the previous fiscal year as the start. Intermediate zero months count as continuous. The check occurs before positive and negative account rows cancel, and respects final-budget overrides of 0. It is blank for all-zero months, no period, custom classifications, or a carryover period starting after April or continuing through March. Renaming preserves classification rules, and saving amounts/periods derives it from the new source data. The start date cannot be edited directly.
 
@@ -184,7 +184,7 @@ Both tables add quarters 1–4 after June, September, December, and March; first
 
 If the table viewport is shorter than the full fixed header block, scrolling to the bottom can hide the top of fixed headers. Screen tests check narrow-width operations and test fixed positions at heights that fit the headers.
 
-The breakdown table fixes category, period, subcategory, and initiative-name columns at the left. Within each category it groups by period-master order, puts unselected periods last as blanks, and vertically merges identical period names. Within each period, subcategories follow master order and equal subcategory cells merge vertically. Blank subcategories appear last; initiatives within a subcategory retain registration order. Category subtotals and calculations remain. Title is left and comparison slots right on the same row to maximize table space; slots wrap on narrow screens.
+The breakdown table fixes category, period, subcategory, and initiative-name columns at the left when its viewport exceeds 650px; otherwise only the initiative name stays fixed. Within each category it groups by period-master order, puts unselected periods last as blanks, and vertically merges identical period names. Within each period, subcategories follow master order and equal subcategory cells merge vertically. Blank subcategories appear last; initiatives within a subcategory retain registration order. Category subtotals and calculations remain. Title is left and comparison slots right on the same row to maximize table space; slots wrap on narrow screens.
 
 ### Masters, aggregations, and amount precision
 
@@ -255,6 +255,8 @@ Open the amount-item master from Masters or Home's graph to view three fixed ite
 The account-attribute master, also reached from Masters or Home, shows revenue, cost of sales, expenses, and profit in fixed names/order. It cannot be added to, edited, or deleted. It shares definitions with account-master choices and excludes aggregations. There are no new tables, migrations, or external transmission; viewing does not rewrite plans/results.
 
 ## Colors
+
+At table viewport widths of 650px or less, initiative and breakdown tables freeze only the initiative name, sizing it to leave room for amounts. Wider tables keep four fixed columns. Selected month headers use a dark-gray background and light text in dark mode. Both aggregation-creation inputs use the app border colors and blue focus outline.
 
 The file name sits immediately to the left of the theme toggle; they remain together at the right edge when the header wraps. The sun/moon toggle at the right end of the header switches the whole app, including entry, tables, masters, and dialogs, between light and dark. The first launch uses light. The choice is retained in browser localStorage (`triadichrome.theme`) until changed or browser storage is cleared, and shared with other windows in the same browser. It does not follow the OS theme. If preference storage fails, switching still works in the current screen. Tab and Space support keyboard operation; reduced-motion settings shorten the transition. No plan-file, data-history, undo, Excel-output, permission, or external-transmission changes are made. Dark mode uses `#8099FF` for the existing blue accent.
 
@@ -745,7 +747,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 表の表示領域が固定見出し全体より低い場合、最下端までスクロールすると固定見出しの上部が隠れる制限があります。画面テストでは狭い幅の操作を確認し、固定位置の検査は見出しが収まる高さで行います。
 
-展開表は展開名・期間名・展開区分・施策名の4列を左端に固定します。各展開内を期間マスタ順、未選択は空欄で最後にまとめ、同じ期間名は縦に結合します。同じ期間内を区分マスタ順にまとめて区分名も縦結合し、区分未選択は最後の空欄とします。区分内は登録順で、展開別小計と金額計算は維持します。
+展開表は表の表示幅が650pxを超える場合に展開名・期間名・展開区分・施策名の4列を左端に固定します。650px以下では施策名だけを固定し、ほかの分類は横スクロールで確認し、合計・小計の名称も施策名と同じ幅で残します。各展開内を期間マスタ順、未選択は空欄で最後にまとめ、同じ期間名は縦に結合します。同じ期間内を区分マスタ順にまとめて区分名も縦結合し、区分未選択は最後の空欄とします。区分内は登録順で、展開別小計と金額計算は維持します。
 
 展開表はタイトルを左側、比較対象スロットを右側に同じ横一列で配置し、表の表示領域を確保します。狭い画面ではスロットを次の行へ折り返します。
 
@@ -787,7 +789,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 施策一覧は見出し・種別選択・「施策を追加」を一行にまとめ、狭い画面では折り返します。各月の売上・費用・利益を表示します。費用は費用属性の科目の合計で、削減額は負数として表示します。表だけを画面内で縦横にスクロールでき、下端の横スクロールバー、上端の月・項目見出し、左端の施策名を表示し続けます。
 
-展開表はスロットで選んだ1〜2種別の月別売上・利益を表示します。2種選択時だけ、選択順に関係なく「確定予算−一次予算」の比較列を表示します。前年は上部の行で扱い、種別の列には加えません。上部は前年・合計・展開計で、合計は前年＋展開計です。展開名ごとに施策をまとめ、施策がない展開も小計0で表示します。各展開名の中は期間マスタ順にまとめ、同じ期間内を区分マスタ順にまとめて区分名も縦結合します。区分未選択は最後の空欄とし、区分内は登録順で表示します。期間未選択の施策は最後に空欄の期間として表示します。施策名から編集へ進み、元の表へ戻れます。展開区分は各施策の選択済み区分の現在のマスタ名を表示し、未選択は空欄です。区分別小計は追加しません。展開名・期間名・展開区分・施策名の4列を左端に固定し、表の領域だけを縦横にスクロールできます。月・種別・売上／利益の3段の列見出しから前年・合計・展開計までをまとめて上端に固定し、縦スクロールでは下の施策行と展開別小計だけが移動します。見出し・金額・小計の列境界をそろえ、長い名称は折り返します。狭い画面では名称列を縮めて表示します。
+展開表はスロットで選んだ1〜2種別の月別売上・利益を表示します。2種選択時だけ、選択順に関係なく「確定予算−一次予算」の比較列を表示します。前年は上部の行で扱い、種別の列には加えません。上部は前年・合計・展開計で、合計は前年＋展開計です。展開名ごとに施策をまとめ、施策がない展開も小計0で表示します。各展開名の中は期間マスタ順にまとめ、同じ期間内を区分マスタ順にまとめて区分名も縦結合します。区分未選択は最後の空欄とし、区分内は登録順で表示します。期間未選択の施策は最後に空欄の期間として表示します。施策名から編集へ進み、元の表へ戻れます。展開区分は各施策の選択済み区分の現在のマスタ名を表示し、未選択は空欄です。区分別小計は追加しません。表の表示幅が650pxを超える場合は展開名・期間名・展開区分・施策名の4列、650px以下は施策名だけを左端に固定し、表の領域だけを縦横にスクロールできます。月・種別・売上／利益の3段の列見出しから前年・合計・展開計までをまとめて上端に固定し、縦スクロールでは下の施策行と展開別小計だけが移動します。見出し・金額・小計の列境界をそろえ、長い名称は折り返します。狭い画面では名称列を縮めて表示します。
 
 施策一覧・総原価表・展開表は、表の列見出しより上にスロット式の種別選択を置きます。施策一覧は1種、総原価表・展開表は1〜2種を選び、2つ目だけ未選択にできます。同じ種別の重複選択はできません。初期値は施策一覧が確定予算、他の2表が「一次予算・未選択」です。横並びの候補のクリックと矢印キーによる選択に対応し、選択は画面ごとにファイルへ保存して開き直しても保持します。総原価表は1予算時に「前年・選んだ予算・前年差」の3列、両予算時に「前年・一次予算・確定予算・前年差・一次予算差」の5列を表示します。前年差は表示する予算から前年を引き、両予算時は確定予算を使います。一次予算差は確定予算から一次予算を引きます。保存失敗時は保存済み表示を維持して理由を通知します。過去を開くとその時点の保存済み種別を表示し、現在へ戻ると現在の保存済み種別へ戻します。過去閲覧中は選択を一時的に変更でき、ファイルには保存しません。施策一覧・展開表は業種・部署の全件を表示し、総原価表では部署名・業種名の順に並べたドロップダウンで絞り込みます。施策一覧の4固定列は見出しから並べ替えられます。3画面とも列見出しのフィルターは設けません。
 
@@ -820,6 +822,8 @@ ExcelJS 4.4.0（MIT）と、ExcelJSが既に使用するXML解析器saxes 5.0.1�
 科目属性マスタは「マスタ」またはホームの相関図から開き、売上・売上原価・費用・利益の4件を固定の名称と順序で確認できます。追加・編集・削除はできません。勘定科目マスタの選択候補と同じ定義を使用し、集計は含みません。新しい保存テーブル・データ移行・外部送信はなく、閲覧で計画や計算結果を書き換えません。
 
 ## 配色
+
+施策一覧・展開表は、表に割り当てられた表示幅が650px以下なら施策名だけを固定し、施策名と金額を並べて確認できる幅へ調整します。650pxを超える場合は従来の4列固定です。金額セルの選択月は、ダークでは濃いグレーの背景と明るい文字で表示します。集計追加の「集計名」「表示名」も通常枠と選択中の青い枠をアプリの配色に揃えます。
 
 ファイル名はテーマ切替のすぐ左に並び、狭い画面でヘッダーが折り返す場合も一緒に右端へ寄せます。ヘッダー右端の太陽・月のトグルで、ライト（白基調）とダーク（黒・濃いグレー基調）を切り替えられます。ファイルを開く前の入口でも使え、表・マスタ・ダイアログも連動します。初回はライトで、端末の明暗設定には追従しません。選択はブラウザ内のlocalStorage（`triadichrome.theme`）へ保存し、次回起動・同じブラウザの別ウィンドウへ反映します。選び直すかブラウザの保存領域を消すまで保持します。保存領域が使えない場合は現在の画面だけに適用します。計画ファイル・時点履歴・操作取消・Excel出力は変えず、追加権限・外部送信はありません。Tabでトグルへ移動し、Spaceで切り替えられます。
 

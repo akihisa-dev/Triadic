@@ -120,14 +120,16 @@ test("属性別に集計した施策を一覧で表示し、種別表示・属�
   await expect(row.locator("td:not(.initiative-list-fixed)").nth(3)).toHaveText("0");
   await expect(row.locator("td:not(.initiative-list-fixed)").nth(6)).toHaveText("0");
   await expect(row.locator("td:not(.initiative-list-fixed)").nth(35)).toHaveText("300");
-  await expect(row.getByRole("rowheader")).toHaveAttribute("title", "登録時の備考");
+  await expect(row.getByRole("button", { name: "施策A", exact: true })).toHaveAttribute("title", "登録時の備考");
   await app.locator(".home-header").getByRole("button", { name: /サイドバー/ }).click();
   const region = app.getByRole("region", { name: "施策一覧の月別売上・費用・利益" });
   await settleMotion(app.locator("body"));
   const before = (await row.getByRole("rowheader").boundingBox())!;
   await region.evaluate(node => { node.scrollLeft = node.scrollWidth; });
   const after = (await row.getByRole("rowheader").boundingBox())!;
-  expect(after.x).toBe(before.x);
+  if (await region.evaluate(node => node.clientWidth) <= 650) {
+    expect(Math.abs(after.x - (await region.boundingBox())!.x)).toBeLessThanOrEqual(1);
+  } else expect(Math.abs(after.x - before.x)).toBeLessThanOrEqual(1);
   expect(await app.locator(".home-content").evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
   await page.screenshot({ path: join(tmpdir(), `triadichrome-list-${test.info().project.name}.png`) });
   await app.getByRole("button", { name: "サイドバーを開く" }).click();
@@ -164,7 +166,7 @@ test("属性別に集計した施策を一覧で表示し、種別表示・属�
   await expect(list.locator("tbody").getByRole("rowheader")).toHaveText(["施策A", "施策B"]);
   await expect(total.getByRole("rowheader")).toHaveText("合計");
   await expect(total.locator("td").nth(2)).toHaveText("986");
-  await expect(row.getByRole("rowheader")).toHaveAttribute("title", "登録時の備考");
+  await expect(row.getByRole("button", { name: "施策A", exact: true })).toHaveAttribute("title", "登録時の備考");
 });
 
 test("施策保存の失敗で入力と保存済み一覧を保持する", async ({ app }) => {

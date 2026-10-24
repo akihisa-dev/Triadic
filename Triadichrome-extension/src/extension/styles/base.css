@@ -43,6 +43,7 @@
   --table-line: #e5e5e5;
   --table-divider: #c8c8c8;
   --control-line: #a3a3a3;
+  --selected-month: #a3a3a3;
   --ink: #202020;
   --muted: #626262;
   --accent: #0033ff;
@@ -147,6 +148,7 @@ button:focus-visible {
   --table-line: #393939;
   --table-divider: #606060;
   --control-line: #858585;
+  --selected-month: #404040;
   --ink: #ededed;
   --muted: #b3b3b3;
   --accent: #8099ff;
@@ -189,3 +191,5 @@ button:focus-visible {
   --tone-fafafa: #1e1e1e;
   --tone-ffffff: #1a1a1a;
 }
+
+:root[data-theme="dark"] th.grid-month-selected { color: var(--ink); }

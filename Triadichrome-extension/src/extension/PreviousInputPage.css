@@ -30,4 +30,4 @@
 .previous-grid-container { scroll-padding: 48px 0 0 220px; }
 @media (max-width: 700px) { .previous-grid-container { scroll-padding-left: 140px; } }
 
-.previous-grid thead tr[data-column-header] th.grid-month-selected { background: var(--control-line); }
+.previous-grid thead tr[data-column-header] th.grid-month-selected { background: var(--selected-month); }

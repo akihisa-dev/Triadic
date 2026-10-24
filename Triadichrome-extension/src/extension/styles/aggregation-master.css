@@ -8,7 +8,8 @@
 .aggregation-master-heading .text-button { min-height: 28px; padding: 0; }
 .aggregation-add-form { display: flex; align-items: end; gap: 8px; flex-wrap: wrap; }
 .aggregation-add-form label { display: flex; flex-direction: column; gap: 4px; }
-.aggregation-add-form input { min-height: 32px; }
+.aggregation-add-form input { min-height: 32px; border: 1px solid var(--line); outline: 2px solid transparent; outline-offset: -1px; }
+.aggregation-add-form input:focus { border-color: var(--accent); outline-color: var(--accent); }
 .aggregation-grid-scroll { flex: 1; width: 100%; min-height: 0; overflow: auto; position: relative; scrollbar-gutter: stable; }
 .aggregation-grid-surface { position: relative; width: 100%; isolation: isolate; }
 .aggregation-layout-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-size: 12px; line-height: 18px; position: relative; z-index: 1; }
