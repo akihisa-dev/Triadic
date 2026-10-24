@@ -22,6 +22,7 @@
 // Excel名称の_x0041_・_x005F_・日本語・実文字との併存は tests/previous-workbook-export.mjs の合成計画でXLSX往復・マスタ照合・三表とシート参照を確認する。
 // 属性未設定の表示と金額の入力保持は既存の手修正・0固定・全月0・相殺データを使う。tests/budget-hints.mjs と tests/ui/budget-tooltips.spec.ts で属性未設定・不正入力の保護と、手修正の点線・吹き出しがないことを確認する。
 // 履歴の収支比較は既存サンプルの過去4月100→現在120と確定130を使い、tests/history-income-impact.mjs と tests/ui/history-income-impact.spec.ts で前年・各属性・1円・年間/月別・手修正・セル別上限を確認する。
+// 一覧と詳細の往復は tests/ui/initiative-list-return.spec.ts で200/201件・並べ替え・番号再利用・Tab継続を確認する。
 // 施策検索は既存サンプルの施策名・備考・過去履歴を使い、tests/initiative-search.mjs と tests/ui/initiative-search.spec.ts で一致規則・移動・入力保護・50件表示・空の計画を確認する。
 // 施策複製は既存サンプルの同科目複数行・分類・確定手修正0を使い、tests/duplicate-initiative.mjs と tests/ui/duplicate-initiative.spec.ts で独立性・登録・取消・入力保護を確認する。
 // 履歴と現在の差分は既存の3時点の備考・4月月額を使い、tests/history-difference.mjs と tests/ui/history-difference.spec.ts で参照専用・1円・手修正・作成識別子・大量表示・失敗を確認する。

@@ -11,7 +11,7 @@ import { ExpansionTablePage } from "./ExpansionTablePage";
 import { IndustryMasterPage } from "./IndustryMasterPage";
 import { ExpansionMasterPage } from "./ExpansionMasterPage";
 import { InitiativeEntryPage } from "./InitiativeEntryPage";
-import { InitiativeListPage } from "./InitiativeListPage";
+import { InitiativeListPage, type InitiativeListReturn } from "./InitiativeListPage";
 import { InitiativeDetailPage } from "./InitiativeDetailPage";
 import { MasterPage } from "./MasterPage";
 import { AggregationMasterPage } from "./AggregationMasterPage";
@@ -38,6 +38,7 @@ export function WorkspacePage({ displayed, workspace }: { displayed: Screen; wor
 
   const { selectedInitiative, detailOrigin } = displayed;
   const currentInitiative = initiatives.find(item => item.id === selectedInitiative?.id && item.fiscalYear === selectedInitiative?.fiscalYear);
+  const listReturn = useRef<InitiativeListReturn | null>(null);
   const lastDetail = useRef<Initiative | null>(null);
   if (currentInitiative) lastDetail.current = currentInitiative;
   const retainedInitiative = currentInitiative ?? (lastDetail.current?.id === selectedInitiative?.id && lastDetail.current?.fiscalYear === selectedInitiative?.fiscalYear ? lastDetail.current : null);
@@ -48,7 +49,7 @@ export function WorkspacePage({ displayed, workspace }: { displayed: Screen; wor
     case "home": return <HomeRelationsPage view={relationView} disabled={navigationBlocked} onNavigate={target => { dismissNotice(); setPage(target); }} />;
     case "initiative-entry": return <InitiativeEntryPage onBack={() => setPage("initiative-list")} draft={initiativeDraft} onDraftChange={setInitiativeDraft} accounts={accounts} expansions={contents.expansions} expansionCategories={contents.expansionCategories} departments={contents.departments} periodTypes={contents.periodTypes} industries={contents.industries} onOpenMaster={() => setPage("account-master")} isSaving={isSaving} onRegister={() => { void register(); }} />;
     case "initiative-detail": return retainedInitiative && <InitiativeDetailPage onRecoverDraft={workspace.recoverInitiative} onDuplicate={() => workspace.duplicateInitiative(retainedInitiative)} duplicationBlocked={navigationBlocked || !currentInitiative} sourceMissing={!currentInitiative} key={`${retainedInitiative.id}:${displayed.detailKind ?? 1}:${displayed.detailVisit ?? ""}`} initialKind={displayed.detailKind ?? 1} initiative={retainedInitiative} accounts={accounts} expansions={contents.expansions} expansionCategories={contents.expansionCategories} departments={contents.departments} periodTypes={contents.periodTypes} industries={contents.industries} onOpenMaster={() => setPage("account-master")} onUpdate={update} onPendingChange={setEditPending} onPrepareSave={onPrepareSave} backLabel={detailOrigin === "cost-table" ? "総原価表" : detailOrigin === "home" ? "Home" : detailOrigin === "expansion-table" ? "展開表" : "施策一覧"} onBack={() => setPage(detailOrigin)} />;
-    case "initiative-list": return <InitiativeListPage expansions={contents.expansions} periodTypes={contents.periodTypes} onAddInitiative={startInitiative} selectedKind={workspace.localKinds["initiative-list"][0]!} selection={kindSelection("initiative-list")} initiatives={initiatives} accounts={accounts} fiscalYear={String(contents.fiscalYear)} onOpenInitiative={openInitiative} navigationBlocked={navigationBlocked} />;
+    case "initiative-list": return <InitiativeListPage returnTo={listReturn} expansions={contents.expansions} periodTypes={contents.periodTypes} onAddInitiative={startInitiative} selectedKind={workspace.localKinds["initiative-list"][0]!} selection={kindSelection("initiative-list")} initiatives={initiatives} accounts={accounts} fiscalYear={String(contents.fiscalYear)} onOpenInitiative={openInitiative} navigationBlocked={navigationBlocked} />;
     case "cost-table": return <CostTablePage view={workspace.costTableView} navigationBlocked={navigationBlocked} onOpenInitiative={openInitiative} selection={kindSelection("cost-table")} contents={costContents} selected={workspace.localKinds["cost-table"]} />;
     case "expansion-table": return <ExpansionTablePage selection={kindSelection("expansion-table")} contents={expansionContents} selected={workspace.localKinds["expansion-table"]} onOpenInitiative={openInitiative} />;
     case "master": return <MasterPage onOpenAggregations={() => setPage("aggregation-master")} onOpenAmountItems={() => setPage("amount-item-master")} onOpenAccountTypes={() => setPage("account-type-master")} onOpenAccounts={() => setPage("account-master")} onOpenExpansions={() => setPage("expansion-master")} onOpenExpansionCategories={() => setPage("expansion-category-master")} onOpenIndustries={() => setPage("industry-master")} onOpenDepartments={() => setPage("department-master")} onOpenPeriods={() => setPage("period-master")} onOpenKinds={() => setPage("kind-master")} />;
