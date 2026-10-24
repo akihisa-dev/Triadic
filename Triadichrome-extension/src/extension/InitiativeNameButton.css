@@ -1,0 +1,2 @@
+.initiative-name-tooltip { position: fixed; inset: auto; margin: 0; box-sizing: border-box; width: max-content; max-width: min(420px, calc(100vw - 16px)); max-height: calc(100vh - 16px); overflow: auto; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; line-height: 1.6; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+.initiative-name-tooltip p { margin: 8px 0 0; color: var(--muted); }

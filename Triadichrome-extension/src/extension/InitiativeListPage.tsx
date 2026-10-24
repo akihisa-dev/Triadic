@@ -1,3 +1,4 @@
+import { InitiativeNameButton } from "./InitiativeNameButton";
 import { hasUnclassifiedAmount } from "../core/domain/budgetHints";
 import { useRowWindow, WindowRows } from "./VirtualTableRows";
 import { TableCalculationBoundary } from "./TableCalculationBoundary";
@@ -113,15 +114,15 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
         <tbody><WindowRows items={rendered} count={displayed.length} height={28} columns={40} render={(item, index) => <tr key={item.id} aria-rowindex={index + 3}>
           <td className="initiative-list-fixed initiative-list-expansion">{item.expansionId == null ? "" : expansionNames.get(item.expansionId) ?? ""}</td>
           <td className="initiative-list-fixed initiative-list-period">{item.periodTypeId == null ? "" : periodNames.get(item.periodTypeId) ?? ""}</td>
-          <th scope="row" className="initiative-list-fixed initiative-list-name" title={item.note || item.name}>
-            <button data-initiative-identity={item.identity} className="initiative-name-button" type="button" disabled={navigationBlocked} onFocus={() => setFocusedId(item.id)}
+          <th scope="row" className="initiative-list-fixed initiative-list-name">
+            <InitiativeNameButton name={item.name} note={item.note} data-initiative-identity={item.identity} className="initiative-name-button" type="button" disabled={navigationBlocked} onFocus={() => setFocusedId(item.id)}
               onBlur={event => {
                 // Native Tab blurs before focusing its destination. Do not unmount that neighbour between the events.
                 if (!(event.relatedTarget instanceof Node && event.currentTarget.closest("tbody")?.contains(event.relatedTarget))) setFocusedId(null);
               }} onClick={() => {
                 if (returnTo) returnTo.current = { id: item.id, identity: item.identity ?? "", sort };
                 onOpenInitiative(item, selectedKind);
-              }}>{item.name}{unclassifiedIds.has(item.id) && <span className="initiative-attribute-hint"> · 属性未設定</span>}</button>
+              }}>{item.name}{unclassifiedIds.has(item.id) && <span className="initiative-attribute-hint"> · 属性未設定</span>}</InitiativeNameButton>
           </th>
           <td className="initiative-list-fixed initiative-list-start">{item.startYearMonths[selectedKind]}</td>
           {item.calculation === "failed" ? <td colSpan={36} role="alert" style={{ textAlign: "left" }}>{item.error} 施策を開いて金額を修正してください。</td> : initiativeMonths.map(month => <Fragment key={month}>

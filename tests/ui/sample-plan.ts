@@ -1,3 +1,4 @@
+// 長い施策名と備考の吹き出しは tests/ui/initiative-name-tooltip.spec.ts で200/201件・ホバー・フォーカス・Esc・画面端・表の寸法維持を確認する。
 // 検索語の保持は tests/ui/initiative-search-retention.spec.ts で閉じる・Esc・詳細移動・最新データ・ファイル終了後の破棄を確認する。
 // Enter・Shift+Enter後の上書きは tests/ui/grid-enter-replace.spec.ts で施策新規/詳細・前年の両種別、不正入力・変換確定を確認する。
 // 複数ウィンドウの同期・表示条件/位置の複製・共有取消・全保存先切替・履歴集約は既存の施策/月額/3時点履歴を使い、tests/window-session.mjs と tests/ui/multi-window.spec.ts で確認する。保存データは追加しない。
