@@ -37,6 +37,9 @@ for (const surface of ["entry", "detail", "previous"]) {
       await expect(cell).toHaveValue(value);
       await expect(display).toHaveText(Number(value).toLocaleString("en-US", { maximumFractionDigits: 3 }));
     }
+    await expect(cell.locator("..")).toHaveAttribute("title", "1,234,567.001");
+    const label = display.locator("span");
+    await expect(label).toHaveCSS("text-overflow", "ellipsis");
     await cell.dblclick();
     await expect(display).toHaveCount(0);
     await cell.press("Escape");
