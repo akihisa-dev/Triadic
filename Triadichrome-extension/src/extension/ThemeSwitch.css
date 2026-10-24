@@ -1,4 +1,6 @@
 .home-header { flex-wrap: wrap; }
+.home-theme-controls { display: flex; align-items: center; gap: 12px; min-width: 0; max-width: 100%; margin-left: auto; }
+.home-theme-controls .theme-switch { margin-left: 0; }
 
 .theme-switch {
   position: relative;

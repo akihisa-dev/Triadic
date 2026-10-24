@@ -29,7 +29,6 @@
 
 .home-file-name {
   min-width: 0;
-  margin-left: auto;
   overflow: hidden;
   color: var(--muted);
   font-size: 12px;

@@ -72,13 +72,15 @@ export function WorkspaceHeader({ workspace, windows }: { workspace: HomeWorkspa
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="1" /><path d="M16 8V4H4v12h4" /></svg>
         </button>
         <span className="home-window-label" title={windows.label}>{windows.label}</span>
-        <strong className="home-file-name" title={fileName}>{fileName}</strong>
         {preview ? <div className="history-preview-controls" aria-label="過去のデータを閲覧中">
           <span className="history-preview-label">{historyDate(preview.entry.recordedAt)} · 閲覧専用</span>
           <button className="secondary-button" type="button" disabled={navigationBlocked} onClick={returnToCurrent}>現在に戻る</button>
           <button className="primary-button" type="button" disabled={navigationBlocked} onClick={() => { setRestoreError(""); setRestoreRequested(true); }}>この時点に戻す</button>
         </div> : null}
-        <ThemeSwitch />
+        <div className="home-theme-controls">
+          <strong className="home-file-name" title={fileName}>{fileName}</strong>
+          <ThemeSwitch />
+        </div>
       </header>
   );
 }

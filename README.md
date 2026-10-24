@@ -254,7 +254,7 @@ The account-attribute master, also reached from Masters or Home, shows revenue, 
 
 ## Colors
 
-The sun/moon toggle at the right end of the header switches the whole app, including entry, tables, masters, and dialogs, between light and dark. The first launch uses light. The choice is retained in browser localStorage (`triadichrome.theme`) until changed or browser storage is cleared, and shared with other windows in the same browser. It does not follow the OS theme. If preference storage fails, switching still works in the current screen. Tab and Space support keyboard operation; reduced-motion settings shorten the transition. No plan-file, data-history, undo, Excel-output, permission, or external-transmission changes are made. Dark mode uses `#8099FF` for the existing blue accent.
+The file name sits immediately to the left of the theme toggle; they remain together at the right edge when the header wraps. The sun/moon toggle at the right end of the header switches the whole app, including entry, tables, masters, and dialogs, between light and dark. The first launch uses light. The choice is retained in browser localStorage (`triadichrome.theme`) until changed or browser storage is cleared, and shared with other windows in the same browser. It does not follow the OS theme. If preference storage fails, switching still works in the current screen. Tab and Space support keyboard operation; reduced-motion settings shorten the transition. No plan-file, data-history, undo, Excel-output, permission, or external-transmission changes are made. Dark mode uses `#8099FF` for the existing blue accent.
 
 
 Monochrome is the base; `#0033FF` marks the selected sidebar icon, active input/selection borders and text caret, and the active Home icon with directly connected lines. It applies to initiative input/details, classification choices, previous-year amounts, master registration/editing, and aggregation editing. There is no selection bar. Normal buttons, kind tabs, tables, graph names/backgrounds/descriptions, and notifications remain monochrome. Entry file-drop targets use the required pale blue background and blue dashed border with monochrome text. Import/export drop instructions use gray backgrounds/black dashed borders; history-selection checkboxes remain monochrome.
@@ -817,12 +817,12 @@ ExcelJS 4.4.0（MIT）と、ExcelJSが既に使用するXML解析器saxes 5.0.1�
 
 ## 配色
 
-ヘッダー右端の太陽・月のトグルで、ライト（白基調）とダーク（黒・濃いグレー基調）を切り替えられます。ファイルを開く前の入口でも使え、表・マスタ・ダイアログも連動します。初回はライトで、端末の明暗設定には追従しません。選択はブラウザ内のlocalStorage（`triadichrome.theme`）へ保存し、次回起動・同じブラウザの別ウィンドウへ反映します。選び直すかブラウザの保存領域を消すまで保持します。保存領域が使えない場合は現在の画面だけに適用します。計画ファイル・時点履歴・操作取消・Excel出力は変えず、追加権限・外部送信はありません。Tabでトグルへ移動し、Spaceで切り替えられます。
+ファイル名はテーマ切替のすぐ左に並び、狭い画面でヘッダーが折り返す場合も一緒に右端へ寄せます。ヘッダー右端の太陽・月のトグルで、ライト（白基調）とダーク（黒・濃いグレー基調）を切り替えられます。ファイルを開く前の入口でも使え、表・マスタ・ダイアログも連動します。初回はライトで、端末の明暗設定には追従しません。選択はブラウザ内のlocalStorage（`triadichrome.theme`）へ保存し、次回起動・同じブラウザの別ウィンドウへ反映します。選び直すかブラウザの保存領域を消すまで保持します。保存領域が使えない場合は現在の画面だけに適用します。計画ファイル・時点履歴・操作取消・Excel出力は変えず、追加権限・外部送信はありません。Tabでトグルへ移動し、Spaceで切り替えられます。
 
 
 モノクロを基本に、選択中のサイドバーのアイコンと、操作中の入力・選択欄の枠・文字カーソル、ホームの操作対象アイコンと直接つながる線に `#0033FF` を使います。施策入力と登録済み施策、分類の選択欄、前年の金額、マスタの登録・編集、集計の編集が対象です。選択を示す棒は付けません。選択中の種別タブは文字と下線、三表の種別・比較対象は選択中の文字だけを同じ青で示し、背景はグレーを保ちます。通常のボタン、未選択の種別タブ、表、相関図の名称・背景・関係の説明、通知はモノクロを保ちます。入口のファイルドロップ先は要件に従い淡い青の背景と青い破線で強調し、文字はモノクロを保ちます。入出力のファイルドロップ案内はグレーの背景と黒い破線で示し、履歴選択のチェックボックスもモノクロに揃えます。
 
-ダークでは操作対象の青を `#8099FF` にして暗い背景上でも読み取れるようにします。アクセントは `styles/base.css` の `--accent` で管理し、ボタン・図・表領域のキーボードフォーカス用の `--focus` と分けています。`npm run test:ui:colors` で、広い画面と狭い画面の適用・解除・画面遷移・モノクロを保つ対象・ファイルドロップ案内・履歴選択を確認します。テーマの初回・記憶・失敗時・表・マスタ・ダイアログと320〜1280pxでの操作は `npx playwright test theme.spec.ts` で確認します。Chromeと検証環境は[ブラウザでの画面確認・自動テスト](#ブラウザでの画面確認自動テスト)を参照してください。
+ダークでは操作対象の青を `#8099FF` にして暗い背景上でも読み取れるようにします。アクセントは `styles/base.css` の `--accent` で管理し、ボタン・図・表領域のキーボードフォーカス用の `--focus` と分けています。`npm run test:ui:colors` で、広い画面と狭い画面の適用・解除・画面遷移・モノクロを保つ対象・ファイルドロップ案内・履歴選択を確認します。テーマの初回・記憶・失敗時・表・マスタ・ダイアログと320〜3824pxでの操作は `npx playwright test theme.spec.ts` で確認します。Chromeと検証環境は[ブラウザでの画面確認・自動テスト](#ブラウザでの画面確認自動テスト)を参照してください。
 
 ## 画面の動き
 

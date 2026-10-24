@@ -75,13 +75,19 @@ test("テーマ設定を読めなくてもライトで開始し切替できる",
 test("各画面幅でヘッダーのトグルへ到達できる", async ({ page, app }) => {
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await expect(app.getByRole("heading", { name: "Home", exact: true })).toBeVisible();
-  for (const width of [320, 600, 700, 800, 900, 1280]) {
+  for (const width of [320, 600, 700, 800, 900, 1280, 1920, 3824]) {
     await page.setViewportSize({ width, height: 864 });
     await settleMotion(app.locator("body"));
     const bounds = await app.getByRole("switch", { name: "ダークテーマ" }).boundingBox();
     expect(bounds).not.toBeNull();
     expect(bounds!.x).toBeGreaterThanOrEqual(0);
     expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+    const fileName = (await app.locator(".home-file-name").boundingBox())!;
+    expect(fileName.width).toBeGreaterThan(0);
+    expect(bounds!.x - (fileName.x + fileName.width)).toBeCloseTo(12, 0);
+    expect(fileName.y + fileName.height / 2).toBeCloseTo(bounds!.y + bounds!.height / 2, 0);
+    const header = (await app.locator(".home-header").boundingBox())!;
+    expect(header.x + header.width - bounds!.x - bounds!.width).toBeCloseTo(width <= 600 ? 12 : 16, 0);
     await app.getByRole("switch", { name: "ダークテーマ" }).click();
   }
 });
