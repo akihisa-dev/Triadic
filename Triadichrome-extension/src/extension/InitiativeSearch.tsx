@@ -7,17 +7,18 @@ import "./InitiativeSearch.css";
 type Props = { initiatives: Initiative[]; disabled: boolean; onOpen: (initiative: Initiative) => void };
 export function InitiativeSearch({ initiatives, disabled, onOpen }: Props) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const trigger = useRef<HTMLButtonElement>(null);
   return <>
     <button ref={trigger} type="button" className="secondary-button initiative-search-trigger" disabled={disabled} onClick={() => setOpen(true)}>施策を検索</button>
-    {open && <InitiativeSearchDialog initiatives={initiatives} disabled={disabled} returnFocus={trigger.current}
+    {open && <InitiativeSearchDialog query={query} onQueryChange={setQuery} initiatives={initiatives} disabled={disabled} returnFocus={trigger.current}
       onClose={() => setOpen(false)} onOpen={item => { if (!disabled) { onOpen(item); setOpen(false); } }} />}
   </>;
 }
 
-function InitiativeSearchDialog({ initiatives, disabled, onOpen, onClose, returnFocus }: Props & { onClose: () => void; returnFocus: HTMLElement | null }) {
+function InitiativeSearchDialog({ initiatives, disabled, onOpen, onClose, returnFocus, query, onQueryChange }: Props & { onClose: () => void; returnFocus: HTMLElement | null; query: string; onQueryChange: (query: string) => void }) {
   const title = useId(), dialog = useRef<HTMLDialogElement>(null), queryInput = useRef<HTMLInputElement>(null);
-  const [query, setQuery] = useState(""), [page, setPage] = useState(0);
+  const [page, setPage] = useState(0);
   const search = useMemo(() => createInitiativeSearch(initiatives), [initiatives]);
   const results = useMemo(() => search(query), [search, query]);
   const pages = Math.max(1, Math.ceil(results.length / 50)), currentPage = Math.min(page, pages - 1);
@@ -29,7 +30,7 @@ function InitiativeSearchDialog({ initiatives, disabled, onOpen, onClose, return
     onCancel={event => { event.preventDefault(); onClose(); }}
     onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); onClose(); } }}>
     <div className="initiative-search-heading"><h2 id={title}>施策を検索</h2><button type="button" className="secondary-button" onClick={onClose}>閉じる</button></div>
-    <label className="initiative-search-query">施策名・備考<input ref={queryInput} type="search" value={query} onChange={event => { setQuery(event.target.value); setPage(0); }}
+    <label className="initiative-search-query">施策名・備考<input ref={queryInput} type="search" value={query} onChange={event => { onQueryChange(event.target.value); setPage(0); }}
       onKeyDown={event => {
         if (event.key === "Enter" && !event.nativeEvent.isComposing && event.keyCode !== 229) {
           event.preventDefault(); const first = results[currentPage * 50]; if (!disabled && first) onOpen(first);
