@@ -1,3 +1,4 @@
+import { GridAmountInput } from "./GridAmountInput";
 import { hasUnclassifiedAmount } from "../core/domain/budgetHints";
 import { AccountRowSelect } from "./AccountRowSelect";
 import { gridCellEvents, nextGridCell } from "./gridCellEvents";
@@ -127,7 +128,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                   return <td key={month} className={selected ? "initiative-cell-selected" : ""}
                     onPointerEnter={event => extendSelection(cell, event.buttons)}
                     onPointerDown={events.onPointerDown}>
-                    <input type="number" step="0.001" inputMode="decimal" data-row={index} data-column={column}
+                    <GridAmountInput editing={grid.editing && selection?.end.row === index && selection.end.column === column} type="number" step="0.001" inputMode="decimal" data-row={index} data-column={column}
                       ref={input => { if (input) input.setCustomValidity(invalidInput ? "金額に有効な数値を入力してください。"
                         : input.value === "" || isValidAmount(input.value) ? "" : "金額は千円単位・小数点以下3桁までで入力してください。"); }}
                       aria-label={`${accountName} ${month}月の金額`}

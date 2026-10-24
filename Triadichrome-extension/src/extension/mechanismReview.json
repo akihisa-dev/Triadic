@@ -4,7 +4,7 @@
     "description": "7f6ae5259415be09a32323fc544ef72d4df04a37e891d058a6c3da5e5b1d05ec"
   },
   "inheritance": {
-    "implementation": "3410a062e950841bacf05b709913292d8a239f6fe555e09fc853abfc2942c926",
+    "implementation": "fb3bb17040704c51908a659d3f5d05120602a32cd5ecaaf8de649c9459905534",
     "description": "776bae7a0043c1e8c33a180f18632b3738b4d12827b665e71ce96d4b9569a879"
   },
   "effects": {
@@ -28,11 +28,11 @@
     "description": "f31501022868e958d912039f86befb636656bdec1b68ad891ebfc9abba20d62c"
   },
   "classification": {
-    "implementation": "214f2a2a31bceadfbdf83d93a4246c3db4dd28e4f5300df70e36ce386352356f",
+    "implementation": "db12df68d81b7ac2cb444d14fb59b5262dcfa30b56d116b0eaaf66266d71eb41",
     "description": "6ad5e38695f8cdaf6baf0d32ad061ad8a259535503342e4045125b530b96da6e"
   },
   "open": {
-    "implementation": "df396621344869f67e95eddbc34484f6d6ecb1c05e63c17335690a59527acbab",
+    "implementation": "d08b96dd2a0d610346677b3411c23ef9fddce2502a245ae64279dcc047d0eceb",
     "description": "8d01fd68c18f9e4a3256e8dd401c5275fbc236bdfaf33c5bb55c01674f790a3e"
   },
   "save": {
@@ -52,11 +52,11 @@
     "description": "f1f427fce2212e6cf9fddf5308ef30794853f527f3f0daa42492a4629aefb1d4"
   },
   "storage": {
-    "implementation": "e699ff5bb9bf77004d43c030383bae316d7bc7b8a33a760ffb46e0e0ca033f9b",
+    "implementation": "615defe560c254f32ecb4ef6969e4a6de5afa042c337de8fac0c3e50a98a7a4c",
     "description": "7a9ff02faab78f0b3a9899cd3d5117a67b541f6ca504ead25c451c5762a4448b"
   },
   "validation": {
-    "implementation": "a3e171012b12b756b83b6b823e12fa50ee7d528d8a59e722858e71ab52a0394b",
+    "implementation": "41f69c572e4b7aa1360abbd7bec4a12968a593bc6685fac4a7ce1718d25d6fb8",
     "description": "922e50f62791d29969dd8a6cba2a5eda23ee470520266d2e35bffdd2c2e4d743"
   },
   "periods": {
@@ -76,15 +76,15 @@
     "description": "ad87b9c4430cc93097b6525c9004f5ad95210c346ce2ec61d6da239ca131c5fc"
   },
   "attribute-totals": {
-    "implementation": "9e78df18477f055af026b131f0f99347932baf6e1a2517914b99f73da358917a",
+    "implementation": "a94734ce156a7b652a057ac0d358969b10d1e827b6e2c86ed457f8bf6869a8c1",
     "description": "3905bd9e163d8e964824ab9a7a34d2e51c48fbcd64dbe7de200dc2bc75195f9a"
   },
   "department-industries": {
-    "implementation": "3867d0f1e6e2c30e8458585d84fe27340c1048b56c4c3f7d6e03bb973a44e448",
+    "implementation": "128d3f707a6e2f38f666b7e9e7a8b6f8e7333d313265a6a8bea1dd31efd163d9",
     "description": "d7bf89508107dee42b5ef476809121b0cb2e2aa5163f6c3b6a06f4ed2cff24cf"
   },
   "expansion-categories": {
-    "implementation": "ccda50bbbace924e1aa3896f3f4e575fbaa89dc879d4b2d2d60706623ad137ae",
+    "implementation": "d40eb7889962963efe8802e0e84f1f16de3f47425f673d4a7588df389f5cd3b3",
     "description": "ceb6e6617047d5f2dd2526d70e9604f5b9d48ddf02312d4c0c297f6df9e4bb12"
   },
   "cost-breakdown": {
@@ -100,7 +100,7 @@
     "description": "7d25ee848ea3f0b60b0af9920d4d8929cc77aef713e42a6088bead96adc1d011"
   },
   "duplicate-initiative": {
-    "implementation": "a8fec4b8d81c8c43e0d08ccb740c265367c1badeb66301b381b92f7b4c39da1d",
+    "implementation": "0e877d705f39d986a75d61cbbd9ff1a78d174ab3a3739a3fc153bdf663c6392f",
     "description": "10525cc703a2eaff73ff4a6c469f163cad65e1e9c390f6eb5cf60a3c285ec1f4"
   },
   "initiative-search": {
@@ -112,15 +112,15 @@
     "description": "3ae6cd5ac94b27682d902ad46e45534a4ea22015ff5b4cd7ddf407e842a01c7c"
   },
   "budget-hints": {
-    "implementation": "d6682badc69ba013b09b229a58ac25c6d49dc3c58ef1e7d13fada8dddd050582",
+    "implementation": "c32a5db694fa9fbfb82a763f201e4aa3a20c5404726af9acee5c8bc7c1580f4f",
     "description": "3a22459e0190c6dba8e504a14fac3a785d02378c3a01540acc98580a798793f2"
   },
   "selection-total": {
-    "implementation": "096a22e9a2cd977435fd6fd063f587982ec521d0bda86fcebf6baa7d1cb4e117",
-    "description": "73e6095f3f2c223c465e8f078162f9e7cc7ee7ae1449c6bd2d8c0cad9294d7dc"
+    "implementation": "c6493f926558560409c0a208bea9d84b08f098931edc16caf52337d6601abf9f",
+    "description": "1da860b4fca1f4e190ca5f0e04096418523799391a61989319a34f91510433a5"
   },
   "previous-baseline": {
-    "implementation": "b0688325645c0bc795da68ca50f04eb4af4974f7ad804f93dccf560087fb0b78",
+    "implementation": "6d1fff8256f3e331b42b85af40cd5a516f7c8993d680782e248590c4f1afa219",
     "description": "3ed0dd26dd6efec88023cf45cfe96bbdd5e2740eb308a3d7854f001f86bbe7cb"
   }
 }
