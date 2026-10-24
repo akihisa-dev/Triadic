@@ -68,7 +68,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
           <thead>
             <tr>
               <th scope="col">勘定科目</th>
-              {months.map(month => <th key={month} scope="col">{month}月</th>)}
+              {months.map((month, column) => <th key={month} scope="col" className={bounds && column >= bounds.left && column <= bounds.right ? "grid-month-selected" : undefined}>{month}月</th>)}
             </tr>
           </thead>
           <tbody>

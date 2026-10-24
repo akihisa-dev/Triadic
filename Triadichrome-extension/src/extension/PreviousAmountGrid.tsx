@@ -159,7 +159,7 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
     <div className="previous-grid-container" role="region" aria-label="前年の月別金額" tabIndex={0}>
       <table ref={table} className={`initiative-list-table cost-table previous-grid${freezeHeader ? "" : " cost-header-scroll"}`} aria-label="前年入力の月別金額">
         <thead>
-          <tr data-column-header><th scope="col" className="initiative-list-name">科目・集計</th>{initiativeMonths.map(month => <th scope="col" key={month}>{month}月</th>)}{previousPeriods.map(period => <th scope="col" key={period.id} className={periodCellClass(period, true)}>{period.label}</th>)}</tr>
+          <tr data-column-header><th scope="col" className="initiative-list-name">科目・集計</th>{initiativeMonths.map((month, column) => <th scope="col" key={month} className={bounds && column >= bounds.left && column <= bounds.right ? "grid-month-selected" : undefined}>{month}月</th>)}{previousPeriods.map(period => <th scope="col" key={period.id} className={periodCellClass(period, true)}>{period.label}</th>)}</tr>
           {rows.slice(0, salesIndex + 1).map(renderRow)}
         </thead>
         <tbody>{rows.slice(salesIndex + 1).map((row, index) => renderRow(row, salesIndex + 1 + index))}</tbody>
