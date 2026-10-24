@@ -65,6 +65,7 @@
 .aggregation-layout-table .aggregation-empty>.aggregation-handle-cell, .aggregation-layout-table .aggregation-empty>th { background: var(--soft); border-bottom-color: var(--table-line); }
 .aggregation-inline-edit { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .aggregation-inline-edit input { min-width: 0; width: 12rem; font-size: 12px; padding: 3px 6px; }
+.aggregation-inline-edit input:focus { border-color: var(--accent); outline: 2px solid var(--accent); outline-offset: -1px; }
 .aggregation-inline-edit .text-button { min-height: 28px; padding: 2px 6px; }
 
 .aggregation-layout-table { z-index: auto; }

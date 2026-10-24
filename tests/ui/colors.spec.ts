@@ -14,8 +14,14 @@ async function navigate(app: FrameLocator, name: string) {
   await settleMotion(app.locator("body"));
 }
 
-async function expectEditingColor(input: Locator) {
+async function expectEditingColor(input: Locator, startCellEditing = false) {
   await input.click();
+  if (startCellEditing) {
+    await expect(input).toHaveClass("grid-amount-idle");
+    await expect(input).toHaveCSS("caret-color", "rgba(0, 0, 0, 0)");
+    await input.press("F2");
+    await expect(input).not.toHaveClass("grid-amount-idle");
+  }
   await expect(input).toBeFocused();
   await expect(input).toHaveCSS("outline-color", blue);
   await expect(input).toHaveCSS("caret-color", blue);
@@ -87,7 +93,7 @@ test("施策の文字・金額・科目・分類に青い編集枠が付き、�
   await account.focus();
   await expect(account).toHaveCSS("outline-color", blue);
   const amount = app.locator(".initiative-amount-table input[data-row]").first();
-  await expectEditingColor(amount);
+  await expectEditingColor(amount, true);
   await expect(app.locator('.kind-tabs [aria-selected="true"]')).toHaveCSS("border-bottom-color", blue);
   await expect(app.locator('.kind-tabs [aria-selected="true"]')).toHaveCSS("background-color", soft);
   await expect(app.getByRole("button", { name: "登録", exact: true })).toHaveCSS("background-color", ink);
@@ -140,7 +146,10 @@ test("前年金額は編集位置だけ青く、範囲選択の背景と罫線�
   await page.mouse.move(page.viewportSize()!.width - 10, 200);
   await settleMotion(app.locator("body"));
   const april = app.getByRole("textbox", { name: "売上高 4月の前年金額", exact: true });
-  await expectEditingColor(april);
+  await expectEditingColor(april, true);
+  await april.press("Escape");
+  await expect(april).toHaveClass("grid-amount-idle");
+  await expect(april).toHaveCSS("caret-color", "rgba(0, 0, 0, 0)");
   await april.press("Shift+ArrowRight");
   const may = app.getByRole("textbox", { name: "売上高 5月の前年金額", exact: true });
   await expect(may).toBeFocused();
@@ -163,12 +172,22 @@ test("全マスタの登録・編集欄と集計編集にも青を適用する",
     for (const input of await app.locator(".account-master-table input:not([type=checkbox])").all()) await expectEditingColor(input);
   }
   await navigate(app, "マスタ");
-  await app.locator(".master-menu").getByRole("button", { name: /^勘定科目マスタ/ }).click();
-  await app.getByRole("button", { name: "売上集計を編集", exact: true }).click();
-  for (const input of await app.locator(".account-master-table input:not(:disabled):not([type=checkbox])").all()) await expectEditingColor(input);
-  const target = app.locator(".account-master-table input:not([type=checkbox])").first();
+  await app.locator(".master-menu").getByRole("button", { name: /^集計マスタ/ }).click();
+  await expect(app.getByRole("heading", { name: "集計マスタ", exact: true })).toBeVisible();
+  await app.getByRole("button", { name: "営業利益を移動", exact: true }).press("F2");
+  await expect(app.getByRole("textbox", { name: "営業利益の集計名", exact: true })).toBeDisabled();
+  const target = app.getByRole("textbox", { name: "営業利益の表示名", exact: true });
+  await expectEditingColor(target);
+  await expect(target).toHaveCSS("border-color", blue);
+  const theme = app.getByRole("switch", { name: "ダークテーマ" });
+  await theme.click();
+  await expect(target).not.toHaveCSS("outline-color", blue);
   await target.focus();
-  await expect(target).toHaveCSS("outline-color", blue);
+  for (const property of ["outline-color", "border-color", "caret-color"]) {
+    await expect(target).toHaveCSS(property, "rgb(128, 153, 255)");
+  }
+  await theme.click();
+  await expect(target).not.toHaveCSS("outline-color", blue);
   await expect(app.locator('.sidebar-item[aria-current="page"] svg')).toHaveCSS("color", blue);
   await navigate(app, "マスタ");
   await app.locator(".master-menu").getByRole("button", { name: /^種別マスタ/ }).click();
@@ -177,7 +196,7 @@ test("全マスタの登録・編集欄と集計編集にも青を適用する",
 });
 
 test("入口の年度以外のボタンと確認ダイアログのフォーカスはモノクロ", async ({ page, app }) => {
-  const close = app.getByRole("button", { name: "閉じる", exact: true });
+  const close = app.locator(".sidebar-footer").getByRole("button", { name: "閉じる", exact: true });
   await page.keyboard.press("Tab");
   await close.focus();
   await expect(close).toHaveCSS("outline-color", ink);
@@ -188,7 +207,7 @@ test("入口の年度以外のボタンと確認ダイアログのフォーカ�
   await expect(cancel).toHaveCSS("outline-color", ink);
   await cancel.click();
   await close.click();
-  await app.getByRole("button", { name: "閉じる", exact: true }).click();
+  await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   const year = app.getByRole("spinbutton", { name: "年度", exact: true });
   await page.keyboard.press("Tab");
   await year.focus();
