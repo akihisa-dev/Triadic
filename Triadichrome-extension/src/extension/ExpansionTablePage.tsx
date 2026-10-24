@@ -1,4 +1,5 @@
 import type { ExpansionMonths } from "../core/tables/expansionTable";
+import { PeriodScrollFrame } from "./PeriodScrollbar";
 import { useRowWindow, WindowRows } from "./VirtualTableRows";
 import { TableCalculationBoundary } from "./TableCalculationBoundary";
 import { periodCellClass } from "./periodCellStyle";
@@ -99,7 +100,7 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
     },
   });
   const labels = [...selected.map(id => contents.kinds.find(kind => kind.id === id)!.kindName), ...(selected.length === 2 ? ["比較"] : [])];
-  return <div ref={container} className="initiative-list-container" role="region" aria-label="展開表の月別種別・比較" tabIndex={0}>
+  return <PeriodScrollFrame container={container} label="展開表" layoutKey={selected.join(",")}><div ref={container} className="initiative-list-container" role="region" aria-label="展開表の月別種別・比較" tabIndex={0}>
       <table className={`initiative-list-table expansion-table${virtual ? " virtual-table" : ""}`} style={{ "--virtual-row-height": "28px" } as React.CSSProperties} aria-label="展開表" aria-rowcount={flat.length + 6}>
         <colgroup>
           <col className="expansion-group-col" /><col className="expansion-period-col" /><col className="expansion-category-col" /><col className="expansion-name-col" />
@@ -110,7 +111,7 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
           <th rowSpan={3} scope="col" className="expansion-period">期間名</th>
           <th rowSpan={3} scope="col" className="expansion-category">展開区分</th>
           <th rowSpan={3} scope="col" className="expansion-name">施策名</th>
-          {tablePeriods.map(period => <th key={period.id} colSpan={labels.length * 2} scope="colgroup" className={periodCellClass(period, true)}>{period.label}</th>)}
+          {tablePeriods.map(period => <th key={period.id} data-table-period={period.id} colSpan={labels.length * 2} scope="colgroup" className={periodCellClass(period, true)}>{period.label}</th>)}
         </tr>
         <tr>{tablePeriods.map(period => <Fragment key={period.id}>{labels.map((label, index) => <th key={index} scope="colgroup" colSpan={2} className={periodCellClass(period, index === 0)}>{label}</th>)}</Fragment>)}</tr>
         <tr>{tablePeriods.map(period => <Fragment key={period.id}>{labels.flatMap((_, index) => (["sales", "profit"] as const).map(key => <th key={`${index}-${key}`} scope="col" className={periodCellClass(period, key === "sales" && index === 0)}>{key === "sales" ? "売上" : "利益"}</th>))}</Fragment>)}</tr>
@@ -146,5 +147,5 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
           <ExpansionSubtotalCells name={group.expansion.expansionName} values={group.values} />
         </tr>
       </tbody>; })}</table>
-    </div>;
+    </div></PeriodScrollFrame>;
 }

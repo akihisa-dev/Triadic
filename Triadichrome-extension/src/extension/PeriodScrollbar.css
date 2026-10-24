@@ -1,0 +1,18 @@
+.period-scroll-frame { display: flex; position: relative; flex: 1; min-width: 0; min-height: 0; }
+.period-scroll-frame > .initiative-list-container { flex: 1; min-width: 0; min-height: 0; margin: 0; }
+.period-scroll-frame > .initiative-list-container::-webkit-scrollbar { width: 12px; height: 12px; }
+.period-scroll-frame > .initiative-list-container::-webkit-scrollbar-track,
+.period-scroll-frame > .initiative-list-container::-webkit-scrollbar-corner { background: var(--soft); }
+.period-scroll-frame > .initiative-list-container::-webkit-scrollbar-thumb { background: var(--control-line); border: 3px solid var(--soft); border-radius: 6px; }
+.period-scrollbar { position: absolute; bottom: 0; left: 0; z-index: 4; background: var(--soft); }
+.period-scrollbar input { appearance: none; display: block; width: 100%; height: 100%; margin: 0; padding: 0; background: transparent; cursor: grab; }
+.period-scrollbar input:active { cursor: grabbing; }
+.period-scrollbar input:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.period-scrollbar input::-webkit-slider-runnable-track { height: 6px; background: var(--soft); }
+.period-scrollbar input::-webkit-slider-thumb { appearance: none; width: var(--period-scroll-thumb); height: 6px; border-radius: 6px; background: var(--control-line); }
+.period-scrollbar:is(:hover, :has(:focus-visible), .period-scrollbar-touch) input::-webkit-slider-thumb { background: var(--line); }
+.period-scroll-marks { position: absolute; inset: 0; pointer-events: none; visibility: hidden; }
+.period-scrollbar:not(.period-scrollbar-dismissed):is(:hover, :has(:focus-visible), .period-scrollbar-touch) .period-scroll-marks { visibility: visible; }
+.period-scroll-mark { position: absolute; top: 0; height: 100%; padding: 0 3px; border: 0; border-radius: 0; color: var(--ink); background: transparent; font: inherit; font-size: 11px; line-height: 12px; white-space: nowrap; pointer-events: auto; }
+.period-scroll-mark:hover { text-decoration: underline; text-underline-offset: 2px; }
+.period-scroll-mark:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }

@@ -1,4 +1,5 @@
 import { useAdaptiveTableHeader } from "./useAdaptiveTableHeader";
+import { PeriodScrollFrame } from "./PeriodScrollbar";
 import { MeasuredTableBody, type TableRowMeasurements } from "./MeasuredTableBody";
 import { TableCalculationBoundary } from "./TableCalculationBoundary";
 import { periodCellClass } from "./periodCellStyle";
@@ -144,7 +145,7 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
         onClick={() => setDetail({ target: { kind: row.kind as "account" | "group", id: row.id, period, column: index }, title: `${row.name} ${period.label} ${labels[index]}` })}>{formatTableYen(values[period.id])}</button>
       : formatTableYen(values[period.id])}</td>)}</Fragment>)}
   </tr>;
-  return <><div ref={container} onScroll={event => { view.current.top = event.currentTarget.scrollTop; view.current.left = event.currentTarget.scrollLeft; }} className="initiative-list-container cost-table-container" role="region" aria-label="総原価表の月別前年・種別別金額" tabIndex={0}>
+  return <><PeriodScrollFrame container={container} label="総原価表" layoutKey={key}><div ref={container} onScroll={event => { view.current.top = event.currentTarget.scrollTop; view.current.left = event.currentTarget.scrollLeft; }} className="initiative-list-container cost-table-container" role="region" aria-label="総原価表の月別前年・種別別金額" tabIndex={0}>
       <table ref={tableElement} onFocusCapture={event => {
         const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button[aria-label]"), key = button?.closest<HTMLElement>("tr[data-cost-row]")?.dataset.costRow;
         if (button && key) focused.current = { key, label: button.getAttribute("aria-label")! };
@@ -155,7 +156,7 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
         </colgroup>
         <thead>
           <tr data-column-header><th rowSpan={2} scope="col" className="initiative-list-name">科目・集計</th>
-            {tablePeriods.map(period => <th key={period.id} colSpan={labels.length} scope="colgroup" className={periodCellClass(period, true)}>{period.label}</th>)}
+            {tablePeriods.map(period => <th key={period.id} data-table-period={period.id} colSpan={labels.length} scope="colgroup" className={periodCellClass(period, true)}>{period.label}</th>)}
           </tr>
           <tr data-column-header>{tablePeriods.map(period => <Fragment key={period.id}>{labels.map((_, index) => <th key={index} scope="col" className={periodCellClass(period, index === 0, index === labels.length - 1)}>{labels[index]}</th>)}</Fragment>)}</tr>
           {!virtualPrefix && rows.slice(0, salesIndex + 1).map(renderRow)}
@@ -163,7 +164,7 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
         <MeasuredTableBody rows={bodyRows} container={container} estimate={24} columns={1 + tablePeriods.length * labels.length}
           retainKey={focused.current?.key ?? null} heightCache={rowHeights} rowKey={row => `${row.kind}:${row.id}`} render={renderRow} />
       </table>
-    </div>
+    </div></PeriodScrollFrame>
     {detail && <CostBreakdownDialog contents={contents} selected={selected} target={detail.target} title={detail.title}
       candidates={breakdownCandidates} navigationBlocked={navigationBlocked} onClose={() => setDetail(null)} onOpenInitiative={onOpenInitiative} />}
     </>;

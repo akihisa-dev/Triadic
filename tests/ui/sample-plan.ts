@@ -1,3 +1,4 @@
+// 総原価表・展開表のバー内期間移動は既存の月・四半期・半期・年間データを使い tests/ui/period-scrollbar.spec.ts でホバー・クリック・ドラッグ・表示位置復帰・比較切替・狭幅を確認する。四半期見出しはQ1〜Q4。保存データは変えない。
 // テーマ切替は tests/ui/theme.spec.ts で初回・記憶・画面移動・表・ダイアログ・記憶失敗を確認する。端末設定のためサンプル保存項目は追加しない。
 // 勘定科目の文字検索は既存科目を使い tests/ui/account-search.spec.ts と initiative-table-layout.spec.ts で部分一致・確定・取消・変換中・狭幅・金額保持を確認する。保存データは変更しない。
 // 長い施策名と備考の吹き出しは tests/ui/initiative-name-tooltip.spec.ts で200/201件・ホバー・フォーカス・Esc・画面端・表の寸法維持を確認する。

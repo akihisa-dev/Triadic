@@ -4,8 +4,9 @@ test("総原価表と展開表の期間計を比較対象の切替後も確認�
   await page.goto("/tests/ui/preview.html?data=full");
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("button", { name: "サイドバーを開く", exact: true }).click();
   const menu = app.getByRole("navigation", { name: "メインナビゲーション" });
-  const labels = ["第1四半期計", "第2四半期計", "上期計", "第3四半期計", "第4四半期計", "下期計", "年間計"];
+  const labels = ["Q1", "Q2", "上期計", "Q3", "Q4", "下期計", "年間計"];
   for (const name of ["総原価表", "展開表"]) {
     await menu.getByRole("button", { name, exact: true }).click();
     const table = app.getByRole("table", { name, exact: true });

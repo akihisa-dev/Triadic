@@ -6,7 +6,7 @@ import type { PlanContents } from "../domain/plan";
 import { buildCostComparison } from "./costComparison";
 
 export type TablePeriod = { id: string; label: string; months: readonly InitiativeMonth[] };
-const quarter = (index: number): TablePeriod => ({ id: `quarter-${index + 1}`, label: `第${index + 1}四半期計`, months: initiativeMonths.slice(index * 3, index * 3 + 3) });
+const quarter = (index: number): TablePeriod => ({ id: `quarter-${index + 1}`, label: `Q${index + 1}`, months: initiativeMonths.slice(index * 3, index * 3 + 3) });
 const half = (index: number): TablePeriod => ({ id: `half-${index + 1}`, label: index === 0 ? "上期計" : "下期計", months: initiativeMonths.slice(index * 6, index * 6 + 6) });
 export const tablePeriods: TablePeriod[] = initiativeMonths.flatMap((month, index) => [
   { id: String(month), label: `${month}月`, months: [month] },
