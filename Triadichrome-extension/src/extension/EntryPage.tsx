@@ -1,3 +1,4 @@
+import { ThemeSwitch } from "./ThemeSwitch";
 import { version as appVersion } from "../../../package.json";
 import appIcon from "../../../branding/logo-512.png?no-inline";
 import { FiscalYearSlot } from "./FiscalYearSlot";
@@ -11,6 +12,7 @@ export function EntryPage({ entry }: { entry: FileEntry }) {
     onDragLeave={leave}
     onDrop={drop}>
 
+    <header className="entry-theme-header"><ThemeSwitch /></header>
     <div className="entry-content">
       <header className="entry-brand">
         <img className="entry-logo" src={appIcon} width="40" height="40" alt="" draggable={false} />

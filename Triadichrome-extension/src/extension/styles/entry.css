@@ -31,11 +31,11 @@
   background: var(--surface);
   transition: border-color var(--motion-feedback), box-shadow var(--motion-feedback);
 }
-.entry-resume { padding: 1.75rem 2rem; background: #f4f4f4; border-radius: 1rem 1rem 0 0; }
+.entry-resume { padding: 1.75rem 2rem; background: var(--tone-f4f4f4); border-radius: 1rem 1rem 0 0; }
 .entry-recent-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .entry-recent-label { font-size: 0.75rem; color: var(--muted); }
 .entry-recent-row { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; }
-.entry-file-icon { flex-shrink: 0; color: #999; }
+.entry-file-icon { flex-shrink: 0; color: var(--tone-999999); }
 .has-recent .entry-file-icon { color: var(--ink); }
 .entry-recent-name { flex: 1; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.125rem; font-weight: 550; letter-spacing: -0.02em; }
 .entry-resume:not(.has-recent) .entry-recent-name { font-size: 0.875rem; color: var(--muted); font-weight: 400; }
@@ -59,7 +59,7 @@
   opacity: 0;
   transition: opacity var(--motion-feedback) var(--motion-ease);
 }
-.is-drag-active .entry-open-section { background: #eef2ff; }
+.is-drag-active .entry-open-section { background: var(--tone-eef2ff); }
 .is-drag-active .entry-open-section::after { opacity: 1; }
 .entry-create-section { border-left: 1px solid var(--line); }
 .entry-option-icon { margin-bottom: 1rem; }
@@ -70,7 +70,7 @@
 .entry-open-button, .entry-new-button { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 2.75rem; padding: 0.625rem 0.875rem; border: 1px solid var(--line); border-radius: 0.5rem; font: inherit; font-size: 0.8125rem; font-weight: 550; cursor: pointer; }
 .entry-open-button { color: var(--surface); background: var(--ink); border-color: var(--ink); }
 .entry-new-button { color: var(--ink); background: var(--surface); }
-.entry-open-button:hover:not(:disabled) { background: #393939; }
+.entry-open-button:hover:not(:disabled) { background: var(--tone-393939); }
 .entry-new-button:hover:not(:disabled) { background: var(--soft); border-color: var(--control-line); }
 button:disabled { cursor: default; opacity: 0.5; }
 .entry-file-input { display: none; }
@@ -81,7 +81,7 @@ button:disabled { cursor: default; opacity: 0.5; }
   height: 108px;
   overflow: hidden;
   border-radius: 0.5rem;
-  background: #f4f4f4;
+  background: var(--tone-f4f4f4);
   touch-action: none;
   user-select: none;
   font-variant-numeric: tabular-nums;
@@ -92,8 +92,8 @@ button:disabled { cursor: default; opacity: 0.5; }
 .year-slot-window {
   position: absolute;
   inset: 36px 0;
-  border-block: 1px solid #dedede;
-  background: #ededed;
+  border-block: 1px solid var(--tone-dedede);
+  background: var(--tone-ededed);
 }
 .year-slot-reel {
   position: absolute;

@@ -9,29 +9,29 @@
 .home-relations-map { position: absolute; display: block; width: 1240px; height: 640px; max-width: none; transform-origin: 0 0; overflow: visible; }
 .home-relations-controls { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); box-shadow: 0 2px 8px #0000000c; }
 .home-relations-controls button { min-width: 40px; min-height: 40px; border: 0; border-radius: 6px; background: var(--surface); color: var(--ink); cursor: pointer; }
-.home-relations-controls button:hover { background: #eee; }
+.home-relations-controls button:hover { background: var(--tone-eeeeee); }
 .home-relations-controls button:disabled { opacity: .4; cursor: default; }
 .home-relation { transition: opacity var(--motion-feedback) var(--motion-ease); }
-.home-relation path { fill: none; stroke: #aaa; stroke-width: 1.5; transition: stroke var(--motion-feedback), stroke-width var(--motion-feedback); }
+.home-relation path { fill: none; stroke: var(--tone-aaaaaa); stroke-width: 1.5; transition: stroke var(--motion-feedback), stroke-width var(--motion-feedback); }
 .home-relation.is-active path { stroke: var(--accent); stroke-opacity: .55; stroke-width: 2; }
 .home-relation.is-muted { opacity: .65; }
 .home-relation-node { display: flex; box-sizing: border-box; flex-direction: row; align-items: center; justify-content: center; gap: 10px; margin: 6px; width: 200px; height: 56px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font-size: 16px; font-weight: 500; cursor: grab; }
-.home-relation-icon { display: grid; place-items: center; flex: 0 0 32px; width: 32px; background: transparent; color: #555; transition: color var(--motion-feedback), transform var(--motion-feedback); }
+.home-relation-icon { display: grid; place-items: center; flex: 0 0 32px; width: 32px; background: transparent; color: var(--tone-555555); transition: color var(--motion-feedback), transform var(--motion-feedback); }
 .home-relation-icon svg { width: 28px; height: 28px; pointer-events: none; }
 .home-relation-node.is-entry .home-relation-icon { flex-basis: 40px; width: 40px; }
 .home-relation-node.is-entry .home-relation-icon svg { width: 36px; height: 36px; }
-.home-relation-node.is-master .home-relation-icon { color: #888; }
+.home-relation-node.is-master .home-relation-icon { color: var(--tone-888888); }
 .home-relation-node:hover .home-relation-icon, .home-relation-node:focus-visible .home-relation-icon, .home-relation-node.is-related .home-relation-icon { color: var(--ink); }
 .home-relation-node.is-selected:not(:disabled) .home-relation-icon { color: var(--accent); transform: scale(1.08); }
 .home-relation-name { line-height: 24px; white-space: nowrap; }
-.home-relation-node.is-entry { border-color: #777; font-weight: 600; }
+.home-relation-node.is-entry { border-color: var(--tone-777777); font-weight: 600; }
 .home-relation-node:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 .home-relation-node.is-selected .home-relation-name { font-weight: 700; }
 .home-relation-node:disabled { opacity: .5; cursor: wait; }
 @media (prefers-reduced-motion: reduce) { .home-relation, .home-relation path { transition: none; } }
 
-.home-relation-subnode { display: grid; place-items: center; box-sizing: border-box; width: 100%; height: 32px; padding: 4px 6px; border: 0; border-radius: 0; background: var(--canvas); color: #555; font-size: 13px; line-height: 20px; white-space: nowrap; cursor: grab; }
-.home-relation.is-active .home-relation-subnode { border-color: #888; color: var(--ink); }
+.home-relation-subnode { display: grid; place-items: center; box-sizing: border-box; width: 100%; height: 32px; padding: 4px 6px; border: 0; border-radius: 0; background: var(--canvas); color: var(--tone-555555); font-size: 13px; line-height: 20px; white-space: nowrap; cursor: grab; }
+.home-relation.is-active .home-relation-subnode { border-color: var(--tone-888888); color: var(--ink); }
 .home-relation-subnode:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 
 /* Only the visible card intercepts pointers. */
@@ -48,5 +48,5 @@
 .home-relation.relation-view path { stroke-width: 1.25; }
 .home-relations-legend { position: absolute; left: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px 18px; max-width: calc(100% - 210px); padding: 8px 10px; background: var(--canvas); color: var(--muted); font-size: 12px; pointer-events: none; }
 .home-relations-legend > span { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
-.home-relations-legend path { stroke: #666; }
+.home-relations-legend path { stroke: var(--tone-666666); }
 @media (max-width: 600px) { .home-relations-legend { left: 4px; bottom: 70px; max-width: calc(100% - 8px); gap: 4px 12px; font-size: 11px; } }

@@ -12,15 +12,15 @@
   cursor: pointer;
 }
 .cost-amount-button:hover { text-decoration: underline; }
-.cost-amount-button:focus-visible { outline: 1px solid #0033ff; outline-offset: 2px; }
+.cost-amount-button:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
 .confirmation-dialog.cost-breakdown-dialog { width: min(960px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 32px); padding: 20px; }
 .cost-breakdown-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
 .cost-breakdown-heading h2 { overflow-wrap: anywhere; }
 .cost-breakdown-heading button { flex-shrink: 0; }
 .cost-breakdown-scroll { overflow: auto; max-height: calc(100dvh - 200px); }
 .cost-breakdown-scroll table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.cost-breakdown-scroll th, .cost-breakdown-scroll td { padding: 6px 8px; border: 1px solid #dedede; text-align: left; overflow-wrap: anywhere; min-width: 64px; }
+.cost-breakdown-scroll th, .cost-breakdown-scroll td { padding: 6px 8px; border: 1px solid var(--tone-dedede); text-align: left; overflow-wrap: anywhere; min-width: 64px; }
 .cost-breakdown-scroll th:first-child { min-width: 160px; }
 .cost-breakdown-scroll td:last-child { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.cost-breakdown-scroll thead { position: sticky; top: 0; background: #f3f3f3; }
-.cost-breakdown-scroll tfoot { position: sticky; bottom: 0; background: #f3f3f3; font-weight: 600; }
+.cost-breakdown-scroll thead { position: sticky; top: 0; background: var(--tone-f3f3f3); }
+.cost-breakdown-scroll tfoot { position: sticky; bottom: 0; background: var(--tone-f3f3f3); font-weight: 600; }

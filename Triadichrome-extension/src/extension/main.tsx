@@ -2,6 +2,10 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { ExtensionPage } from "./ExtensionPage";
 
+import { initializeTheme } from "./theme";
+
+initializeTheme();
+
 const rootElement = document.getElementById("root");
 
 if (!rootElement) {

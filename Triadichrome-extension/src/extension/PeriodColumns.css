@@ -1,9 +1,9 @@
 /* Opaque cell backgrounds keep period bands visible in frozen headers and subtotal rows. */
 .initiative-list-table.cost-table thead th.period-month[colspan]:not(:has(+ .period-start)),
 .initiative-list-table.cost-table :is(th, td).period-month.initiative-month-end:not(:has(+ .period-start)) { border-right: 1px solid var(--table-divider); }
-.initiative-list-table:is(.cost-table, .expansion-table) :is(th, td).period-quarter { background: #ebebeb; }
-.initiative-list-table:is(.cost-table, .expansion-table) :is(th, td).period-half { background: #dedede; font-weight: 600; }
-.initiative-list-table:is(.cost-table, .expansion-table) :is(th, td).period-annual { background: #c9c9c9; font-weight: 700; }
+.initiative-list-table:is(.cost-table, .expansion-table) :is(th, td).period-quarter { background: var(--tone-ebebeb); }
+.initiative-list-table:is(.cost-table, .expansion-table) :is(th, td).period-half { background: var(--tone-dedede); font-weight: 600; }
+.initiative-list-table:is(.cost-table, .expansion-table) :is(th, td).period-annual { background: var(--tone-c9c9c9); font-weight: 700; }
 .initiative-list-table:is(.cost-table, .expansion-table) :is(th, td).period-start { border-left: 1px solid var(--table-divider); }
 /* A period boundary belongs to one cell, so adjacent edges never double up. */
 .initiative-list-table:is(.cost-table, .expansion-table) :is(th, td)[class]:has(+ .period-start) { border-right: 0; }

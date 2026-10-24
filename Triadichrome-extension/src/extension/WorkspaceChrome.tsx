@@ -1,3 +1,4 @@
+import { ThemeSwitch } from "./ThemeSwitch";
 import { pageMetadata } from "./pageMetadata";
 import { version as appVersion } from "../../../package.json";
 import appIcon from "../../../branding/logo-512.png?no-inline";
@@ -77,6 +78,7 @@ export function WorkspaceHeader({ workspace, windows }: { workspace: HomeWorkspa
           <button className="secondary-button" type="button" disabled={navigationBlocked} onClick={returnToCurrent}>現在に戻る</button>
           <button className="primary-button" type="button" disabled={navigationBlocked} onClick={() => { setRestoreError(""); setRestoreRequested(true); }}>この時点に戻す</button>
         </div> : null}
+        <ThemeSwitch />
       </header>
   );
 }
