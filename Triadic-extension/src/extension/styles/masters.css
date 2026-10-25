@@ -176,7 +176,7 @@
 /* The unified master keeps every field readable and scrolls within its table. */
 .master-data-page.unified-master-page .account-master-form,
 .master-data-page.unified-master-page .account-master-list { max-width: none; }
-.master-data-page.unified-master-page .account-master-list { flex: 1; }
+.master-data-page.unified-master-page .account-master-list { flex: 1; min-height: 160px; }
 .master-data-page.unified-master-page .account-master-table { min-width: 1036px; }
 .master-data-page.unified-master-page .account-master-table th,
 .master-data-page.unified-master-page .account-master-table td { padding: 4px 8px; }
