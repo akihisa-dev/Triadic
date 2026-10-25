@@ -10,8 +10,8 @@ import { formatYen, isValidAmount } from "../core/domain/amounts";
 import { initiativeMonths as months } from "../core/domain/calendar";
 import { type InitiativeEntryDraft } from "../core/domain/plan";
 import { type Account } from "../core/domain/accountMaster";
-import { canEditInitiativeCell, cancelInitiativeCell, changeInitiativeCell, fillInitiativeGrid, pasteInitiativeGrid, initiativeAmountTotals } from "../core/tables/initiativeGrid";
-import { normalizeGridAmount, type GridCell } from "../core/tables/grid";
+import { canEditInitiativeCell, cancelInitiativeCell, changeInitiativeCell, fillInitiativeGrid, pasteInitiativeGrid, moveInitiativeGrid, initiativeAmountTotals } from "../core/tables/initiativeGrid";
+import { gridBounds, normalizeGridAmount, type GridCell, type GridSelection } from "../core/tables/grid";
 import { StatusNotice } from "./StatusNotice";
 import { initiativeSelectionTotal } from "../core/tables/selectionTotal";
 import { GridSelectionTotal } from "./GridSelectionTotal";
@@ -44,18 +44,23 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
     const count = draft.rows.slice(bounds.top, bounds.bottom + 1).filter(row => row.accountId !== null).length * (bounds.right - bounds.left + 1);
     return `${bounds.top + 1}行目 ${name(first)} ${months[bounds.left]}月から${bounds.bottom + 1}行目 ${name(last)} ${months[bounds.right]}月まで、${count}セルを選択`;
   })() : "";
-  useEffect(() => { setSelection(null); setEditing(false); }, [draft.rows.length]);
+  useEffect(() => { setSelection(null); setEditing(false); grid.setCut(null); }, [draft.rows.map(row => `${row.id}:${row.accountId}`).join("|")]);
   const valueAt = (cell: GridCell, source = draft) => {
     const row = source.rows[cell.row]!;
     const month = months[cell.column]!;
     return kind === 1 ? row.amounts[month] ?? "0" : row.overrides?.[kind]?.[month] ?? resolvedAmount(row, kind, month);
   };
   const apply = (operation: () => InitiativeEntryDraft) => {
-    if (readOnly || isSaving) return;
+    if (readOnly || isSaving) return false;
     try {
-      onDraftChange(operation()); setError(""); setEditing(false);
+      onDraftChange(operation()); setError(""); setEditing(false); return true;
     }
-    catch (failure) { setError(failure instanceof Error ? failure.message : "入力できませんでした。"); }
+    catch (failure) { setError(failure instanceof Error ? failure.message : "入力できませんでした。"); return false; }
+  };
+  const cutStamp = (selection: GridSelection) => {
+    const bounds = gridBounds(selection);
+    return JSON.stringify([draft.rows.map(row => [row.id, row.accountId]), draft.rows.slice(bounds.top, bounds.bottom + 1).map(row =>
+      months.slice(bounds.left, bounds.right + 1).map(month => [row.amounts[month], row.overrides?.[kind]?.[month], row.invalidAmounts?.[kind]?.[month]]))]);
   };
   const changeCell = (cell: GridCell, value: string, badInput = false) => {
     if (isSaving || !canEditInitiativeCell(draft, kind, cell)) return;
@@ -103,7 +108,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                     return true;
                   };
                   const events = gridCellEvents(grid, cell, value, {
-                    captureOriginal, blocked: isSaving, onTyping: input => input.select(),
+                    captureOriginal, blocked: readOnly || isSaving, onTyping: input => input.select(),
                     change: (value, badInput) => changeCell(cell, value, badInput),
                     cancel: editing => {
                       if (editing || invalidInput) onDraftChange(cancelInitiativeCell(draft, kind, cell, { original: original.current, inherited: originalInherited.current }));
@@ -119,6 +124,14 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                       apply(() => fillInitiativeGrid(draft, kind, selection, text));
                     },
                     paste: (start, text, selection) => apply(() => pasteInitiativeGrid(draft, kind, start, text, selection)),
+                    cutStamp: selection => {
+                      try { const bounds = gridBounds(selection); moveInitiativeGrid(draft, kind, selection, { row: bounds.top, column: bounds.left }); return cutStamp(selection); }
+                      catch (failure) { setError((failure as Error).message); return null; }
+                    },
+                    move: (source, start, stamp) => apply(() => {
+                      if (stamp !== cutStamp(source)) throw new Error("切り取り後に入力内容が変わりました。範囲を選び直してください。");
+                      return moveInitiativeGrid(draft, kind, source, start);
+                    }),
                     copy: bounds => draft.rows.slice(bounds.top, bounds.bottom + 1).map((_, offset) =>
                       months.slice(bounds.left, bounds.right + 1).map((_, columnOffset) => valueAt({ row: bounds.top + offset, column: bounds.left + columnOffset }) || "0").join("\t")
                     ).join("\n"),

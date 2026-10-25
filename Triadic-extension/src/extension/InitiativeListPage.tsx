@@ -1,3 +1,4 @@
+import { tableCopyCell, useTableRangeCopy } from "./useTableRangeCopy";
 import { InitiativeNameButton } from "./InitiativeNameButton";
 import { hasUnclassifiedAmount } from "../core/domain/budgetHints";
 import { useRowWindow, WindowRows } from "./VirtualTableRows";
@@ -75,7 +76,8 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
     ...initiativeMonths.flatMap(month => amountItems.map(metric => ({ id: `${month}:${metric.id}`, label: metric.name, name: `${month}月 ${metric.name}`, type: "number" as const, scale: 1000,
       value: (row: InitiativeListRow) => row.calculation === "ready" ? row.months[month]?.[metric.id] : null }))),
   ], [expansionNames, periodNames, selectedKind]);
-  const tableView = useTableView(source, columns, { state: { sort, filters }, change: state => {
+  const tableState = useMemo(() => ({ sort, filters }), [sort, filters]);
+  const tableView = useTableView(source, columns, { state: tableState, change: state => {
     setSort(state.sort); setFilters(state.filters); if (container.current) container.current.scrollTop = 0;
   } });
   const cellFilter = useTableCellFilter(tableView, navigationBlocked);
@@ -87,6 +89,13 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
     catch (failure) { return { source: displayed, errors, totals: null, totalError: (failure as Error).message }; }
   }, [view, displayed, tableView.filtered]);
   const { errors } = displayedView;
+  const rangeCopy = useTableRangeCopy(container, { rowCount: displayed.length + 1, columnCount: 36, resetKey: displayedView,
+    textAt: (row, column) => {
+      const month = initiativeMonths[Math.floor(column / amountItems.length)]!, metric = amountItems[column % amountItems.length]!;
+      if (row === displayed.length) return displayedView.totals ? amountText(displayedView.totals[month]?.[metric.id]) : "計算不可";
+      const item = displayed[row]!;
+      return item.calculation === "failed" ? "計算不可" : amountText(item.months[month]?.[metric.id]);
+    } });
   const window = useRowWindow(container, displayed.length, 28, 200, 56);
   const virtual = displayed.length > 200;
   const focusedIndex = useMemo(() => focusedId === null ? -1 : displayed.findIndex(item => item.id === focusedId), [displayed, focusedId]);
@@ -107,7 +116,7 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
       <button ref={addButton} className="primary-button" type="button" disabled={navigationBlocked || readOnly} onClick={onAddInitiative}>施策を追加</button>
     </div>
     <TableCalculationBoundary resetKeys={[initiatives, accounts, selectedKind, fiscalYear]}>
-    <div ref={container} className="initiative-list-container" role="region" aria-label="施策一覧の月別売上・費用・利益" tabIndex={0}>
+    <div ref={container} {...rangeCopy} className="initiative-list-container" role="region" aria-label="施策一覧の月別売上・費用・利益" tabIndex={0}>
       <table className={`initiative-list-table${virtual ? " virtual-table" : ""}`} style={{ "--virtual-row-height": "28px" } as React.CSSProperties} aria-label="施策一覧" aria-rowcount={displayed.length + 3}>
         <colgroup>
           <col className="initiative-expansion-column" />
@@ -128,7 +137,7 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
             {amountItems.map((metric, index) => <TableViewHeader key={metric.id} view={tableView} column={`${month}:${metric.id}`} className={index === amountItems.length - 1 ? "initiative-month-end" : undefined} />)}
           </Fragment>)}</tr>
         </thead>
-        <tbody><WindowRows items={rendered} count={displayed.length} height={28} columns={40} render={(item, index) => <tr key={item.id} aria-rowindex={index + 3}>
+        <tbody><WindowRows items={rendered} count={displayed.length} height={28} columns={40} render={(item, indexRow) => <tr key={item.id} aria-rowindex={indexRow + 3}>
           <td {...cellFilter.props("expansion", expansionNames.get(item.expansionId!))} className="initiative-list-fixed initiative-list-expansion">{item.expansionId == null ? "" : expansionNames.get(item.expansionId) ?? ""}</td>
           <td {...cellFilter.props("period", periodNames.get(item.periodTypeId!))} className="initiative-list-fixed initiative-list-period">{item.periodTypeId == null ? "" : periodNames.get(item.periodTypeId) ?? ""}</td>
           <th {...cellFilter.props("name", item.name)} scope="row" className="initiative-list-fixed initiative-list-name">
@@ -143,11 +152,11 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
           </th>
           <td {...cellFilter.props("start", item.startYearMonths[selectedKind])} className="initiative-list-fixed initiative-list-start">{item.startYearMonths[selectedKind]}</td>
           {item.calculation === "failed" ? <td colSpan={36} role="alert" style={{ textAlign: "left" }}>{item.error} 施策を開いて金額を修正してください。</td> : initiativeMonths.map(month => <Fragment key={month}>
-            {amountItems.map((metric, index) => <td key={metric.id} className={index === amountItems.length - 1 ? "initiative-month-end" : undefined}>{amountText(item.months[month]?.[metric.id])}</td>)}
+            {amountItems.map((metric, index) => <td key={metric.id} {...tableCopyCell(indexRow, initiativeMonths.indexOf(month) * amountItems.length + index)} className={index === amountItems.length - 1 ? "initiative-month-end" : undefined}>{amountText(item.months[month]?.[metric.id])}</td>)}
           </Fragment>)}
         </tr>} />{!virtual && <tr className="initiative-list-fill" aria-hidden="true"><td colSpan={40} /></tr>}</tbody>
         {tableView.filtered && displayed.length === 0 && <TableViewEmpty columns={40} />}
-        <tfoot>{errors.size ? <tr className="initiative-total-row"><th colSpan={40} scope="row" style={{ textAlign: "left" }}>計算できない施策があるため、合計を表示できません。</th></tr> : <InitiativeTotalRow view={displayedView} filtered={tableView.filtered} />}</tfoot>
+        <tfoot>{errors.size ? <tr className="initiative-total-row"><th colSpan={40} scope="row" style={{ textAlign: "left" }}>計算できない施策があるため、合計を表示できません。</th></tr> : <InitiativeTotalRow view={displayedView} filtered={tableView.filtered} copyRow={displayed.length} />}</tfoot>
       </table>
     </div>
     </TableCalculationBoundary>
@@ -156,13 +165,13 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
   </main>;
 }
 
-function InitiativeTotalRow({ view, filtered }: { view: InitiativeListView; filtered: boolean }) {
+function InitiativeTotalRow({ view, filtered, copyRow }: { view: InitiativeListView; filtered: boolean; copyRow: number }) {
   if (!view.totals) return <tr className="initiative-total-row"><th colSpan={40} scope="row" role="alert">{view.totalError} 施策を開いて金額を修正してください。</th></tr>;
   const totals = view.totals;
   return <tr className="initiative-total-row">
     <th colSpan={4} scope="row" className="initiative-total-label"><span>{filtered ? "表示中の合計" : "合計"}</span></th>
     {initiativeMonths.map(month => <Fragment key={month}>
-      {amountItems.map((metric, index) => <td key={metric.id} className={index === amountItems.length - 1 ? "initiative-month-end" : undefined}>{amountText(totals[month]?.[metric.id])}</td>)}
+      {amountItems.map((metric, index) => <td key={metric.id} {...tableCopyCell(copyRow, initiativeMonths.indexOf(month) * amountItems.length + index)} className={index === amountItems.length - 1 ? "initiative-month-end" : undefined}>{amountText(totals[month]?.[metric.id])}</td>)}
     </Fragment>)}
   </tr>;
 }

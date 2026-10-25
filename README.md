@@ -96,6 +96,8 @@ Save As and conflict recovery both reject destinations used by another open/load
 
 The existing header search finds saved initiatives by name, notes, and selected breakdown category, subcategory, department, industry, and period names. Space-separated terms must all match across those fields. Results show only classifications matching at least one term; an empty query shows no classification details. Historical viewing uses names from that checkpoint. No buttons or input fields are added.
 
+Input grids support cut-and-paste moves within the same table: cutting keeps source values visible until a valid paste commits the move. Read-only cost, breakdown, and initiative tables support rectangular copying of displayed amounts to Excel or editable input grids; they do not accept pastes. No buttons, fields, permissions, storage-format changes, or network transmission are added.
+
 ### Current scope and limitations
 
 - The app runs as a Chrome extension and handles local files for which you grant read/write permission. It does not transmit plans externally or synchronize across browsers.
@@ -1258,3 +1260,11 @@ Excel出力では、名称などに含まれる `_x0041_`・`_x005F_` のよう�
 展開マスタの削除は、確認を開いた時点のコード・名称・展開区分を確定時に照合します。対象が削除・再登録・変更されていれば削除せず、確認を閉じて選び直す案内を表示します。無関係な更新では確認を維持し、使用中の削除拒否も維持します。保存形式は変更しません。
 
 前年入力・名称マスタ・勘定科目マスタの編集中に対象が削除された場合、元の分類・対象名と未保存入力を元の欄へ閲覧・コピー用に残します。自動保存・再試行・編集は停止し、同じ番号で再登録しても入力を転用しません。「入力を取り消す」で保持入力を破棄し、最新の保存内容へ戻れます。保持情報は画面内だけで、保存形式・権限・外部送信は変更しません。
+
+## 表の範囲コピーと金額の切り取り
+
+施策入力・施策詳細・前年入力の編集可能な月別金額は、範囲選択してCtrl／Command＋Xで切り取り、同じ入力表の移動先を選んでCtrl／Command＋Vで移動します。切り取り時点では金額を変更せず、元範囲を点線で示します。貼り付けでは元値を先に保持し、移動元を0、移動先を保持した値へ一度に変更するため、重なる範囲も移動できます。同じ位置への貼り付けは値と引き継ぎを変更しません。確定予算の移動元0・移動先は明示手修正にします。表外・科目未選択・集計行・不正金額を含む場合や、切り取り後に元の入力または行構成が変わった場合は移動せず入力を保持します。失敗後は元範囲を保って移動先を選び直せます。Esc・コピー・文字編集・種別・画面の切り替えや前年入力の分類変更で切り取りを解除します。別の入力表やExcelへは通常の文字列コピーとして扱い、元表を消しません。セル内の文字編集中は通常の文字列の切り取りを使います。移動確定は通常の自動保存・操作取消の対象で、保存失敗では移動後の入力と保存済みデータを保持します。
+
+総原価表・展開表・施策一覧では、金額セルをドラッグまたはShift＋クリックで矩形選択し、Ctrl／Command＋Cで表示中の値を行・列の順にコピーできます。選択後は矢印キーで移動し、Shift＋矢印で範囲を広げ、Escで解除します。表示と同じ千円単位・丸め・空欄・利益率の文字列を使い、タブ・改行で区切ります。見出し・名称・分類は含めません。並べ替え・絞り込み後の表示順と合計・小計を使い、大量行で画面外になった中間行も含めます。表示条件や元データが変わると選択を解除します。総原価表の金額の通常クリックで内訳を開く操作は維持し、ドラッグまたはShift＋クリックでは開きません。コピーした範囲はExcelや、施策入力・施策詳細・前年入力の編集可能な月別金額へ貼り付けられます。総原価表・展開表・施策一覧への貼り付けと切り取りは行いません。
+
+ボタン・入力欄・保存形式・権限・外部通信は追加しません。クリップボードへの書き出しはコピー・切り取り操作時だけ行います。選択と切り取り待ちは画面内だけに保持し、ファイルへ保存しません。

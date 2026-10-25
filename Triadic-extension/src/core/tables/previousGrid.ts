@@ -31,3 +31,18 @@ export function fillPreviousGrid(draft: PreviousInput, rowIds: (number | null)[]
   return { ...draft, rows: draft.rows.map(row => selectedIds.has(row.accountId) ? { ...row, amounts: { ...row.amounts,
     ...Object.fromEntries(initiativeMonths.slice(bounds.left, bounds.right + 1).map(month => [month, value])) } } : row) };
 }
+
+export function movePreviousGrid(draft: PreviousInput, rowIds: (number | null)[], source: GridSelection, start: GridCell): PreviousInput {
+  const bounds = gridBounds(source);
+  if (![bounds.top, bounds.bottom, bounds.left, bounds.right, start.row, start.column].every(Number.isInteger)
+    || bounds.top < 0 || bounds.bottom >= rowIds.length || bounds.left < 0 || bounds.right >= initiativeMonths.length) throw new Error("切り取る範囲が表の外にはみ出します。");
+  const inputs = new Map(draft.rows.map(row => [row.accountId, row]));
+  const text = rowIds.slice(bounds.top, bounds.bottom + 1).map(id => {
+    if (id == null || !inputs.has(id)) throw new Error("小計・合計・利益率は切り取りできません。");
+    return initiativeMonths.slice(bounds.left, bounds.right + 1).map(month => normalizeGridAmount(inputs.get(id)!.amounts[month] ?? "0")).join("\t");
+  }).join("\n");
+  pastePreviousGrid(draft, rowIds, start, text);
+  if (rowIds.slice(start.row, start.row + bounds.bottom - bounds.top + 1).some(id => id == null || !inputs.has(id))) throw new Error("移動先の科目が見つかりません。選択し直してください。");
+  if (start.row === bounds.top && start.column === bounds.left) return draft;
+  return pastePreviousGrid(fillPreviousGrid(draft, rowIds, source, "0"), rowIds, start, text);
+}

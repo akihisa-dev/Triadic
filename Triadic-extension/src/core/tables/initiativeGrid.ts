@@ -87,6 +87,21 @@ export function fillInitiativeGrid(draft: InitiativeEntryDraft, kind: KindId, se
     Array.from({ length: bottom - top + 1 }, () => Array<string>(right - left + 1).fill(text)));
 }
 
+/** Snapshot before clearing so overlapping moves never destroy their own source. */
+export function moveInitiativeGrid(draft: InitiativeEntryDraft, kind: KindId, source: GridSelection, start: GridCell): InitiativeEntryDraft {
+  const bounds = gridBounds(source);
+  // Validate both rectangles, including the source, before returning any change.
+  fillInitiativeGrid(draft, kind, source, "0");
+  const values = draft.rows.slice(bounds.top, bounds.bottom + 1).map(row =>
+    initiativeMonths.slice(bounds.left, bounds.right + 1).map(month => {
+      if (row.invalidAmounts?.[kind]?.[month]) throw new Error("切り取り元の金額を確定してください。");
+      return normalizeGridAmount(resolvedAmount(row, kind, month));
+    }));
+  applyRectangle(draft, kind, start, values);
+  if (start.row === bounds.top && start.column === bounds.left) return draft;
+  return applyRectangle(fillInitiativeGrid(draft, kind, source, "0"), kind, start, values);
+}
+
 /** Apply the same fixed composition used by the amount item master, before display rounding. */
 export function initiativeAmountTotals(draft: Pick<InitiativeEntryDraft, "rows" | "invalidNumbers">, kind: KindId, accounts: Account[]) {
   const accountById = new Map(accounts.map(account => [account.id, account]));

@@ -101,3 +101,10 @@ for (const screen of screenData) if (headerViewPages.has(screen.page)) screen.ca
 for (const screen of screenData) if (screen.page === "expansion-master") screen.calculated.push("削除確認を開いた時点のコード・名称・展開区分を確定時まで保持して照合します。削除・再作成・内容変更後の古い確認は拒否し、確認を閉じて対象の選び直しを案内します。無関係な変更では確認を維持します。照合情報はメモリ内だけで保存形式を変えません。");
 
 for (const screen of screenData) if (["previous-input", "account-master", "period-master", "department-master", "industry-master", "expansion-master", "expansion-category-master"].includes(screen.page)) screen.calculated.push("未保存入力がある間に対象が削除された場合、元の分類・対象名と入力値を元の欄へ閲覧・コピー用に残します。編集・自動保存・再試行を停止し、同じ番号の再登録先へ転用しません。入力を取り消すと保持入力を破棄し、最新の保存内容へ戻ります。保持は画面内だけで保存しません。");
+
+const cutMoveRule = "施策入力・施策詳細・前年入力の編集可能な月別金額は、範囲選択してCtrl／Command＋Xで切り取り、同じ入力表の移動先を選んでCtrl／Command＋Vで移動します。切り取り時点では金額を変更せず、元範囲を点線で示します。貼り付けでは元値を先に保持し、移動元を0、移動先を保持した値へ一度に変更するため、重なる範囲も移動できます。同じ位置への貼り付けは値と引き継ぎを変更しません。確定予算の移動元0・移動先は明示手修正にします。表外・科目未選択・集計行・不正金額を含む場合や、切り取り後に元の入力または行構成が変わった場合は移動せず入力を保持します。失敗後は元範囲を保って移動先を選び直せます。Esc・コピー・文字編集・種別・画面の切り替えや前年入力の分類変更で切り取りを解除します。別の入力表やExcelへは通常の文字列コピーとして扱い、元表を消しません。セル内の文字編集中は通常の文字列の切り取りを使います。移動確定は通常の自動保存・操作取消の対象で、保存失敗では移動後の入力と保存済みデータを保持します。ボタン・入力欄・保存形式・権限・外部通信は追加しません。クリップボードへの書き出しはコピー・切り取り操作時だけ行います。選択と切り取り待ちは画面内だけに保持し、ファイルへ保存しません。";
+const rangeCopyRule = "総原価表・展開表・施策一覧では、金額セルをドラッグまたはShift＋クリックで矩形選択し、Ctrl／Command＋Cで表示中の値を行・列の順にコピーできます。選択後は矢印キーで移動し、Shift＋矢印で範囲を広げ、Escで解除します。表示と同じ千円単位・丸め・空欄・利益率の文字列を使い、タブ・改行で区切ります。見出し・名称・分類は含めません。並べ替え・絞り込み後の表示順と合計・小計を使い、大量行で画面外になった中間行も含めます。表示条件や元データが変わると選択を解除します。総原価表の金額の通常クリックで内訳を開く操作は維持し、ドラッグまたはShift＋クリックでは開きません。コピーした範囲はExcelや、施策入力・施策詳細・前年入力の編集可能な月別金額へ貼り付けられます。総原価表・展開表・施策一覧への貼り付けと切り取りは行いません。ボタン・入力欄・保存形式・権限・外部通信は追加しません。クリップボードへの書き出しはコピー・切り取り操作時だけ行います。選択と切り取り待ちは画面内だけに保持し、ファイルへ保存しません。";
+for (const screen of screenData) {
+  if (["initiative-entry", "initiative-detail", "previous-input"].includes(screen.page)) screen.calculated.push(cutMoveRule);
+  if (["cost-table", "expansion-table", "initiative-list"].includes(screen.page)) screen.calculated.push(rangeCopyRule);
+}

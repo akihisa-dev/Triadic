@@ -1,0 +1,8 @@
+[data-copy-row] { user-select: none; }
+[data-range-selected="true"] { background: var(--soft) !important; box-shadow: inset 0 0 0 1px var(--control-line); }
+[data-grid-cut] { position: relative; }
+[data-grid-cut]::after { content: ""; position: absolute; inset: 1px; pointer-events: none; border: 0 dashed var(--ink); }
+[data-grid-cut~="top"]::after { border-top-width: 1px; }
+[data-grid-cut~="bottom"]::after { border-bottom-width: 1px; }
+[data-grid-cut~="left"]::after { border-left-width: 1px; }
+[data-grid-cut~="right"]::after { border-right-width: 1px; }

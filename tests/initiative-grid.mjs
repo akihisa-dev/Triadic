@@ -24,6 +24,21 @@ export function verifyInitiativeGrid(api) {
       { id: "unassigned", accountId: null, amounts: {} },
     ] };
   const before = structuredClone(draft);
+  const moving = { ...draft, rows: [{ id: "move", accountId: 1, amounts: { 4: "100.001", 5: "200", 6: "300", 7: "0" } }] };
+  const movingBefore = structuredClone(moving), sourceMove = { anchor: { row: 0, column: 0 }, end: { row: 0, column: 2 } };
+  const moved = api.moveInitiativeGrid(moving, 1, sourceMove, { row: 0, column: 1 });
+  assert.deepEqual([4,5,6,7].map(month => moved.rows[0].amounts[month]), ["0","100.001","200","300"], "重なった移動でも1円精度の元値を保つ");
+  const returned = api.moveInitiativeGrid(moved, 1, { anchor: { row: 0, column: 1 }, end: { row: 0, column: 3 } }, { row: 0, column: 0 });
+  assert.deepEqual([4,5,6,7].map(month => returned.rows[0].amounts[month]), ["100.001","200","300","0"]);
+  const confirmedMove = api.moveInitiativeGrid(moving, 2, sourceMove, { row: 0, column: 1 });
+  assert.deepEqual(confirmedMove.rows[0].overrides[2], { 4: "0", 5: "100.001", 6: "200", 7: "300" }, "確定の移動元0・移動先を明示手修正にし、一次は変更しない");
+  assert.deepEqual(confirmedMove.rows[0].amounts, moving.rows[0].amounts);
+  assert.equal(api.moveInitiativeGrid(moving, 2, sourceMove, { row: 0, column: 0 }), moving, "同じ位置への移動で引き継ぎを固定しない");
+  assert.throws(() => api.moveInitiativeGrid(moving, 1, sourceMove, { row: 0, column: 11 }), /外/);
+  assert.throws(() => api.moveInitiativeGrid({ ...moving, rows: [{ ...moving.rows[0], amounts: { 4: "不正" } }] }, 1, sourceMove, { row: 0, column: 1 }));
+  assert.throws(() => api.moveInitiativeGrid({ ...moving, rows: [...moving.rows, { accountId: null, amounts: {} }] }, 1, sourceMove, { row: 1, column: 1 }), /勘定科目/);
+  assert.deepEqual(moving, movingBefore, "移動・拒否とも元データを変更しない");
+
   for (const kind of [0, 3, 4, 5]) assert.throws(() => api.pasteInitiativeGrid(draft, kind, { row: 0, column: 0 }, "1"), /種別/);
   const selection = { anchor: { row: 1, column: 1 }, end: { row: 0, column: 0 } };
   for (const kind of [1, 2]) for (const text of ["9", "9\n", "9\r\n"]) {

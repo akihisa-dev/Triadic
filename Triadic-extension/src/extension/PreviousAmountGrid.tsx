@@ -1,6 +1,6 @@
 import { GridAmountInput } from "./GridAmountInput";
 import { useAdaptiveTableHeader } from "./useAdaptiveTableHeader";
-import { normalizeGridAmount } from "../core/tables/grid";
+import { gridBounds, normalizeGridAmount, type GridSelection } from "../core/tables/grid";
 import { gridCellEvents, nextGridCell } from "./gridCellEvents";
 import { useGridInteraction } from "./useGridInteraction";
 import { useMemo, useRef, useState, type ReactElement } from "react";
@@ -11,7 +11,7 @@ import { formatYen, formatRate, isValidAmount, yenToAmount } from "../core/domai
 import { initiativeMonths } from "../core/domain/calendar";
 import { type PlanContents } from "../core/domain/plan";
 import type { PreviousInput } from "../core/domain/kinds";
-import { fillPreviousGrid, pastePreviousGrid } from "../core/tables/previousGrid";
+import { fillPreviousGrid, pastePreviousGrid, movePreviousGrid } from "../core/tables/previousGrid";
 import { previousPeriods, previousPeriodAmount } from "../core/tables/previousPeriods";
 import { periodCellClass } from "./periodCellStyle";
 import { StatusNotice } from "./StatusNotice";
@@ -94,9 +94,13 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
   const inputIndices = useMemo(() => new Map(draft?.rows.map((row, index) => [row.accountId, index])), [accountOrder]);
   const latestIndices = useRef(inputIndices); latestIndices.current = inputIndices;
   const apply = (operation: () => PreviousInput) => {
-    if (latest.current.readOnly) return;
-    try { latest.current.onChange(operation()); setError(""); setEditing(false); }
-    catch (failure) { setError(failure instanceof Error ? failure.message : "入力できませんでした。"); }
+    if (latest.current.readOnly) return false;
+    try { latest.current.onChange(operation()); setError(""); setEditing(false); return true; }
+    catch (failure) { setError(failure instanceof Error ? failure.message : "入力できませんでした。"); return false; }
+  };
+  const cutStamp = (selection: GridSelection) => {
+    const { rowIds, inputsByAccount } = latest.current, bounds = gridBounds(selection);
+    return JSON.stringify([rowIds, rowIds.slice(bounds.top, bounds.bottom + 1).map(id => initiativeMonths.slice(bounds.left, bounds.right + 1).map(month => inputsByAccount.get(id!)?.amounts[month]))]);
   };
   const changeCell = (accountId: number, month: number, value: string) => {
     if (latest.current.readOnly) return;
@@ -127,6 +131,7 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
             const selected = bounds && rowIndex >= bounds.top && rowIndex <= bounds.bottom && column >= bounds.left && column <= bounds.right;
             const value = inputsByAccount.get(row.id)?.amounts[month] ?? "0";
             const events = row.kind === "account" && draft ? gridCellEvents(() => latest.current.grid, cell, value, {
+              blocked: Boolean(latest.current.readOnly),
               captureOriginal: () => { original.current = expressionOriginals.current.get(`${row.id}:${month}`) ?? value; },
               change: value => changeCell(row.id, month, value),
               cancel: editing => {
@@ -141,6 +146,14 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
               },
               fill: (selection, text) => apply(() => fillPreviousGrid(latest.current.draft!, latest.current.rowIds, selection, text)),
               paste: (start, text, selection) => apply(() => pastePreviousGrid(latest.current.draft!, latest.current.rowIds, start, text, selection)),
+              cutStamp: selection => {
+                try { const bounds = gridBounds(selection); movePreviousGrid(latest.current.draft!, latest.current.rowIds, selection, { row: bounds.top, column: bounds.left }); return cutStamp(selection); }
+                catch (failure) { setError((failure as Error).message); return null; }
+              },
+              move: (source, start, stamp) => apply(() => {
+                if (stamp !== cutStamp(source)) throw new Error("切り取り後に入力内容が変わりました。範囲を選び直してください。");
+                return movePreviousGrid(latest.current.draft!, latest.current.rowIds, source, start);
+              }),
               copy: bounds => { const { rows, inputsByAccount, calculationFailed } = latest.current; return rows.slice(bounds.top, bounds.bottom + 1).map(item => initiativeMonths.slice(bounds.left, bounds.right + 1).map(m =>
                 item.kind === "account" ? inputsByAccount.get(item.id)?.amounts[m] || "0" : calculationFailed ? "" : item.kind === "ratio" ? formatRate(item.previous[m]) : item.previous[m] === undefined ? "" : yenToAmount(item.previous[m]!)
               ).join("\t")).join("\n"); },

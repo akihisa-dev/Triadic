@@ -14,6 +14,17 @@ export function verifyPreviousGrid(api) {
   const draft = { industryId: 1, departmentId: 1, rows: [1, 2, 3].map(accountId => ({ accountId, amounts: { 4: "7", 5: "8", 3: "9" } })) };
   const before = structuredClone(draft);
   const ids = [1, 2, null, 3];
+  const moving = { ...draft, rows: [{ accountId: 1, amounts: { 4: "100.001", 5: "200", 6: "300", 7: "0" } }, ...draft.rows.slice(1)] };
+  const originalMove = structuredClone(moving), sourceMove = { anchor: { row: 0, column: 0 }, end: { row: 0, column: 2 } };
+  const moved = api.movePreviousGrid(moving, ids, sourceMove, { row: 0, column: 1 });
+  assert.deepEqual([4,5,6,7].map(month => moved.rows[0].amounts[month]), ["0","100.001","200","300"]);
+  assert.equal(api.movePreviousGrid(moving, ids, sourceMove, { row: 0, column: 0 }), moving);
+  assert.throws(() => api.movePreviousGrid(moving, ids, sourceMove, { row: 2, column: 0 }), /小計/);
+  assert.throws(() => api.movePreviousGrid(moving, ids, { anchor: { row: 1, column: 0 }, end: { row: 2, column: 0 } }, { row: 0, column: 0 }), /小計/);
+  assert.throws(() => api.movePreviousGrid(moving, ids, sourceMove, { row: 0, column: 11 }), /外/);
+  assert.throws(() => api.movePreviousGrid({ ...moving, rows: moving.rows.slice(0, 1) }, ids, sourceMove, { row: 1, column: 0 }), /移動先/);
+  assert.deepEqual(moving, originalMove, "集計・表外への移動を拒否し元値を保持");
+
   const pasted = api.pastePreviousGrid(draft, ids, { row: 0, column: 0 }, "1,200.125\t-0.001\r\n\t0\r\n");
   assert.deepEqual(pasted.rows[0].amounts, { 4: "1200.125", 5: "-0.001", 3: "9" });
   assert.equal(pasted.rows[1].amounts[4], "0");

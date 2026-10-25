@@ -1,3 +1,4 @@
+import { tableCopyCell, useTableRangeCopy } from "./useTableRangeCopy";
 import { useAdaptiveTableHeader } from "./useAdaptiveTableHeader";
 import { PeriodScrollFrame } from "./PeriodScrollbar";
 import { MeasuredTableBody, type TableRowMeasurements } from "./MeasuredTableBody";
@@ -104,6 +105,13 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
     comparisons.set(key, table);
   }
   const { labels, rows } = table;
+  const copyRowIndices = useMemo(() => new Map(rows.map((row, index) => [row, index])), [rows]);
+  const rangeCopy = useTableRangeCopy(container, { rowCount: rows.length, columnCount: tablePeriods.length * labels.length, resetKey: rows,
+    textAt: (rowIndex, column) => {
+      const row = rows[rowIndex]!, period = tablePeriods[Math.floor(column / labels.length)]!, index = column % labels.length;
+      return row.kind === "ratio" ? formatTableRate(row.values[index]![period.id], labels[index] === "前年差" || labels[index] === "一次予算差")
+        : formatTableYen(row.values[index]![period.id]);
+    } });
   const salesGroupId = contents.aggregations.find(group => group.required === "sales")?.id;
   const salesIndex = rows.findIndex(row => row.kind === "group" && row.id === salesGroupId);
   // A prefix that cannot possibly fit already uses the column-only fallback.
@@ -130,7 +138,7 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
   }, [availableHeight, virtualPrefix]);
   const renderRow = (row: (typeof rows)[number]) => <tr key={`${row.kind}:${row.id}`} data-cost-row={`${row.kind}:${row.id}`} className={`cost-data-row${row.kind !== "account" ? ` cost-subtotal${row.required ? " cost-required" : ""}` : ""}${row.kind === "group" && row.id === salesGroupId ? " cost-sales-anchor" : ""}`}>
     <th scope="row" className="initiative-list-name">{row.name}{!row.configured && <span className="cost-unconfigured">未設定</span>}</th>
-    {tablePeriods.map(period => <Fragment key={period.id}>{row.values.map((values, index) => <td key={index} className={periodCellClass(period, index === 0, index === labels.length - 1)}>{row.kind === "ratio" ? formatTableRate(values[period.id], labels[index] === "前年差" || labels[index] === "一次予算差")
+    {tablePeriods.map(period => <Fragment key={period.id}>{row.values.map((values, index) => <td key={index} {...tableCopyCell(copyRowIndices.get(row)!, tablePeriods.indexOf(period) * labels.length + index)} className={periodCellClass(period, index === 0, index === labels.length - 1)}>{row.kind === "ratio" ? formatTableRate(values[period.id], labels[index] === "前年差" || labels[index] === "一次予算差")
       : row.configured && values[period.id] !== undefined ? <button type="button" className="cost-amount-button"
         aria-label={`${row.name} ${period.label} ${labels[index]}の内訳`} aria-description={formatTableYen(values[period.id]) || "0"} disabled={navigationBlocked}
         onFocus={event => {
@@ -145,7 +153,7 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
         onClick={() => setDetail({ target: { kind: row.kind as "account" | "group", id: row.id, period, column: index }, title: `${row.name} ${period.label} ${labels[index]}` })}>{formatTableYen(values[period.id])}</button>
       : formatTableYen(values[period.id])}</td>)}</Fragment>)}
   </tr>;
-  return <><PeriodScrollFrame container={container} label="総原価表" layoutKey={key}><div ref={container} onScroll={event => { view.current.top = event.currentTarget.scrollTop; view.current.left = event.currentTarget.scrollLeft; }} className="initiative-list-container cost-table-container" role="region" aria-label="総原価表の月別前年・種別別金額" tabIndex={0}>
+  return <><PeriodScrollFrame container={container} label="総原価表" layoutKey={key}><div ref={container} {...rangeCopy} onScroll={event => { view.current.top = event.currentTarget.scrollTop; view.current.left = event.currentTarget.scrollLeft; }} className="initiative-list-container cost-table-container" role="region" aria-label="総原価表の月別前年・種別別金額" tabIndex={0}>
       <table ref={tableElement} onFocusCapture={event => {
         const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button[aria-label]"), key = button?.closest<HTMLElement>("tr[data-cost-row]")?.dataset.costRow;
         if (button && key) focused.current = { key, label: button.getAttribute("aria-label")! };

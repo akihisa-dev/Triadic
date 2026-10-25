@@ -50,7 +50,7 @@ export async function verifyInitiativeListRendering(api) {
   const confirmed = api.renderInitiativeList(contents, 2);
   assert.match(confirmed, /role="alert"[^>]*>金額の合計が正確に計算できる範囲を超えています/);
   assert.match(confirmed, /<button[^>]*>施策内上限確認<\/button>/, '超過した施策の編集導線を残す');
-  assert.match(confirmed, /通常確認<\/button>[\s\S]*?<td>2<\/td>/, '正常な施策は選択種別の金額を表示');
+  assert.match(confirmed, /通常確認<\/button>[\s\S]*?<td(?:\s[^>]*)?>2<\/td>/, '正常な施策は選択種別の金額を表示');
   assert.match(confirmed, /計算できない施策があるため、合計を表示できません/);
   assert.doesNotMatch(api.renderInitiativeList(contents, 1), /role="alert"/);
   assert.deepEqual(contents, before, '表示失敗で保存データを変更しない');

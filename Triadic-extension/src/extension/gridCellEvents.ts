@@ -13,6 +13,8 @@ export type GridCellAdapter = {
   fill(selection: GridSelection, value: string, input?: HTMLInputElement): void;
   paste(start: GridCell, text: string, selection: GridSelection | null): void;
   copy(bounds: Bounds): string;
+  cutStamp?(selection: GridSelection): string | null;
+  move?(source: GridSelection, start: GridCell, stamp: string): boolean;
   next(from: GridCell, key: GridMovementKey, shift: boolean): GridCell | null;
   blocked?: boolean;
   onTyping?(input: HTMLInputElement): void;
@@ -61,22 +63,43 @@ export function gridCellEvents(grid: Interaction | (() => Interaction), cell: Gr
         if (!committed && value.trim().startsWith("=")) adapter.commit(event.currentTarget);
         current().setEditing(false);
       },
-      onDoubleClick() { current().setEditing(true); adapter.captureOriginal(); },
+      onDoubleClick() { current().setCut(null); current().setEditing(true); adapter.captureOriginal(); },
       onChange(event: ChangeEvent<HTMLInputElement>) {
         const { editing, setEditing } = current();
+        current().setCut(null);
         if (!editing) adapter.captureOriginal();
         setEditing(true); adapter.change(event.target.value, event.target.validity.badInput);
       },
       onCopy(event: ClipboardEvent<HTMLInputElement>) {
+        current().setCut(null);
         const { editing, bounds } = current();
         if (editing || !bounds) return;
         event.preventDefault(); event.clipboardData.setData("text/plain", adapter.copy(bounds));
+      },
+      onCut(event: ClipboardEvent<HTMLInputElement>) {
+        const { editing, selection, bounds, setCut } = current();
+        if (editing) return;
+        event.preventDefault();
+        if (adapter.blocked || !selection || !bounds || !adapter.cutStamp || !adapter.move) return;
+        const stamp = adapter.cutStamp(selection);
+        if (stamp === null) return;
+        const text = adapter.copy(bounds), token = crypto.randomUUID();
+        event.clipboardData.setData("text/plain", text);
+        event.clipboardData.setData("application/x-triadic-grid-cut", token);
+        setCut({ selection, text, token, stamp });
       },
       onPaste(event: ClipboardEvent<HTMLInputElement>) {
         const { editing, bounds, selection } = current();
         if (!event.clipboardData.types.includes("text/plain")) { event.preventDefault(); return; }
         if (editing) return;
         event.preventDefault();
+        if (adapter.blocked) return;
+        const { cut, setCut } = current();
+        if (cut && event.clipboardData.getData("application/x-triadic-grid-cut") === cut.token && event.clipboardData.getData("text/plain") === cut.text) {
+          if (adapter.move?.(cut.selection, bounds ? { row: bounds.top, column: bounds.left } : cell, cut.stamp)) setCut(null);
+          return;
+        }
+        setCut(null);
         adapter.paste(bounds ? { row: bounds.top, column: bounds.left } : cell, event.clipboardData.getData("text/plain"), selection);
       },
       onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -85,16 +108,19 @@ export function gridCellEvents(grid: Interaction | (() => Interaction), cell: Gr
         const input = event.currentTarget;
         if (!editing && event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) adapter.onTyping?.(input);
         if (event.key === "Escape") {
+          if (current().cut) { event.preventDefault(); current().setCut(null); return; }
           event.preventDefault(); adapter.cancel(editing);
           setEditing(false); setSelection({ anchor: cell, end: cell }); return;
         }
         if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && selection) {
+          current().setCut(null);
           event.preventDefault(); adapter.fill(selection, value, input); return;
         }
         if ((event.key === "Delete" || event.key === "Backspace") && !editing && selection) {
+          current().setCut(null);
           event.preventDefault(); adapter.fill(selection, "0"); return;
         }
-        if (event.key === "F2") { event.preventDefault(); adapter.captureOriginal(); setEditing(true); return; }
+        if (event.key === "F2") { event.preventDefault(); current().setCut(null); adapter.captureOriginal(); setEditing(true); return; }
         if (editing && event.key !== "Enter" && event.key !== "Tab") return;
         if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter", "Tab"].includes(event.key)) return;
         event.preventDefault();
