@@ -10,6 +10,9 @@ import { initiativeMonths } from "../../Triadichrome-extension/src/core/domain/c
 import { yenToAmount } from "../../Triadichrome-extension/src/core/domain/amounts";
 import { businessScenarios, companyRegions, companyIndustries, previousAnnualSales, workloadWeights, months } from "./sample-portfolio";
 
+// The delivered sample has a fixed year; ordinary new files still use the app calendar.
+export const BUSINESS_SAMPLE_FISCAL_YEAR = 2027;
+
 // Ratio to annual business sales; the second field selects volume-linked versus fixed cost allocation.
 // These are fictional planning assumptions, not claimed industry statistics.
 const costProfiles: [string, number, "volume" | "fixed" | "bonus"][][] = [

@@ -11,7 +11,7 @@ if (args.length > 1 || (args.length === 1 && args[0] !== "--check")) {
 const check = args[0] === "--check";
 const relativeOutput = "samples/全機能確認用.triadic";
 const output = join(projectRoot, relativeOutput);
-await withNodeBundle("tests/sample-api.ts", async ({ createSamplePlan, openTriadicDatabase }, temporary) => {
+await withNodeBundle("tests/sample-api.ts", async ({ createSamplePlan, openTriadicDatabase, BUSINESS_SAMPLE_FISCAL_YEAR }, temporary) => {
   // Compare the full schema and every stored value, not SQLite's internal write counters.
   const contents = async bytes => {
     const database = await openTriadicDatabase(bytes);
@@ -24,7 +24,7 @@ await withNodeBundle("tests/sample-api.ts", async ({ createSamplePlan, openTriad
       return JSON.stringify([database.exec("PRAGMA user_version"), database.exec("PRAGMA application_id"), schema, tables]);
     } finally { database.close(); }
   };
-  const bytes = Buffer.from(await createSamplePlan(undefined, true));
+  const bytes = Buffer.from(await createSamplePlan(BUSINESS_SAMPLE_FISCAL_YEAR, true));
   const expected = await contents(bytes);
   const existing = await readFile(output).catch(error => {
     if (error.code === "ENOENT") return undefined;

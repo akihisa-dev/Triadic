@@ -7,6 +7,8 @@ test('基準サンプルの全件・末尾・三表・編集と取消を確認�
   await app.getByRole('button',{name:'ファイルを開く',exact:true}).click();
   const nav=app.getByRole('navigation',{name:'メインナビゲーション'});
   await expect(nav).toBeAttached();
+  await expect(page.getByLabel('テストデータ').locator('option:checked')).toHaveText('2027年度サンプル予算');
+  await expect(app.getByRole('status',{name:'基準年度',exact:true})).toHaveText('2027年度');
   const navigate=async(name:string)=>{
     await app.getByRole('button',{name:'サイドバーを開く',exact:true}).click();
     await nav.getByRole('button',{name,exact:true}).click();

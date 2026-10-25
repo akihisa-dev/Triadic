@@ -1,6 +1,6 @@
 # 三面運輸の予算サンプルと機能の確認
 
-[全機能確認用.triadic](全機能確認用.triadic)は、物流会社「三面運輸」の5か年計画2年目の単年度予算です。会社設定・数値根拠・各施策・継続更新の正本は[サンプル予算設計](../docs/sample-budget-design.md)です。利用するアプリの版はrootの[package.json](../package.json)、保存形式は現行実装に従います。年度は生成時の当年度（4月〜翌3月）です。
+[全機能確認用.triadic](全機能確認用.triadic)は、物流会社「三面運輸」の5か年計画2年目の単年度予算です。会社設定・数値根拠・各施策・継続更新の正本は[サンプル予算設計](../docs/sample-budget-design.md)です。利用するアプリの版はrootの[package.json](../package.json)、保存形式は現行実装に従います。「2027年度サンプル予算」として、2027年4月〜2028年3月を収録します。生成日にかかわらず基準年度は2027です。
 
 前年実績は売上120億円、営業利益6億2,115万円。既存事業はルート配送・チャーター配送・アパレル倉庫で、7圏域と本社を持ちます。今回の予算は名古屋新輸送センターと関東第一倉庫の開設、衣料品以外の荷主開拓、機械化・AI、既存荷主の物量減と費用上昇を含みます。現在は29施策・104科目行・3時点の履歴ですが、件数やサイズは目標ではなく、必要な業務内容で変わります。
 
@@ -18,7 +18,7 @@
 
 | 実装済み機能・条件 | 根拠となる実装 | データ・初期状態 | 操作・再現方法 | 期待結果 | 確認方法 |
 |---|---|---|---|---|---|
-| 新規作成・形式・年度 | core/storage/triadicDatabase.ts・triadicSchema.ts | 当年度一つ、前年見込/実績、一次/確定 | 生成したSQLiteを再読込。不正/旧形式は専用データ | 整合性・参照制約が正常。旧形式は移行せず拒否 | 自動: sample-plan.mjs・file-boundaries.mjs |
+| 新規作成・形式・年度 | core/storage/triadicDatabase.ts・triadicSchema.ts | 2027年度一つ、前年見込/実績、一次/確定 | 生成したSQLiteを再読込。不正/旧形式は専用データ | 整合性・参照制約が正常。旧形式は移行せず拒否 | 自動: sample-plan.mjs・file-boundaries.mjs |
 | 前年入力・見込と実績 | core/storage/settings.ts・core/tables/previousGrid.ts | 事業と圏域ごとの前年元帳。1〜3月に見込/実績差 | 基準前年を切替。前年入力は東京圏/アパレル倉庫を選択 | 前年実績の外部売上120億円。見込の未確定売上を独立保持 | 自動: reference-sample.mjs・previous-baselines.mjs。画面: 前年切替 |
 | 部署・業種・所属 | core/storage/departmentMaster.ts・industryMaster.ts | 7圏域＋本社、5業種。非衣料品倉庫は東京/福岡だけ | マスタと絞込候補を確認。不正所属は私有コピーで登録 | 未所属の業種を登録拒否。本社は本社管理のみ | 自動: sample-plan.mjs・department-data.mjs |
 | 展開・区分・期間・開始年月 | core/storage/expansionMaster.ts・core/domain/initiativeStartMonth.ts | 初期8展開/6区分。期間差は前年10月・11月 | 展開表/施策詳細で分類を確認。負ID/0/未選択は専用データ | 業務に合う分類。期間差は前年、設備導入は準備月から活動 | 自動: start-months.mjs・expansion-table-view.mjs。画面: 詳細 |
