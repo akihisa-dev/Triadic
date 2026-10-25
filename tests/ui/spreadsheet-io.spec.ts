@@ -3,6 +3,36 @@ import JSZip from "jszip";
 import { currentFiscalYear } from "../../Triadichrome-extension/src/core/domain/calendar";
 import { readFile } from "node:fs/promises";
 import { test, expect } from "./fixtures";
+import { settleMotion } from "./fixtures";
+
+test("取込プレビューの罫線と見出しを両テーマで識別できる", async ({ page, app }) => {
+  await page.goto("/tests/ui/preview.html");
+  await expect(page.getByRole("status")).toHaveText("操作できます");
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "入出力", exact: true }).click();
+  await app.getByRole("checkbox", { name: "直営自動車・部署A", exact: true }).check();
+  const downloading = page.waitForEvent("download");
+  await app.getByRole("button", { name: "フォーマットを出力", exact: true }).click();
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(await readFile((await (await downloading).path())!) as unknown as ExcelJS.Buffer);
+  workbook.worksheets[0]!.getCell("C4").value = 123.456;
+  const bytes = Buffer.from(await workbook.xlsx.writeBuffer());
+  await app.locator('input[type="file"]').setInputFiles({ name: "罫線確認.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: bytes });
+  const preview = app.getByRole("region", { name: "前年金額の変更確認" });
+  await expect(preview).toBeVisible();
+  for (const dark of [false, true]) {
+    await app.getByRole("switch", { name: "ダークテーマ" }).setChecked(dark);
+    await settleMotion(app.locator("body"));
+    const cell = preview.locator("tbody td").first();
+    const header = preview.locator("thead th").first();
+    await expect(cell).toHaveCSS("border-bottom-width", "1px");
+    await expect(header).toHaveCSS("border-bottom-width", "1px");
+    expect(await cell.evaluate(node => getComputedStyle(node).borderBottomColor)).not.toBe(await header.evaluate(node => getComputedStyle(node).borderBottomColor));
+    await expect(preview.getByText("123.456", { exact: true })).toBeVisible();
+  }
+  await preview.getByRole("button", { name: "キャンセル", exact: true }).click();
+  await expect(preview).toHaveCount(0);
+});
 
 test('別ウィンドウの前年取り込み確認を履歴で破棄する前に確認する', async ({page}) => {
   test.setTimeout(120_000);

@@ -7,7 +7,10 @@
   --soft: #eeeee9;
   --ink: #343434;
   --muted: #666660;
-  --line: #d5d5ce;
+  --line: #c6c6bd;
+  --table-line: #b9b9b0;
+  --table-divider: #9b9b92;
+  --control-track: #d5d5ce;
   --control-line: #8b8b84;
   --accent: #0033ff;
 
@@ -19,12 +22,10 @@
   --accent-drop: #d7e6f3;
 
   /* Derived roles keep tables, selected cells and inverse controls coherent. */
-  --table-line: color-mix(in srgb, var(--line) 65%, var(--surface));
-  --table-divider: var(--line);
-  --selected-month: var(--line);
+  --selected-month: #d5d5ce;
   --period-quarter: var(--soft);
-  --period-half: color-mix(in srgb, var(--soft) 50%, var(--line));
-  --period-annual: var(--line);
+  --period-half: color-mix(in srgb, var(--soft) 50%, var(--period-annual));
+  --period-annual: #d5d5ce;
   --focus: var(--ink);
   --on-ink: var(--canvas);
   --ink-hover: color-mix(in srgb, var(--ink) 85%, var(--canvas));
@@ -40,7 +41,12 @@
   --soft: #40403d;
   --ink: #f4f0e6;
   --muted: #bdb9af;
-  --line: #55544f;
+  --line: #62625b;
+  --table-line: #707068;
+  --table-divider: #929287;
+  --control-track: #55544f;
+  --selected-month: #55544f;
+  --period-annual: #55544f;
   --control-line: #8f8c82;
   --accent: #d6b86c;
   --accent-ink: var(--accent);

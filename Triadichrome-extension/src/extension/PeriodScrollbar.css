@@ -10,7 +10,7 @@
 .period-scrollbar input:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 .period-scrollbar input::-webkit-slider-runnable-track { height: 10px; background: var(--soft); }
 .period-scrollbar input::-webkit-slider-thumb { appearance: none; width: var(--period-scroll-thumb); height: 10px; border-radius: 6px; background: var(--control-line); }
-.period-scrollbar:is(:hover, :has(:focus-visible), .period-scrollbar-touch) input::-webkit-slider-thumb { background: var(--line); }
+.period-scrollbar:is(:hover, :has(:focus-visible), .period-scrollbar-touch) input::-webkit-slider-thumb { background: var(--control-track); }
 .period-scroll-marks { position: absolute; inset: 0; pointer-events: none; visibility: hidden; }
 .period-scrollbar:not(.period-scrollbar-dismissed):is(:hover, :has(:focus-visible), .period-scrollbar-touch) .period-scroll-marks { visibility: visible; }
 .period-scroll-mark { position: absolute; top: 0; height: 100%; padding: 0 3px; border: 0; border-radius: 0; color: var(--ink); background: transparent; font: inherit; font-size: 11px; line-height: 12px; white-space: nowrap; pointer-events: auto; }

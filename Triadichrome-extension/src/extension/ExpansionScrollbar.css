@@ -4,7 +4,7 @@
 .expansion-scrollbar input:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 .expansion-scrollbar input::-webkit-slider-runnable-track { width: 10px; background: var(--soft); }
 .expansion-scrollbar input::-webkit-slider-thumb { appearance: none; height: var(--expansion-scroll-thumb); width: 10px; border-radius: 6px; background: var(--control-line); }
-.expansion-scrollbar:is(:hover, :has(:focus-visible), .expansion-scrollbar-touch) input::-webkit-slider-thumb { background: var(--line); }
+.expansion-scrollbar:is(:hover, :has(:focus-visible), .expansion-scrollbar-touch) input::-webkit-slider-thumb { background: var(--control-track); }
 .expansion-scroll-marks { position: absolute; inset: 0; pointer-events: none; visibility: hidden; }
 .expansion-scrollbar:not(.expansion-scrollbar-dismissed):is(:hover, :has(:focus-visible), .expansion-scrollbar-touch) .expansion-scroll-marks { visibility: visible; }
 .expansion-scroll-mark { position: absolute; left: 0; width: 100%; overflow: hidden; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--ink); font: inherit; font-size: 11px; line-height: 12px; pointer-events: auto; user-select: none; transition: top 340ms cubic-bezier(.22,1.25,.38,1), height 340ms cubic-bezier(.22,1.25,.38,1); }

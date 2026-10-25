@@ -24,10 +24,12 @@
 .io-import-preview h3 { margin: 0; font-size: 15px; }
 .io-preview-table { max-height: 320px; overflow: auto; }
 .io-preview-table table { width: 100%; border-collapse: collapse; white-space: nowrap; }
-.io-preview-table th, .io-preview-table td { padding: 6px 10px; border: 1px solid var(--line); text-align: left; }
+.io-preview-table th, .io-preview-table td { padding: 6px 10px; border: 1px solid var(--table-line); text-align: left; }
 .io-preview-table thead { position: sticky; top: 0; background: var(--soft); }
 .io-preview-table td:nth-last-child(-n+2) { text-align: right; }
 @media (max-width: 600px) { .io-panel { padding: 12px; } .io-table-conditions { padding-left: 0; } .io-pair-list { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .io-table-option:not(:has(.io-classifications)) { grid-template-columns: minmax(0, 1fr); } }
 
 .io-previous-panel.is-drag-active { outline: 2px dashed var(--ink); outline-offset: -3px; background: var(--soft); }
+
+.io-preview-table thead th { border-bottom-color: var(--table-divider); }

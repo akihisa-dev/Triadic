@@ -9,7 +9,7 @@
 .history-difference-controls input, .history-difference-controls select { width: 180px; max-width: 100%; padding: 6px; border: 1px solid var(--control-line); border-radius: 4px; background: var(--surface); color: var(--ink); }
 .history-difference-scroll { overflow: auto; min-height: 0; }
 .history-difference-scroll table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 13px; }
-.history-difference-scroll th, .history-difference-scroll td { padding: 8px; border: 1px solid var(--line); text-align: left; vertical-align: top; overflow-wrap: anywhere; white-space: pre-wrap; min-width: 72px; max-width: 280px; }
+.history-difference-scroll th, .history-difference-scroll td { padding: 8px; border: 1px solid var(--table-line); text-align: left; vertical-align: top; overflow-wrap: anywhere; white-space: pre-wrap; min-width: 72px; max-width: 280px; }
 .history-difference-scroll thead { position: sticky; top: 0; background: var(--soft); }
 .history-difference-scroll tbody th { font-weight: 400; min-width: 160px; }
 .history-difference-pages { display: flex; align-items: center; justify-content: flex-end; gap: 12px; font-size: 13px; }
@@ -18,3 +18,5 @@
 .history-income-scroll table { min-width: 560px; }
 .history-income-scroll tbody th { min-width: 60px; }
 .history-income-scroll td:nth-child(n+3) { text-align: right; font-variant-numeric: tabular-nums; }
+
+.history-difference-scroll thead th { border-bottom-color: var(--table-divider); }

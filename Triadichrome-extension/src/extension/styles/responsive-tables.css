@@ -29,3 +29,17 @@
     clip-path: inset(0 calc(100% - var(--expansion-name-width)) 0 0);
   }
 }
+
+/* Clipped colspan cells need an edge at the visible frozen width, not at
+   their original (offscreen) right border. A background layer adds no width. */
+@container plan-table (max-width: 650px) {
+  .initiative-overview-page .initiative-list-table .initiative-list-name { border-right-color: var(--table-divider); }
+  .initiative-overview-page .initiative-total-label,
+  .expansion-table :is(.expansion-summary, .expansion-subtotal-name) {
+    background-image: linear-gradient(var(--table-divider), var(--table-divider));
+    background-repeat: no-repeat;
+    background-size: 1px 100%;
+  }
+  .initiative-overview-page .initiative-total-label { background-position: calc(var(--initiative-name-width) - 1px) 0; }
+  .expansion-table :is(.expansion-summary, .expansion-subtotal-name) { background-position: calc(var(--expansion-name-width) - 1px) 0; }
+}

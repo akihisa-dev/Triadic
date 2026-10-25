@@ -310,7 +310,7 @@
 .initiative-list-table { width: 100%; min-width: 2908px; table-layout: fixed; border-collapse: separate; border-top: 1px solid var(--table-line); border-left: 1px solid var(--table-line); border-spacing: 0; font-variant-numeric: tabular-nums; }
 .initiative-list-table th, .initiative-list-table td { padding: 12px; border-bottom: 1px solid var(--table-line); }
 .initiative-list-table thead th { font-size: 14px; font-weight: 500; background: var(--soft); }
-.initiative-list-table thead th[colspan] { border-right: 1px solid var(--table-line); text-align: center; }
+.initiative-list-table thead th[colspan] { border-right: 1px solid var(--table-divider); text-align: center; }
 .initiative-list-table tbody th { font-weight: 400; }
 .initiative-list-table td { text-align: right; }
 .initiative-list-table .initiative-list-fixed { position: sticky; z-index: 1; overflow-wrap: anywhere; background: var(--canvas); border-right: 1px solid var(--table-line); }
@@ -327,7 +327,7 @@
   .initiative-overview-page .initiative-list-table { --initiative-expansion-width: 44px; --initiative-period-width: 44px; --initiative-name-width: 64px; --initiative-start-width: 72px; }
   .initiative-list-table .initiative-list-fixed { padding-inline: 6px; }
 }
-.initiative-list-table .initiative-month-end { border-right: 1px solid var(--table-line); }
+.initiative-list-table .initiative-month-end { border-right: 1px solid var(--table-divider); }
 .initiative-name-button { max-width: 100%; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; overflow-wrap: anywhere; text-decoration: underline; text-decoration-color: var(--control-line); text-underline-offset: 4px; }
 .initiative-name-button:hover { text-decoration-color: currentColor; }
 .initiative-name-button:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
@@ -414,3 +414,17 @@
 .confirmation-dialog h2 { margin: 0; font-size: 20px; line-height: 1.5; }
 .confirmation-dialog p { margin: 16px 0 24px; overflow-wrap: anywhere; font-size: 15px; line-height: 1.7; }
 .confirmation-dialog .form-actions { justify-content: flex-end; }
+
+/* Structural edges stay visible on shaded cells and at frozen boundaries. */
+.initiative-list-table thead tr:last-child > *,
+.initiative-amount-table thead tr:last-child > * { border-bottom-color: var(--table-divider); }
+.initiative-overview-page .initiative-total-row > * { border-top: 1px solid var(--table-divider); }
+.initiative-overview-page .initiative-list-start,
+.initiative-list-table .initiative-total-label { border-right: 1px solid var(--table-divider); }
+.initiative-amount-table th:first-child { border-right-color: var(--table-divider); }
+.initiative-amount-table tfoot tr:first-child > * { border-top: 1px solid var(--table-divider); }
+/* Optional column filters use the same surface/control distinction as dialogs. */
+.table-filter-panel input:not([type="checkbox"]):not([type="radio"]),
+.table-filter-panel select { border: 1px solid var(--control-line); outline: 2px solid transparent; outline-offset: -1px; background: var(--surface); color: var(--ink); }
+.table-filter-panel input:not([type="checkbox"]):not([type="radio"]):focus,
+.table-filter-panel select:focus { border-color: var(--accent); outline-color: var(--accent); }

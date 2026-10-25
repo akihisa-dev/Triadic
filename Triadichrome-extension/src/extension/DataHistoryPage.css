@@ -5,10 +5,10 @@
 .data-history-heading .data-history-actions { flex: 0 1 auto; min-width: 0; }
 .data-history-actions input { min-width: 0; max-width: 100%; box-sizing: border-box; }
 .data-history-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 13px; }
-.data-history-actions input { padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); color: var(--ink); }
+.data-history-actions input { padding: 6px 8px; border: 1px solid var(--control-line); border-radius: 4px; background: var(--surface); color: var(--ink); }
 .data-history-list { flex: 1; min-height: 0; overflow: auto; }
 .data-history-list table { width: 100%; min-width: 0; table-layout: auto; border-collapse: collapse; text-align: left; }
-.data-history-list th, .data-history-list td { padding: 8px; border-bottom: 1px solid var(--line); }
+.data-history-list th, .data-history-list td { padding: 8px; border-bottom: 1px solid var(--table-line); }
 .data-history-list th { color: var(--muted); font-size: 13px; font-weight: 500; }
 .data-history-list input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--ink); }
 .data-history-list th:first-child, .data-history-list td:first-child { width: 42px; text-align: center; }
@@ -23,3 +23,5 @@
 .page-switch:has(> .data-history-page) { height: 100%; min-height: 0; grid-template-rows: minmax(0, 1fr); }
 .home-header:has(.history-preview-controls) { flex-wrap: wrap; }
 .data-history-list th:last-child { width: auto; }
+
+.data-history-list thead th { border-bottom-color: var(--table-divider); }
