@@ -21,7 +21,7 @@ async function open(page: Page, app: FrameLocator, screen: string) {
 async function filter(app: FrameLocator, table: Locator, name: string) {
   const trigger = table.getByRole('button', { name: new RegExp(`^${name}を絞り込む`) });
   await trigger.focus(); await trigger.press('Enter');
-  const panel = app.getByRole('dialog', { name, exact: true });
+  const panel = app.getByRole('dialog', { name: new RegExp(`^${name}(?:（完全一致）)?$`) });
   await expect(panel).toBeVisible(); return panel;
 }
 async function choice(app: FrameLocator, table: Locator, name: string, value: string) {
@@ -193,5 +193,113 @@ test('内訳と履歴差分: 親ダイアログを閉じずに条件編集を取
   await clear(app, differences, '項目');
   await expect(differences.locator('tbody tr')).toHaveCount(2);
   await dialog.getByRole('button', { name: '閉じる', exact: true }).click();
+  expect(await app.locator('body').evaluate(() => (window as unknown as { headerWrites: number }).headerWrites)).toBe(0);
+});
+
+test('セルのアイコン: 他列の条件と順序を維持し、名称は完全一致で絞る', async ({ page, app }) => {
+  await open(page, app, '施策一覧');
+  const table = app.getByRole('table', { name: '施策一覧', exact: true });
+  const names = table.locator('tbody .initiative-name-button');
+  const period = await table.locator('tbody tr').filter({ hasText: 'コスト' }).first().locator('td.initiative-list-period').innerText();
+  await choice(app, table, '期間名', period);
+  await table.getByRole('button', { name: '施策名', exact: true }).click();
+  await table.getByRole('button', { name: '施策名', exact: true }).click();
+  const before = await names.allTextContents();
+  const cell = table.locator('tbody td.initiative-list-expansion').filter({ hasText: 'コスト' }).first();
+  await cell.click({ button: 'right' });
+  const menu = app.getByRole('menu', { name: 'セルの絞り込み', exact: true });
+  const action = menu.getByRole('menuitem', { name: 'この値で絞り込む', exact: true });
+  await expect(action).toBeVisible(); await expect(action).toHaveText(''); await expect(action.locator('svg')).toHaveCount(1);
+  expect(await names.allTextContents()).toEqual(before);
+  await action.press('Escape'); await expect(menu).toHaveCount(0);
+  await cell.click({ button: 'right' }); await action.click();
+  const expected = await table.locator('tbody tr:has(.initiative-name-button)').allTextContents();
+  expect(expected.length).toBeGreaterThan(0); expect(expected.length).toBeLessThan(before.length);
+  for (const value of expected) { expect(value).toContain('コスト'); expect(value).toContain(period); }
+  await expect(table.locator('th[aria-sort="descending"]')).toHaveAttribute('aria-label', '施策名');
+  const exactName = await names.first().textContent();
+  await names.first().press('Shift+F10'); await expect(action).toBeVisible(); await action.press('Enter');
+  await expect(names).toHaveCount(1); await expect(names).toHaveText(exactName!);
+  const exact = await filter(app, table, '施策名');
+  await expect(exact.getByRole('searchbox', { name: '一致する値', exact: true })).toHaveValue(exactName!);
+  await exact.getByRole('button', { name: '適用', exact: true }).click(); await expect(names).toHaveCount(1);
+  await clear(app, table, '施策名'); expect(await table.locator('tbody tr:has(.initiative-name-button)').allTextContents()).toEqual(expected);
+  await names.first().click(); await app.getByRole('button', { name: '← 施策一覧へ戻る', exact: true }).click();
+  await expect.poll(() => table.locator('tbody tr:has(.initiative-name-button)').allTextContents()).toEqual(expected);
+  await table.locator('tbody tr:has(.initiative-name-button) td').last().click({ button: 'right' });
+  await expect(menu).toHaveCount(0);
+  expect(await app.locator('body').evaluate(() => (window as unknown as { headerWrites: number }).headerWrites)).toBe(0);
+});
+
+test('セルのアイコン: マスタの名称・所属を絞り、編集中は入力欄の操作を保つ', async ({ page, app }, testInfo) => {
+  if (testInfo.project.name === 'narrow') await page.setViewportSize({ width: 375, height: 1100 });
+  await open(page, app, 'マスタ');
+  const menu = app.getByRole('menu', { name: 'セルの絞り込み', exact: true });
+  for (const [subject, label] of [['展開', '展開名'], ['展開区分', '展開区分名'], ['部署', '部署名'], ['業種', '業種名'], ['期間', '期間名'], ['勘定科目', '名称']] as const) {
+    await app.getByRole('button', { name: new RegExp(`^${subject}マスタ`) }).click();
+    await settleMotion(app.locator('body'));
+    const table = app.getByRole('table', { name: `${subject}一覧`, exact: true });
+    const nameCell = table.locator('tbody th').first(), name = await nameCell.innerText();
+    await nameCell.click({ button: 'right' }); await menu.getByRole('menuitem').click();
+    await expect(table.locator('tbody th')).toHaveCount(1); await expect(table.locator('tbody th')).toHaveText(name);
+    await clear(app, table, label);
+    if (subject === '部署') {
+      const relation = table.locator('tbody tr').first().locator('td').first(), value = await relation.innerText();
+      await relation.click({ button: 'right' }); await menu.getByRole('menuitem').click();
+      for (const row of await table.locator('tbody tr').all()) await expect(row.locator('td').first()).toHaveText(value);
+      await clear(app, table, '業種名');
+    }
+    await table.getByRole('button', { name: `${name}を編集`, exact: true }).click();
+    await table.locator('tbody input').first().click({ button: 'right' }); await expect(menu).toHaveCount(0);
+    await table.getByRole('button', { name: '完了', exact: true }).click();
+    await app.getByRole('button', { name: '← マスタへ戻る', exact: true }).click();
+  }
+  expect(await app.locator('body').evaluate(() => (window as unknown as { headerWrites: number }).headerWrites)).toBe(0);
+});
+
+test('セルのアイコン: 展開表の結合セルと大量行でも同じ条件に絞る', async ({ page, app }, testInfo) => {
+  if (testInfo.project.name === 'narrow') await page.setViewportSize({ width: 375, height: 1100 });
+  for (const data of ['', '?data=signed-categories-large']) {
+    await page.goto(`/tests/ui/preview.html${data}`); await expect(page.getByRole('status')).toHaveText('操作できます');
+    await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
+    await app.getByRole('navigation', { name: 'メインナビゲーション' }).getByRole('button', { name: '展開表', exact: true }).click();
+    const table = app.getByRole('table', { name: '展開表', exact: true });
+    await table.getByRole('button', { name: '施策名', exact: true }).click();
+    const group = table.locator('tbody th.expansion-group').first(), name = await group.innerText();
+    await group.click({ button: 'right' });
+    await app.getByRole('menuitem', { name: 'この値で絞り込む', exact: true }).click();
+    await expect(table.getByRole('button', { name: '展開名を絞り込む（適用中）', exact: true })).toBeVisible();
+    for (const cell of await table.locator('tbody th.expansion-group').all()) await expect(cell).toHaveText(name);
+    await expect(table.locator('th[aria-sort="ascending"]')).toHaveAttribute('aria-label', '施策名');
+    const target = table.locator('tbody .initiative-name-button').first(), targetName = await target.innerText();
+    await target.click({ button: 'right' }); await app.getByRole('menuitem', { name: 'この値で絞り込む', exact: true }).click();
+    await expect(table.locator('tbody .initiative-name-button')).toHaveCount(1); await expect(table.locator('tbody .initiative-name-button')).toHaveText(targetName);
+    await clear(app, table, '施策名'); await clear(app, table, '展開名');
+  }
+});
+
+test('セルのアイコン: 内訳と履歴差分で取消・適用しても親を閉じない', async ({ page, app }) => {
+  await open(page, app, '総原価表');
+  const amountTrigger = app.getByRole('button', { name: '売上高 4月 一次予算の内訳', exact: true });
+  await amountTrigger.focus(); await amountTrigger.press('Enter');
+  const parent = app.getByRole('dialog', { name: '売上高 4月 一次予算の内訳', exact: true });
+  const menu = app.getByRole('menu', { name: 'セルの絞り込み', exact: true });
+  const account = parent.locator('tbody tr').first().locator('td').first(), value = await account.innerText();
+  await account.click({ button: 'right' }); await menu.getByRole('menuitem').press('Escape');
+  await expect(parent).toBeVisible(); await expect(menu).toHaveCount(0);
+  await account.click({ button: 'right' }); await menu.getByRole('menuitem').click();
+  await expect(parent).toBeVisible();
+  for (const cell of await parent.locator('tbody tr td:first-of-type').all()) await expect(cell).toHaveText(value);
+  await parent.getByRole('button', { name: '閉じる', exact: true }).click();
+  await app.getByRole('navigation', { name: 'メインナビゲーション' }).getByRole('button', { name: '履歴', exact: true }).click();
+  await app.getByRole('button', { name: /と現在の差分$/ }).last().click();
+  const history = app.getByRole('dialog', { name: '履歴と現在の差分', exact: true });
+  await history.getByRole('button', { name: '変更項目', exact: true }).click();
+  const table = history.getByRole('table', { name: '履歴と現在の変更箇所', exact: true });
+  const item = table.locator('tbody th').first(), name = await item.innerText();
+  await item.click({ button: 'right' }); await menu.getByRole('menuitem').click();
+  for (const cell of await table.locator('tbody th').all()) await expect(cell).toHaveText(name);
+  await clear(app, table, '項目'); await expect(table.locator('tbody tr')).toHaveCount(2);
+  await history.getByRole('button', { name: '閉じる', exact: true }).click();
   expect(await app.locator('body').evaluate(() => (window as unknown as { headerWrites: number }).headerWrites)).toBe(0);
 });

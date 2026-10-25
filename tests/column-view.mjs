@@ -9,6 +9,12 @@ export async function verifyColumnView(api) {
     { id: 5, name: '零', group: [], amount: 0 },
   ];
   const original = structuredClone(rows);
+  assert.equal(api.matchesTableFilter('A施策2', { type: 'text', text: 'A施策', exact: true }), false);
+  assert.equal(api.matchesTableFilter('Ａ施策', { type: 'text', text: 'Ａ施策', exact: true }), true);
+  assert.equal(api.matchesTableFilter('A施策', { type: 'text', text: 'Ａ施策', exact: true }), false);
+  assert.equal(api.matchesTableFilter(null, { type: 'text', text: '', exact: true }), true);
+  assert.equal(api.matchesTableFilter(['部署A', '部署B'], { type: 'text', text: '部署A・部署B', exact: true }), true);
+  assert.equal(api.matchesTableFilter(['部署B'], { type: 'text', text: '部署A・部署B', exact: true }), false);
   const columns = [
     { id: 'name', label: '名称', value: row => row.name },
     { id: 'group', label: '所属', type: 'choice', value: row => row.group },
@@ -26,6 +32,7 @@ export async function verifyColumnView(api) {
   assert.deepEqual(selected({ filters: { amount: { type: 'number', operator: 'zero' } } }), [5]);
   assert.deepEqual(selected({ filters: { amount: { type: 'number', operator: 'blank' } } }), [3]);
   assert.deepEqual(selected({ filters: { obsolete: { type: 'text', text: 'unknown' } } }), [1, 2, 3, 4, 5]);
+  assert.deepEqual(selected({ sort: { column: 'amount', direction: 'descending' }, filters: { group: { type: 'choice', values: ['部署B'] }, name: { type: 'text', text: '同額', exact: true } } }), [4]);
   assert.deepEqual(rows, original, '並べ替え・絞り込みで元の行と順序を変更しない');
 
   const contents = await api.readPlanContents(await api.createSamplePlan(2026));

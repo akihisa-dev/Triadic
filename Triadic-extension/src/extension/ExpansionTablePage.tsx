@@ -1,3 +1,4 @@
+import { useTableCellFilter } from "./TableCellFilter";
 import { TableViewHeader, TableViewEmpty, useTableView } from "./TableViewHeader";
 import { emptyTableView, type TableColumn } from "../core/tables/columnView";
 import { useWindowViewState } from "./windowView";
@@ -7,7 +8,7 @@ import { PeriodScrollFrame } from "./PeriodScrollbar";
 import { useRowWindow, WindowRows } from "./VirtualTableRows";
 import { TableCalculationBoundary } from "./TableCalculationBoundary";
 import { periodCellClass } from "./periodCellStyle";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
 import { Fragment, memo, useMemo, useRef, useState } from "react";
 import { expansionPeriodAmount, tablePeriods } from "../core/tables/periodTables";
 import { type Initiative, type PlanContents } from "../core/domain/plan";
@@ -34,22 +35,23 @@ const AmountCells = memo(function AmountCells({ values, error = "" }: { values: 
   </Fragment>)}</Fragment>);
 });
 type ExpansionItem = NonNullable<ReturnType<ReturnType<typeof createExpansionTableView>>["flat"][number]["item"]>;
-function ExpansionGroupCell({ name, span, title }: { name: string; span?: number; title?: string }) {
-  return <th rowSpan={span} scope="rowgroup" className="expansion-group" title={title}>{name}</th>;
+function ExpansionGroupCell({ name, span, title, cellProps }: { name: string; span?: number; title?: string; cellProps: HTMLAttributes<HTMLTableCellElement> }) {
+  return <th {...cellProps} rowSpan={span} scope="rowgroup" className="expansion-group" title={title}>{name}</th>;
 }
 function ExpansionSubtotalCells({ name, values, filtered, error = "" }: { name: string; values: ExpansionMonths[]; filtered?: boolean; error?: string }) {
   return <><th colSpan={3} scope="row" className="expansion-subtotal-name">{name}計{filtered ? "（表示中）" : ""}</th><AmountCells values={values} error={error} /></>;
 }
 /** Row content and navigation are identical; each renderer owns spans and focus retention. */
-function ExpansionInitiativeCells({ item, source, kind, onOpen, period, category, focusHandlers }: {
+function ExpansionInitiativeCells({ item, source, kind, onOpen, period, category, focusHandlers, cellFilter }: {
   item: ExpansionItem; source: Initiative; kind: KindId; onOpen: Props["onOpenInitiative"];
   period: { name: string; span: number } | null; category: { name: string; span: number } | null;
   focusHandlers?: Pick<ButtonHTMLAttributes<HTMLButtonElement>, "onFocus" | "onBlur">;
+  cellFilter: ReturnType<typeof useTableCellFilter<ExpansionViewItem>>;
 }) {
   return <>
-    {period && <th rowSpan={period.span} className="expansion-period">{period.name}</th>}
-    {category && <td rowSpan={category.span} className="expansion-category" title={category.name}>{category.name}</td>}
-    <th scope="row" className="expansion-name"><button className="initiative-name-button" type="button" {...focusHandlers}
+    {period && <th {...cellFilter.props("period", period.name)} rowSpan={period.span} className="expansion-period">{period.name}</th>}
+    {category && <td {...cellFilter.props("category", category.name)} rowSpan={category.span} className="expansion-category" title={category.name}>{category.name}</td>}
+    <th {...cellFilter.props("name", item.name)} scope="row" className="expansion-name"><button className="initiative-name-button" type="button" {...focusHandlers}
       title={item.note || item.name} onClick={() => onOpen(source, kind)}>{item.name}</button></th>
     <AmountCells values={item.values} />
   </>;
@@ -93,6 +95,7 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
   }, [contents.expansions, contents.periodTypes, contents.kinds, categoryNames, selected]);
   const members = useMemo(() => baseView.table.groups.flatMap(group => group.initiatives), [baseView]);
   const tableView = useTableView(members, columns, { state: viewState, change: state => { setViewState(state); if (container.current) container.current.scrollTop = 0; } });
+  const cellFilter = useTableCellFilter(tableView);
   const { table, groups, flat, calculationError } = useMemo(() => selectExpansionView(baseView, contents, columns, viewState), [baseView, contents, columns, viewState]);
   const window = useRowWindow(container, flat.length, 28, 200, 165);
   const virtual = flat.length > 200;
@@ -155,9 +158,9 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
         const categorySpan = Math.min(row.categoryCount - row.categoryOffset, range.end - index);
         const periodSpan = Math.min((row.period?.initiatives.length ?? 0) - row.periodOffset, range.end - index);
         return <tr data-expansion-start={row.groupOffset === 0 ? row.group.expansion.id : undefined} key={row.item?.id ?? `subtotal:${row.group.expansion.id}`} className={row.subtotal ? "expansion-subtotal" : undefined} aria-rowindex={index + 7}>
-          {firstGroup && <ExpansionGroupCell name={row.group.expansion.expansionName} span={groupSpan} title={row.group.expansion.expansionName} />}
+          {firstGroup && <ExpansionGroupCell cellProps={cellFilter.props("expansion", row.group.expansion.expansionName)} name={row.group.expansion.expansionName} span={groupSpan} title={row.group.expansion.expansionName} />}
           {row.subtotal ? <ExpansionSubtotalCells name={row.group.expansion.expansionName} values={row.group.values} filtered={tableView.filtered} error={calculationError} />
-            : <ExpansionInitiativeCells item={row.item!} source={sourceInitiatives.get(row.item!.id)!} kind={selected[0]!} onOpen={onOpenInitiative}
+            : <ExpansionInitiativeCells cellFilter={cellFilter} item={row.item!} source={sourceInitiatives.get(row.item!.id)!} kind={selected[0]!} onOpen={onOpenInitiative}
               period={firstPeriod ? { name: row.period!.name, span: periodSpan } : null}
               category={firstCategory ? { name: categoryName(row.item!), span: categorySpan } : null}
               focusHandlers={focusHandlers(row.item!.id)} />}
@@ -166,14 +169,14 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
         {periods.map((period, periodIndex) => period.categories.flatMap((category, categoryGroupIndex) => category.initiatives.map((item, categoryIndex) => {
           const firstPeriod = categoryGroupIndex === 0 && categoryIndex === 0;
           return <tr key={item.id} data-expansion-start={periodIndex === 0 && firstPeriod ? group.expansion.id : undefined}>
-          {periodIndex === 0 && firstPeriod && <ExpansionGroupCell name={group.expansion.expansionName} span={group.initiatives.length + 1} />}
-          <ExpansionInitiativeCells item={item} source={sourceInitiatives.get(item.id)!} kind={selected[0]!} onOpen={onOpenInitiative}
+          {periodIndex === 0 && firstPeriod && <ExpansionGroupCell cellProps={cellFilter.props("expansion", group.expansion.expansionName)} name={group.expansion.expansionName} span={group.initiatives.length + 1} />}
+          <ExpansionInitiativeCells cellFilter={cellFilter} item={item} source={sourceInitiatives.get(item.id)!} kind={selected[0]!} onOpen={onOpenInitiative}
             period={firstPeriod ? { name: period.name, span: period.initiatives.length } : null}
             category={categoryIndex === 0 ? { name: categoryName(item), span: category.initiatives.length } : null} />
         </tr>; }))) }
-        <tr className="expansion-subtotal" data-expansion-start={group.initiatives.length === 0 ? group.expansion.id : undefined}>{group.initiatives.length === 0 && <ExpansionGroupCell name={group.expansion.expansionName} />}
+        <tr className="expansion-subtotal" data-expansion-start={group.initiatives.length === 0 ? group.expansion.id : undefined}>{group.initiatives.length === 0 && <ExpansionGroupCell cellProps={cellFilter.props("expansion", group.expansion.expansionName)} name={group.expansion.expansionName} />}
           <ExpansionSubtotalCells name={group.expansion.expansionName} values={group.values} filtered={tableView.filtered} error={calculationError} />
         </tr>
       </tbody>; })}{!groups.length && <TableViewEmpty columns={4 + labels.length * tablePeriods.length * 2} />}</table>
-    </div><ExpansionScrollbar container={container} targets={scrollTargets} virtual={virtual} /></PeriodScrollFrame>;
+    </div>{cellFilter.menu}<ExpansionScrollbar container={container} targets={scrollTargets} virtual={virtual} /></PeriodScrollFrame>;
 }

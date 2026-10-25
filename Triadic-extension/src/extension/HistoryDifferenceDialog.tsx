@@ -1,3 +1,4 @@
+import { useTableCellFilter } from "./TableCellFilter";
 import { TableViewHeader, TableViewEmpty, useTableView } from "./TableViewHeader";
 import { emptyTableView, type TableColumn } from "../core/tables/columnView";
 import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -27,6 +28,7 @@ export function HistoryDifferenceDialog({ date, differences, impact, onClose, re
   ];
   const [viewState, setViewState] = useState(emptyTableView);
   const tableView = useTableView(searched, columns, { state: viewState, change: state => { setViewState(state); setPage(0); } });
+  const cellFilter = useTableCellFilter(tableView, mode !== "fields");
   const filtered = tableView.rows;
   const pages = Math.max(1, Math.ceil(filtered.length / 50)), currentPage = Math.min(page, pages - 1);
   useLayoutEffect(() => {
@@ -51,7 +53,7 @@ export function HistoryDifferenceDialog({ date, differences, impact, onClose, re
     {differences.length === 0 ? <p>差分はありません。</p> : <div className="history-difference-scroll">
       <table aria-label="履歴と現在の変更箇所"><thead><tr>{columns.map(column => <TableViewHeader key={column.id} view={tableView} column={column.id} />)}</tr></thead>
         <tbody>{filtered.slice(currentPage * 50, (currentPage + 1) * 50).map((item, index) => <tr key={currentPage * 50 + index}>
-          <td>{item.section}</td><th scope="row">{item.subject}</th><td>{item.change}</td><td>{item.field}</td><td>{item.before}</td><td>{item.after}</td>
+          <td {...cellFilter.props("section", item.section)}>{item.section}</td><th {...cellFilter.props("subject", item.subject)} scope="row">{item.subject}</th><td {...cellFilter.props("change", item.change)}>{item.change}</td><td {...cellFilter.props("field", item.field)}>{item.field}</td><td>{item.before}</td><td>{item.after}</td>
         </tr>)}</tbody>{!filtered.length && <TableViewEmpty columns={6} />}</table>
     </div>}
     {filtered.length > 50 && <nav className="history-difference-pages" aria-label="差分のページ">
@@ -59,5 +61,6 @@ export function HistoryDifferenceDialog({ date, differences, impact, onClose, re
       <output>{currentPage + 1} / {pages}</output>
       <button type="button" className="secondary-button" disabled={currentPage + 1 >= pages} onClick={() => setPage(currentPage + 1)}>次へ</button>
     </nav>}</>}
+  {cellFilter.menu}
   </dialog>, document.body);
 }

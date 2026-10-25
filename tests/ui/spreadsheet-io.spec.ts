@@ -60,12 +60,11 @@ test('見出しで変更確認を絞っても非表示の変更を含む全件�
   await app.locator('input[type="file"]').setInputFiles({ name: '見出し確認.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: Buffer.from(await workbook.xlsx.writeBuffer()) });
   const preview = app.getByRole('region', { name: '前年金額の変更確認', exact: true });
   await expect(preview.getByRole('heading')).toContainText('2件');
-  const trigger = preview.getByRole('button', { name: '月を絞り込む', exact: true });
-  await trigger.focus(); await trigger.press('Enter');
-  const panel = app.getByRole('dialog', { name: '月', exact: true });
-  await panel.getByRole('checkbox', { name: 'すべて選択', exact: true }).uncheck();
-  await panel.getByRole('checkbox', { name: '4月', exact: true }).check();
-  await panel.getByRole('button', { name: '適用', exact: true }).click();
+  await preview.getByRole('button', { name: '変更後', exact: true }).click();
+  await preview.locator('tbody tr').filter({ hasText: '111.001' }).getByRole('cell', { name: '4月', exact: true }).click({ button: 'right' });
+  const cellAction = app.getByRole('menuitem', { name: 'この値で絞り込む', exact: true });
+  await expect(cellAction).toHaveText(''); await cellAction.click();
+  await expect(preview.locator('th[aria-sort="ascending"]')).toHaveAttribute('aria-label', '変更後');
   await expect(preview.getByRole('heading')).toContainText('表示 1件 / 取込対象 2件');
   await expect(preview.locator('tbody tr')).toHaveCount(1);
   await expect(preview).not.toContainText('222.002');

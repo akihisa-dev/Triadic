@@ -1,3 +1,4 @@
+import { useTableCellFilter } from "./TableCellFilter";
 import { TableViewHeader, TableViewEmpty, useTableView } from "./TableViewHeader";
 import type { TableColumn } from "../core/tables/columnView";
 import { amountToYen } from "../core/domain/amounts";
@@ -75,6 +76,7 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
   const [previewState, setPreviewState] = useState(emptyTableView);
   if (previewSource !== patches) { setPreviewSource(patches); setPreviewState(emptyTableView()); }
   const previewView = useTableView(previewRows, previewColumns, { state: previewState, change: setPreviewState });
+  const cellFilter = useTableCellFilter(previewView, working || busy);
   const input = useRef<HTMLInputElement>(null);
   const previewContainer = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -155,7 +157,7 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
         <h3>変更内容 · {previousKindName(patches[0]!.previousKind)} · {previewView.filtered ? `表示 ${previewView.rows.length}件 / 取込対象 ${patches.length}件` : `${patches.length}件`}</h3>
         <div ref={previewContainer} className="io-preview-table"><table><thead><tr>{previewColumns.map(column => <TableViewHeader key={column.id} view={previewView} column={column.id} disabled={working || busy} />)}</tr></thead>
           <MeasuredTableBody key={JSON.stringify(previewView.state)} rows={previewView.rows} container={previewContainer} columns={6} rowKey={({ patch: p }) => `${p.previousKind}:${p.industryId}:${p.departmentId}:${p.accountId}:${p.month}`} render={({ patch: p, industryName, departmentName, accountName }) => <tr>
-            <td>{industryName}</td><td>{departmentName}</td><td>{accountName}</td><td>{p.month}月</td><td>{p.before}</td><td>{p.after}</td>
+            <td {...cellFilter.props("industry", industryName)}>{industryName}</td><td {...cellFilter.props("department", departmentName)}>{departmentName}</td><td {...cellFilter.props("account", accountName)}>{accountName}</td><td {...cellFilter.props("month", `${p.month}月`)}>{p.month}月</td><td>{p.before}</td><td>{p.after}</td>
           </tr>} />{!previewView.rows.length && <TableViewEmpty columns={6} />}</table></div>
         <div className="form-actions"><button type="button" className="secondary-button" disabled={working || busy} onClick={() => { controller.cancelPreview(); setNotice(""); }}>キャンセル</button>
           <button type="button" className="primary-button" disabled={working || busy || readOnly} onClick={() => { void operation(controller.beginSaving(), async state => {
@@ -164,5 +166,6 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
       </div>}
     </section>
     <StatusNotice message={working ? "処理中…" : notice} error={error} {...(working ? {} : { onDismiss: dismiss })} />
+  {cellFilter.menu}
   </main>;
 }

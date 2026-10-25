@@ -232,7 +232,7 @@ Monthly revenue/expense/profit totals sit at the initiative table's bottom, at t
 
 In the cost summary, “all departments” offers every industry in the master, including industries without assignments or amounts. Selecting one department restricts candidates to its industries and auto-selects a sole candidate. Returning to all departments restores all candidates and keeps a valid industry selection. These display changes do not save the plan.
 
-Data-column headers in the initiative list, expansion table, amount details, editable naming/account masters, history and comparison tables, and Excel import preview toggle ascending/descending order through their labels and open filters through the right-hand mark. Filter marks appear on hover/focus or while applied (always on touch). Choices support multiple values; text matching normalizes width and case; numeric filters compare unrounded yen with sign, zero, unresolved, and range conditions. Multiple columns combine with AND. Empty results keep headers available. Filters preserve sorting and vice versa. Esc closes only the filter editor; its original-order action clears sorting. Display choices never save data. Account drag reorder is available after clearing display filters and sorting. See the Japanese operation details below.
+Data-column headers in the initiative list, expansion table, amount details, editable naming/account masters, history and comparison tables, and Excel import preview toggle ascending/descending order through their labels and open filters through the right-hand mark. Filter marks appear on hover/focus or while applied (always on touch). Choices support multiple values; text matching normalizes width and case; numeric filters compare unrounded yen with sign, zero, unresolved, and range conditions. Multiple columns combine with AND. Empty results keep headers available. Filters preserve sorting and vice versa. Esc closes only the filter editor; its original-order action clears sorting. Display choices never save data. Account drag reorder is available after clearing display filters and sorting. Right-clicking a name/classification cell reveals only a filter icon; activating it matches that cell value exactly while retaining other column filters and sorting. Editable fields, numeric and operation cells are excluded. See the Japanese operation details below.
 
 ## Excel import and export
 
@@ -1240,6 +1240,8 @@ Excel出力では、名称などに含まれる `_x0041_`・`_x005F_` のよう�
 施策入力・施策詳細・前年入力の金額欄は、=で始まる数値の四則演算（+・-・*・/）と括弧を受け付けます。Enter・Tab・欄外への移動で計算し、結果の数値へ置き換えます。式は入力中だけ保持し、保存・再編集には結果の数値だけを使います。途中計算は正確な分数で扱い、1円未満の端数・ゼロ除算・不正式・金額上限超過は確定せず、理由と入力を保持します。式は512文字・括弧32段までで、セル参照や関数は扱いません。範囲貼り付け・同値入力も数値へ変換してから全体を適用し、一つでも失敗すれば部分更新しません。確定予算では計算結果0も手修正として保持し、Escでは元の金額と引き継ぎ状態へ戻します。ボタン・欄・保存形式・権限・外部送信は追加しません。
 
 ### 列見出しの並べ替え・絞り込み
+
+施策一覧・展開表・総原価表の内訳・各編集マスタ・履歴差分・Excel取り込みの変更確認では、名称・分類のセルを右クリックすると見出しと同じ絞り込みアイコンだけを表示します。押すとその列をセルの値と完全一致する条件へ置き換え、他列の条件と並び順を維持します。複数所属は表示された所属の組み合わせ全体、空欄は空欄に一致させます。解除は既存の列見出しから行います。Esc・欄外クリック・スクロール・サイズ変更では適用せず閉じます。名称ボタンのShift＋F10でも開けます。金額・操作・移動ハンドル・集計の合計セルと編集中の入力欄は対象外で、常設ボタン・欄・保存データを増やしません。
 
 施策一覧・総原価表の内訳・展開表・勘定科目／展開／展開区分／部署／業種／期間の各マスタ・履歴一覧／差分／収支への影響・Excel取り込みの変更確認は、データ列の見出し文字で昇順・降順、右端のマークで絞り込みます。マークはホバー・キーボードフォーカス時と条件適用中に表示し、タッチでは常に操作できます。候補の複数選択、全半角・英字大小を区別しない文字検索、丸め前の金額の正負・0・未設定・範囲に対応し、複数列の条件をすべて満たす行を残します。金額の範囲は千円単位・小数点以下3桁で指定します。条件の適用と解除は並び順を保ち、並べ替えは条件を保ちます。該当0件でも見出しと解除操作を残し、Escは条件編集だけを閉じます。操作列・移動ハンドルは対象外です。
 

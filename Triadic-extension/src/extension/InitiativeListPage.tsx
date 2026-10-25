@@ -14,6 +14,7 @@ import type { PeriodType } from "../core/domain/periodMaster";
 import type { KindId } from "../core/domain/kinds";
 
 import { type TableColumn, type TableSort, type TableViewState } from "../core/tables/columnView";
+import { useTableCellFilter } from "./TableCellFilter";
 import { TableViewHeader, TableViewEmpty, useTableView } from "./TableViewHeader";
 import { initiativeTotals } from "../core/tables/initiativeTotals";
 import type { InitiativeListRow } from "../core/tables/initiativeListView";
@@ -77,6 +78,7 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
   const tableView = useTableView(source, columns, { state: { sort, filters }, change: state => {
     setSort(state.sort); setFilters(state.filters); if (container.current) container.current.scrollTop = 0;
   } });
+  const cellFilter = useTableCellFilter(tableView, navigationBlocked);
   const displayed = tableView.rows;
   const displayedView = useMemo(() => {
     if (!tableView.filtered) return view;
@@ -127,9 +129,9 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
           </Fragment>)}</tr>
         </thead>
         <tbody><WindowRows items={rendered} count={displayed.length} height={28} columns={40} render={(item, index) => <tr key={item.id} aria-rowindex={index + 3}>
-          <td className="initiative-list-fixed initiative-list-expansion">{item.expansionId == null ? "" : expansionNames.get(item.expansionId) ?? ""}</td>
-          <td className="initiative-list-fixed initiative-list-period">{item.periodTypeId == null ? "" : periodNames.get(item.periodTypeId) ?? ""}</td>
-          <th scope="row" className="initiative-list-fixed initiative-list-name">
+          <td {...cellFilter.props("expansion", expansionNames.get(item.expansionId!))} className="initiative-list-fixed initiative-list-expansion">{item.expansionId == null ? "" : expansionNames.get(item.expansionId) ?? ""}</td>
+          <td {...cellFilter.props("period", periodNames.get(item.periodTypeId!))} className="initiative-list-fixed initiative-list-period">{item.periodTypeId == null ? "" : periodNames.get(item.periodTypeId) ?? ""}</td>
+          <th {...cellFilter.props("name", item.name)} scope="row" className="initiative-list-fixed initiative-list-name">
             <InitiativeNameButton name={item.name} note={item.note} data-initiative-identity={item.identity} className="initiative-name-button" type="button" disabled={navigationBlocked} onFocus={() => setFocusedId(item.id)}
               onBlur={event => {
                 // Native Tab blurs before focusing its destination. Do not unmount that neighbour between the events.
@@ -139,7 +141,7 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
                 onOpenInitiative(item, selectedKind);
               }}>{item.name}{unclassifiedIds.has(item.id) && <span className="initiative-attribute-hint"> · 属性未設定</span>}</InitiativeNameButton>
           </th>
-          <td className="initiative-list-fixed initiative-list-start">{item.startYearMonths[selectedKind]}</td>
+          <td {...cellFilter.props("start", item.startYearMonths[selectedKind])} className="initiative-list-fixed initiative-list-start">{item.startYearMonths[selectedKind]}</td>
           {item.calculation === "failed" ? <td colSpan={36} role="alert" style={{ textAlign: "left" }}>{item.error} 施策を開いて金額を修正してください。</td> : initiativeMonths.map(month => <Fragment key={month}>
             {amountItems.map((metric, index) => <td key={metric.id} className={index === amountItems.length - 1 ? "initiative-month-end" : undefined}>{amountText(item.months[month]?.[metric.id])}</td>)}
           </Fragment>)}
@@ -149,6 +151,7 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
       </table>
     </div>
     </TableCalculationBoundary>
+    {cellFilter.menu}
     {source.length === 0 && <p className="page-description">表示する施策がありません。</p>}
   </main>;
 }

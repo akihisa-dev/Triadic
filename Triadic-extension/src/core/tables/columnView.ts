@@ -1,6 +1,6 @@
 export type TableValue = string | number | readonly string[] | null | undefined;
 export type TableColumn<T> = { id: string; label: string; name?: string; type?: "text" | "choice" | "number"; value: (row: T) => TableValue; sortValue?: (row: T) => TableValue; scale?: number; sortable?: boolean };
-export type TableFilter = { type: "text"; text: string } | { type: "choice"; values: string[] }
+export type TableFilter = { type: "text"; text: string; exact?: boolean } | { type: "choice"; values: string[] }
   | { type: "number"; operator: "negative" | "positive" | "zero" | "nonzero" | "blank" | "range"; min?: number; max?: number };
 export type TableSort = { column: string; direction: "ascending" | "descending" };
 export type TableViewState = { sort: TableSort | null; filters: Record<string, TableFilter> };
@@ -12,6 +12,7 @@ export const tableChoices = (value: TableValue): string[] => Array.isArray(value
 
 export function matchesTableFilter(value: TableValue, filter: TableFilter): boolean {
   if (filter.type === "choice") return tableChoices(value).some(item => filter.values.includes(item));
+  if (filter.type === "text" && filter.exact) return tableValueText(value) === filter.text;
   if (filter.type === "text") return normalized(filter.text).trim().split(/\s+/).every(word => normalized(tableValueText(value)).includes(word));
   if (filter.operator === "blank") return value == null;
   if (typeof value !== "number" || !Number.isFinite(value)) return false;

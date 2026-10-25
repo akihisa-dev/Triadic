@@ -27,7 +27,7 @@ export function TableViewHeader<T>({ view, column: id, disabled = false, ...prop
   const trigger = useRef<HTMLButtonElement>(null);
   const active = view.state.sort?.column === id, filter = view.state.filters[id];
   const name = column.name ?? column.label;
-  return <th {...props} scope="col" aria-label={name} aria-sort={active ? view.state.sort!.direction : undefined}>
+  return <th {...props} data-table-view-column={id} scope="col" aria-label={name} aria-sort={active ? view.state.sort!.direction : undefined}>
     <div className="table-view-heading">
       {column.sortable === false ? <span className="table-view-label">{column.label}</span> : <button type="button" className="table-view-sort" disabled={disabled}
         aria-label={column.name ? `${name}で並べ替え` : undefined} onClick={() => view.change({ ...view.state, sort: { column: id, direction: active && view.state.sort!.direction === "ascending" ? "descending" : "ascending" } })}>
@@ -35,7 +35,7 @@ export function TableViewHeader<T>({ view, column: id, disabled = false, ...prop
       </button>}
       <button ref={trigger} type="button" className={`table-view-filter${filter ? " is-filtered" : ""}`} aria-label={`${name}を絞り込む${filter ? "（適用中）" : ""}`}
         aria-haspopup="dialog" aria-expanded={open} disabled={disabled} onClick={() => setOpen(!open)}>
-        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4h12M4 8h8M6 12h4" /></svg>
+        <TableFilterIcon />
       </button>
     </div>
     {open && !disabled && <TableFilterPanel column={column} source={view.source} filter={filter} sorted={active} trigger={trigger.current!}
@@ -43,6 +43,7 @@ export function TableViewHeader<T>({ view, column: id, disabled = false, ...prop
       onOriginalOrder={() => view.change({ ...view.state, sort: null })} />}
   </th>;
 }
+export function TableFilterIcon() { return <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4h12M4 8h8M6 12h4" /></svg>; }
 function TableFilterPanel<T>({ column, source, filter, sorted, trigger, onClose, onApply, onOriginalOrder }: {
   column: TableColumn<T>; source: readonly T[]; filter: TableFilter | undefined; sorted: boolean; trigger: HTMLButtonElement;
   onClose: () => void; onApply: (filter?: TableFilter) => void; onOriginalOrder: () => void;
@@ -83,7 +84,9 @@ function TableFilterPanel<T>({ column, source, filter, sorted, trigger, onClose,
     const observer = new ResizeObserver(position); observer.observe(element);
     return () => { observer.disconnect(); document.removeEventListener("pointerdown", outside, true); document.removeEventListener("scroll", scroll, true); document.removeEventListener("wheel", gesture, true); document.removeEventListener("touchmove", gesture, true); window.removeEventListener("resize", onClose); };
   }, []);
+  const exact = filter?.type === "text" && filter.exact;
   const apply = () => {
+    if (exact) { onApply({ type: "text", text: query, exact: true }); close(); return; }
     if (column.type === "number") {
       if (operator === "all") onApply();
       else if (operator === "range") {
@@ -109,8 +112,8 @@ function TableFilterPanel<T>({ column, source, filter, sorted, trigger, onClose,
         if (next < 0 || next >= controls.length) { event.preventDefault(); controls[event.shiftKey ? controls.length - 1 : 0]?.focus(); }
       }
     }}>
-    <div id={heading} className="table-filter-title">{column.name ?? column.label}</div>
-    {column.type === "number" ? <>
+    <div id={heading} className="table-filter-title">{column.name ?? column.label}{exact ? "（完全一致）" : ""}</div>
+    {exact ? <input type="search" aria-label="一致する値" value={query} onChange={event => setQuery(event.target.value)} /> : column.type === "number" ? <>
       <div className="table-filter-options">{([["all", "すべて"], ["negative", "0より小さい"], ["positive", "0より大きい"], ["zero", "0"], ["nonzero", "0以外"], ["blank", "未設定・計算不可"], ["range", "範囲を指定"]] as const).map(([value, label]) => <label key={value}><input type="radio" name={heading} value={value} checked={operator === value} onChange={() => setOperator(value)} />{label}</label>)}</div>
       {operator === "range" && <div className="table-filter-range"><label>以上<input aria-label="以上" inputMode="decimal" value={min} onChange={event => setMin(event.target.value)} /></label><label>以下<input aria-label="以下" inputMode="decimal" value={max} onChange={event => setMax(event.target.value)} /></label></div>}
     </> : column.type === "choice" ? <>

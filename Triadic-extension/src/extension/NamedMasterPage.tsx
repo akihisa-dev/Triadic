@@ -1,3 +1,4 @@
+import { useTableCellFilter } from "./TableCellFilter";
 import { TableViewHeader, useTableView, useEditingTableRows } from "./TableViewHeader";
 import type { TableColumn } from "../core/tables/columnView";
 import { useMasterOperation } from "./useMasterOperation";
@@ -52,6 +53,7 @@ export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange,
     ...(relationOptions ? [{ id: "relations", label: relationLabel, type: "choice" as const, value: (row: NamedMasterRow) => relationOptions.filter(option => row.relationIds?.includes(option.id)).map(option => option.name) }] : []),
   ];
   const tableView = useTableView(rows, columns);
+  const cellFilter = useTableCellFilter(tableView, !!draft || isSaving);
   const displayed = useEditingTableRows(tableView.rows, rows, draft ? String(draft.id) : null, row => String(row.id));
   return <main className="master-page account-master-page master-data-page named-master-page" aria-labelledby={`${slug}-master-title`} aria-busy={isSaving}
     onCompositionStart={() => controller.pause()} onCompositionEnd={() => controller.resume()}>
@@ -93,8 +95,8 @@ export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange,
               }
             }}>
               {coded && <td className="account-code">{editing ? <input autoFocus aria-label={`${item.name}の${subject}コード`} inputMode="numeric" value={editing.code} onChange={event => controller.change({ ...editing, code: event.target.value })} /> : item.code}</td>}
-              <th scope="row" className="account-master-name">{editing ? <input autoFocus={!coded} aria-label={`${item.name}の${subject}名`} value={editing.name} onChange={event => controller.change({ ...editing, name: event.target.value })} /> : item.name}</th>
-              {relationOptions && <td>{editing ? relationChoices(editing.relationIds ?? [], relationIds => controller.change({ ...editing, relationIds }), readOnly, `${item.name}の${relationLabel}`) : relationOptions.filter(option => item.relationIds?.includes(option.id)).map(option => option.name).join("・")}</td>}
+              <th {...cellFilter.props("name", item.name)} scope="row" className="account-master-name">{editing ? <input autoFocus={!coded} aria-label={`${item.name}の${subject}名`} value={editing.name} onChange={event => controller.change({ ...editing, name: event.target.value })} /> : item.name}</th>
+              {relationOptions && <td {...cellFilter.props("relations", relationOptions.filter(option => item.relationIds?.includes(option.id)).map(option => option.name))}>{editing ? relationChoices(editing.relationIds ?? [], relationIds => controller.change({ ...editing, relationIds }), readOnly, `${item.name}の${relationLabel}`) : relationOptions.filter(option => item.relationIds?.includes(option.id)).map(option => option.name).join("・")}</td>}
               <td><div className="form-actions">{editing
                 ? <button className="text-button" type="button" disabled={readOnly || autoSave.pending} onClick={() => controller.end()}>完了</button>
                 : <><button className="text-button" type="button" aria-label={`${item.name}を編集`} disabled={readOnly || isSaving || draft !== null} onClick={() => { dismissNotice(); controller.begin({ type: "update", ...item }, JSON.stringify([item.id, item.identity])); }}>編集</button>
@@ -105,5 +107,6 @@ export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange,
         </tbody>
       </table>
     </div>
+  {cellFilter.menu}
   </main>;
 }
