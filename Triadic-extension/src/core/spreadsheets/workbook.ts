@@ -40,7 +40,7 @@ export function createPreviousWorkbook(contents: PlanContents, pairs: PreviousPa
     if (!industry.identity || !department.identity) throw new Error("分類の作成識別子が正しくありません。");
     if (!department.industryIds.includes(pair.industryId)) throw new Error("部署に設定されている業種を選択してください。");
     // ExcelJS decodes these literal entity strings a second time in sheet names on load.
-    const name = `${index + 1}_${industry.industryName}_${department.departmentName}`.replace(/&(lt|amp|quot|apos|gt);/g, "_").replace(/[\\/*?:\[\]\t\r\n]/g, "_").slice(0, 31).replace(/^'|'$/g, "_");
+    const name = `${index + 1}_${industry.industryName}_${department.departmentName}`.replace(/&(lt|amp|quot|apos|gt);/g, "_").replace(/[\\/*?:\[\]\x00-\x1f\x7f]/g, "_").slice(0, 31).replace(/^'|'$/g, "_");
     const ws = sheet(wb, name, [14, 30, ...initiativeMonths.map(() => 14)], 1, 2);
     ws.getCell("A1").value = previousKindName(previousKind);
     ws.getCell("A2").value = `${contents.fiscalYear}年度 · ${industry.industryName} · ${department.departmentName} · 単位：千円`;
@@ -132,14 +132,33 @@ export function readPreviousWorkbook(wb: ExcelJS.Workbook, contents: PreviousWor
 }
 
 export async function serializeWorkbook(wb: ExcelJS.Workbook): Promise<Uint8Array> {
-  const bytes = new Uint8Array(await wb.xlsx.writeBuffer());
+  // ExcelJS drops XML-forbidden controls before writing. Carry them through shared strings
+  // with temporary tokens, then encode their exact UTF-16 values as OOXML escapes.
+  const controls = /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g;
+  const prefix = `TRIADIC_CONTROL_${crypto.randomUUID()}_`;
+  const replacements = new Map<string, string>();
+  const originals: { cell: ExcelJS.Cell; value: string }[] = [];
+  wb.eachSheet(ws => ws.eachRow(row => row.eachCell(cell => {
+    const value = cell.value;
+    if (typeof value !== "string") return;
+    const encoded = value.replace(controls, character => {
+      const hex = character.charCodeAt(0).toString(16).padStart(4, "0").toUpperCase();
+      const token = `${prefix}${hex}_`;
+      replacements.set(token, `_x${hex}_`); return token;
+    });
+    if (encoded !== value) { originals.push({ cell, value }); cell.value = encoded; }
+  })));
+  let bytes: Uint8Array;
+  try { bytes = new Uint8Array(await wb.xlsx.writeBuffer()); }
+  finally { for (const { cell, value } of originals) cell.value = value; }
   // ExcelJS writes literal OOXML escape sequences unchanged but decodes them on load.
   // Protect only shared-string text, leaving worksheet names and formula references intact.
   const zip = await JSZip.loadAsync(bytes);
   const shared = zip.file("xl/sharedStrings.xml");
   if (!shared) return bytes;
   const xml = await shared.async("string");
-  const protectedXml = xml.replace(/_x[0-9a-fA-F]{4}_/g, value => `_x005F_${value.slice(1)}`);
+  let protectedXml = xml.replace(/_x[0-9a-fA-F]{4}_/g, value => `_x005F_${value.slice(1)}`);
+  for (const [token, escape] of replacements) protectedXml = protectedXml.replaceAll(token, escape);
   if (xml === protectedXml) return bytes;
   zip.file("xl/sharedStrings.xml", protectedXml);
   return zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });

@@ -4,7 +4,7 @@ import JSZip from "jszip";
 
 export async function verifyPreviousWorkbookExport(api) {
   const plan = await api.readPlanContents(await api.createPreviousExportPlan());
-  for (const name of ["科目_x0041_", "科目_x005F_", "通常の日本語", "A_x0041__x005F_あ_x3042_", "_x00af_"]) {
+  for (const name of ["科目_x0041_", "科目_x005F_", "通常の日本語", "A_x0041__x005F_あ_x3042_", "_x00af_", "科目\u000b名称", "科目\u007f名称", "科目\u000b_x000B_\u007f名称"]) {
     const named = { ...plan,
       accounts: plan.accounts.map((a, i) => i === 0 ? { ...a, accountName: name, displayName: name } : a),
       industries: plan.industries.map(i => ({ ...i, industryName: name })),
