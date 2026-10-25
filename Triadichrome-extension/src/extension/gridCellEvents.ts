@@ -42,6 +42,7 @@ export function nextGridCell(from: GridCell, key: GridMovementKey, shift: boolea
 /** DOM event policy is shared; cached rows may read the latest interaction on demand. */
 export function gridCellEvents(grid: Interaction | (() => Interaction), cell: GridCell, value: string, adapter: GridCellAdapter) {
   const current = () => typeof grid === "function" ? grid() : grid;
+  let committed = false;
   return {
     onPointerDown(event: PointerEvent<HTMLElement>) {
       const { selection, editing, dragging, focus } = current();
@@ -56,7 +57,10 @@ export function gridCellEvents(grid: Interaction | (() => Interaction), cell: Gr
         setSelection(current => current && (current.anchor.row === cell.row && current.anchor.column === cell.column
           || current.end.row === cell.row && current.end.column === cell.column) ? current : { anchor: cell, end: cell });
       },
-      onBlur() { current().setEditing(false); },
+      onBlur(event: FocusEvent<HTMLInputElement>) {
+        if (!committed && value.trim().startsWith("=")) adapter.commit(event.currentTarget);
+        current().setEditing(false);
+      },
       onDoubleClick() { current().setEditing(true); adapter.captureOriginal(); },
       onChange(event: ChangeEvent<HTMLInputElement>) {
         const { editing, setEditing } = current();
@@ -95,6 +99,7 @@ export function gridCellEvents(grid: Interaction | (() => Interaction), cell: Gr
         if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter", "Tab"].includes(event.key)) return;
         event.preventDefault();
         if (editing && !adapter.commit(input)) return;
+        committed = true;
         const from = event.shiftKey && !editing && selection ? selection.end : cell;
         const next = adapter.next(from, event.key as GridMovementKey, event.shiftKey);
         if (next) focus(next, event.shiftKey && event.key.startsWith("Arrow"));

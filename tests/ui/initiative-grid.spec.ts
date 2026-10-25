@@ -78,7 +78,7 @@ test("不正・表外・科目未選択の保護とセル移動", async ({ app }
   const cell = (row: number, month: number) => app.getByRole("spinbutton", { name: `売上高 ${month}月の金額`, exact: true }).nth(row);
   const april = cell(0, 4);
   await april.click(); await paste(april, "7\t8\n9\t10");
-  for (const text of ["1\t2\n3\t不正", "0.0001", "1\t2\n3", "=1+2"]) {
+  for (const text of ["1\t2\n3\t不正", "0.0001", "1\t2\n3", "=1+"]) {
     await paste(april, text);
     await expect(app.getByRole("alert")).toBeVisible();
     await expect(april).toHaveValue("7");

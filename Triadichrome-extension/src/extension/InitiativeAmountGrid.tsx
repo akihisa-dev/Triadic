@@ -59,7 +59,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
   };
   const changeCell = (cell: GridCell, value: string, badInput = false) => {
     if (isSaving || !canEditInitiativeCell(draft, kind, cell)) return;
-    onDraftChange(changeInitiativeCell(draft, kind, cell, value, badInput ? { original: original.current, inherited: originalInherited.current } : undefined));
+    onDraftChange(changeInitiativeCell(draft, kind, cell, value, badInput || value !== "" && !isValidAmount(value) ? { original: original.current, inherited: originalInherited.current } : undefined));
   };
   return <>
     <StatusNotice message={error || totals.error || selectedTotal?.error || ""} error {...(error ? { onDismiss: () => setError("") } : {})} />
@@ -99,7 +99,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                     originalInherited.current = invalidInput?.inherited ?? (kind === 2 && row.overrides?.[2]?.[month] === undefined);
                   };
                   const acceptInput = (input: HTMLInputElement) => {
-                    if (invalidInput || input.validity.badInput) { setError("金額に有効な数値を入力してください。"); return false; }
+                    if (input.validity.badInput) { setError("金額に有効な数値を入力してください。"); return false; }
                     return true;
                   };
                   const events = gridCellEvents(grid, cell, value, {
@@ -128,7 +128,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                   return <td key={month} className={selected ? "initiative-cell-selected" : ""}
                     onPointerEnter={event => extendSelection(cell, event.buttons)}
                     onPointerDown={events.onPointerDown}>
-                    <GridAmountInput editing={grid.editing && selection?.end.row === index && selection.end.column === column} type="number" step="0.001" inputMode="decimal" data-row={index} data-column={column}
+                    <GridAmountInput editing={grid.editing && selection?.end.row === index && selection.end.column === column} type="text" role="spinbutton" aria-valuenow={isValidAmount(value) ? Number(value) : undefined} inputMode="text" data-row={index} data-column={column}
                       ref={input => { if (input) input.setCustomValidity(invalidInput ? "金額に有効な数値を入力してください。"
                         : input.value === "" || isValidAmount(input.value) ? "" : "金額は千円単位・小数点以下3桁までで入力してください。"); }}
                       aria-label={`${accountName} ${month}月の金額`}

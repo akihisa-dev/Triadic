@@ -44,11 +44,16 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
   const { selection, setEditing, table, original, bounds, extendSelection } = grid;
   const freezeHeader = useAdaptiveTableHeader(table);
   const [error, setError] = useState("");
+  const expressionOriginals = useRef(new Map<string, string>());
   const [cellErrors, setCellErrors] = useState<Record<string, { accountId: number; month: number; message: string }>>({});
   const clearCellError = (accountId: number, month: number) => setCellErrors(current => {
     const next = { ...current }; delete next[`${accountId}:${month}`]; return next;
   });
   const inputsByAccount = useMemo(() => new Map(draft?.rows.map(row => [row.accountId, row])), [draft?.rows]);
+  for (const key of expressionOriginals.current.keys()) {
+    const [accountId, month] = key.split(":").map(Number);
+    if (!inputsByAccount.get(accountId!)?.amounts[month!]?.trim().startsWith("=")) expressionOriginals.current.delete(key);
+  }
   const cellError = Object.values(cellErrors).find(item => !isValidAmount(inputsByAccount.get(item.accountId)?.amounts[item.month] || "0"))?.message;
   const salesGroupId = contents.aggregations.find(group => group.required === "sales")?.id;
   type CostRow = (typeof rows)[number];
@@ -95,6 +100,10 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
     const { draft, onChange } = latest.current;
     const index = latestIndices.current.get(accountId);
     if (!draft || index === undefined) return;
+    const key = `${accountId}:${month}`;
+    if (value.trim().startsWith("=")) {
+      if (!expressionOriginals.current.has(key)) expressionOriginals.current.set(key, original.current);
+    } else expressionOriginals.current.delete(key);
     const rows = draft.rows.slice(), row = rows[index]!;
     rows[index] = { ...row, amounts: { ...row.amounts, [month]: value } };
     onChange({ ...draft, rows });
@@ -115,10 +124,10 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
             const selected = bounds && rowIndex >= bounds.top && rowIndex <= bounds.bottom && column >= bounds.left && column <= bounds.right;
             const value = inputsByAccount.get(row.id)?.amounts[month] ?? "0";
             const events = row.kind === "account" && draft ? gridCellEvents(() => latest.current.grid, cell, value, {
-              captureOriginal: () => { original.current = value; },
+              captureOriginal: () => { original.current = expressionOriginals.current.get(`${row.id}:${month}`) ?? value; },
               change: value => changeCell(row.id, month, value),
               cancel: editing => {
-                if (editing) {
+                if (editing || expressionOriginals.current.has(`${row.id}:${month}`)) {
                   changeCell(row.id, month, original.current);
                   if (isValidAmount(original.current || "0")) clearCellError(row.id, month);
                 }
@@ -142,7 +151,7 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
             return <td key={month} className={`${row.kind === "account" && draft ? "previous-input-cell" : ""}${selected ? " previous-cell-selected" : ""}`}
               onPointerEnter={event => extendSelection(cell, event.buttons)}>
               {row.kind !== "account" || !draft ? (calculationFailed ? "" : row.kind === "ratio" ? formatRate(row.previous[month]) : formatYen(row.previous[month])) :
-                <GridAmountInput editing={activeEdit === column} type="text" inputMode="decimal" data-row={rowIndex} data-column={column}
+                <GridAmountInput editing={activeEdit === column} type="text" inputMode="text" data-row={rowIndex} data-column={column}
                   aria-label={`${row.name} ${month}月の前年金額`} aria-invalid={value !== undefined && value !== "" && !isValidAmount(value)} value={value}
                   onPointerDown={events!.onPointerDown}
                   {...events!.input} />}

@@ -1,4 +1,5 @@
 import { amountToYen, yenToAmount } from "../domain/amounts";
+import { calculateAmountExpression } from "./amountExpression";
 
 export type GridCell = { row: number; column: number };
 export type GridSelection = { anchor: GridCell; end: GridCell };
@@ -9,6 +10,7 @@ export function gridBounds(selection: GridSelection) {
 export function normalizeGridAmount(text: string): string {
   const value = text.trim();
   if (!value) return "0";
+  if (value.startsWith("=")) return calculateAmountExpression(value);
   // Accept Excel's thousands separators, but reject malformed grouping.
   if (value.includes(",") && !/^[+-]?\d{1,3}(,\d{3})+(\.\d{0,3})?$/.test(value)) throw new Error("金額の桁区切りが正しくありません。");
   return yenToAmount(amountToYen(value.replaceAll(",", "")));

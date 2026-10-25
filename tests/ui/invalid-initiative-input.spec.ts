@@ -4,7 +4,7 @@ import type { FrameLocator, Locator } from "@playwright/test";
 const cell = (app: FrameLocator, month: number) => app.getByRole("spinbutton", { name: `売上高 ${month}月の金額`, exact: true });
 async function badInput(input: Locator, text: string) {
   await input.click(); await input.press("ControlOrMeta+A"); await input.pressSequentially(text);
-  await expect.poll(() => input.evaluate(node => (node as HTMLInputElement).validity.badInput)).toBe(true);
+  await expect(input).toHaveAttribute("aria-invalid", "true");
 }
 async function paste(input: Locator, text: string) {
   await input.click();
@@ -18,7 +18,7 @@ async function savedBytes(app: FrameLocator) {
 }
 async function blocked(app: FrameLocator) {
   await expect(app.getByRole("button", { name: "保存を再試行", exact: true })).toBeEnabled();
-  await expect(app.getByRole("alert")).toContainText("有効な数値");
+  await expect(app.getByRole("alert").filter({ hasText: "有効な数値" })).toBeVisible();
   await expect(app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true })).toBeDisabled();
 }
 async function reopen(app: FrameLocator) {
@@ -28,6 +28,7 @@ async function reopen(app: FrameLocator) {
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "施策一覧", exact: true }).click();
   await app.getByRole("button", { name: "不正入力の保存確認", exact: true }).click();
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
 }
 
 test.beforeEach(async ({ page, app }) => {
@@ -55,6 +56,7 @@ test.beforeEach(async ({ page, app }) => {
   await cell(app, 4).fill("20"); await cell(app, 5).fill("6");
   await app.getByRole("button", { name: "登録", exact: true }).click();
   await app.getByRole("button", { name: "不正入力の保存確認", exact: true }).click();
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
 });
 
 for (const kind of ["一次予算", "確定予算"] as const) for (const text of ["-", "1e"]) for (const operation of ["入力", "貼付", "範囲消去"] as const) {
@@ -114,7 +116,7 @@ test("不正な確定予算のセルを取消した後も一次予算を引き�
   await expect(app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true })).toBeEnabled();
   await app.getByRole("tab", { name: "確定予算", exact: true }).click();
   await expect(cell(app, 6)).toHaveValue("13");
-  await badInput(cell(app, 6), "1e"); await blocked(app);
+  await badInput(cell(app, 6), "=1/0"); await blocked(app);
   await app.getByRole("tab", { name: "一次予算", exact: true }).click();
   await cell(app, 5).fill("8"); await blocked(app);
   await app.getByRole("tab", { name: "確定予算", exact: true }).click();
@@ -148,10 +150,12 @@ test("新規登録でも別種別の不正入力を訂正するまで保存し�
   await app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }).focus();
   await selectAccount(app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }), "1");
   await badInput(cell(app, 4), "-");
-  await app.getByRole("tab", { name: "確定予算", exact: true }).click(); await cell(app, 5).fill("8");
+  await app.getByRole("tab", { name: "確定予算", exact: true }).click();
+  // Keep this kind valid so registration must detect the invalid other kind.
+  await cell(app, 4).fill("20"); await cell(app, 5).fill("8");
   const before = await savedBytes(app);
   await app.getByRole("button", { name: "登録", exact: true }).click();
-  await expect(app.getByRole("alert")).toContainText("有効な数値");
+  await expect(app.getByRole("alert").filter({ hasText: "有効な数値" })).toBeVisible();
   expect(await savedBytes(app)).toEqual(before);
   await app.getByRole("tab", { name: "一次予算", exact: true }).click();
   await expect(cell(app, 4)).toHaveAttribute("aria-invalid", "true");
@@ -159,5 +163,6 @@ test("新規登録でも別種別の不正入力を訂正するまで保存し�
   await cell(app, 4).press("Escape"); await cell(app, 4).fill("");
   await app.getByRole("button", { name: "登録", exact: true }).click();
   await app.getByRole("button", { name: "新規の不正入力", exact: true }).click();
+  await app.getByRole("tab", { name: "一次予算", exact: true }).click();
   await expect(cell(app, 4)).toHaveValue("0");
 });

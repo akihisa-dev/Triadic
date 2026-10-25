@@ -47,7 +47,7 @@ export function verifyInitiativeGrid(api) {
   const late = api.pasteInitiativeGrid(draft, 2, { row: 0, column: 6 }, "15\t-0.001");
   assert.equal(late.rows[0].overrides[2][10], "15");
   assert.equal(late.rows[0].overrides[2][11], "-0.001");
-  for (const text of ["1\t2\n3\t不正", "1\t2\n3", "1.0001", "12,34", "=1+2", "1e3"]) {
+  for (const text of ["1\t2\n3\t不正", "1\t2\n3", "1.0001", "12,34", "=1+", "1e3"]) {
     assert.throws(() => api.pasteInitiativeGrid(draft, 1, { row: 0, column: 0 }, text));
   }
   assert.throws(() => api.pasteInitiativeGrid(draft, 1, { row: 1, column: 0 }, "1\n2"), /勘定科目/);
