@@ -7,7 +7,13 @@
 .expansion-scrollbar:is(:hover, :has(:focus-visible), .expansion-scrollbar-touch) input::-webkit-slider-thumb { background: var(--line); }
 .expansion-scroll-marks { position: absolute; inset: 0; pointer-events: none; visibility: hidden; }
 .expansion-scrollbar:not(.expansion-scrollbar-dismissed):is(:hover, :has(:focus-visible), .expansion-scrollbar-touch) .expansion-scroll-marks { visibility: visible; }
-.expansion-scroll-mark { position: absolute; left: 0; width: 100%; writing-mode: vertical-rl; text-orientation: mixed; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 3px 2px; border: 0; border-radius: 0; background: transparent; color: var(--ink); font: inherit; font-size: 11px; line-height: 12px; pointer-events: auto; }
-.expansion-scroll-mark:hover { text-decoration: underline; text-underline-offset: 1px; }
+.expansion-scroll-mark { position: absolute; left: 0; width: 100%; overflow: hidden; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--ink); font: inherit; font-size: 11px; line-height: 12px; pointer-events: auto; user-select: none; transition: top 340ms cubic-bezier(.22,1.25,.38,1), height 340ms cubic-bezier(.22,1.25,.38,1); }
+.expansion-scroll-id { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; opacity: 1; transition: opacity 100ms, transform 260ms; }
+.expansion-scroll-mark[data-long-id="true"] .expansion-scroll-id { writing-mode: vertical-rl; text-orientation: upright; }
+.expansion-scroll-name { position: absolute; inset: 3px 2px; display: flex; writing-mode: vertical-rl; text-orientation: mixed; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transform: scaleY(.82); transition: opacity 150ms 80ms, transform 340ms cubic-bezier(.22,1.25,.38,1); }
+.expansion-scroll-mark:is(.expansion-scroll-expanded,.expansion-scroll-full-name) .expansion-scroll-name { opacity: 1; transform: scaleY(1); }
+.expansion-scroll-mark:is(.expansion-scroll-expanded,.expansion-scroll-full-name) .expansion-scroll-id { opacity: 0; transform: scaleY(1.3); }
+.expansion-scroll-expanded { font-weight: 500; }
 .expansion-scroll-mark:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+@media (prefers-reduced-motion: reduce) { .expansion-scroll-mark, .expansion-scroll-mark span { transition: none; } }
 .expansion-table-page .period-scroll-frame > .initiative-list-container::-webkit-scrollbar { width: 16px; }

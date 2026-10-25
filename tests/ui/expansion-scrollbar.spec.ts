@@ -30,7 +30,7 @@ test("展開名を縦バー内に表示し、先頭行へ移動しても横位�
     const parent = region.getBoundingClientRect();
     const buttons = [...node.querySelectorAll("button")];
     const marks = buttons.map(button => button.getBoundingClientRect());
-    const glyphs = buttons.map(button => { const range = document.createRange(); range.selectNodeContents(button); return range.getBoundingClientRect(); });
+    const glyphs = buttons.map(button => { const range = document.createRange(); range.selectNodeContents(button.querySelector(".expansion-scroll-name")!); return range.getBoundingClientRect(); });
     return { glyphsInsideWidth: glyphs.every(glyph => glyph.left >= box.left && glyph.right <= box.right), inside: box.left >= parent.left + region.clientWidth - 1 && box.right <= parent.right + 1,
       labelsInside: marks.every(mark => mark.top >= box.top - 1 && mark.bottom <= box.bottom + 1 && mark.left >= box.left - 1 && mark.right <= box.right + 1),
       overlap: marks.some((mark, i) => marks.slice(i + 1).some(other => mark.top < other.bottom && other.top < mark.bottom)) };
@@ -96,7 +96,7 @@ test("大量行でも未描画の展開と施策のない展開へ移動でき�
   const rail = app.locator(".expansion-scrollbar");
   await rail.hover({ position: { x: 5, y: (await rail.boundingBox())!.height - 3 } });
   const last = rail.locator("button").last();
-  const name = await last.textContent();
+  const name = await last.locator(".expansion-scroll-name").textContent();
   await last.click();
   await expect.poll(() => region.evaluate(node => node.scrollTop)).toBeGreaterThan(0);
   await expect(table.locator(".expansion-group").filter({ hasText: name! }).last()).toBeVisible();
