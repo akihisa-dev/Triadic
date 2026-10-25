@@ -7,7 +7,7 @@ test('科目・集計の共通順と表示名を総原価表へ反映する', as
   await app.getByRole('button',{name:'マスタ',exact:true}).click();
   await expect(app.getByRole('button',{name:/^集計マスタ/})).toHaveCount(1);
   await app.getByRole('button',{name:/^集計マスタ/}).click();
-  await app.getByRole('button',{name:'社外売上小計を移動',exact:true}).press('ArrowUp');
+  await app.getByRole('button',{name:'社内売上小計を移動',exact:true}).press('ArrowUp');
   await app.getByRole('button',{name:'← マスタへ戻る',exact:true}).click();
   await app.getByRole('button',{name:/^勘定科目マスタ/}).click();
   if(testInfo.project.name === 'narrow') await app.getByRole('button',{name:'サイドバーを閉じる',exact:true}).first().click();
@@ -29,6 +29,9 @@ test('科目・集計の共通順と表示名を総原価表へ反映する', as
   await settleMotion(app.locator('body'));
   const names=app.locator('.cost-table th[scope="row"]');
   await expect(names.nth(0)).toContainText('売上表示');
-  await expect(names.nth(1)).toContainText('小計');
-  await expect(names.nth(2)).toContainText('グループ売上高');
+  await expect(names.nth(1)).toContainText('グループ売上高');
+  await expect(names.nth(2)).toContainText('本支店売上高');
+  await expect(names.nth(3)).toContainText('店内売上高');
+  await expect(names.nth(4)).toContainText('小計');
+  await expect(names.nth(5)).toContainText('小計');
 });
