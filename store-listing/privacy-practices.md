@@ -10,7 +10,7 @@
 
 Manifestに`permissions`、`optional_permissions`、`host_permissions`の指定はありません。ウェブサイトへのアクセス権限は要求しません。
 
-ファイルは利用者が選択し、ブラウザ標準のファイル読み書き機能で許可されたものだけを開きます。この許可と、Manifestで要求する拡張機能の権限は別のものです。「続きから」のため、直近ファイルへの参照を端末内のIndexedDBに記憶します。参照はファイル内容の外部送信ではありません。
+ファイルは利用者が選択し、ブラウザ標準のファイル読み書き機能で許可されたものだけを開きます。この許可と、Manifestで要求する拡張機能の権限は別のものです。「続きから」のため、直近ファイルへの参照を端末内のIndexedDBに記憶します。参照はファイル内容の外部送信ではありません。配色の選択は拡張機能内のlocalStorageへ記憶し、施策の検索語は同じウィンドウでファイルを開いている間だけメモリに保持します。検索語は永続保存せず、ファイルを閉じると破棄します。
 
 ## リモートコード
 
@@ -30,7 +30,7 @@ Manifestに`permissions`、`optional_permissions`、`host_permissions`の指定�
 
 画面の分類名が異なる場合は、その説明に照らして入力します。申告欄とは別に、以下の説明を掲載文・ポリシーへ記載済みです。
 
-> 利用者が入力・選択した施策名、備考、分類、月別金額、前年金額、履歴と、選択したファイルへの参照を端末内で扱います。これらを開発者・外部サーバーへ送信せず、販売・広告・信用審査には利用しません。
+> 利用者が入力・選択した施策名、備考、分類、月別金額、前年金額、履歴、施策の検索語、配色設定と、選択したファイルへの参照を端末内で扱います。これらを開発者・外部サーバーへ送信せず、販売・広告・信用審査には利用しません。
 
 利用者データを販売・第三者へ移転しないこと、単一用途と無関係な目的で利用・移転しないこと、信用評価・融資判断に利用・移転しないことの確認欄は、記載と一致する現行実装を確認して提出者がチェックします。
 
@@ -40,11 +40,13 @@ Manifestに`permissions`、`optional_permissions`、`host_permissions`の指定�
 
 https://gist.github.com/akihisa-dev/a97db44fddd4ff38f8c0f21bde35be18
 
-[privacy-policy.md](privacy-policy.md)と同一の本文をGitHub Gistで公開しています。[privacy-policy-url.txt](privacy-policy-url.txt)からURLだけをコピーできます。
+公開先は上記のGitHub Gistです。[privacy-policy.md](privacy-policy.md)は配色設定と検索語の扱いを追記した2026年10月25日改訂原稿です。この改訂原稿の公開先への反映は未確認です。ストア提出前に同じGistの本文をこの原稿と一致させてください。[privacy-policy-url.txt](privacy-policy-url.txt)からURLだけをコピーできます。
 
 ## 根拠
 
 - `Triadichrome-extension/manifest.template.json`：追加権限なし、同梱service worker、同梱コード用の実行制限
+- `Triadichrome-extension/src/extension/theme.ts`：配色の選択をlocalStorageへ保持
+- `Triadichrome-extension/src/extension/WorkspaceChrome.tsx`：作業中の検索語をメモリへ保持
 - `Triadichrome-extension/src/extension/recentFile.ts`：直近のファイル参照をIndexedDBへ保持
 - `Triadichrome-extension/src/core/storage/`：計画・マスタ・履歴の保存処理
 - [Chrome公式：プライバシー欄](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy)
