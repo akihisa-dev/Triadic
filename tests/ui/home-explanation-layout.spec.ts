@@ -24,6 +24,21 @@ test("ホームの説明項目は左に縦並びで、最後の項目まで選�
     expect(contentBox.x).toBeGreaterThanOrEqual(navBox.x + navBox.width);
     expect(contentBox.y).toBeCloseTo(navBox.y);
     expect(await view.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
+    // Explanation sections must share the same reading column at every width.
+    const document = view.locator(label === "画面とデータ" ? ".screen-data-document" : ".mechanism-document");
+    const documentBox = (await document.boundingBox())!;
+    expect(documentBox.width).toBeGreaterThan(contentBox.width * .85);
+    const sectionBoxes = await document.locator(label === "画面とデータ"
+      ? ":scope > .screen-data-overview, :scope > .screen-data-calculated, :scope > .screen-data-tables"
+      : ":scope > .mechanism-overview, :scope > .mechanism-inputs, :scope > .mechanism-flow, :scope > .mechanism-outcomes, :scope > .mechanism-sources")
+      .evaluateAll(nodes => nodes.map(node => {
+        const box = node.getBoundingClientRect();
+        return { x: box.x, top: box.top, bottom: box.bottom };
+      }));
+    for (let index = 1; index < sectionBoxes.length; index++) {
+      expect(sectionBoxes[index]!.x).toBeCloseTo(sectionBoxes[0]!.x);
+      expect(sectionBoxes[index]!.top).toBeGreaterThanOrEqual(sectionBoxes[index - 1]!.bottom);
+    }
     // A long explanation must not move the list out of reach.
     await view.locator(content).evaluate(node => { node.scrollTop = node.scrollHeight; });
     const last = buttons.last();

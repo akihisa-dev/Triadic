@@ -12,16 +12,22 @@ export function MechanismMap({ kind }: { kind: Mechanism["kind"] }) {
       {topics.map(item => <button key={item.id} type="button" aria-pressed={item.id === topic.id} onClick={() => select(item.id)}>{item.name}</button>)}
     </nav>
     <article className="mechanism-content" key={topic.id}>
-      <header><h2>{topic.name}</h2><p>{topic.purpose}</p></header>
-      <div className="mechanism-inputs"><h3>元になる情報</h3><ul>{topic.inputs.map(input => <li key={input}>{input}</li>)}</ul></div>
-      <ol className="mechanism-flow" aria-label={`${topic.name}の流れ`}>
-        {topic.steps.map((step, index) => <li key={step.name}><span className="mechanism-step" aria-hidden="true">{index + 1}</span><div><h3>{step.name}</h3><p>{step.detail}</p></div></li>)}
-      </ol>
-      <div className="mechanism-outcomes">
-        <section><h3>条件と例外</h3><ul>{topic.conditions.map(condition => <li key={condition}>{condition}</li>)}</ul></section>
-        <section><h3>結果</h3><p>{topic.result}</p><h3>どこに残るか</h3><p>{topic.retention}</p></section>
+      <div className="mechanism-document">
+        <header><h2>{topic.name}</h2><p>{topic.purpose}</p></header>
+        <section className="mechanism-overview" aria-label={kind === "calculation" ? "計算の順序" : "処理の順序"}>
+          <h3>{kind === "calculation" ? "計算の順序" : "処理の順序"}</h3>
+          <ol>{topic.steps.map(step => <li key={step.name}>{step.name}</li>)}</ol>
+        </section>
+        <div className="mechanism-inputs"><h3>元になる情報</h3><ul>{topic.inputs.map(input => <li key={input}>{input}</li>)}</ul></div>
+        <ol className="mechanism-flow" aria-label={`${topic.name}の流れ`}>
+          {topic.steps.map((step, index) => <li key={step.name}><span className="mechanism-step" aria-hidden="true">{index + 1}</span><div><h3>{step.name}</h3><p>{step.detail}</p></div></li>)}
+        </ol>
+        <div className="mechanism-outcomes">
+          <section><h3>条件と例外</h3><ul>{topic.conditions.map(condition => <li key={condition}>{condition}</li>)}</ul></section>
+          <section><h3>結果</h3><p>{topic.result}</p><h3>どこに残るか</h3><p>{topic.retention}</p></section>
+        </div>
+        <details className="mechanism-sources"><summary>説明に対応する実装</summary><ul>{topic.sources.map(source => <li key={source}><code>{source.replace("Triadic-extension/src/", "src/")}</code></li>)}</ul></details>
       </div>
-      <details className="mechanism-sources"><summary>説明に対応する実装</summary><ul>{topic.sources.map(source => <li key={source}><code>{source.replace("Triadic-extension/src/", "src/")}</code></li>)}</ul></details>
     </article>
   </section>;
 }

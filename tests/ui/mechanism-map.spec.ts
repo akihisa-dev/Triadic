@@ -2,6 +2,7 @@ import { test, expect } from "./fixtures";
 import { mechanisms } from "../../Triadic-extension/src/extension/mechanismModel";
 
 test("仕組みの全対象を閲覧し、条件・保存範囲を確認して業務の関連図へ戻る", async ({ app, page }) => {
+  test.setTimeout(90_000);
   await page.goto("/tests/ui/preview.html?data=full");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   for (const [kind, label] of [["calculation", "計算の仕組み"], ["process", "処理の流れ"]] as const) {
@@ -11,12 +12,19 @@ test("仕組みの全対象を閲覧し、条件・保存範囲を確認して�
       await view.getByRole("navigation").getByRole("button", { name: topic.name, exact: true }).click();
       await expect(view.getByRole("heading", { name: topic.name, exact: true })).toBeVisible();
       await expect(view.getByRole("list", { name: `${topic.name}の流れ` })).toBeVisible();
+      await expect(view.locator(".mechanism-content header p")).toHaveText(topic.purpose);
+      await expect(view.locator(".mechanism-overview li")).toHaveText(topic.steps.map(step => step.name));
+      await expect(view.locator(".mechanism-inputs li")).toHaveText(topic.inputs);
+      await expect(view.locator(".mechanism-flow h3")).toHaveText(topic.steps.map(step => step.name));
+      await expect(view.locator(".mechanism-flow p")).toHaveText(topic.steps.map(step => step.detail));
+      await expect(view.locator(".mechanism-outcomes li")).toHaveText(topic.conditions);
+      await view.getByText("説明に対応する実装", { exact: true }).click();
+      await expect(view.locator(".mechanism-sources code")).toHaveText(topic.sources.map(source => source.replace("Triadic-extension/src/", "src/")));
       await expect(view).toContainText(topic.result);
       await expect(view).toContainText(topic.retention);
       await expect(view.getByRole("heading", { name: "条件と例外", exact: true })).toBeVisible();
       expect(await view.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
     }
-    await view.getByText("説明に対応する実装", { exact: true }).click();
     await expect(view.locator(".mechanism-sources ul")).toBeVisible();
     await expect(view).not.toContainText("既存商品の販売拡大");
   }

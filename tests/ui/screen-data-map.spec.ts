@@ -1,4 +1,36 @@
 import { test, expect, settleMotion } from "./fixtures";
+import { dataTables, screenData } from "../../Triadic-extension/src/extension/screenDataModel";
+
+test("全画面の対応・説明・保存項目・参照先を省略せずに閲覧できる", async ({ app }) => {
+  test.setTimeout(90_000);
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("button", { name: "画面とデータ", exact: true }).click();
+  const map = app.getByRole("region", { name: "画面とデータの対応図" });
+  for (const screen of screenData) {
+    await map.getByRole("navigation").getByRole("button", { name: screen.name, exact: true }).click();
+    await expect(map.locator(".screen-data-calculated p")).toHaveText(screen.calculated);
+    expect(await map.locator(".screen-data-summary tbody tr").evaluateAll(rows => rows.map(row => ({
+      fields: Array.from(row.querySelectorAll("li"), item => item.textContent),
+      table: row.querySelector("code")!.textContent,
+      purpose: row.querySelectorAll("td")[2]!.textContent,
+    })))).toEqual(screen.tables.map(usage => ({
+      fields: usage.fields.map(name => dataTables.find(table => table.name === usage.table)!.columns.find(column => column.name === name)!.label),
+      table: usage.table, purpose: usage.purpose,
+    })));
+    for (const usage of screen.tables) {
+      const table = dataTables.find(item => item.name === usage.table)!;
+      const detail = map.locator(`#screen-data-${table.name}`);
+      const button = detail.locator(".screen-data-table-heading");
+      await expect(button).toHaveAttribute("aria-expanded", "false");
+      await button.click();
+      await expect(detail.locator(".screen-data-columns")).toBeVisible();
+      expect(await detail.locator("tbody tr").evaluateAll(rows => rows.map(row =>
+        Array.from(row.querySelectorAll("td"), cell => cell.textContent))))
+        .toEqual(table.columns.map(column => [column.label, column.name, column.reference ?? "—"]));
+    }
+  }
+  await expect(app.getByRole("button", { name: "操作を取り消す", exact: true })).toBeDisabled();
+});
 
 test("画面の保存項目と参照先をたどり、関連図の入口へ戻れる", async ({ app }) => {
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
