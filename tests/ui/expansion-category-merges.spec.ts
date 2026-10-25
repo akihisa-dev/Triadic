@@ -8,9 +8,10 @@ test("展開・期間内の同じ区分をまとめて結合し、その他と�
   const table = app.getByRole("table", { name: "展開表", exact: true });
   const cost = table.locator("tbody").filter({ has: app.locator(".expansion-group").filter({ hasText: /^コスト$/ }) });
   await expect(cost.locator(".expansion-category")).toHaveText(["下払いUP", "ベースアップ", "設備投資", "燃料費UP", "電気料金UP", "その他"]);
-  await expect(cost.locator(".expansion-category").first()).toHaveAttribute("rowspan", "4");
-  const other = cost.getByRole("row").filter({ has: app.getByRole("button", { name: "通信運搬費と消耗品費の削減", exact: true }) });
+  await expect(cost.locator(".expansion-category").first()).toHaveAttribute("rowspan", "1");
+  const other = cost.getByRole("row").filter({ has: app.getByRole("button", { name: "本社・荷主マスタ統合とアクセス管理整備", exact: true }) });
   await expect(other.locator(".expansion-category")).toHaveText("その他");
+  await expect(other.locator(".expansion-category")).toHaveAttribute("rowspan", "3");
   await expect(table.locator("tbody .expansion-category").filter({ hasText: /^$/ }).first()).toHaveAttribute("rowspan", /[2-9]|\d{2,}/);
 });
 

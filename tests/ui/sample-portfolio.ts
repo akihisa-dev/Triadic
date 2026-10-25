@@ -2,124 +2,131 @@ import { initiativeMonths } from "../../Triadichrome-extension/src/core/domain/c
 import { yenToAmount } from "../../Triadichrome-extension/src/core/domain/amounts";
 import type { InitiativeRow } from "../../Triadichrome-extension/src/core/domain/plan";
 
-export const PORTFOLIO_COUNT = 8 * 9 * 2;
-const operations = ["車両整備", "法人車両", "月極賃貸", "施設運営", "定期配送", "構内作業", "委託管理", "本社支援", "保有資産"];
-const assets = ["診断装置", "洗車設備", "入退場設備", "空調設備", "積替設備", "搬送装置", "管理端末", "業務端末", "監視装置"];
-const costCategories = ["下払いUP", "ベースアップ", "設備投資", "燃料費UP", "電気料金UP"];
-type Monthly = (index: number) => number;
+// Design authority: docs/sample-budget-design.md. Money below is in thousands of yen.
+// Explicit business cases, never a Cartesian product of regions, industries and expansions.
+export const companyRegions = ["東京圏", "大阪圏", "名古屋圏", "福岡圏", "仙台圏", "札幌圏", "中四国圏", "本社"];
+export const companyIndustries = ["ルート配送", "チャーター配送", "アパレル倉庫", "非衣料品倉庫", "本社管理"];
+export const previousAnnualSales = [
+  [1_920_000, 1_152_000, 768_000, 384_000, 192_000, 144_000, 240_000],
+  [420_000, 264_000, 240_000, 96_000, 60_000, 48_000, 72_000],
+  [2_700_000, 1_440_000, 900_000, 360_000, 180_000, 120_000, 300_000],
+];
+// Relative workload by April–March. Annual allocations preserve each annual total exactly.
+export const workloadWeights = [
+  [104, 94, 96, 98, 86, 108, 104, 108, 110, 88, 92, 112],
+  [100, 96, 98, 102, 92, 104, 102, 108, 114, 90, 94, 100],
+  [98, 96, 92, 98, 90, 112, 110, 108, 106, 90, 88, 112],
+];
+export type Monthly = number[];
+export const months = (fn: (index: number) => number): Monthly => initiativeMonths.map((_, index) => fn(index));
+const from = (index: number, amount: number) => months(i => i >= index ? amount : 0);
+const once = (index: number, amount: number) => months(i => i === index ? amount : 0);
+const scale = (values: Monthly, factor: number) => values.map(value => value * factor);
+export type BusinessScenario = { key: string; name: string; note: string; region: string; industry: string; expansion: string; category?: string | undefined; carryover?: boolean; rows: InitiativeRow[] };
 
-/** Amounts are changes from last year, in yen. Each override describes a business revision. */
-export function portfolioScenario(e: number, i: number, d: number, accounts: Map<string, number>) {
-  const operation = operations[i]!;
-  const region = d === 0 ? "東" : "西";
-  const rows: InitiativeRow[] = [];
-  const add = (name: string, primary: Monthly, confirmed: Monthly = primary, explicitEqual: number[] = []) => {
+export function businessScenarios(accounts: Map<string, number>): BusinessScenario[] {
+  const result: BusinessScenario[] = [];
+  const row = (name: string, primary: Monthly, confirmed = primary, equalMonths: number[] = []): InitiativeRow => {
     const accountId = accounts.get(name);
-    if (accountId === undefined) throw new Error(`サンプルに必要な科目がありません: ${name}`);
-    const overrides = Object.fromEntries(initiativeMonths.flatMap((month, index) => {
-      const value = confirmed(index);
-      return value !== primary(index) || explicitEqual.includes(month) ? [[month, yenToAmount(value)]] : [];
-    }));
-    rows.push({ accountId, amounts: Object.fromEntries(initiativeMonths.map((month, index) => [month, yenToAmount(primary(index))])), overrides: { 2: overrides } });
+    if (accountId === undefined) throw new Error(`三面運輸の予算に必要な科目がありません: ${name}`);
+    const amount = (value: number) => yenToAmount(Math.round(value * 1000));
+    return { accountId, amounts: Object.fromEntries(initiativeMonths.map((m, i) => [m, amount(primary[i]!)])),
+      overrides: { 2: Object.fromEntries(initiativeMonths.flatMap((m, i) => amount(primary[i]!) !== amount(confirmed[i]!) || equalMonths.includes(m) ? [[m, amount(confirmed[i]!)]] : [])) } };
   };
-  let program: string;
-  let rationale: string;
-  let categoryName: string | null = null;
-  const volume = 20 + i * 3 + d * 2;
-  const base = (40 + i * 8 + d * 5) * 1000;
-  if (e === 0) {
-    const category = (i * 2 + d) % 5;
-    categoryName = costCategories[category]!;
-    if (category === 0) {
-      program = "委託作業単価の上昇";
-      const jobs = (j: number) => 10 + i * 2 + d + ([3, 8].includes(j) ? 5 : 0);
-      add("下払作業賃", j => jobs(j) * 800, j => jobs(j) * (j >= 3 ? 900 : 800), [4]);
-      add("外注費", j => j === 6 ? 1500 + d * 500 : 0);
-      rationale = `毎月${10 + i * 2 + d}件、7月・12月は5件増の委託作業。前年契約に対する追加単価800円/件を下払作業賃へ正額計上。10月の契約監査は外注費${1500 + d * 500}円。確定は7月の委託先合意により追加単価900円/件へ改定、4月は同額で確定。売上増は計上しない。`;
-    } else if (category === 1) {
-      program = "給与ベースアップ";
-      const people = 4 + i + d;
-      const salary = (j: number, confirmed: boolean) => people * (confirmed && j >= 3 ? 3500 : 3000);
-      add("給料手当", j => salary(j, false), j => salary(j, true), [4]);
-      add("法定福利費", j => Math.round(salary(j, false) * 0.15), j => Math.round(salary(j, true) * 0.15));
-      rationale = `対象${people}名、前年からの月額昇給3,000円/人を4月から給料手当に計上し、法定福利費を昇給額の15%で見積。確定は7月の労使合意で3,500円/人へ改定し、福利費も再計算。4月の昇給額は労使合意済みのため維持する。`;
-    } else if (category === 2) {
-      program = `${assets[i]}の更新`;
-      const purchase = (1200 + i * 120 + d * 60) * 1000;
-      const preparation = 18000 + i * 1000 + d * 500;
-      const oldRepair = 2000 + i * 100;
-      add("固定資産減価償却費", j => j >= 6 ? purchase / 60 : 0, j => j >= 7 ? purchase * 0.9 / 60 : 0);
-      add("修繕費", j => j >= 6 ? -oldRepair : 0, j => j >= 7 ? -oldRepair : 0);
-      add("消耗品費", j => j === 5 ? preparation : 0, j => j === 6 ? preparation : 0);
-      rationale = `取得価額${purchase}円、使用60か月、10月供用開始で月${purchase / 60}円を固定資産減価償却費へ計上。取得代金は損益へ二重計上せず備考だけに保持。旧設備の修繕費を供用開始後毎月${oldRepair}円削減、9月の準備消耗品${preparation}円。確定は納期が11月へ延期、取得見積10%減で月${purchase * 0.9 / 60}円、旧修繕削減も11月開始、準備費は10月へ移す。`;
-    } else if (category === 3) {
-      program = "燃料単価の上昇";
-      const liters = (j: number) => 300 + i * 20 + d * 30 + (j === 3 ? 100 : j === 8 ? 80 : j === 11 ? 60 : 0);
-      add("燃料油脂費", j => liters(j) * 15, j => liters(j) * (j >= 6 ? 18 : 15), [4]);
-      rationale = `基準使用量${300 + i * 20 + d * 30}L/月、7月は100L・12月80L・3月60L追加。前年からの単価上昇15円/Lを燃料油脂費へ正額計上。確定は10月からの仕入先通知で18円/Lへ改定する。使用量の季節計画は維持し、4月の燃料仕入額は当初の見積額で確定する。`;
-    } else {
-      program = "電気契約料金の上昇";
-      const kwh = (j: number) => 1000 + i * 100 + d * 50 + ([3, 4].includes(j) ? 300 : [8, 9].includes(j) ? 200 : 0);
-      add("動力光熱費", j => j >= 3 ? kwh(j) * 3 : 0, j => j >= 5 ? kwh(j) * 4 : 0);
-      rationale = `基準使用量${1000 + i * 100 + d * 50}kWh/月、7〜8月は冷房300kWh・12〜1月は暖房200kWh追加。前年からの追加単価3円/kWhを7月から動力光熱費へ正額計上。確定は契約更新が9月へ延期し追加単価4円/kWh、7〜8月は0で旧契約を継続する。売上・給料は変更しない。`;
-    }
-  } else if (e === 1) {
-    program = "サービス料金改定";
-    add("売上高", j => j >= 6 ? volume * 300 : 0, j => j >= 7 ? volume * 400 : 0);
-    add("通信運搬費", j => j === 6 ? 2000 + i * 100 + d * 100 : 0, j => j === 7 ? 2000 + i * 100 + d * 100 : 0);
-    rationale = `既存契約${volume}件/月、数量は変えず10月から前年比300円/件の料金差を売上高へ計上。原価は数量不変のため追加しない。通知郵送費${2000 + i * 100 + d * 100}円を開始月に計上。確定は顧客合意が11月に延期し400円/件へ改定、10月の売上・郵送費を0、通知を11月へ移す。改定前の増減は両予算とも全行0。`;
-  } else if (e === 2) {
-    program = "低採算業務の終了";
-    const payroll = Math.round(base * 0.22);
-    const rent = Math.round(base * 0.08);
-    add("売上高", j => j >= 3 ? -base : 0, j => j >= 5 ? -base : 0);
-    add("本支店売上原価", j => j >= 3 ? -Math.round(base * 0.75) : 0, j => j >= 5 ? -Math.round(base * 0.75) : 0);
-    add("給料手当", j => j >= 3 ? -payroll : 0, j => j >= 5 ? -payroll : 0);
-    add("賃借料", j => j >= 3 ? -rent : 0, j => j >= 5 ? -rent : 0);
-    add("外注費", j => j === 3 ? 12000 + i * 500 : 0, j => j === 5 ? 10000 + i * 500 : 0);
-    rationale = `7月に月商${base}円の低採算契約を終了。売上比で原価75%・給料22%・賃借料8%の計105%となる赤字契約。売上を減額し、原価・給料${payroll}円・賃借料${rent}円を削減して終了後は毎月${Math.round(base * 0.05)}円の赤字を解消。終了月の外注解約作業${12000 + i * 500}円は正額。確定は引継ぎのため9月終了へ延期し7〜8月を0、交渉で解約作業費を${10000 + i * 500}円へ減額。終了前の費用削減は計上しない。`;
-  } else if (e === 3) {
-    program = "繁忙期の受注増";
-    const quantity = (j: number, confirmed: boolean) => volume + (j === 3 ? 5 : j === 8 ? 8 + (confirmed ? 6 : 0) : j === 11 ? 4 : 0);
-    add("売上高", j => quantity(j, false) * 2000, j => quantity(j, true) * 2000, [4]);
-    add("本支店売上原価", j => quantity(j, false) * 700, j => quantity(j, true) * 700);
-    add("通信運搬費", j => quantity(j, false) * 120, j => quantity(j, true) * 120);
-    add("臨時傭員費", j => quantity(j, false) * 200, j => quantity(j, true) * 200);
-    rationale = `前年より毎月${volume}件増、7月5件・12月8件・3月4件の繁忙加算。1件の売上2,000円・原価700円・配送120円・臨時作業200円で数量に応じて計算。確定は12月の追加受注6件だけを4科目へ連動反映する。4月は数量が確定したため当初計画の額を維持し、その他の月も年間の受注見込みに従う。`;
-  } else if (e === 4) {
-    program = "新規顧客の開拓";
-    const contracts = (j: number, start: number) => j < start ? 0 : 5 + i + d + Math.floor((j - start) / 3);
-    add("売上高", j => contracts(j, 3) * 5000, j => contracts(j, 4) * 5000);
-    add("本支店売上原価", j => contracts(j, 3) * 1750, j => contracts(j, 4) * 1750);
-    add("給料手当", j => j >= 3 ? 5000 + d * 1000 : 0, j => j >= 4 ? 5000 + d * 1000 : 0);
-    add("宣伝広告費", j => j < 3 ? 0 : j === 3 ? 18000 + i * 500 : 2000, j => j < 4 ? 0 : j === 4 ? 18000 + i * 500 : 2000);
-    add("営業外収益", j => j === 11 ? 5001 : 0);
-    rationale = `7月に${5 + i + d}社で開始、3か月ごとに1社増、1社月額売上5,000円・原価1,750円。開始月の販促${18000 + i * 500}円、以後2,000円/月、給料${5000 + d * 1000}円/月、完了時3月に開拓助成5,001円。確定は契約開始が8月へ延期し7月全行を0、契約増加の四半期計画と初月販促も8月起点へ移す。助成の交付時期は変えない。`;
-  } else if (e === 7) {
-    program = "作業手順の改善";
-    add("研修教育費", j => j === 0 ? 10000 + i * 1000 + d * 500 : 0, undefined, [4]);
-    add("下払作業賃", j => j >= 2 ? -4000 - i * 300 - d * 200 : 0, j => j >= 3 ? -4000 - i * 300 - d * 200 : 0);
-    add("給料手当", j => j >= 2 ? -3000 - i * 100 - d * 200 : 0, j => j >= 3 ? -2800 - i * 100 - d * 200 : 0);
-    add("通信運搬費", j => j >= 2 ? -1251 : 0, j => j >= 3 ? -1251 : 0);
-    add("営業外収益", j => j === 8 ? 12000 + i * 500 : 0, () => 0);
-    rationale = `4月研修${10000 + i * 1000 + d * 500}円を投入し6月から外注作業${4000 + i * 300 + d * 200}円・給料${3000 + i * 100 + d * 200}円・通信1,251円/月を削減。一次は12月の改善助成${12000 + i * 500}円を見込む。確定は定着遅延で削減開始を7月へ移し6月を0、給料削減を${2800 + i * 100 + d * 200}円/月へ見直す。助成要件未達で12月助成も0。研修費は同額で確定する。`;
-  } else if (e === 6) {
-    program = "作業時間の短縮";
-    const training = 15000 + i * 1000 + d * 500;
-    const saving = 6000 + i * 400 + d * 300;
-    add("研修教育費", j => j === 3 ? training : 0, j => j === 4 ? training : 0);
-    add("給料手当", j => j >= 4 ? -saving : 0, j => j >= 5 ? -saving : 0);
-    rationale = `標準作業を見直して同じ人数で処理できる件数を増やす。7月に研修費${training}円を計上し、8月から残業手当を毎月${saving}円削減する。売上と契約数量は維持し、給料手当の減額だけを効果に含める。確定は研修を8月、削減開始を9月へ延期し、研修費と毎月の削減額は維持する。`;
-  } else {
-    program = "担当業務の移管";
-    const sign = d === 0 ? -1 : 1;
-    const income = (j: number) => (40 + i * 8) * 1000 + (j + 1) * 1000;
-    const counterparts = `${operation}・${program}・${d === 0 ? "西" : "東"}`;
-    add("売上高", j => sign * income(j), j => j >= 3 ? sign * income(j) : 0);
-    add("本支店売上原価", j => sign * Math.round(income(j) * 0.35), j => j >= 3 ? sign * Math.round(income(j) * 0.35) : 0);
-    add("給料手当", () => sign * (5000 + i * 100), j => j >= 3 ? sign * (5000 + i * 100) : 0);
-    add("通信運搬費", () => sign * (1000 + i * 50), j => j >= 3 ? sign * (1000 + i * 50) : 0);
-    rationale = `相手施策「${counterparts}」と対になる拠点集約に伴う同一業務の移管。東日本営業部から西日本営業部へ4月移管し、売上は4月${income(0)}円から毎月1,000円増、原価35%・給料${5000 + i * 100}円・通信${1000 + i * 50}円も同額で受け渡す。元は負、先は正。確定は引継ぎ完了が7月へ延期し4〜6月の全科目を両部署とも0。7月以降の受渡額と全体合計は維持する。`;
-  }
-  return { name: `${operation}・${program}・${region}`, note: `${region}側拠点（${d === 0 ? "東日本営業部" : "西日本営業部"}）の${operation}。${categoryName ? `展開区分は${categoryName}。` : ""}${rationale}`, categoryName, rows };
+  const add = (key: string, name: string, region: string, industry: string, expansion: string, note: string, rows: InitiativeRow[], category?: string, carryover = false) => {
+    result.push({ key, name, region, industry, expansion, note, category, carryover,
+      rows: rows.map((value, index) => ({ ...value, id: `sanmen:${key}:${index}` })) });
+  };
+  add("tokyo-rates", "東京・既存アパレル荷主の運賃是正", "東京圏", "ルート配送", "料金改定",
+    "三面運輸・5か年計画2年目。架空荷主の星衣社・青葉服飾との年間契約。改定対象の前年運賃は月1億円、4月から3%増の月300万円。数量増は含めない。確定4月は合意済みの同額を保持。他月は一次を引き継ぐ。",
+    [row("売上高", from(0, 3000), undefined, [4])]);
+  add("osaka-rates", "大阪・百貨店向け共同配送の契約更改", "大阪圏", "ルート配送", "料金改定",
+    "対象運賃月6,500万円の2.5%改定を7月から見込む。確定は荷主3社との交渉により8月開始・2.8%となり、7月の増収を0にする。車両数・配送量は据え置き。",
+    [row("売上高", from(3, 1625), from(4, 1820))]);
+  add("tokyo-storage-rates", "東京・入出庫作業料と長期滞留保管料の見直し", "東京圏", "アパレル倉庫", "料金改定",
+    "6月更新の入出庫作業料月1億2,000万円を3%改定。別契約の長期滞留品保管料は9月から月80万円増。同じ売上科目の2行に契約を分け、数量増や新倉庫売上は含めない。確定も契約条件を維持。",
+    [row("売上高", from(2, 3600)), row("売上高", from(5, 800))]);
+  add("osaka-storage-rates", "大阪・アパレル倉庫の作業単価改定", "大阪圏", "アパレル倉庫", "料金改定",
+    "前年から交渉していた既存契約の作業売上月6,000万円を4月から2.5%改定し月150万円増。追加作業量はなく、派遣料金上昇は別施策で計上する。",
+    [row("売上高", from(0, 1500))]);
+  add("key-customer-volume", "東京・星衣社の店舗統廃合による配送量減", "東京圏", "ルート配送", "物量増減",
+    "最大荷主の前年対象運賃月8,000万円に対し4月から3%の物量減、月240万円減収。委託便80万円・燃料20万円・通行料10万円を削減。社員は新規荷主へ配置するため固定給は減らさない。料金改定は前年数量で計算しているため、減少分240万円×3%の月7.2万円も別売上行で控除する。",
+    [row("売上高", from(0, -2400)), row("売上高", from(0, -72)), row("下払運賃", from(0, -800)), row("燃料油脂費", from(0, -200)), row("通行乗船料", from(0, -100))]);
+  add("osaka-exit", "大阪・西都服飾の閉店に伴う専用便終了", "大阪圏", "ルート配送", "荷主撤退",
+    "9月から月240万円の専用便が終了。委託運賃120万円、燃料15万円、残業手当50万円を削減。社員の固定給・共用拠点賃料は継続。8月に返却・引継作業30万円を支出する。",
+    [row("売上高", from(5, -2400)), row("下払運賃", from(5, -1200)), row("燃料油脂費", from(5, -150)), row("給料手当", from(5, -500)), row("外注費", once(4, 300))]);
+  const household = [0, 6000, 6000, 8000, 8000, 8000, 10000, 10000, 12000, 10000, 10000, 12000];
+  add("nagoya-charter", "名古屋・日用品メーカーの工場間チャーター受託", "名古屋圏", "チャーター配送", "売上拡販",
+    "架空の東海日用品から5月に月60便×10万円で受託し、7月80便、10月100便、12月・3月120便へ増える。協力会社運賃は売上の72%、配車担当1名40万円/月と福利費6万円/月を5月から追加。募集費60万円は4月。既存拠点で処理し、新センター売上とは別契約。",
+    [row("売上高", household), row("下払運賃", scale(household, .72)), row("給料手当", from(1, 400)), row("法定福利費", from(1, 60)), row("宣伝広告費", once(0, 600))]);
+  add("fukuoka-cosmetics", "福岡・化粧品販売会社の流通在庫管理", "福岡圏", "非衣料品倉庫", "売上拡販",
+    "架空の博多コスメ販売の常温・未開封商品の保管と店舗出荷。7月から月売上600万円、10月から750万円。既存倉庫の空き区画を使用し、アパレルの解約や新倉庫開設は伴わない。作業委託35%・梱包材5%、管理者35万円と福利費5.25万円/月。6月に棚・備品120万円、教育60万円を費用処理。",
+    [row("売上高", months(i => i < 3 ? 0 : i < 6 ? 6000 : 7500)), row("下払作業賃", months(i => i < 3 ? 0 : (i < 6 ? 6000 : 7500) * .35)), row("消耗品費", months(i => i === 2 ? 1200 : i < 3 ? 0 : (i < 6 ? 6000 : 7500) * .05)), row("給料手当", from(3, 350)), row("法定福利費", from(3, 52.5)), row("研修教育費", once(2, 600))]);
+  add("sendai-supplies", "仙台・介護施設向け日用消耗品の定期配送", "仙台圏", "ルート配送", "売上拡販",
+    "架空の杜の生活用品から10月に20施設×月20万円の配送を受託。消耗品のみで医薬品や温度管理品は扱わない。既存便の空き時間を使い委託運賃140万円、燃料35万円、通行料15万円、残業30万円/月を追加。9月の導入教育40万円。",
+    [row("売上高", from(6, 4000)), row("下払運賃", from(6, 1400)), row("燃料油脂費", from(6, 350)), row("通行乗船料", from(6, 150)), row("給料手当", from(6, 300)), row("研修教育費", once(5, 400))]);
+  add("chugoku-household", "中四国・生活雑貨専門店の共同配送", "中四国圏", "ルート配送", "売上拡販",
+    "架空の瀬戸くらし雑貨の15店舗へ8月から定期配送。1店月20万円で月300万円。委託便120万円、燃料30万円、通行料20万円、残業20万円/月。既存車両の復路を使い新車購入は行わない。7月に運行設計50万円を支出。",
+    [row("売上高", from(4, 3000)), row("下払運賃", from(4, 1200)), row("燃料油脂費", from(4, 300)), row("通行乗船料", from(4, 200)), row("給料手当", from(4, 200)), row("外注費", once(3, 500))]);
+  add("sapporo-winter", "札幌・冬季生活用品の臨時チャーター", "札幌圏", "チャーター配送", "売上拡販",
+    "架空の北灯生活用品の冬季補充便。11〜2月は月20便×12万円、3月は10便。協力会社への支払いは1便9万円で冬季加算を含む。新しい専用車両や年間固定人員は増やさない。",
+    [row("売上高", months(i => i < 7 ? 0 : i === 11 ? 1200 : 2400)), row("下払運賃", months(i => i < 7 ? 0 : i === 11 ? 900 : 1800))]);
+  const nagoyaVolume = [0, 0, 0, 15000, 18000, 21000, 24000, 27000, 30000, 27000, 27000, 30000];
+  add("nagoya-center", "名古屋新輸送センター・生活用品共同配送の立上げ", "名古屋圏", "ルート配送", "売上拡販",
+    "7月開設。架空の中京ホーム用品・東海衛生材を対象に月150便×10万円から300便へ段階拡大。従来荷主の付替売上は含めない。運行15名×40万円/月、福利費15%、年間賞与は12月に600万円。5〜6月の準備要員5名、6月から家賃150万円/月、車両12台のリース120万円/月。保険20万円・整備24万円・IT18万円・電力20万円・税10万円/月も7月から負担。変動費は燃料8%・委託12%・通行6%。賞与福利費90万円は12月。5月に採用・運行準備400万円。確定は売上を無理に上積みせず一次を維持。",
+    [row("売上高", nagoyaVolume), row("給料手当", months(i => i === 0 ? 0 : i < 3 ? 2000 : 6000)), row("法定福利費", months(i => i === 0 ? 0 : i < 3 ? 300 : i === 8 ? 1800 : 900)), row("賞与", once(8, 6000)), row("賃借料", from(2, 1500)), row("リース料", from(3, 1200)), row("保険料", from(3, 200)), row("修繕費", from(3, 240)), row("ＥＤＰ処理料", from(3, 180)), row("動力光熱費", from(3, 200)), row("租税公課", from(3, 100)), row("燃料油脂費", scale(nagoyaVolume, .08)), row("下払運賃", scale(nagoyaVolume, .12)), row("通行乗船料", scale(nagoyaVolume, .06)), row("外注費", once(1, 4000))]);
+  const warehouseSales = [0, 0, 0, 0, 0, 0, 24000, 28000, 32000, 34000, 36000, 40000];
+  const warehouseFinal = [0, 0, 0, 0, 0, 0, 0, 24000, 28000, 32000, 36000, 40000];
+  add("kanto-warehouse", "関東第一倉庫・生活雑貨の保管出荷受託", "東京圏", "非衣料品倉庫", "売上拡販",
+    "架空のくらしリンク・日和ホームの生活雑貨。賃借3,000坪×月3,000円。一次10月稼働、確定は設備検収により11月へ延期。売上は保管900万円＋出荷1件300円（初月5万件、年度末約10.3万件）で段階増加。家賃は9月から、常勤12名×35万円と福利費15%は10月から維持。保険12万円/月は10月から、賞与福利費63万円は12月。臨時人員は売上20%、梱包材4%。取得設備1.2億円/60か月の償却を稼働月から計上し取得代金は損益に加算しない。立上外注800万円は8〜9月、教育120万円は稼働前月へ移す。",
+    [row("売上高", warehouseSales, warehouseFinal), row("賃借料", from(5, 9000)), row("給料手当", from(6, 4200)), row("法定福利費", months(i => i < 6 ? 0 : i === 8 ? 1260 : 630)), row("保険料", from(6, 120)), row("賞与", once(8, 4200)), row("臨時傭員費", scale(warehouseSales, .20), scale(warehouseFinal, .20)), row("消耗品費", scale(warehouseSales, .04), scale(warehouseFinal, .04)), row("固定資産減価償却費", from(6, 2000), from(7, 2000)), row("動力光熱費", from(6, 600), from(7, 600)), row("ＥＤＰ処理料", from(6, 400), from(7, 400)), row("外注費", months(i => i === 4 || i === 5 ? 4000 : 0)), row("研修教育費", once(5, 1200), once(6, 1200))]);
+  add("tokyo-relocation", "東京拠点移転・大型化の基本設計", "東京圏", "ルート配送", "拠点集約",
+    "3年目の移転に向け、1月に動線・交通調査200万円、3月に基本設計180万円を支出。今回の年度に移転売上、増床家賃、新設備償却、旧拠点撤退益は計上しない。関東第二倉庫・関西倉庫は4〜5年目で今期の実行契約はない。",
+    [row("外注費", months(i => i === 9 ? 2000 : i === 11 ? 1800 : 0))]);
+  add("tokyo-automation-carryover", "東京・前年導入の搬送設備による通年化効果", "東京圏", "アパレル倉庫", "生産性向上",
+    "1年目の10月に導入した搬送設備の期間差。前年に未稼働だった4〜9月だけ臨時人員200万円/月・残業100万円/月を削減し、償却80万円/月（取得4,800万円/60か月）・保守30万円/月を追加。10月以降は前年基準に含まれるため増減0。社員の人数は減らさない。",
+    [row("臨時傭員費", months(i => i < 6 ? -2000 : 0)), row("給料手当", months(i => i < 6 ? -1000 : 0)), row("固定資産減価償却費", months(i => i < 6 ? 800 : 0)), row("修繕費", months(i => i < 6 ? 300 : 0))], undefined, true);
+  add("osaka-sorter", "大阪・仕分け設備の段階導入", "大阪圏", "アパレル倉庫", "コスト",
+    "既存倉庫へ取得3,600万円/60か月の仕分け設備を導入。一次9月、確定は11月に検収延期。月60万円の償却と保守10万円。初月の臨時人員削減60万円、翌月から120万円、残業は翌月から30万円削減。導入前月に教育80万円。人員削減は派遣契約時間と残業だけで、固定給は維持。",
+    [row("固定資産減価償却費", from(5, 600), from(7, 600)), row("修繕費", from(5, 100), from(7, 100)), row("臨時傭員費", months(i => i < 5 ? 0 : i === 5 ? -600 : -1200), months(i => i < 7 ? 0 : i === 7 ? -600 : -1200)), row("給料手当", from(6, -300), from(8, -300)), row("研修教育費", once(4, 800), once(6, 800))], "設備投資");
+  add("routing-carryover", "東京・前年配車見直しの期間差", "東京圏", "ルート配送", "効率化",
+    "1年目11月に実施した配車見直し。4〜10月の7か月のみ委託便120万円・燃料60万円・残業40万円/月を削減し配車システム25万円/月を追加。11月以降は前年収支に既に含む。新センターや今期の物量減とは別の既存便が対象。",
+    [row("下払運賃", months(i => i < 7 ? -1200 : 0)), row("燃料油脂費", months(i => i < 7 ? -600 : 0)), row("給料手当", months(i => i < 7 ? -400 : 0)), row("ＥＤＰ処理料", months(i => i < 7 ? 250 : 0))], undefined, true);
+  add("ai-invoices", "本社・AIによる請求照合と入力委託の縮小", "本社", "本社管理", "効率化",
+    "4〜6月に業務設計・照合システム接続各300万円。利用料60万円/月は7月開始。一次は9月から入力委託250万円/月を削減、確定は照合精度の受入れにより10月開始へ延期。社員の確認責任と固定給は維持し、時間創出をそのまま給与削減にはしない。",
+    [row("外注費", months(i => i < 3 ? 3000 : 0)), row("ＥＤＰ処理料", from(3, 600)), row("外注費", from(5, -2500), from(6, -2500))]);
+  add("it-foundation", "本社・荷主マスタ統合とアクセス管理整備", "本社", "本社管理", "コスト",
+    "AI活用と新荷主受入れの前提となるデータ整備。6月の移行委託500万円、7月の教育120万円、8月から基盤利用料80万円/月。現行システムは並行運用し、廃止可能な契約だけ別施策で削減する。開発資産を取得する契約ではなく導入支援サービスの費用。",
+    [row("外注費", once(2, 5000)), row("研修教育費", once(3, 1200)), row("ＥＤＰ処理料", from(4, 800))], "その他");
+  add("legacy-retirement", "本社・重複帳票サービスの契約終了", "本社", "本社管理", "効率化",
+    "マスタ統合後、重複する帳票サービスだけを11月に終了。利用料80万円/月を削減し10月のデータ退避委託60万円を計上。AI利用料・保守担当者の給与は削減対象にしない。",
+    [row("ＥＤＰ処理料", from(7, -800)), row("外注費", once(6, 600))]);
+  add("tokyo-retention", "東京・運転職の定着に向けた基本給改定", "東京圏", "ルート配送", "コスト",
+    "既存運転職116名の基本給を4月から月8,000円増。給料92.8万円/月、福利費15%の13.92万円/月。賞与は増額分1か月ずつを7月・12月へ追加する。新センター採用者とは別。確定でも労使合意済みの条件を維持。",
+    [row("給料手当", from(0, 928)), row("法定福利費", from(0, 139.2)), row("賞与", months(i => i === 3 || i === 8 ? 928 : 0))], "ベースアップ");
+  add("osaka-agency", "大阪・倉庫派遣契約の時間単価上昇", "大阪圏", "アパレル倉庫", "コスト",
+    "7月更改の派遣契約2万時間/月について時給100円上昇で月200万円増。仕分け設備で削減する時間は別契約のスポット要員であり、この2万時間との二重計上はない。",
+    [row("臨時傭員費", from(3, 2000))], "下払いUP");
+  add("tokyo-fuel", "東京・軽油の契約単価上昇", "東京圏", "ルート配送", "コスト",
+    "7月から単価差4円/L、対象18万L/月で月72万円増。物量減・前年配車効果の削減後に継続する便の使用量。確定は共同購入で追加3円/L、月54万円に抑制。新規荷主や名古屋新センター分は対象外。",
+    [row("燃料油脂費", from(3, 720), from(3, 540))], "燃料費UP");
+  add("tokyo-power", "東京・既存倉庫の電力契約更新", "東京圏", "アパレル倉庫", "コスト",
+    "9月更新の既存倉庫で追加2円/kWh。通常30万kWh/月、12〜2月は35万kWh/月の暖房需要。新倉庫電力は別施策に含み対象外。削減予定のない照明・空調部分が対象。",
+    [row("動力光熱費", months(i => i < 5 ? 0 : i >= 8 && i <= 10 ? 700 : 600))], "電気料金UP");
+  add("fukuoka-rent", "福岡・既存倉庫の賃貸借更新", "福岡圏", "アパレル倉庫", "コスト",
+    "10月に既存アパレル専用棟の賃料が月35万円上昇。化粧品に使う別棟の空き区画とは契約を分ける。移転や面積増は行わず、更新月から差額のみ計上。",
+    [row("賃借料", from(6, 350))], "その他");
+  add("osaka-transfer", "大阪・中京向け中継便の管理移管", "大阪圏", "ルート配送", "拠点集約",
+    "名古屋センター開設に合わせ7月から既存中継契約の売上200万円/月と委託運賃170万円/月の管理を名古屋へ移管。対は「名古屋・中京向け中継便の管理受入」。全社では売上も利益も変わらず、新規受注には含めない。",
+    [row("売上高", from(3, -2000)), row("下払運賃", from(3, -1700))]);
+  add("nagoya-transfer", "名古屋・中京向け中継便の管理受入", "名古屋圏", "ルート配送", "拠点集約",
+    "大阪から7月に既存中継契約の売上200万円/月と委託運賃170万円/月を受け入れる。対は「大阪・中京向け中継便の管理移管」。新センターの新規生活用品売上とは別行で、全社の純増は0。",
+    [row("売上高", from(3, 2000)), row("下払運賃", from(3, 1700))]);
+  add("tokyo-packaging", "東京・梱包資材の仕様統一と共同調達", "東京圏", "アパレル倉庫", "効率化",
+    "既存荷主と段ボール規格を統一。8月から月5万枚×13円の削減で65万円/月を削減。7月の荷姿検証30万円。3月は年度精算による端数125円の追加値引きを含む。非衣料品倉庫の立上げ資材は対象外。",
+    [row("消耗品費", months(i => i < 4 ? 0 : i === 11 ? -650.125 : -650)), row("外注費", once(3, 300))]);
+  add("funding", "本社・倉庫設備資金の借入と利息", "本社", "本社管理", "コスト",
+    "関東第一倉庫の設備取得資金1.2億円を10月に借入れ、年3%の月割利息30万円を計上。借入元金・設備支払額は損益の施策に入れず設計書の資金計画に記載。検収が11月になっても10月の融資実行・利息は維持する。",
+    [row("営業外費用", from(6, 300))], "その他");
+  return result;
 }

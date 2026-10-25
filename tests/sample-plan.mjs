@@ -115,7 +115,7 @@ export async function verifySamplePlan(api, { excel = false } = {}) {
   await validateTriadicDatabase(largeBytes);
   const large = await readPlanContents(largeBytes);
   assert.deepEqual(large.expansionCategories, plan.expansionCategories, "再生成した実ファイルもデフォルトの区分だけを含む");
-  assert.deepEqual(large.departments.map(item => item.departmentName), ["東日本営業部", "西日本営業部"]);
+  assert.deepEqual(large.departments.map(item => item.departmentName), ["東京圏", "大阪圏", "名古屋圏", "福岡圏", "仙台圏", "札幌圏", "中四国圏", "本社"]);
   assert.ok(large.initiatives.every(item => large.departments.find(d => d.id === item.departmentId).industryIds.includes(item.industryId)));
   assert.ok(large.previousAmounts.every(item => large.departments.find(d => d.id === item.departmentId).industryIds.includes(item.industryId)));
   // Filtering and unused-department edits use a private test plan, never the delivered sample.
