@@ -20,3 +20,5 @@ export function* initiativeReferences(databases: readonly Database[]) {
     yield { ...change, initiativeId: change.row[1]!, accountId: change.row[2]! };
   }
 }
+
+export type InitiativeReference = ReturnType<typeof initiativeReferences> extends Generator<infer Change> ? Change : never;

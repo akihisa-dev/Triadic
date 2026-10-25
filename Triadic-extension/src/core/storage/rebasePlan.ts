@@ -1,13 +1,14 @@
-import { canMergeInitiativeOwners } from "./rebaseInitiativeOwners";
-import { canMergeAccountReferences } from "./rebaseAccountReferences";
+import { initiativeOwnerCheck } from "./rebaseInitiativeOwners";
+import { accountReferenceChecks } from "./rebaseAccountReferences";
 import { mergeRebaseOrder } from "./rebaseOrder";
 import { canMergeRowAccounts } from "./rebaseRowAccounts";
-import { canMergeClassifications } from "./rebaseClassifications";
+import { classificationReferenceChecks } from "./rebaseClassifications";
 import { remapAddedAccounts } from "./rebaseAccounts";
 import { BUSINESS_TABLES } from "./triadicSchema";
 import { exportTriadicDatabase, openTriadicDatabase } from "./triadicDatabase";
 import { trackHistoryChange, createBusinessSnapshot } from "./dataHistory";
 import type { Database, SqlValue } from "./sqliteRuntime";
+import { initiativeReferences } from "./rebaseReferences";
 import { rebaseLayout } from "./rebaseLayout";
 
 const equal = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
@@ -38,10 +39,24 @@ export async function rebasePlan(baseBytes: Uint8Array, editedBytes: Uint8Array,
     const identity = (db: Database) => db.exec("SELECT fiscal_year, created_at FROM document_info")[0]?.values;
     if (!equal(identity(base), identity(current))) return null;
     if (!remapAddedAccounts(base, edited, current)) return null;
-    if (!canMergeInitiativeOwners(base, edited, current)) return null;
-    if (!canMergeAccountReferences(base, edited, current)) return null;
+    const ownerCheck = initiativeOwnerCheck(base, edited, current);
+    if (!ownerCheck) return null;
+    let accountChecks: ReturnType<typeof accountReferenceChecks> | undefined;
+    let classificationChecks: ReturnType<typeof classificationReferenceChecks> | undefined;
+    // Stream each changed reference through independent rules without retaining a diff array.
+    // Prepare later guards only after earlier checks accept the first reference.
+    for (const change of initiativeReferences([base, edited, current])) {
+      if (!ownerCheck(change)) return null;
+      accountChecks ??= accountReferenceChecks(base, edited, current);
+      if (!accountChecks.initiative(change)) return null;
+      classificationChecks ??= classificationReferenceChecks(base, edited, current);
+      if (!classificationChecks.initiative(change)) return null;
+    }
+    accountChecks ??= accountReferenceChecks(base, edited, current);
+    if (!accountChecks.remaining()) return null;
     if (!canMergeRowAccounts(base, edited, current)) return null;
-    if (!canMergeClassifications(base, edited, current)) return null;
+    classificationChecks ??= classificationReferenceChecks(base, edited, current);
+    if (!classificationChecks.remaining()) return null;
     base.attachReadonly("comparison_edit", edited.export());
     const replacements = new Map<string, { removed: SqlValue[][]; inserted: SqlValue[][] }>();
     for (const table of BUSINESS_TABLES) {

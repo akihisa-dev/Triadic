@@ -33,5 +33,35 @@ export async function verifyInitiativeOwnerRebase(api) {
   for(const [a,b] of [[local,renamed],[renamed,local]])assert.equal(await api.rebasePlan(base,a,b),null,'施策ヘッダー変更と行編集の重なりは同一性不明として拒否');
   const replaced=await api.registerInitiative(undo,{...draft,name:'別施策B',rows:[{id:'external-row',accountId:account,amounts:{4:'2'}}]});
   await verifyReferenceRecovery(api,base,replaced,{type:'initiative.update',id:item.id,draft:{...draft,rows:[...item.rows,{id:'local-row',accountId:account,amounts:{4:'1.001'}}]}});
+  // Count only the common reference SQL during real SQLite merges, including early refusal.
+  const { Database } = await api.initializeSqlite(), exec = Database.prototype.exec;
+  const largeRows = Array.from({ length: 1200 }, (_, index) => ({ id: `bulk-${index}`, accountId: account, amounts: { 4: '1' } }));
+  const large = await api.updateInitiative(base, item.id, 2026, { ...draft, rows: largeRows });
+  const first = await api.updateInitiative(large, item.id, 2026, { ...draft, rows: largeRows.map(row => ({ ...row, amounts: { 4: '2' } })) });
+  const second = await api.updateInitiative(large, item.id, 2026, { ...draft, rows: largeRows.map(row => ({ ...row, amounts: { 4: '1', 5: '3' } })) });
+  const counts = [];
+  for (const [a, b, accepted] of [[first, second, true], [second, first, true], [local, renamed, false], [renamed, local, false]]) {
+    let rows = 0, months = 0, accountReads = 0;
+    Database.prototype.exec = function(sql, ...args) {
+      if (sql === 'SELECT id, initiative_id, account_id, sort_order FROM initiative_rows') rows++;
+      if (sql.startsWith("SELECT a.row_id || ':'")) months++;
+      if (sql === 'SELECT * FROM accounts') accountReads++;
+      return exec.call(this, sql, ...args);
+    };
+    let result;
+    try { result = await api.rebasePlan(accepted ? large : base, a, b); }
+    finally { Database.prototype.exec = exec; }
+    assert.equal(Boolean(result), accepted);
+    assert.equal(rows, 3, '施策行の共通取得は各DB一回');
+    assert.equal(months, accepted ? 3 : 0, '所有施策の早期拒否では月額JOINを開始しない');
+    if (!accepted) assert.equal(accountReads, 0, '所有施策の早期拒否では後続の科目検査を準備しない');
+    if (accepted) {
+      const merged = (await api.readPlanContents(result.bytes)).initiatives[0].rows;
+      assert.equal(merged.length, 1200);
+      assert.ok(merged.every(row => row.amounts[4] === '2' && row.amounts[5] === '3'));
+    }
+    counts.push({ accepted, rows, months });
+  }
+  console.log('PASS: 1200行の大量月額差分と早期拒否、両方向の参照SQL回数', counts);
   console.log('PASS: 施策番号再利用の取消・履歴復元、同名/別名、行あり/なし、両保存順と既存月額、独立行追加・取消やり直し');
 }
