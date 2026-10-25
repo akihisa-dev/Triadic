@@ -448,7 +448,7 @@ test("配布用フォルダーと正式ZIPに固定依存の著作権・ライ�
     assert.ok(dist.includes(`${info.name}@${info.version}`), `${name}の同梱版`);
     const { readdir } = await import("node:fs/promises");
     for (const file of (await readdir(directory)).filter(file => /^(licen[sc]e|copying|notice)(\.|$)/i.test(file)))
-      assert.ok(dist.includes(await readFile(path.join(directory, file), "utf8")), `${name}の${file}の全文`);
+      assert.ok(dist.includes((await readFile(path.join(directory, file), "utf8")).replace(/[ \t]+$/gm, "").trimEnd()), `${name}の${file}の全文`);
   }
   const version = JSON.parse(await readFile(path.join(projectRoot, "package.json"), "utf8")).version;
   const archive = await JSZip.loadAsync(await readFile(path.join(projectRoot, `dist/Triadic-${version}.zip`)));
@@ -462,6 +462,6 @@ test("ExcelJSの事前同梱依存72組の原文も配布し、本文の対応�
   assert.equal(vendor.modules.length, 72);
   for (const module of vendor.modules) {
     assert.ok(module.version && module.verified_sources.length && module.verification);
-    for (const text of Object.values(module.notices)) assert.ok(notice.includes(text));
+    for (const text of Object.values(module.notices)) assert.ok(notice.includes(text.replace(/[ \t]+$/gm, "").trimEnd()));
   }
 });

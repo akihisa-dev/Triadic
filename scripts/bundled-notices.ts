@@ -67,7 +67,7 @@ export function bundledNotices() {
       notices.push({ name: `${info.name}@${info.version}`, text: `${info.name}@${info.version}\nLicense: ${typeof info.license === "string" ? info.license : JSON.stringify(info.license)}${info.name === "jszip" ? " (MIT selected)" : ""}\n\n${texts.join("\n\n")}` });
     }
     notices.sort((a, b) => a.name.localeCompare(b.name, "en"));
-    this.emitFile({ type: "asset", fileName: "assets/THIRD-PARTY-NOTICES.txt", source: "Bundled third-party software notices\n\n" + notices.map(item => item.text).join("\n\n--------------------\n\n") + "\n" });
+    this.emitFile({ type: "asset", fileName: "assets/THIRD-PARTY-NOTICES.txt", source: ("Bundled third-party software notices\n\n" + notices.map(item => item.text).join("\n\n--------------------\n\n")).replace(/[ \t]+$/gm, "").trimEnd() + "\n" });
   } });
   return { main, worker };
 }
