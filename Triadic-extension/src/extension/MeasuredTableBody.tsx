@@ -95,7 +95,9 @@ export function MeasuredTableBody<T>({ rows, container, columns, estimate = 34, 
           const position = Math.max(0, region.scrollTop - origin), old = currentOffsets.current;
           let low = 0, high = rows.length;
           while (low < high) { const middle = (low + high) >>> 1; if (old[middle + 1]! <= position) low = middle + 1; else high = middle; }
-          anchor.current = { index: low, within: position - old[low]!, origin, bottom: bottom.current };
+          // Before the body starts, keep the visible header instead of moving
+          // it out of view when the first wrapped rows are measured.
+          anchor.current = region.scrollTop < origin ? null : { index: low, within: position - old[low]!, origin, bottom: bottom.current };
         }
         frame = 0; updates.forEach(([index, height]) => {
           measurements.set(index, height);

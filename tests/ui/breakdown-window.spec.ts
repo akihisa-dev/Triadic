@@ -31,8 +31,10 @@ test('5000行の全件を並べ替え、先頭へ戻して正しい施策を開�
   await dialog.locator('.cost-breakdown-scroll').evaluate(node => { node.scrollTop = node.scrollHeight; });
   const header = dialog.getByRole('button', { name: '前年・施策', exact: true });
   await header.click();
+  await expect.poll(() => dialog.locator('.cost-breakdown-scroll').evaluate(node => node.scrollTop)).toBe(0);
   await expect(rows.first().locator('th')).toContainText('確認施策1・');
   await header.press('Space');
+  await expect.poll(() => dialog.locator('.cost-breakdown-scroll').evaluate(node => node.scrollTop)).toBe(0);
   await expect(rows.first().locator('th')).toHaveText('確認施策5000（1行目）');
   await expect.poll(() => rows.count()).toBeLessThan(80);
   await expect(dialog.locator('tfoot td')).toHaveText('0');

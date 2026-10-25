@@ -38,6 +38,7 @@ export function CostBreakdownDialog({ contents, selected, target, title, navigat
     { id: "amount", label: "反映額", type: "number", scale: 1000, value: row => row.amount },
   ];
   const tableView = useTableView(result.detail?.lines ?? [], definitions);
+  useLayoutEffect(() => { if (container.current) container.current.scrollTop = 0; }, [tableView.state]);
   const cellFilter = useTableCellFilter(tableView, navigationBlocked);
   const displayed = tableView.rows;
   let total = "";
