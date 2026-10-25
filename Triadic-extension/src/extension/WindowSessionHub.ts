@@ -12,7 +12,7 @@ import type { PlanContents } from "../core/domain/plan";
 import { createNewPlanFile } from "./newPlanFile";
 
 type Peer = { port: Pick<MessagePort, "postMessage">; group: Group | null; number: number; label: string; initialView: WindowView | null; publishedContents?: PlanContents | null; opening?: boolean };
-type Group = { id: string; session: PlanSession; peers: Set<Peer>; openingPeers: number; nextNumber: number; cancelCheckpoint?: () => void; releaseRecovery?: () => void; actionTail: Promise<void>; historyPreparing: boolean; historyOwner: Peer | null; tail: Promise<unknown>; acting: Peer | null; openingHandle: FileSystemFileHandle | undefined; opened: Promise<void>; releasing?: Promise<void> };
+type Group = { id: string; session: PlanSession; peers: Set<Peer>; openingPeers: number; nextNumber: number; cancelCheckpoint?: () => void; releaseRecovery?: () => void; actionTail: Promise<void>; coordinating: boolean; historyPreparing: boolean; historyOwner: Peer | null; tail: Promise<unknown>; acting: Peer | null; openingHandle: FileSystemFileHandle | undefined; opened: Promise<void>; releasing?: Promise<void> };
 const destinationMissing = async (): Promise<FileSystemFileHandle> => { throw new Error("保存先を選択してください。入力は保持しています。"); };
 const errorText = (failure: unknown, field: "message" | "name", fallback: string) => failure && typeof failure === "object" && field in failure && typeof Reflect.get(failure, field) === "string" ? String(Reflect.get(failure, field)) : fallback;
 class WindowControlTimeoutError extends Error {}
@@ -137,7 +137,7 @@ export class WindowSessionHub {
       if (handle) group.releaseRecovery = await this.reserveSaveTarget(group, handle);
       return handle;
     }),
-      peers: new Set(), openingPeers: 0, nextNumber: 1, actionTail: Promise.resolve(), historyPreparing: false, historyOwner: null, tail: Promise.resolve(), acting: null, opened: Promise.resolve(), openingHandle: plan.handle };
+      peers: new Set(), openingPeers: 0, nextNumber: 1, actionTail: Promise.resolve(), coordinating: false, historyPreparing: false, historyOwner: null, tail: Promise.resolve(), acting: null, opened: Promise.resolve(), openingHandle: plan.handle };
     this.groups.set(group.id, group);
     group.session.subscribe(() => this.publish(group));
     group.session.subscribeFileSave(async handle => {
@@ -161,6 +161,7 @@ export class WindowSessionHub {
           const handle = group.openingHandle ?? group.session.getHandle();
           if (handle && plan.handle && await handle.isSameEntry(plan.handle)) {
             if (group.releasing) return { wait: group.releasing };
+            if (group.coordinating && !group.historyPreparing) return { wait: group.actionTail };
             group.openingPeers++; return { group };
           }
         }
@@ -218,6 +219,7 @@ export class WindowSessionHub {
     const group = this.requireGroup(peer);
     const task = group.actionTail.then(async () => {
       // Freeze membership before collecting windows or awaiting their input/save decisions.
+      group.coordinating = true;
       if (history) group.historyPreparing = true;
       const peers = [...group.peers];
       const transaction = history ? crypto.randomUUID() : "";
@@ -254,6 +256,7 @@ export class WindowSessionHub {
         }
         return result;
       } finally {
+        group.coordinating = false;
         if (history) group.historyPreparing = false;
         if (history && !committed) for (const item of peers) {
           try { this.send(item, { type: "history-decision", transaction, commit: false }); }
@@ -274,6 +277,8 @@ export class WindowSessionHub {
           const group = this.groups.get(groupId);
           if (!group) throw new Error("このファイルは既に閉じられています。「ファイルを開く」から開き直してください。");
           if (group.historyPreparing || group.historyOwner) throw new Error("履歴の閲覧中はウィンドウを複製できません。");
+          while (group.coordinating) await group.actionTail;
+          if (group.historyPreparing || group.historyOwner || !this.groups.has(group.id)) throw new Error("このファイルへ参加できません。通常画面へ戻ってから開き直してください。");
           let reserved = ticket ? this.tickets.get(ticket) : undefined;
           if (ticket && reserved && reserved.expiresAt <= Date.now()) { this.removeTicket(ticket); reserved = undefined; }
           if (ticket && (!reserved || reserved.group !== group)) throw new Error("ウィンドウを開き直してください。");
@@ -318,10 +323,21 @@ export class WindowSessionHub {
             group = this.newGroup({ name: handle.name, handle, bytes });
             group.openingPeers++;
           } else {
-            group = await this.selectGroup(args[0]);
+            let plan = args[0];
+            for (;;) {
+              group = await this.selectGroup(plan);
+              openingGroup = group;
+              await group.opened;
+              if (!group.coordinating || group.historyPreparing) break;
+              // Coordination may have started after identity selection; select again after it ends.
+              group.openingPeers--; openingGroup = undefined;
+              await group.actionTail;
+              if (plan.handle) plan = { ...plan, bytes: new Uint8Array(await (await plan.handle.getFile()).arrayBuffer()) };
+            }
           }
           openingGroup = group;
-          await group.opened;
+          if (method === "create") await group.opened;
+          while (group.coordinating && !group.historyPreparing) await group.actionTail;
           if (!this.peers.has(peer)) return;
           if (group.historyPreparing || group.historyOwner) throw new Error("同じファイルの履歴を閲覧しています。通常画面に戻ってから開いてください。");
           this.groups.set(group.id, group);

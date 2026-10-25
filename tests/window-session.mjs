@@ -1,3 +1,4 @@
+import { verifyOperationMembership } from "./window-operation-membership.mjs";
 import { verifyPlanContentsPatch } from "./plan-contents-patch.mjs";
 import { verifyPlanProcessing } from "./plan-processing.mjs";
 import { verifyLatestNavigation } from "./latest-navigation.mjs";
@@ -8,6 +9,7 @@ import { verifyHistoryCommit } from "./window-history-commit.mjs";
 import { verifyWindowControlTimeout } from "./window-control-timeout.mjs";
 
 export async function verifyWindowSession(api) {
+  await verifyOperationMembership(api);
   await verifyLatestNavigation(api);
   await verifyPlanProcessing(api);
   const bytes = await api.createTriadicDatabase(2026);

@@ -86,7 +86,7 @@ Plans, masters, and snapshots are saved in the same `.triadic` file. Text and nu
 
 Edit requests include only the affected reconciliation baseline. Completion replies reuse ordered shared-state notifications with a bounded patch; initial synchronization and broad changes can still send a full snapshot.
 
-Joining or duplicating the same file is blocked throughout history consolidation, including save and confirmation waits. Cancellation or failure releases this restriction.
+Joining or duplicating the same file is blocked throughout history consolidation, including save and confirmation waits. Cancellation or failure releases this restriction. During Save As and undo/redo coordination, joining the same file waits internally until the checked operation finishes; other files remain available. Success or failure releases the wait.
 
 History consolidation waits for every window to prepare discarding and closing before committing either action. A missing response or disconnect during preparation keeps input in the remaining windows; retry starts a separate decision.
 
@@ -1019,7 +1019,7 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 
 編集要求は同時編集の照合に必要な対象だけを送ります。完了返信は先行する共有通知との差分から正確な保存結果を復元し、初回同期や広範囲の変更では必要に応じて全量を送ります。
 
-履歴への集約開始から、保存待ち・確認待ちも含めて同じファイルへの途中参加・複製を拒否します。取消や失敗の後は通常どおり開けます。
+履歴への集約開始から、保存待ち・確認待ちも含めて同じファイルへの途中参加・複製を拒否します。取消や失敗の後は通常どおり開けます。別名保存・操作取消・やり直しの確認中は同じファイルへの途中参加を内部で待機させ、確認した処理の完了後に参加します。別ファイルは止めず、成功・失敗のいずれでも待機を解放します。
 
 履歴へ集約する際の入力破棄・ウィンドウ終了は、すべての画面が準備に応答してから確定します。準備途中の応答切れ・切断では残った画面の入力を保持し、再試行とは別の操作として扱います。
 
