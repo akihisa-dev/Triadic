@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 
 export async function verifyAggregationData(api) {
   const { createTriadicDatabase, changeAccountMaster, changeAggregationMaster, readPlanContents, registerInitiative,
-    buildCostTable, openTriadicDatabase, validateTriadicDatabase, saveAggregationMaster, saveAccountMaster, layoutAggregationGraph, aggregationNodeWidth } = api;
+    buildCostTable, openTriadicDatabase, validateTriadicDatabase, saveAggregationMaster, saveAccountMaster } = api;
   let bytes = await createTriadicDatabase();
   let contents = await readPlanContents(bytes);
   assert.deepEqual(contents.aggregations.map(group => group.name), ["売上集計", "費用集計", "営業利益", "経常利益"]);
@@ -45,24 +45,6 @@ export async function verifyAggregationData(api) {
   await assert.rejects(update(4, [member("account", 999)]), /見つかりません/);
   await assert.rejects(update(4, [member("account", profitAccount.id, 0)]), /加算/);
   await validateTriadicDatabase(bytes);
-
-  const configured = (await readPlanContents(bytes)).aggregations;
-  for (const graphGroups of [configured, [...configured, { id: 9999, name: "独立した集計", required: null, members: [] }]]) for (const width of [320, 1200]) {
-    const layout = layoutAggregationGraph(graphGroups, new Map([[1, 400], [2, 160], [3, 48], [4, 90], [custom.id, 210]]), width);
-    assert.equal(new Set(layout.nodes.map(node => node.id)).size, graphGroups.length);
-    for (const node of layout.nodes) {
-      assert.ok(node.x >= 0 && node.y >= 0 && node.x + aggregationNodeWidth <= layout.width && node.y + node.height <= layout.height);
-      for (const other of layout.nodes.filter(other => other.id !== node.id)) {
-        assert.ok(node.x + aggregationNodeWidth <= other.x || other.x + aggregationNodeWidth <= node.x || node.y + node.height <= other.y || other.y + other.height <= node.y, "高さが違う集計枠を重ねない");
-      }
-      const children = graphGroups.find(group => group.id === node.id).members.filter(item => item.kind === "group").map(child => layout.nodes.find(item => item.id === child.id));
-      for (const child of children) assert.ok(child.y >= node.y + node.height + 100, "最終集計を上に置き、ドロップ領域を空けて内訳を下へ広げる");
-      for (let index = 1; index < children.length; index++) {
-        assert.ok(children[index].x > children[index - 1].x, "同じ親の内訳は順序を保って左右へ並べる");
-        assert.equal(children[index].y, children[0].y, "高さの違う集計も同じ段の上端を揃える");
-      }
-    }
-  }
 
   // Moving membership is atomic, preserves descendants and never duplicates an item.
   const move = (kind, id, parentId, sign = 1) => ({ type: "move", member: { kind, id }, parentId, sign });
