@@ -10,6 +10,8 @@ button.table-view-filter:hover, button.table-view-filter.is-filtered { color: va
 .table-filter-panel::backdrop { background: transparent; }
 .table-filter-title { font-weight: 600; margin-bottom: 9px; overflow-wrap: anywhere; }
 .table-filter-options { max-height: 230px; overflow: auto; overscroll-behavior: contain; }
+.table-filter-choice-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.table-filter-choice-table td { padding: 0; border: 0; text-align: left; }
 .table-filter-options label, .table-filter-all { display: flex; gap: 8px; align-items: center; min-height: 30px; padding: 4px 0; overflow-wrap: anywhere; }
 .table-filter-panel input[type="checkbox"], .table-filter-panel input[type="radio"] { flex: 0 0 auto; width: 14px; height: 14px; margin: 0; accent-color: var(--accent); }
 .table-filter-all { border-bottom: 1px solid var(--line); margin-bottom: 5px; }

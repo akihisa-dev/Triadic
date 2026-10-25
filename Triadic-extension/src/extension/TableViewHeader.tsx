@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { emptyTableView, selectTableRows, tableChoices, type TableColumn, type TableFilter, type TableViewState } from "../core/tables/columnView";
 import "./TableViewHeader.css";
 import { amountToYen, yenToAmount } from "../core/domain/amounts";
+import { MeasuredTableBody } from "./MeasuredTableBody";
 
 export function useTableView<T>(source: readonly T[], columns: readonly TableColumn<T>[], controlled?: { state: TableViewState; change: (state: TableViewState) => void }) {
   const [local, setLocal] = useState(emptyTableView);
@@ -58,6 +59,11 @@ function TableFilterPanel<T>({ column, source, filter, sorted, trigger, onClose,
   const [max, setMax] = useState(filter?.type === "number" ? displayBound(filter.max) : "");
   const [error, setError] = useState("");
   const choices = useMemo(() => column.type !== "choice" ? [] : [...new Set([...source.flatMap(row => tableChoices(column.value(row))), ...(filter?.type === "choice" ? filter.values : [])])].sort((a, b) => a.localeCompare(b, "ja", { numeric: true })), [source, column]);
+  const selectedValues = useMemo(() => values === null ? null : new Set(values), [values]);
+  const matchingChoices = useMemo(() => {
+    const search = query.normalize("NFKC").toLowerCase();
+    return choices.filter(value => value.normalize("NFKC").toLowerCase().includes(search));
+  }, [choices, query]);
   const close = () => { onClose(); if (trigger.isConnected) trigger.focus({ preventScroll: true }); };
   useLayoutEffect(() => {
     const element = panel.current!;
@@ -101,7 +107,7 @@ function TableFilterPanel<T>({ column, source, filter, sorted, trigger, onClose,
     else onApply(query.trim() ? { type: "text", text: query.trim() } : undefined);
     close();
   };
-  const all = values === null || choices.every(value => values.includes(value));
+  const all = selectedValues === null || choices.every(value => selectedValues.has(value));
   return createPortal(<div ref={panel} popover="manual" className="table-filter-panel" role="dialog" aria-labelledby={heading}
     onKeyDown={event => {
       event.stopPropagation();
@@ -120,12 +126,21 @@ function TableFilterPanel<T>({ column, source, filter, sorted, trigger, onClose,
     </> : column.type === "choice" ? <>
       {choices.length > 8 && <input type="search" aria-label="候補を検索" placeholder="候補を検索" value={query} onChange={event => setQuery(event.target.value)} />}
       <label className="table-filter-all"><input type="checkbox" checked={all} ref={input => { if (input) input.indeterminate = !all && !!values?.length; }} onChange={event => setValues(event.target.checked ? null : [])} />すべて選択</label>
-      <div className="table-filter-options">{choices.filter(value => value.normalize("NFKC").toLowerCase().includes(query.normalize("NFKC").toLowerCase())).map(value => <label key={value}><input type="checkbox" checked={values === null || values.includes(value)} onChange={event => setValues(event.target.checked ? [...(values ?? choices), value] : (values ?? choices).filter(item => item !== value))} />{value || "未設定・空欄"}</label>)}</div>
+      <FilterChoiceList key={query} choices={matchingChoices} selected={selectedValues} onChange={(value, checked) => setValues(checked ? [...(values ?? choices), value] : (values ?? choices).filter(item => item !== value))} />
     </> : <input type="search" aria-label="含む文字" placeholder="含む文字" value={query} onChange={event => setQuery(event.target.value)} />}
     {error && <p role="alert">{error}</p>}
     <div className="table-filter-actions"><button type="button" className="text-button" onClick={() => { onApply(); close(); }}>解除</button><button type="button" className="primary-button" onClick={apply}>適用</button></div>
     {sorted && <button type="button" className="text-button table-filter-original" onClick={() => { onOriginalOrder(); close(); }}>元の並び順に戻す</button>}
   </div>, trigger.closest("dialog") ?? document.body);
+}
+
+/** Keep wrapped labels and native checkbox navigation while windowing large lists. */
+function FilterChoiceList({ choices, selected, onChange }: { choices: string[]; selected: Set<string> | null; onChange: (value: string, checked: boolean) => void }) {
+  const container = useRef<HTMLDivElement>(null);
+  return <div ref={container} className="table-filter-options"><table className="table-filter-choice-table" role="presentation">
+    <MeasuredTableBody rows={choices} container={container} columns={1} estimate={38} rowKey={value => value}
+      render={value => <tr><td><label><input type="checkbox" checked={selected === null || selected.has(value)} onChange={event => onChange(value, event.target.checked)} />{value || "未設定・空欄"}</label></td></tr>} />
+  </table></div>;
 }
 
 export function TableViewEmpty({ columns }: { columns: number }) { return <tbody><tr><td colSpan={columns} className="table-view-empty" role="status">条件に合う行がありません。</td></tr></tbody>; }
