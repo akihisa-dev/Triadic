@@ -129,13 +129,13 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
         observe: ".entry-drop-title .fade-swap",
         actions: [{ frame: 0, selector: ".entry-page", event: "dragenter" as const }],
       });
-      expect(drag.some(sample => sample.text.includes("ファイルを開く") && sample.opacity > 0 && sample.opacity < 0.9)).toBe(true);
+      expect(drag.some(sample => sample.text.includes(".triadicファイルをここにドロップ") && sample.opacity > 0 && sample.opacity < 0.9)).toBe(true);
       expect(drag.find(sample => sample.text.includes("ここにドロップして開く"))!.opacity).toBeLessThan(0.25);
       const dragEnd = await app.locator("body").evaluate(sampleChange, {
         observe: ".entry-drop-title .fade-swap",
         actions: [{ frame: 0, selector: ".entry-page", event: "dragleave" as const }],
       });
-      expect(dragEnd.find(sample => sample.text.includes("ファイルを開く"))!.opacity).toBeLessThan(0.25);
+      expect(dragEnd.find(sample => sample.text.includes(".triadicファイルをここにドロップ"))!.opacity).toBeLessThan(0.25);
     });
 
     test("エラーはフェードし、表示・消去で入口の位置が動かない", async ({ page, app }) => {

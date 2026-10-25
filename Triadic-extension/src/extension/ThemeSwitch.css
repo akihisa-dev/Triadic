@@ -20,6 +20,4 @@
 .theme-switch input:checked + .theme-track .theme-thumb { transform: translateX(24px); }
 .theme-switch input:checked + .theme-track .theme-thumb::after { content: "☾"; }
 .theme-switch input:focus-visible + .theme-track { outline: 2px solid var(--focus); outline-offset: 2px; }
-.entry-theme-header { position: absolute; top: 8px; right: 16px; display: flex; }
-.entry-page { position: relative; padding-top: max(64px, 6vw); }
 @media (prefers-reduced-motion: reduce) { .theme-track, .theme-thumb { transition-duration: 1ms; } }

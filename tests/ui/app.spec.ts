@@ -31,8 +31,8 @@ async function prepareAccountRows(target: FrameLocator | Page) {
 
 test("ファイルを開き、サイドバーを操作して入口へ戻る", async ({ page, app }, testInfo) => {
   const preview = page.locator("#app-preview");
-  await expect(app.getByRole("heading", { name: "新しいファイル", exact: true })).toBeVisible();
-  await expect(app.getByText("前回のファイル", { exact: true })).toBeVisible();
+  await expect(app.getByRole("heading", { name: "新しい計画", exact: true })).toBeVisible();
+  await expect(app.getByText("前回の計画", { exact: true })).toBeVisible();
   await attachImage(testInfo, "入口", await preview.screenshot());
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   const trigger = app.locator(".home-header").getByRole("button", { name: /サイドバー/ });

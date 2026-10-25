@@ -12,7 +12,7 @@ test("ファイルの受け入れ先を強調し、子要素への移動で保�
   // Dispatch real file drag events against the production entry, without changing state directly.
   const frame = page.frames()[1]!;
   await frame.locator(".entry-open-section").dispatchEvent("dragenter", { dataTransfer: transfer });
-  await expect(app.getByRole("heading", { name: "ここにドロップして開く", exact: true })).toBeVisible();
+  await expect(app.getByText("ここにドロップして開く", { exact: true })).toBeVisible();
   await settleMotion(open);
   await expect(open).toHaveCSS("background-color", "rgb(238, 242, 255)");
   expect(await open.evaluate(node => {
@@ -25,9 +25,9 @@ test("ファイルの受け入れ先を強調し、子要素への移動で保�
   await frame.locator(".entry-open-section").evaluate(node => {
     node.dispatchEvent(new DragEvent("dragleave", { bubbles: true, relatedTarget: node.querySelector("button") }));
   });
-  await expect(app.getByRole("heading", { name: "ここにドロップして開く", exact: true })).toBeVisible();
+  await expect(app.getByText("ここにドロップして開く", { exact: true })).toBeVisible();
   await frame.locator(".entry-page").dispatchEvent("dragleave", { relatedTarget: null });
-  await expect(app.getByRole("heading", { name: "ファイルを開く", exact: true })).toBeVisible();
+  await expect(app.getByText(".triadicファイルをここにドロップ", { exact: true })).toBeVisible();
   await settleMotion(open);
   expect(await open.evaluate(node => getComputedStyle(node, "::after").opacity)).toBe("0");
 
@@ -43,5 +43,5 @@ test("ファイルの受け入れ先を強調し、子要素への移動で保�
   await frame.locator(".entry-open-section").dispatchEvent("drop", { dataTransfer: transfer });
   await expect(entry).not.toHaveClass(/is-drag-active/);
   await expect(app.getByRole("alert")).toBeVisible();
-  await expect(app.getByRole("heading", { name: "ファイルを開く", exact: true })).toBeVisible();
+  await expect(app.getByText(".triadicファイルをここにドロップ", { exact: true })).toBeVisible();
 });

@@ -246,7 +246,7 @@ test("入口のファイルドロップ先だけ背景と破線を青で示し�
     node.dispatchEvent(new DragEvent("dragenter", { bubbles: true, dataTransfer: data }));
   });
   await expect(entry).toHaveClass(/is-drag-active/);
-  await expect(app.getByRole("heading", { name: "ここにドロップして開く", exact: true })).toBeVisible();
+  await expect(app.getByText("ここにドロップして開く", { exact: true })).toBeVisible();
   await settleMotion(app.locator("body"));
   const section = app.locator(".entry-open-section");
   await expect(section).toHaveCSS("background-color", "rgb(238, 242, 255)");
@@ -255,7 +255,7 @@ test("入口のファイルドロップ先だけ背景と破線を青で示し�
   expect(await section.evaluate(node => getComputedStyle(node, "::after").borderColor)).toBe(blue);
   await entry.dispatchEvent("dragleave", { relatedTarget: null });
   await expect(entry).not.toHaveClass(/is-drag-active/);
-  await expect(app.getByRole("heading", { name: "ファイルを開く", exact: true })).toBeVisible();
+  await expect(app.getByText(".triadicファイルをここにドロップ", { exact: true })).toBeVisible();
   await settleMotion(app.locator("body"));
   await expect(section).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
 });

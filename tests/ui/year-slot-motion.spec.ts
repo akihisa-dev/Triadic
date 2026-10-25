@@ -4,6 +4,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
   test(`年度スロットは数字が流れ、離した後に減速して止まる: ${reducedMotion}`, async ({ page, app }) => {
     await page.emulateMedia({ reducedMotion });
     const slot = app.getByRole("spinbutton", { name: "年度", exact: true });
+    await slot.scrollIntoViewIfNeeded();
     const selected = (await app.locator(".year-slot-selected").boundingBox())!;
     const x = selected.x + selected.width / 2;
     const y = selected.y + selected.height / 2;

@@ -32,7 +32,7 @@
     "description": "d2fa7316417ef9250fc12a039ec5f5d291702805c69a7724afad4ca76e933575"
   },
   "open": {
-    "implementation": "d6a64679128a4fa45a9e678c2e2f4a50fe8127c489bcbf76576e5c5fe5ed55a5",
+    "implementation": "8fd67ce9315d67f5c22cabb3bd9303ff772a9d7a21797e1b82c2f4015ba0d238",
     "description": "a704dbd8f66ce4d0595b688a52f7390e174a6fbcac4ecf9dc0f6c047db2ff195"
   },
   "save": {
@@ -124,7 +124,7 @@
     "description": "1639dcf3e34e998fd71504fdd548a04cdfd231f0900d891c2349207adbb12a5c"
   },
   "color-theme": {
-    "implementation": "c128d6f2aa06eeb5c0ef4956f9b8362fc23af2a223e27496cb422b177c061bb8",
+    "implementation": "5170c9aca7cbe621cfff87ba6c752f192fb4ff611a6dbf39a5b4a9b48a36ac04",
     "description": "6a7a26ad8053af292efb4f0593d1408eec2c82d1d3060ca1b71e5f34d519ac5f"
   },
   "header-view": {
