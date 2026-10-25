@@ -1,4 +1,36 @@
-import { test, expect } from "./fixtures";
+import { test, expect, settleMotion } from "./fixtures";
+
+test("施策一覧の列見出し文字を列の中央に保ち、並べ替えと絞り込みを操作できる", async ({ app, page }) => {
+  await page.goto("/tests/ui/preview.html");
+  await expect(page.getByRole("status")).toHaveText("操作できます");
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "施策一覧", exact: true }).click();
+  await settleMotion(app.locator("body"));
+  const table = app.getByRole("table", { name: "施策一覧", exact: true });
+  const centred = async () => {
+    const offsets = await table.locator("thead .table-view-sort").evaluateAll(buttons => buttons.map(button => {
+      const range = document.createRange();
+      range.selectNode(button.firstChild!);
+      const text = range.getBoundingClientRect(), cell = button.closest("th")!.getBoundingClientRect();
+      return Math.abs((text.left + text.right - cell.left - cell.right) / 2);
+    }));
+    expect(offsets).toHaveLength(40);
+    for (const offset of offsets) expect(offset).toBeLessThanOrEqual(1);
+  };
+  await centred();
+  await table.getByRole("button", { name: "施策名", exact: true }).click();
+  await expect(table.locator('[aria-sort="ascending"]')).toHaveCount(1);
+  await centred();
+  const trigger = table.getByRole("button", { name: "施策名を絞り込む", exact: true });
+  await trigger.focus();
+  await trigger.press("Enter");
+  const panel = app.getByRole("dialog", { name: "施策名", exact: true });
+  await expect(panel).toBeVisible();
+  await panel.getByRole("searchbox").fill("倉庫");
+  await panel.getByRole("button", { name: "適用", exact: true }).click();
+  await expect(table.getByRole("button", { name: "施策名を絞り込む（適用中）", exact: true })).toBeVisible();
+  await centred();
+});
 
 test("対象の表だけ見出し操作を持ち、総原価表と固定定義は行構造を保つ", async ({ app, page }) => {
   await page.goto("/tests/ui/preview.html");
