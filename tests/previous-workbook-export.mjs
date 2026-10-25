@@ -22,7 +22,7 @@ export async function verifyPreviousWorkbookExport(api) {
       selections: { "cost-table": [2, 1], "expansion-table": [2, 1], "initiative-list": [2] }, costFilter: { industries: null, departments: null } });
     const reopened = new ExcelJS.Workbook(); await reopened.xlsx.load(await api.serializeWorkbook(report));
     report.eachSheet(ws => ws.eachRow(row => row.eachCell(cell => {
-      if (typeof cell.value === "string" || cell.formula) assert.deepEqual(reopened.getWorksheet(ws.name).getCell(cell.address).value, cell.value, `三表の文字列・数式: ${ws.name}!${cell.address}`);
+      if (typeof cell.value === "string" || cell.formula) assert.deepEqual(reopened.getWorksheet(ws.name).getCell(cell.address).value, cell.value, `総原価表・展開表・施策一覧の文字列・数式: ${ws.name}!${cell.address}`);
     })));
   }
   for (const name of ["営業\t部署", "営業\n部署", "営業\r部署", "日本語", "'部署'", "部署/業種:*?[]\\", "長".repeat(40), "_x0041_\t_x005F_",

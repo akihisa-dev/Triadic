@@ -7,7 +7,7 @@
 | 責任 | 依存の考え方 | 確定するもの |
 |---|---|---|
 | 業務の規則と型 | core内。React、Chrome、ファイル参照、SQLの接続へ依存しない単位を検討 | 金額の精度、年度・月、種別の引き継ぎ、入力制約、分類・科目の意味 |
-| 表示用の計算 | 業務の規則と保存済みのデータから求める | 三表・施策一覧・明細の数値と安定した順序 |
+| 表示用の計算 | 業務の規則と保存済みのデータから求める | 総原価表・展開表・施策一覧・明細の数値と安定した順序 |
 | SQLiteの処理 | core内。規則を利用し、接続・SQL・検証・複製を所有 | 有効なバイト列と読み取り結果。ブラウザの保存成功とは分ける |
 | 計画を開いている間の制御 | extension内。coreとブラウザ処理を組み合わせる | 現在の計画、保存の順序、履歴期限、過去閲覧、終了可能な状態 |
 | ブラウザ処理 | extension内。具体的なブラウザAPIを所有 | 選択、許可、ファイル参照、読み書き、前回ファイルの記憶 |
@@ -24,7 +24,7 @@
 - `extension/PlanSession.ts`、`preparePlanCommand.ts`、`usePlanSession.ts`：保存済み計画、更新命令、保存と履歴の順序、記録期限、終了。
 - `extension/HomePage.tsx`、`useHomeWorkspace.tsx`、`WorkspacePage.tsx`、`WorkspaceChrome.tsx`と`useScreenHistory.ts`：画面移動履歴、登録前の下書き、過去閲覧、編集による移動禁止。
 - `core/domain/`：施策と分類の型・検証、年度・金額・種別の規則、明細の編集対象。
-- `core/tables/`：種別別投影、前年の合算、三表と明細、集計図の計算、入力表の一括操作。
+- `core/tables/`：種別別投影、前年の合算、総原価表・展開表・施策一覧と明細、集計図の計算、入力表の一括操作。
 - `core/storage/triadicSchema.ts`、関連Schema、`triadicDatabase.ts`、`transaction.ts`、`readPlan.ts`：現行形式の直接生成・検証・コピー上の更新・一括読込。
 - `core/autoSave.ts`、`extension/useAutoSave.ts`、`planFile.ts`、`triadicFile.ts`：入力待機から実ファイル確定まで。
 - `core/storage/dataHistory.ts`、`dataHistorySchema.ts`、`extension/DataHistoryPage.tsx`：時点記録、閲覧、復元、削除と業務snapshotの境界。

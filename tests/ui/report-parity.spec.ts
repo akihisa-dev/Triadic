@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { markupCells, workbookCells } from '../report-parity.mjs';
 import { test, expect } from './fixtures';
 
-test('ダウンロードした三表とブラウザで表示する三表の全セル・結合が一致する', async ({ page, app }) => {
+test('ダウンロードした総原価表・展開表・施策一覧とブラウザで表示する総原価表・展開表・施策一覧の全セル・結合が一致する', async ({ page, app }) => {
   await page.goto('/tests/ui/preview.html');
   await expect(page.getByRole('status')).toHaveText('操作できます');
   await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();

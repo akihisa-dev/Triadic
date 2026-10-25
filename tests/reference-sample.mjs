@@ -157,5 +157,5 @@ export async function verifyReferenceSample(api, bytes, plan, { excel = false } 
     assert.ok(reopened.getWorksheet("計算元").rowCount > plan.initiatives.length);
   }
   assert.deepEqual(bytes, before, "検証で主ファイルを変更しない");
-  console.log(`PASS: 三面運輸の前年120億円、地域/事業配分、開設と延期、通年化、利益維持、三表/期間計、3履歴、設計書との対応 (${plan.initiatives.length}施策・${bytes.length} bytes)`);
+  console.log(`PASS: 三面運輸の前年120億円、地域/事業配分、開設と延期、通年化、利益維持、総原価表・展開表・施策一覧/期間計、3履歴、設計書との対応 (${plan.initiatives.length}施策・${bytes.length} bytes)`);
 }

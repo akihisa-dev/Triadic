@@ -33,7 +33,7 @@
 // 異年度の履歴比較は tests/history-difference.mjs と tests/ui/history-year.html・specで選択時の拒否・再試行・参照専用・選択保持を確認する。
 // 前年Excelの分類名に含むタブ・LF・CR・禁則・アポストロフィ・長名は tests/previous-workbook-export.mjs で実XLSX往復・単一セル更新・元データ保持を確認する。
 // 前年表の行構成変更は tests/ui/previous-selection.html と同名specで実SQLiteの保存統合・選択解除・フォーカス・Delete・貼付・属性変更時の選択維持を確認する。既存サンプルの内容は変えない。
-// Excel名称の_x0041_・_x005F_・日本語・実文字との併存は tests/previous-workbook-export.mjs の合成計画でXLSX往復・マスタ照合・三表とシート参照を確認する。
+// Excel名称の_x0041_・_x005F_・日本語・実文字との併存は tests/previous-workbook-export.mjs の合成計画でXLSX往復・マスタ照合・総原価表・展開表・施策一覧とシート参照を確認する。
 // 属性未設定の表示と金額の入力保持は既存の手修正・0固定・全月0・相殺データを使う。tests/budget-hints.mjs と tests/ui/budget-tooltips.spec.ts で属性未設定・不正入力の保護と、手修正の点線・吹き出しがないことを確認する。
 // 履歴の収支比較は既存サンプルの過去4月100→現在120と確定130を使い、tests/history-income-impact.mjs と tests/ui/history-income-impact.spec.ts で前年・各属性・1円・年間/月別・手修正・セル別上限を確認する。
 // 月額の桁区切り・部分編集・1円精度・Escape取消は tests/ui/grid-amount-format.spec.ts で確認する。
@@ -61,7 +61,7 @@
 // 施策の科目欄はコードなしの全文表示と狭幅での横スクロールを tests/ui/initiative-table-layout.spec.ts で確認する。
 import { createBusinessSample } from "./sample-business";
 // 集計所属順は現行DDLの非負・安全な整数で生成する。不正型・値域・採番境界の拒否は tests/aggregation-positions.mjs の合成DBで確認する。
-// Excel出力では選択した表と条件を保ち、従来の三表と計算元、および基本関数による金額の再計算を確認する。
+// Excel出力では選択した表と条件を保ち、従来の総原価表・展開表・施策一覧と計算元、および基本関数による金額の再計算を確認する。
 // Excel計算元の行順・分類名・種別・ID・元金額とマスタ索引の共有は tests/report-workbook.mjs で確認する。
 // 多数の展開・非連続集計の数式長と引数上限は tests/report-workbook.mjs の合成計画で確認する。
 // 前年Excelの確認表の名称取得・改名・大量変更の走査量は tests/spreadsheet-io.mjs、取消・保存失敗は tests/ui/spreadsheet-io.spec.ts で確認する。

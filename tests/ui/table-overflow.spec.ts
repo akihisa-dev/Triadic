@@ -62,7 +62,7 @@ for (const scenario of ["monthly", "period", "previous", "difference", "normal"]
 }
 
 
-test("相殺後が上限内なら三表・施策入力・期間計を表示する", async ({ page }) => {
+test("相殺後が上限内なら総原価表・展開表・施策一覧・施策入力・期間計を表示する", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.goto("/tests/ui/preview.html?data=overflow-cancellation");

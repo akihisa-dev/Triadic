@@ -16,7 +16,7 @@ const versionFiles = [
   "dist/extension/manifest.json",
 ];
 
-test("三表照合の入口はWindows・POSIXで直接実行だけを検証し、不一致を失敗にする", async t => {
+test("総原価表・展開表・施策一覧照合の入口はWindows・POSIXで直接実行だけを検証し、不一致を失敗にする", async t => {
   const source = await readFile(path.join(projectRoot, "tests/report-parity.mjs"), "utf8");
   const entry = source.trim().split("\n").at(-1);
   // Run the actual production entry statement with each OS's path and URL rules.

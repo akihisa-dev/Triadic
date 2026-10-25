@@ -54,7 +54,7 @@
 | 前年値 | 該当する前年金額だけ。分類・科目は前年入力で選択 |
 | 開始年月・年度・種別・月・計算列 | 直接編集不可 |
 
-SQLの読込は保存担当で一括して行い、表の表示は読み込んだ計画から純粋な計算で作る。種別の有効額、前年との積み上げ、比較は共通の[金額処理](Triadic-extension/src/core/domain/kinds.ts)と[表の計算](Triadic-extension/src/core/tables/planTables.ts)へ集める。三表の結果や引き継いだ金額を別の保存表へ複製しない。
+SQLの読込は保存担当で一括して行い、表の表示は読み込んだ計画から純粋な計算で作る。種別の有効額、前年との積み上げ、比較は共通の[金額処理](Triadic-extension/src/core/domain/kinds.ts)と[表の計算](Triadic-extension/src/core/tables/planTables.ts)へ集める。総原価表・展開表・施策一覧の結果や引き継いだ金額を別の保存表へ複製しない。
 
 ## 保存・競合・形式検証
 

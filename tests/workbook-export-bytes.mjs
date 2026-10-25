@@ -10,5 +10,5 @@ export async function verifyWorkbookExportBytes(api, contents) {
     await left.xlsx.load(Buffer.from(expected)); await right.xlsx.load(Buffer.from(actual));
     assert.deepEqual(right.worksheets.map(sheet => sheet.model), left.worksheets.map(sheet => sheet.model));
   }
-  console.log('PASS: 出力Workerと従来処理の三表・前年見込・実績のシート構成・値・数式・書式一致');
+  console.log('PASS: 出力Workerと従来処理の総原価表・展開表・施策一覧・前年見込・実績のシート構成・値・数式・書式一致');
 }

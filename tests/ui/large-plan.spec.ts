@@ -1,6 +1,6 @@
 import {test, expect} from './fixtures';
 
-test('基準サンプルの全件・末尾・三表・編集と取消を確認する', async ({page,app}) => {
+test('基準サンプルの全件・末尾・総原価表・展開表・施策一覧・編集と取消を確認する', async ({page,app}) => {
   test.setTimeout(120_000);
   await page.getByLabel('テストデータ').selectOption('large');
   await expect(page.getByRole('status')).toHaveText('操作できます');

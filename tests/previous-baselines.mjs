@@ -119,5 +119,5 @@ export async function verifyPreviousBaselines(api, { excel = false } = {}) {
   const db = await api.openTriadicDatabase(bytes); let old;
   try { db.run(`PRAGMA user_version = ${api.TRIADIC_FORMAT_VERSION - 1}`); old = db.export(); } finally { db.close(); }
   const untouched = old.slice(); await assert.rejects(api.openTriadicDatabase(old), /保存形式/); assert.deepEqual(old, untouched);
-  console.log('PASS: 基準前年の独立保存・共通基準の三表/内訳一致・選択再読込・コピー独立性・同時編集/競合/取消・履歴収支・旧形式非破壊拒否');
+  console.log('PASS: 基準前年の独立保存・共通基準の総原価表・展開表・施策一覧/内訳一致・選択再読込・コピー独立性・同時編集/競合/取消・履歴収支・旧形式非破壊拒否');
 }
