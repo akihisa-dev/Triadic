@@ -53,3 +53,5 @@ export * from "../../Triadic-extension/src/core/tables/previousGridTable";
 
 export { emptyTableView, selectTableRows, matchesTableFilter } from "../../Triadic-extension/src/core/tables/columnView";
 export { createExpansionTableView, selectExpansionView } from "../../Triadic-extension/src/core/tables/expansionTableView";
+
+export { windowCommandBase, reconcileWindowCommand } from "../../Triadic-extension/src/core/domain/windowCommand";

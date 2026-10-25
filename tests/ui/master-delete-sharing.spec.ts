@@ -1,7 +1,8 @@
 import { test, expect } from "@playwright/test";
-for (const aggregation of [false, true]) {
-  test(`${aggregation ? "集計" : "期間"}の古い削除確認は再作成された対象を削除しない`, async ({ page }) => {
-    await page.goto(`/tests/ui/master-delete-sharing.html${aggregation ? "?aggregation" : ""}`);
+for (const subject of ["period", "aggregation", "expansion"]) {
+  const aggregation = subject === "aggregation";
+  test(`${aggregation ? "集計" : subject === "expansion" ? "展開" : "期間"}の古い削除確認は再作成された対象を削除しない`, async ({ page }) => {
+    await page.goto(`/tests/ui/master-delete-sharing.html${subject === "period" ? "" : `?${subject}`}`);
     const requestDelete = async (name: string) => {
       if (aggregation) {
         await page.getByRole("rowheader", { name, exact: true }).dblclick();

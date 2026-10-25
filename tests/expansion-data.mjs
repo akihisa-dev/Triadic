@@ -21,6 +21,26 @@ export async function verifyExpansionData(api) {
   assert.deepEqual((await readPlanContents(bytes)).expansions, initial);
   await validateTriadicDatabase(changed);
 
+  const target = initial.at(-1), deletion = { type: "delete", id: target.id, deletionKey: api.expansionDeletionKey(target) };
+  const removed = await changeExpansionMaster(bytes, deletion);
+  const recreated = await changeExpansionMaster(removed, { type: "add", expansionCode: "99", expansionName: "別の展開" });
+  assert.equal((await readPlanContents(recreated)).expansions.at(-1).id, target.id);
+  for (const replacement of [
+    recreated,
+    await changeExpansionMaster(bytes, { type: "update", id: target.id, expansionCode: target.expansionCode, expansionName: "改名した展開" }),
+    await changeExpansionMaster(bytes, { type: "update", id: target.id, expansionCode: "99", expansionName: target.expansionName }),
+    await changeExpansionMaster(bytes, { type: "update", id: target.id, expansionCode: target.expansionCode, expansionName: target.expansionName, categoryIds: [1] }),
+  ]) {
+    await assert.rejects(changeExpansionMaster(replacement, deletion), /削除対象の展開が変更/);
+    const current = await readPlanContents(replacement), old = await readPlanContents(bytes);
+    const command = api.reconcileWindowCommand({ type: "expansion", change: deletion }, api.windowCommandBase({ type: "expansion", change: deletion }, old), current);
+    await assert.rejects(changeExpansionMaster(replacement, command.change), /削除対象の展開が変更/);
+  }
+  await assert.rejects(changeExpansionMaster(removed, deletion), /見つかりません/);
+  const unrelated = (await changeAccountMaster(bytes, { type: "add", accountCode: "999", accountName: "独立変更", accountType: "expense" })).bytes;
+  assert.ok(!(await readPlanContents(await changeExpansionMaster(unrelated, deletion))).expansions.some(item => item.id === target.id));
+  assert.equal(api.expansionDeletionKey({ ...target, categoryIds: [2, 1] }), api.expansionDeletionKey({ ...target, categoryIds: [1, 2] }), "所属順だけでは対象変更にしない");
+
   let empty = bytes;
   for (const item of initial) empty = await changeExpansionMaster(empty, { type: "delete", id: item.id });
   assert.deepEqual((await readPlanContents(empty)).expansions, [], "全件削除しても初期データを復活させない");
