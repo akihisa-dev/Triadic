@@ -130,7 +130,13 @@ function TableFilterPanel<T>({ column, source, filter, sorted, trigger, onClose,
       if (event.key === "Escape") { event.preventDefault(); close(); }
       if (event.key === "Enter" && !event.nativeEvent.isComposing && event.nativeEvent.keyCode !== 229 && event.target instanceof HTMLInputElement) { event.preventDefault(); apply(); }
       if (event.key === "Tab") {
-        const controls = [...panel.current!.querySelectorAll<HTMLElement>("button:not(:disabled),input:not(:disabled),select:not(:disabled)")];
+        const candidates = [...panel.current!.querySelectorAll<HTMLElement>("button:not(:disabled),input:not(:disabled),select:not(:disabled)")]
+          .filter(element => element.tabIndex >= 0 && element.getClientRects().length > 0);
+        const controls = candidates.filter(element => {
+          if (!(element instanceof HTMLInputElement) || element.type !== "radio") return true;
+          const group = candidates.filter(item => item instanceof HTMLInputElement && item.type === "radio" && item.name === element.name) as HTMLInputElement[];
+          return element === (group.find(item => item.checked) ?? group[0]);
+        });
         const at = controls.indexOf(document.activeElement as HTMLElement), next = event.shiftKey ? at - 1 : at + 1;
         if (next < 0 || next >= controls.length) { event.preventDefault(); controls[event.shiftKey ? controls.length - 1 : 0]?.focus(); }
       }
