@@ -1,6 +1,8 @@
 import path from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { bundledNotices } from "./scripts/bundled-notices";
+const notices = bundledNotices();
 
 const projectRoot = process.cwd();
 const buildOutputRoot = process.env.TRIADIC_BUILD_OUTPUT
@@ -12,8 +14,8 @@ export default defineConfig({
   base: "./",
   // Preserve embedded whitespace as escaped strings in distribution files.
   esbuild: { supported: { "template-literal": false } },
-  plugins: [react()],
-  worker: { format: "es" },
+  plugins: [react(), notices.main()],
+  worker: { format: "es", plugins: () => [notices.worker()] },
   optimizeDeps: { exclude: ["@sqlite.org/sqlite-wasm"] },
   build: {
     outDir: buildOutputRoot,

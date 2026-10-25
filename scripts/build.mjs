@@ -73,6 +73,7 @@ async function walkFiles(directory) {
 
 async function verifyBuild(buildRoot, manifest, checkSourceLeakage = true) {
   await assertFile(path.join(buildRoot, "index.html"), "独立ページ");
+  await assertFile(path.join(buildRoot, "assets", "THIRD-PARTY-NOTICES.txt"), "同梱依存のライセンス表示");
   await assertFile(path.join(buildRoot, "manifest.json"), "生成Manifest");
   const buildPrefix = buildRoot + path.sep;
 

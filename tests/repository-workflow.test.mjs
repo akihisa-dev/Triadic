@@ -436,3 +436,32 @@ test("画面確認データは選んだ種類だけを一度生成し、切替�
     assert.deepEqual(await retry("empty"), [1]);
   });
 });
+
+test("配布用フォルダーと正式ZIPに固定依存の著作権・ライセンス表示を含める", async () => {
+  const { default: JSZip } = await import("jszip");
+  const noticePath = "assets/THIRD-PARTY-NOTICES.txt";
+  const dist = await readFile(path.join(projectRoot, "dist/extension", noticePath), "utf8");
+  assert.equal(await readFile(path.join(projectRoot, "Triadic-extension", noticePath), "utf8"), dist);
+  for (const name of ["react", "react-dom", "exceljs", "jszip", "saxes", "scheduler", "pako"]) {
+    const directory = path.join(projectRoot, "node_modules", name);
+    const info = JSON.parse(await readFile(path.join(directory, "package.json"), "utf8"));
+    assert.ok(dist.includes(`${info.name}@${info.version}`), `${name}の同梱版`);
+    const { readdir } = await import("node:fs/promises");
+    for (const file of (await readdir(directory)).filter(file => /^(licen[sc]e|copying|notice)(\.|$)/i.test(file)))
+      assert.ok(dist.includes(await readFile(path.join(directory, file), "utf8")), `${name}の${file}の全文`);
+  }
+  const version = JSON.parse(await readFile(path.join(projectRoot, "package.json"), "utf8")).version;
+  const archive = await JSZip.loadAsync(await readFile(path.join(projectRoot, `dist/Triadic-${version}.zip`)));
+  assert.equal(await archive.file(noticePath).async("string"), dist);
+  assert.ok(archive.file("assets/sqlite-wasm-LICENSE.txt"));
+});
+
+test("ExcelJSの事前同梱依存72組の原文も配布し、本文の対応情報を保持する", async () => {
+  const vendor = JSON.parse(await readFile(path.join(projectRoot, "branding/third-party/exceljs-4.4.0-bundled.json"), "utf8"));
+  const notice = await readFile(path.join(projectRoot, "dist/extension/assets/THIRD-PARTY-NOTICES.txt"), "utf8");
+  assert.equal(vendor.modules.length, 72);
+  for (const module of vendor.modules) {
+    assert.ok(module.version && module.verified_sources.length && module.verification);
+    for (const text of Object.values(module.notices)) assert.ok(notice.includes(text));
+  }
+});
