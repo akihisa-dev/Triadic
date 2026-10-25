@@ -3,6 +3,10 @@ import { verifyWindowNewPlan } from "./window-new-plan.mjs";
 
 export async function verifyNewPlanFile(api) {
   await verifyWindowNewPlan(api);
+  const create = async (handle, year) => {
+    const expected = new Uint8Array(await (await handle.getFile()).arrayBuffer());
+    return api.createNewPlanFile(handle, year, expected);
+  };
   for (const initial of [new Uint8Array(), new Uint8Array([1, 2, 3])]) {
     let stored = initial.slice();
     let locked = false, reads = 0, writes = 0, aborted = 0;
@@ -22,14 +26,14 @@ export async function verifyNewPlanFile(api) {
         };
       },
     };
-    await api.createNewPlanFile(handle, 2026);
+    await create(handle, 2026);
     assert.equal((await api.readPlanContents(stored)).fiscalYear, 2026);
     assert.equal(writes, 1); assert.equal(reads, 2); assert.equal(aborted, 0);
     const replacement = new Uint8Array([4, 5, 6]);
     const writer = handle.createWritable.bind(handle);
     reads = 0; writes = 0;
     handle.createWritable = async options => { stored = replacement.slice(); return writer(options); };
-    await assert.rejects(api.createNewPlanFile(handle, 2026), /更新されたため.*別の保存先/);
+    await assert.rejects(create(handle, 2026), /更新されたため.*別の保存先/);
     assert.deepEqual(stored, replacement); assert.equal(writes, 0); assert.equal(aborted, 1);
   }
   for (const failure of ["read", "initialize", "lock", "check", "write", "close"]) {
@@ -52,7 +56,7 @@ export async function verifyNewPlanFile(api) {
         };
       },
     };
-    await assert.rejects(api.createNewPlanFile(handle, failure === "initialize" ? 0 : 2026));
+    await assert.rejects(create(handle, failure === "initialize" ? 0 : 2026));
     assert.deepEqual(stored, original, failure);
     assert.equal(writers, ["read", "initialize"].includes(failure) ? 0 : 1);
     assert.equal(aborted, ["check", "write", "close"].includes(failure));

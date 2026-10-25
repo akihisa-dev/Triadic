@@ -15,7 +15,7 @@ export async function verifyWindowNewPlan(api) {
   }
   function file() {
     let stored = initial.slice();
-    const result = { writes: 0, fail: false, beforeWrite: async () => {}, get bytes() { return stored; } };
+    const result = { writes: 0, fail: false, beforeWrite: async () => {}, get bytes() { return stored; }, replace(value) { stored = value.slice(); } };
     result.handle = { name: '保存先.triadic', queryPermission: async () => 'granted', isSameEntry: async other => other === result.handle,
       getFile: async () => new File([stored], result.handle.name), createWritable: async () => { let next; return {
         write: async value => { await result.beforeWrite(); if (result.fail) throw new Error('確認用の書込失敗'); next = new Uint8Array(value).slice(); },
@@ -63,6 +63,23 @@ export async function verifyWindowNewPlan(api) {
     const saving = a.saveAs(async () => savingTarget.handle); await saveGate.started;
     await assert.rejects(b.create(savingTarget.handle, 2027), /別のウィンドウで使用/);
     assert.equal(savingTarget.writes, 0); saveGate.release(); await saving; a.control = originalControl;
+
+    const waitingTarget = file(), waitingClient = client(), reservationGate = gate(); gates.push(reservationGate);
+    const identity = savingTarget.handle.isSameEntry;
+    savingTarget.handle.isSameEntry = async other => { if (other === waitingTarget.handle) await reservationGate.wait(); return identity(other); };
+    const pendingCreate = waitingClient.create(waitingTarget.handle, 2028);
+    const rejected = assert.rejects(pendingCreate, /保存先のファイルが更新/);
+    await reservationGate.started;
+    const updated = await api.createTriadicDatabase(2029);
+    waitingTarget.replace(updated);
+    reservationGate.release(); await rejected;
+    savingTarget.handle.isSameEntry = identity;
+    assert.deepEqual(waitingTarget.bytes, updated, '保存先の使用状況確認を待つ間の更新を上書きしない');
+    assert.equal(waitingTarget.writes, 0);
+    assert.equal(waitingClient.getSnapshot().contents, null);
+    assert.equal(hub.saveTargets.size, 0);
+    await waitingClient.create(waitingTarget.handle, 2028);
+    assert.equal(waitingClient.getSnapshot().contents.fiscalYear, 2028, '失敗後の選び直しは新しい基準で置換できる');
 
     const failed = file(), h = client(); failed.fail = true;
     await assert.rejects(h.create(failed.handle, 2027), /書込失敗/);

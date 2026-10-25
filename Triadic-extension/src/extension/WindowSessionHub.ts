@@ -309,10 +309,10 @@ export class WindowSessionHub {
         try {
           let group: Group;
           if (method === "create") {
-            const [handle, fiscalYear] = args;
+            const [handle, fiscalYear, expected] = args;
             releaseTarget = await this.reserveSaveTarget(null, handle);
             if (!this.peers.has(peer)) return;
-            await createNewPlanFile(handle, fiscalYear);
+            await createNewPlanFile(handle, fiscalYear, expected);
             const bytes = new Uint8Array(await (await handle.getFile()).arrayBuffer());
             // Publish the new group before releasing its destination to waiting opens.
             group = this.newGroup({ name: handle.name, handle, bytes });

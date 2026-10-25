@@ -1,9 +1,8 @@
 import { createTriadicDatabase, processPlan } from "./planProcessing";
 import { writeTriadicFile } from "./triadicFile";
 
-/** Capture the selected destination before initialization, then compare under the writer lock. */
-export async function createNewPlanFile(handle: FileSystemFileHandle, fiscalYear: number): Promise<void> {
-  const expected = new Uint8Array(await (await handle.getFile()).arrayBuffer());
+/** Preserve the selection-time baseline through reservation/initialization and the writer lock. */
+export async function createNewPlanFile(handle: FileSystemFileHandle, fiscalYear: number, expected: Uint8Array): Promise<void> {
   const bytes = await createTriadicDatabase(fiscalYear);
   await writeTriadicFile(handle, bytes, async () => {
     const current = new Uint8Array(await (await handle.getFile()).arrayBuffer());

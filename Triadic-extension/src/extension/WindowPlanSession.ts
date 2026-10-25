@@ -177,7 +177,11 @@ export class WindowPlanSession implements SessionAccess {
     }, 0);
   }
   async open(plan: Pick<OpenPlan, "name" | "bytes" | "handle">) { await this.request("open", plan); }
-  async create(handle: FileSystemFileHandle, fiscalYear: number) { await this.request("create", handle, fiscalYear); }
+  async create(handle: FileSystemFileHandle, fiscalYear: number) {
+    // Capture before worker readiness and destination reservation, as with Save As.
+    const expected = new Uint8Array(await (await handle.getFile()).arrayBuffer());
+    await this.request("create", handle, fiscalYear, expected);
+  }
   async prepareSave(_destination: () => Promise<FileSystemFileHandle>) {
     if (this.handle && !await requestFileWritePermission(this.handle)) throw new Error("ファイルへの保存を許可してください。");
     await this.request("prepareSave");
