@@ -22,8 +22,10 @@ function sumPeriod(values: Partial<Record<InitiativeMonth, number>>, period: Tab
 /** Aggregate original amounts before display rounding; recompute rates from period totals. */
 export function buildPeriodCostComparison(contents: PlanContents, selected: KindId[]) {
   const table = buildCostComparison(contents, selected);
-  const sales = table.rows.find(row => row.kind === "group" && row.id === contents.aggregations.find(group => group.required === "sales")?.id)!;
-  const profit = table.rows.find(row => row.kind === "group" && row.id === contents.aggregations.find(group => group.required === "ordinary")?.id)!;
+  const salesId = contents.aggregations.find(group => group.required === "sales")?.id;
+  const ordinaryId = contents.aggregations.find(group => group.required === "ordinary")?.id;
+  const sales = table.rows.find(row => row.kind === "group" && row.id === salesId)!;
+  const profit = table.rows.find(row => row.kind === "group" && row.id === ordinaryId)!;
   return { labels: table.labels, rows: table.rows.map(row => {
     const values: Record<string, number | undefined>[] = row.values.map(() => ({}));
     for (const period of tablePeriods) {

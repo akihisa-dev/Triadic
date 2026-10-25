@@ -36,6 +36,16 @@ export async function verifyPeriodTables(api) {
     }
     if (selected.length === 2) assert.equal(api.expansionPeriodAmount(item.values[2], periods.find(period => period.id === "annual"), "sales"), 50000);
   }
+  for (const requiredFirst of [true, false]) {
+    const optional = Array.from({ length: 1000 }, (_, index) => ({ id: 10000 + index, name: `任意集計${index}`, required: null, members: [] }));
+    let reads = 0;
+    const groups = requiredFirst ? [...contents.aggregations, ...optional] : [...optional, ...contents.aggregations];
+    const counted = { ...contents, aggregations: groups.map(group => ({ ...group, get required() { reads++; return group.required; } })) };
+    const result = api.buildPeriodCostComparison(counted, [1, 2]);
+    assert.ok(reads < groups.length * 30, '必須集計の属性参照は集計数に対して線形');
+    const expected = api.buildPeriodCostComparison({ ...contents, aggregations: groups }, [1, 2]);
+    assert.deepEqual(result, expected, '必須集計が先頭・末尾でも期間計と利益率を保持');
+  }
   const annual = periods.find(period => period.id === "annual");
   const upper = periods.find(period => period.id === "half-1");
   const quarter = periods.find(period => period.id === "quarter-1");

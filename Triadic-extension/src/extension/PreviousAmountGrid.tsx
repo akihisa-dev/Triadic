@@ -56,11 +56,12 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
   }
   const cellError = Object.values(cellErrors).find(item => !isValidAmount(inputsByAccount.get(item.accountId)?.amounts[item.month] || "0"))?.message;
   const salesGroupId = contents.aggregations.find(group => group.required === "sales")?.id;
+  const ordinaryGroupId = contents.aggregations.find(group => group.required === "ordinary")?.id;
   type CostRow = (typeof rows)[number];
   const periodCache = useRef(new WeakMap<CostRow, { sales: CostRow | undefined; profit: CostRow | undefined; values: (number | undefined)[]; failed: boolean }>());
   const periodAmounts = useMemo(() => {
     const sales = rows.find(row => row.kind === "group" && row.id === salesGroupId);
-    const profit = rows.find(row => row.kind === "group" && row.id === contents.aggregations.find(group => group.required === "ordinary")?.id);
+    const profit = rows.find(row => row.kind === "group" && row.id === ordinaryGroupId);
     let failed = false;
     const values = rows.map(row => {
       const cached = periodCache.current.get(row);
@@ -76,7 +77,7 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
       failed ||= rowFailed; return values;
     });
     return { values, failed };
-  }, [rows, salesGroupId, contents.aggregations]);
+  }, [rows, salesGroupId, ordinaryGroupId]);
   const salesIndex = rows.findIndex(row => row.kind === "group" && row.id === salesGroupId);
   const rowIds = useMemo(() => rows.map(row => row.kind === "account" ? row.id : null), [rows]);
   const selectedTotal = useMemo(() => previousSelectionTotal(draft, rowIds, selection), [draft, rowIds, selection]);
