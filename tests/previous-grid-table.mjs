@@ -33,6 +33,17 @@ export function verifyPreviousGridTable(api, seed) {
     }
     console.log(`前年入力${count}科目: 30編集の増分・従来計算の一致確認${(performance.now() - start).toFixed(1)}ms`);
   }
+  const account = seed.accounts[0];
+  const chain = Array.from({ length: 10000 }, (_, index) => ({ id: 10000 + index, name: `深い集計${index}`, required: null, members: [{ kind: index ? 'group' : 'account', id: index ? 9999 + index : account.id, sign: 1 }] }));
+  const deep = { ...seed, accounts: [account], aggregations: [...chain, ...seed.aggregations.filter(group => group.required).map(group => ({ ...group, members: group.required === 'sales' ? [{ kind: 'group', id: chain.at(-1).id, sign: 1 }] : [] }))] };
+  api.validateAggregations(deep.aggregations, new Set([account.id]));
+  const incremental = api.previousGridCalculator(deep);
+  const first = draftFor(deep);
+  assert.equal(incremental(first).calculationFailed, false);
+  const edited = { ...first, rows: [{ ...first.rows[0], amounts: { ...first.rows[0].amounts, 4: '2' } }] };
+  const changed = incremental(edited);
+  assert.equal(changed.calculationFailed, false, '合法な深い集計も小額の増分編集が成功');
+  assert.deepEqual(changed.rows, expected(deep, edited), '10000階層も全量と増分が一致');
   const recovery = api.previousGridCalculator(seed);
   const overflowing = draftFor(seed);
   overflowing.rows = overflowing.rows.map(row => ({ ...row, amounts: Object.fromEntries(months.map(month => [month, '9007199254740.991'])) }));

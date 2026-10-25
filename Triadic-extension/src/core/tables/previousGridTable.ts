@@ -47,7 +47,11 @@ export function previousGridCalculator(contents: Pick<PlanContents, "accounts" |
         const byKey = new Map(current.map(row => [`${row.kind}:${row.id}`, row]));
         const affected = new Set<number>();
         const collect = (key: string) => {
-          for (const parent of parents.get(key) ?? []) if (!affected.has(parent)) { affected.add(parent); collect(`group:${parent}`); }
+          const pending = [key];
+          while (pending.length) for (const parent of parents.get(pending.pop()!) ?? []) {
+            if (affected.has(parent)) continue;
+            affected.add(parent); pending.push(`group:${parent}`);
+          }
         };
         const replace = (row: CostRow, previous: CostRow["previous"]) => {
           if (initiativeMonths.every(month => row.previous[month] === previous[month])) return;
