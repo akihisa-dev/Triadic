@@ -39,7 +39,7 @@
 // 月額の桁区切り・部分編集・1円精度・Escape取消は tests/ui/grid-amount-format.spec.ts で確認する。
 // 月見出しの強調は既存サンプルの施策・前年を使い tests/ui/grid-month-heading.spec.ts で単一・範囲・種別切替と寸法維持を確認する。
 // 一覧と詳細の往復は tests/ui/initiative-list-return.spec.ts で200/201件・並べ替え・番号再利用・Tab継続を確認する。
-// 施策検索は既存サンプルの施策名・備考・過去履歴を使い、tests/initiative-search.mjs と tests/ui/initiative-search.spec.ts で一致規則・移動・入力保護・50件表示・空の計画を確認する。
+// 施策検索は既存サンプルの施策名・備考・選択分類・過去履歴を使い、tests/initiative-search.mjs と tests/ui/initiative-search.spec.ts で分類をまたぐ一致規則・一致分類の表示・移動・入力保護・50件表示・空の計画を確認する。保存データの追加・変更はない。
 // 施策複製は既存サンプルの同科目複数行・分類・確定手修正0を使い、tests/duplicate-initiative.mjs と tests/ui/duplicate-initiative.spec.ts で独立性・登録・取消・入力保護を確認する。
 // 履歴と現在の差分は既存の3時点の備考・4月月額を使い、tests/history-difference.mjs と tests/ui/history-difference.spec.ts で参照専用・1円・手修正・作成識別子・大量表示・失敗を確認する。
 // 通常の別名保存は既存サンプルの計画・履歴を使い、tests/save-as.mjs と tests/ui/save-as.spec.ts で保存先切替・取消・失敗時の保護を確認する。

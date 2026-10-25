@@ -66,7 +66,7 @@ export function WorkspaceHeader({ workspace, windows }: { workspace: HomeWorkspa
             </button>;
           })}
         </nav>
-        <InitiativeSearch initiatives={contents.initiatives} disabled={workspace.searchBlocked || workspace.discardRequest !== null || workspace.restoreRequested} onOpen={workspace.openInitiative} />
+        <InitiativeSearch initiatives={contents.initiatives} masters={contents} disabled={workspace.searchBlocked || workspace.discardRequest !== null || workspace.restoreRequested} onOpen={workspace.openInitiative} />
         <button className="home-icon-button" type="button" aria-label="ウィンドウを複製" title="ウィンドウを複製"
           disabled={navigationBlocked || preview !== null || workspace.screen.page === "data-history"} onClick={windows.duplicate}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="1" /><path d="M16 8V4H4v12h4" /></svg>

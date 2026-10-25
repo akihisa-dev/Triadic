@@ -9,7 +9,7 @@ test('検索で表示中の同じ施策を選び直すと一次予算で開く',
   await expect(app.getByRole('spinbutton',{name:'売上高 4月の金額',exact:true}).first()).toHaveValue('120');
   await app.getByRole('button',{name:'施策を検索',exact:true}).click();
   const dialog=app.getByRole('dialog',{name:'施策を検索',exact:true});
-  await dialog.getByRole('searchbox',{name:'施策名・備考',exact:true}).fill('確定予算の手修正');
+  await dialog.getByRole('searchbox',{name:'施策名・備考・分類',exact:true}).fill('確定予算の手修正');
   await dialog.getByRole('button',{name:'確定予算の手修正',exact:true}).click();
   await expect(app.getByRole('tab',{name:'一次予算',exact:true})).toHaveAttribute('aria-selected','true');
   await expect(app.getByRole('spinbutton',{name:'売上高 4月の金額',exact:true}).first()).toHaveValue('100');
@@ -42,7 +42,7 @@ for(const first of ['一次予算','確定予算']) test(`両種別の展開表�
   await expect(app.getByRole('tab',{name:first,exact:true})).toHaveAttribute('aria-selected','true');
   await app.getByRole('button',{name:'施策を検索',exact:true}).click();
   const dialog=app.getByRole('dialog',{name:'施策を検索',exact:true});
-  await dialog.getByRole('searchbox',{name:'施策名・備考',exact:true}).fill('確定予算の手修正');
+  await dialog.getByRole('searchbox',{name:'施策名・備考・分類',exact:true}).fill('確定予算の手修正');
   await dialog.getByRole('button',{name:'確定予算の手修正',exact:true}).click();
   await expect(app.getByRole('tab',{name:'一次予算',exact:true})).toHaveAttribute('aria-selected','true');
 });

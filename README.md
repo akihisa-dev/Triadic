@@ -94,6 +94,8 @@ Save As captures the destination contents immediately after selection, before wa
 
 Save As and conflict recovery both reject destinations used by another open/loading plan or pending save. A recovery destination stays reserved until the new file reference is shared; cancellation or failure releases the reservation.
 
+The existing header search finds saved initiatives by name, notes, and selected breakdown category, subcategory, department, industry, and period names. Space-separated terms must all match across those fields. Results show only classifications matching at least one term; an empty query shows no classification details. Historical viewing uses names from that checkpoint. No buttons or input fields are added.
+
 ### Current scope and limitations
 
 - The app runs as a Chrome extension and handles local files for which you grant read/write permission. It does not transmit plans externally or synchronize across browsers.
@@ -650,7 +652,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 総原価表の科目・設定済み集計の金額から内訳を開けます。月別・期間計・比較差額と部署・業種の条件に合わせ、前年額と施策の科目行別の増減、集計の加減符号を確認できます。施策名から編集へ進み、「総原価表へ戻る」で元の分類・スクロール位置へ戻ります。利益率・未設定集計は対象外です。過去閲覧では編集できません。内訳と合計は円単位で計算し、各表示だけ整数千円に丸めるため、表示値の足し算と合計が一致しない場合があります。同じ計画の表示中は科目・月別の候補を再利用し、対象外の施策行を期間切り替えや再表示ごとに走査しません。200行を超える内訳は行の高さを測って表示範囲の周辺だけを描画し、名称の折り返し、相殺後0の行、全体の合計と施策への移動を維持します。内訳は保存せず、保存形式・追加権限・外部送信に変更はありません。
 
-共通ヘッダーの「施策を検索」で、保存済みの施策名・備考から詳細へ移動できます。全半角・英字の大小を区別せず、空白で区切った複数語をすべて含む施策を登録順・50件ずつ表示します。検索語なしは全件です。結果を選ぶか、入力欄のEnterで表示ページの先頭を開きます。日本語変換の確定では移動しません。閉じる・Escで元の画面と検索ボタンへ戻り、検索語は同じファイルを開いている間そのウィンドウ内だけに保持し、ファイルを閉じると破棄します。再表示では最新の参照対象を検索し、ページ位置は先頭へ戻します。検索語をファイルや端末へ永続保存しません。検索で一覧の表示条件や予算を変更せず、未保存編集・保存中・確認待ちは検索できません。登録前の施策入力は保持し、検索から別の施策を開いても画面の戻る操作で再開できます。過去閲覧では選んだ時点の施策を閲覧専用で開きます。検索は端末内だけで行い、保存形式・権限・外部送信は変更しません。
+共通ヘッダーの「施策を検索」で、保存済みの施策名・備考と、施策に選択された展開名・展開区分名・部署名・業種名・期間名から詳細へ移動できます。既存の検索欄へ、例えば「運輸部 燃料」と入力すると分類と内容を組み合わせて探せます。結果には検索語のいずれかに一致した分類だけを「部署：運輸部」のように表示します。空の検索では分類を表示せず、ボタンや入力欄は増やしません。全半角・英字の大小を区別せず、空白で区切った複数語をすべて含む施策を登録順・50件ずつ表示します。検索語なしは全件です。結果を選ぶか、入力欄のEnterで表示ページの先頭を開きます。日本語変換の確定では移動しません。閉じる・Escで元の画面と検索ボタンへ戻り、検索語は同じファイルを開いている間そのウィンドウ内だけに保持し、ファイルを閉じると破棄します。再表示では最新の参照対象を検索し、ページ位置は先頭へ戻します。検索語をファイルや端末へ永続保存しません。検索で一覧の表示条件や予算を変更せず、未保存編集・保存中・確認待ちは検索できません。登録前の施策入力は保持し、検索から別の施策を開いても画面の戻る操作で再開できます。過去閲覧では選んだ時点の施策と分類名で検索し、施策を閲覧専用で開きます。検索は端末内だけで行い、保存形式・権限・外部送信は変更しません。
 
 施策詳細の「複製して新規作成」で、保存済みの分類・備考・科目行と一次／確定予算を新規入力へ引き継げます。名前には重複しない「（コピー）」を付け、手修正0・同額手修正・引き継ぎを保持します。内容を調整して「登録」するまではファイルや予算に追加しません。元の施策は変更せず、保持中の登録前入力は確認後だけ置き換えます。未保存・保存中・過去閲覧中は使えず、登録失敗や取消では入力を保持します。登録前の入力は画面内だけに保持し、ファイル終了で破棄します。保存形式・権限・外部送信に変更はありません。
 

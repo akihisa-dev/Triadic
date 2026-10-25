@@ -1,13 +1,40 @@
 import { test, expect, settleMotion } from "./fixtures";
 import { test as standalone } from "@playwright/test";
 
+standalone("分類と備考を合わせて検索し、一致した分類だけを表示して最新の改名へ追従する", async ({ page }) => {
+  await page.goto("/tests/ui/initiative-search.html");
+  const trigger = page.getByRole("button", { name: "施策を検索", exact: true });
+  await trigger.click();
+  const dialog = page.getByRole("dialog"), input = dialog.getByRole("searchbox", { name: "施策名・備考・分類", exact: true });
+  await input.fill("運輸 コスト");
+  await expect(dialog.getByLabel("検索結果件数")).toHaveText("1件 / 全125件");
+  await expect(dialog.getByRole("listitem")).toContainText("部署：運輸部");
+  await expect(dialog.getByRole("listitem").locator("p").last()).toHaveText("展開：コスト　部署：運輸部");
+  await input.fill("上期 xyz 運行");
+  await expect(dialog.getByRole("listitem").first().locator("p").last()).toHaveText("展開区分：運行効率化　業種：一般貨物ＸＹＺ　期間：上期");
+  await input.fill("運輸 共通");
+  await expect(dialog).toContainText("条件に一致する施策はありません。");
+  await input.fill("運輸");
+  await input.press("Enter");
+  await expect(page.getByLabel("移動先")).toHaveText("確認施策125");
+  await page.getByRole("button", { name: "部署名を更新", exact: true }).click();
+  await trigger.click();
+  await expect(input).toHaveValue("運輸");
+  await expect(dialog).toContainText("条件に一致する施策はありません。");
+  await input.fill("配送");
+  await expect(dialog.getByRole("listitem")).toContainText("部署：配送部");
+  await input.fill("");
+  await expect(dialog.getByRole("listitem").first().locator("p")).toHaveCount(1);
+  await expect(dialog.getByRole("searchbox")).toHaveCount(1);
+});
+
 test("共通検索から備考で施策を探し、詳細へ移動して閉じる操作もできる", async ({ page, app }, info) => {
   await page.goto("/tests/ui/preview.html");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   const trigger = app.getByRole("button", { name: "施策を検索", exact: true });
   await trigger.click();
   const dialog = app.getByRole("dialog", { name: "施策を検索", exact: true });
-  const input = dialog.getByRole("searchbox", { name: "施策名・備考", exact: true });
+  const input = dialog.getByRole("searchbox", { name: "施策名・備考・分類", exact: true });
   await expect(input).toBeFocused();
   await input.fill("代理店 販売");
   await expect(dialog.getByLabel("検索結果件数")).toHaveText("1件 / 全14件");
