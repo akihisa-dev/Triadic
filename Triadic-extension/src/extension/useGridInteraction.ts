@@ -5,6 +5,7 @@ import { gridBounds, type GridCell, type GridSelection } from "../core/tables/gr
 export function useGridInteraction() {
   const [selection, setSelection] = useState<GridSelection | null>(null);
   const [editing, setEditing] = useState(false);
+  const [focusedCell, setFocusedCell] = useState<GridCell | null>(null);
   const [cut, setCut] = useState<{ selection: GridSelection; text: string; token: string; stamp: string } | null>(null);
   const table = useRef<HTMLTableElement>(null);
   const dragging = useRef(false);
@@ -42,5 +43,5 @@ export function useGridInteraction() {
     setEditing(false);
     table.current?.querySelector<HTMLInputElement>(`input[data-row="${cell.row}"][data-column="${cell.column}"]`)?.focus();
   };
-  return { selection, setSelection, editing, setEditing, cut, setCut, table, dragging, original, bounds, focus, extendSelection };
+  return { selection, setSelection, editing, setEditing, focusedCell, setFocusedCell, cut, setCut, table, dragging, original, bounds, focus, extendSelection };
 }

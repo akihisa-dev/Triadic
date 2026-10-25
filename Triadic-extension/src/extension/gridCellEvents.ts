@@ -47,14 +47,15 @@ export function gridCellEvents(grid: Interaction | (() => Interaction), cell: Gr
   let committed = false;
   return {
     onPointerDown(event: PointerEvent<HTMLElement>) {
-      const { selection, editing, dragging, focus } = current();
+      const { focusedCell, editing, dragging, focus } = current();
       if (adapter.blocked || event.button !== 0 || (event.target as HTMLElement).closest("button")
-        || (editing && selection?.end.row === cell.row && selection.end.column === cell.column && !event.shiftKey)) return;
+        || (editing && focusedCell?.row === cell.row && focusedCell.column === cell.column && !event.shiftKey)) return;
       event.preventDefault(); dragging.current = true; focus(cell, event.shiftKey);
     },
     input: {
       onFocus(event: FocusEvent<HTMLInputElement>) {
-        const { setSelection } = current();
+        const { setSelection, setFocusedCell } = current();
+        setFocusedCell(cell);
         adapter.captureOriginal(); event.currentTarget.select();
         setSelection(current => current && (current.anchor.row === cell.row && current.anchor.column === cell.column
           || current.end.row === cell.row && current.end.column === cell.column) ? current : { anchor: cell, end: cell });

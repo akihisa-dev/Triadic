@@ -120,7 +120,7 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
   const renderRow = (row: CostRow, rowIndex: number) => {
     const key = `${row.kind}:${row.id}`, input = row.kind === "account" ? inputsByAccount.get(row.id) : undefined;
     const selected = bounds && rowIndex >= bounds.top && rowIndex <= bounds.bottom ? `${bounds.left}:${bounds.right}` : "";
-    const activeEdit = grid.editing && selection?.end.row === rowIndex ? selection.end.column : null;
+    const activeEdit = grid.editing && grid.focusedCell?.row === rowIndex ? grid.focusedCell.column : null;
     const periods = periodAmounts.values[rowIndex], cached = rowCache.current.get(key);
     if (cached && cached.row === row && cached.input === input && cached.periods === periods && cached.selected === selected
       && cached.failed === calculationFailed && cached.readOnly === readOnly && cached.editable === !!draft && cached.activeEdit === activeEdit) return cached.element;

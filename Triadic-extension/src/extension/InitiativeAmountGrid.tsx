@@ -141,7 +141,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                   return <td key={month} className={selected ? "initiative-cell-selected" : ""}
                     onPointerEnter={event => extendSelection(cell, event.buttons)}
                     onPointerDown={events.onPointerDown}>
-                    <GridAmountInput editing={grid.editing && selection?.end.row === index && selection.end.column === column} type="text" role="spinbutton" aria-valuenow={isValidAmount(value) ? Number(value) : undefined} inputMode="text" data-row={index} data-column={column}
+                    <GridAmountInput editing={grid.editing && grid.focusedCell?.row === index && grid.focusedCell.column === column} type="text" role="spinbutton" aria-valuenow={isValidAmount(value) ? Number(value) : undefined} inputMode="text" data-row={index} data-column={column}
                       ref={input => { if (input) input.setCustomValidity(invalidInput ? "金額に有効な数値を入力してください。"
                         : input.value === "" || isValidAmount(input.value) ? "" : "金額は千円単位・小数点以下3桁までで入力してください。"); }}
                       aria-label={`${accountName} ${month}月の金額`}
