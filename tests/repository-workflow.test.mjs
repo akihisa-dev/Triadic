@@ -222,7 +222,7 @@ test("全機能確認用サンプルも除外し強制追加したコミット�
   const repo = await repository(t);
   await cp(path.join(projectRoot, ".gitignore"), path.join(repo.root, ".gitignore"));
   await mkdir(path.join(repo.root, "samples"));
-  const sample = "samples/全機能確認用.triadic";
+  const sample = "samples/2027年度サンプル予算.triadic";
   await writeFile(path.join(repo.root, sample), "generated sample");
   succeeds(repo.run("git", ["check-ignore", "--quiet", "--", sample]));
   fails(repo.run("git", ["add", "--", sample]), /ignored/);

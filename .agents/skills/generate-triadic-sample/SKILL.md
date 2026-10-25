@@ -51,7 +51,7 @@ description: Triadichromeの.triadicサンプル・確認用データの作成�
 
 - 生成元：[tests/ui/sample-plan.ts](../../../tests/ui/sample-plan.ts)、[会社予算生成](../../../tests/ui/sample-business.ts)、[施策定義](../../../tests/ui/sample-portfolio.ts)
 - 生成処理：[scripts/generate-sample-plan.mjs](../../../scripts/generate-sample-plan.mjs)
-- 主成果物：[samples/全機能確認用.triadic](../../../samples/全機能確認用.triadic)（ローカルで生成・検証し、Git管理・commit・pushには含めない）
+- 主成果物：[samples/2027年度サンプル予算.triadic](../../../samples/2027年度サンプル予算.triadic)（ローカルで生成・検証し、Git管理・commit・pushには含めない）
 - データの検証：[tests/sample-plan.mjs](../../../tests/sample-plan.mjs)、[業務予算の独立検証](../../../tests/reference-sample.mjs)
 - 画面の検証：[会社予算](../../../tests/ui/large-plan.spec.ts)、[小規模データ](../../../tests/ui/sample-plan.spec.ts)と機能別の専用テスト
 

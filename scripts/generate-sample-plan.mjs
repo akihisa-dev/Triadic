@@ -9,7 +9,7 @@ if (args.length > 1 || (args.length === 1 && args[0] !== "--check")) {
   throw new Error("引数は --check のみ指定できます。");
 }
 const check = args[0] === "--check";
-const relativeOutput = "samples/全機能確認用.triadic";
+const relativeOutput = "samples/2027年度サンプル予算.triadic";
 const output = join(projectRoot, relativeOutput);
 await withNodeBundle("tests/sample-api.ts", async ({ createSamplePlan, openTriadicDatabase, BUSINESS_SAMPLE_FISCAL_YEAR }, temporary) => {
   // Compare the full schema and every stored value, not SQLite's internal write counters.

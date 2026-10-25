@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
-const sample = Array.from(await readFile(new URL('../../samples/全機能確認用.triadic', import.meta.url)));
+const sample = Array.from(await readFile(new URL('../../samples/2027年度サンプル予算.triadic', import.meta.url)));
 async function picker(page: import('@playwright/test').Page) {
  await page.evaluate(async bytes => {
   const root = await navigator.storage.getDirectory();

@@ -4,7 +4,7 @@ import {withNodeBundle} from './node-bundle.mjs';
 import {projectRoot} from './paths.mjs';
 // Read-only diagnostic. Times are observations, never machine-dependent test assertions.
 await withNodeBundle('tests/performance-api.ts', async api => {
-  const bytes = new Uint8Array(await readFile(join(projectRoot,'samples/全機能確認用.triadic')));
+  const bytes = new Uint8Array(await readFile(join(projectRoot,'samples/2027年度サンプル予算.triadic')));
   await api.readPlanContents(await api.createTriadicDatabase(2026));
   const timings = {};
   const timed = async (name, operation) => {

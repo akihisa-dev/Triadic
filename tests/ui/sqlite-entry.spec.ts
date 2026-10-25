@@ -1,6 +1,6 @@
 import { test,expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
-const sample=Array.from(await readFile(new URL('../../samples/全機能確認用.triadic',import.meta.url)));
+const sample=Array.from(await readFile(new URL('../../samples/2027年度サンプル予算.triadic',import.meta.url)));
 test('入口ではSQLiteを準備せず、Worker起動失敗後の再選択でファイルを開く',async({page})=>{
  const wasm:string[]=[];page.on('request',request=>{const url=new URL(request.url());if(url.pathname.endsWith('.wasm')&&!url.searchParams.has('import'))wasm.push(request.url());});
  await page.goto('/');await expect(page.getByRole('button',{name:'ファイルを開く',exact:true})).toBeEnabled();

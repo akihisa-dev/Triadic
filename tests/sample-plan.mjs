@@ -111,7 +111,7 @@ export async function verifySamplePlan(api, { excel = false } = {}) {
     assert.deepEqual(plan.details.filter(row => row.initiativeId === product.id && row.kindId === 1 && [4,3].includes(row.month)).slice(0,2).map(row => [row.year,row.month]), [[2026,4],[2027,3]]);
   } finally { database.close(); }
   assert.equal((await readPlanContents(bytes)).accounts.length, 59, "削除確認後も元データを再利用できる");
-  const largeBytes = new Uint8Array(await readFile(new URL("../samples/全機能確認用.triadic", import.meta.url)));
+  const largeBytes = new Uint8Array(await readFile(new URL("../samples/2027年度サンプル予算.triadic", import.meta.url)));
   await validateTriadicDatabase(largeBytes);
   const large = await readPlanContents(largeBytes);
   assert.equal(large.fiscalYear, 2027, "表示名と実ファイルの基準年度を一致させる");

@@ -4,7 +4,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {projectRoot as root} from './paths.mjs';
 const {code}=await transform(await readFile(root+'/tests/ui/memory-files.ts','utf8'),{loader:'ts',format:'esm'});
 const {installMemoryFiles}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
-const bytes=[...await readFile(root+'/samples/全機能確認用.triadic')];
+const bytes=[...await readFile(root+'/samples/2027年度サンプル予算.triadic')];
 const browser=await chromium.launch({channel:'chrome',headless:true});
 const trials=[];
 try {for(let i=0;i<5;i++) {

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {join} from 'node:path';
 export async function verifyPerformanceData(api, root) {
-  const bytes = new Uint8Array(await readFile(join(root, 'samples/全機能確認用.triadic')));
+  const bytes = new Uint8Array(await readFile(join(root, 'samples/2027年度サンプル予算.triadic')));
   const compact = await api.readPlanContents(bytes);
   assert.equal(compact.details, undefined, '通常の読込では派生明細を作らない');
   const complete = await api.readPlanContents(bytes);

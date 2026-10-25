@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { test, expect, type Page } from "@playwright/test";
 import { settleMotion } from "./fixtures";
 
-const sample = await readFile(new URL("../../samples/全機能確認用.triadic", import.meta.url));
+const sample = await readFile(new URL("../../samples/2027年度サンプル予算.triadic", import.meta.url));
 
 // Real structured-cloneable handles, confined to this test browser's storage.
 async function filePicker(page: Page, name = "再開テスト.triadic", bytes = Array.from(sample)) {

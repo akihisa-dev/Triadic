@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { installCloneableFiles } from './cloneable-files';
 const openProduction = async (page: import('@playwright/test').Page) => {
   await page.goto('/Triadichrome-extension/index.html');
-  await page.evaluate(installCloneableFiles, {bytes:[...await readFile('samples/全機能確認用.triadic')],name:'画面テスト.triadic'});
+  await page.evaluate(installCloneableFiles, {bytes:[...await readFile('samples/2027年度サンプル予算.triadic')],name:'画面テスト.triadic'});
   await page.getByRole('button',{name:'ファイルを開く',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Home',exact:true})).toBeVisible();
 };
