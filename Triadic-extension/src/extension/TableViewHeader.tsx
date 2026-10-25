@@ -106,7 +106,7 @@ function TableFilterPanel<T>({ column, source, filter, sorted, trigger, onClose,
     onKeyDown={event => {
       event.stopPropagation();
       if (event.key === "Escape") { event.preventDefault(); close(); }
-      if (event.key === "Enter" && !event.nativeEvent.isComposing && event.target instanceof HTMLInputElement) { event.preventDefault(); apply(); }
+      if (event.key === "Enter" && !event.nativeEvent.isComposing && event.nativeEvent.keyCode !== 229 && event.target instanceof HTMLInputElement) { event.preventDefault(); apply(); }
       if (event.key === "Tab") {
         const controls = [...panel.current!.querySelectorAll<HTMLElement>("button:not(:disabled),input:not(:disabled),select:not(:disabled)")];
         const at = controls.indexOf(document.activeElement as HTMLElement), next = event.shiftKey ? at - 1 : at + 1;
