@@ -17,6 +17,7 @@
 .cost-table th, .cost-table td { height: 28px; padding: 4px 6px; white-space: nowrap; }
 .cost-table-page .cost-table th, .cost-table-page .cost-table td { height: 24px; padding-block: 2px; }
 .cost-table thead th { font-size: 12px; }
+.cost-table thead th[scope="col"], .initiative-overview-page thead th { border-right: 1px solid var(--table-line); }
 .cost-table .initiative-list-name { position: sticky; left: 0; z-index: 1; width: 176px; white-space: normal; background: var(--soft); border-right: 1px solid var(--table-divider); }
 .cost-table thead { position: sticky; top: 0; z-index: 2; }
 .cost-table .cost-data-row th, .cost-table .cost-data-row td { background: var(--canvas); font-weight: 400; }
@@ -82,10 +83,11 @@
 .initiative-attribute-hint { font-size: 11px; font-weight: 400; }
 
 /* Keep indicators outside the label's layout so they cannot shift its centre. */
-.initiative-overview-page .table-view-heading { position: relative; }
-.initiative-overview-page button.table-view-sort { position: relative; justify-content: center; text-align: center; }
-.initiative-overview-page .table-view-direction { position: absolute; right: 12px; }
-.initiative-overview-page button.table-view-filter { position: absolute; right: -10px; }
+:is(.initiative-overview-page, .expansion-table-page) .table-view-heading { position: relative; }
+:is(.initiative-overview-page, .expansion-table-page) button.table-view-sort { position: relative; justify-content: center; text-align: center; }
+:is(.initiative-overview-page, .expansion-table-page) .table-view-direction { position: absolute; right: 12px; }
+:is(.initiative-overview-page, .expansion-table-page) button.table-view-filter { position: absolute; right: -10px; }
+.expansion-table thead th:is([scope="col"], [scope="colgroup"]) { text-align: center; }
 
 /* When the full frozen section leaves no room for a data row, freeze only column headers. */
 .cost-table.cost-header-scroll thead { position: static; }

@@ -1,12 +1,12 @@
 import { test, expect, settleMotion } from "./fixtures";
 
-test("施策一覧の列見出し文字を列の中央に保ち、並べ替えと絞り込みを操作できる", async ({ app, page }) => {
+for (const screen of ["施策一覧", "展開表"]) test(`${screen}の列見出し文字を列の中央に保ち、並べ替えと絞り込みを操作できる`, async ({ app, page }) => {
   await page.goto("/tests/ui/preview.html");
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
-  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "施策一覧", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: screen, exact: true }).click();
   await settleMotion(app.locator("body"));
-  const table = app.getByRole("table", { name: "施策一覧", exact: true });
+  const table = app.getByRole("table", { name: screen, exact: true });
   const centred = async () => {
     const offsets = await table.locator("thead .table-view-sort").evaluateAll(buttons => buttons.map(button => {
       const range = document.createRange();
@@ -14,7 +14,7 @@ test("施策一覧の列見出し文字を列の中央に保ち、並べ替え�
       const text = range.getBoundingClientRect(), cell = button.closest("th")!.getBoundingClientRect();
       return Math.abs((text.left + text.right - cell.left - cell.right) / 2);
     }));
-    expect(offsets).toHaveLength(40);
+    expect(offsets.length).toBeGreaterThanOrEqual(40);
     for (const offset of offsets) expect(offset).toBeLessThanOrEqual(1);
   };
   await centred();
@@ -30,6 +30,22 @@ test("施策一覧の列見出し文字を列の中央に保ち、並べ替え�
   await panel.getByRole("button", { name: "適用", exact: true }).click();
   await expect(table.getByRole("button", { name: "施策名を絞り込む（適用中）", exact: true })).toBeVisible();
   await centred();
+});
+
+for (const screen of ["施策一覧", "総原価表"]) test(`${screen}の列見出しを縦罫線で区切る`, async ({ app, page }) => {
+  await page.goto("/tests/ui/preview.html");
+  await expect(page.getByRole("status")).toHaveText("操作できます");
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: screen, exact: true }).click();
+  await settleMotion(app.locator("body"));
+  const table = app.getByRole("table", { name: screen, exact: true });
+  const borders = await table.locator('thead th[scope="col"], thead th[scope="colgroup"]').evaluateAll(cells => cells.map(cell => {
+    const style = getComputedStyle(cell), next = cell.nextElementSibling && getComputedStyle(cell.nextElementSibling);
+    return { right: style.borderRightStyle === "solid" && parseFloat(style.borderRightWidth) === 1,
+      nextLeft: next?.borderLeftStyle === "solid" && parseFloat(next.borderLeftWidth) === 1 };
+  }));
+  expect(borders.length).toBeGreaterThan(40);
+  for (const border of borders) expect(border.right || border.nextLeft).toBe(true);
 });
 
 test("対象の表だけ見出し操作を持ち、総原価表と固定定義は行構造を保つ", async ({ app, page }) => {
