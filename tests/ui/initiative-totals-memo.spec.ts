@@ -56,6 +56,7 @@ test("選択・範囲・編集モードでは合計を再計算せず、計算�
   await expect(april("費用")).toHaveText("0");
   await expect(cell).toHaveValue("0");
   await page.getByRole("button", { name: "1行目を削除", exact: true }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "削除", exact: true }).click();
   await expect(page.getByRole("combobox")).toHaveCount(9);
   expect(errors).toEqual([]);
 });

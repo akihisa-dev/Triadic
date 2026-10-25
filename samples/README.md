@@ -12,7 +12,7 @@
 
 `npm run samples:generate`で生成し、アプリの「ファイルを開く」で上記ファイルを選択します。Codex内の画面確認では `npm run dev:ui` で起動した[会社予算の確認入口](http://127.0.0.1:4173/tests/ui/preview.html?data=large)を使用できます。ここでは実ファイルの内容を読み込み、編集・保存はメモリ内で再現します。
 
-会社予算には業務上の施策だけを入れます。既存の14施策の小規模データ（`?data=full`）は空欄・0・削除制約などに使用します。上限超過、不正形式、許可拒否、競合、大量行などは専用の合成データ・模擬ファイル・自動テストで確認します。確認用の施策を正常な会社予算や履歴へ混ぜません。
+会社予算には業務上の施策だけを入れます。既存の14施策の小規模データ（`?data=full`）は空欄・0・科目行の操作などに使用します。上限超過、不正形式、許可拒否、競合、大量行などは専用の合成データ・模擬ファイル・自動テストで確認します。確認用の施策を正常な会社予算や履歴へ混ぜません。
 
 ## 実装済み機能との対応
 
@@ -25,6 +25,7 @@
 | 部署・業種・所属 | core/storage/departmentMaster.ts・industryMaster.ts | 7圏域＋本社、デフォルト9業種。営業倉庫は衣料品・非衣料品とも不動産B | マスタと絞込候補を確認。不正所属は私有コピーで登録 | 未所属の業種を登録拒否。不動産Aのテナント収入はなく、本社は一般管理費・営業外のみ | 自動: sample-plan.mjs・department-data.mjs |
 | 展開・区分・期間・開始年月 | core/storage/expansionMaster.ts・core/domain/initiativeStartMonth.ts | 初期8展開/6区分。期間差は前年10月・11月 | 展開表/施策詳細で分類を確認。負ID/0/未選択は専用データ | 業務に合う分類。期間差は前年、設備導入は準備月から活動 | 自動: start-months.mjs・expansion-table-view.mjs。画面: 詳細 |
 | 施策登録・詳細・同科目複数行 | core/storage/initiatives.ts・extension/InitiativeDetailPage.tsx | 東京の倉庫作業料/保管料、AI導入支援/委託削減は同科目別行 | コピーを編集・登録し再読込 | 各行の金額を独立保持、元施策不変 | 自動: initiative-data.mjs・duplicate-initiative.mjs。画面: 月額編集 |
+| 科目行の削除確認・並べ替え | extension/InitiativeAmountGrid.tsx・core/storage/initiatives.ts | 既存の科目行と両予算を使用。予算設計・保存項目の変更なし | 小規模データで削除取消・確定と行ハンドルのドラッグ、再表示、操作取消を確認 | キャンセルで元入力を保持。並べ替えで金額・手修正・行識別子を保持 | 画面: initiative-row-actions.spec.ts・auto-save.spec.ts。自動: auto-save.mjs |
 | 一次の引継ぎ・確定0・同額固定 | core/domain/kinds.ts・core/storage/initiatives.ts | 東京運賃4月3,000の同額固定、関東倉庫10月の確定0 | コピーの一次を変更し再読込、確定値を解除 | 固定中は3,000/0を維持、解除後は一次へ追従 | 自動: reference-sample.mjs・kind-amount-storage.mjs。画面: 種別切替 |
 | 開設前費用・検収延期 | core/tables/planTables.ts・core/domain/kinds.ts | 名古屋7月開設、関東倉庫一次10月/確定11月 | 関東倉庫の10月/11月を比較 | 10月確定売上/変動費/償却0、家賃9,000・給与4,200は残る | 自動: reference-sample.mjs。画面: 関東倉庫詳細 |
 | 正負・端数・相殺・通年化 | core/domain/amounts.ts・core/tables/initiatives.ts | 物量減、移管の対、3月資材−650.125、前年投資期間差 | 総原価表・展開表・施策一覧を照合し移管の両施策を見る | 移管は全社0。円精度を保持。前年稼働月は重ねて増減しない | 自動: reference-sample.mjs。画面: 展開表 |

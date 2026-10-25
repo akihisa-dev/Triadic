@@ -166,6 +166,7 @@ test("非0の金額を消さずに科目変更・削除できる", async ({ page
   await expect(app.getByRole("spinbutton", { name: "旅費 4月の金額", exact: true })).toHaveValue("100");
   await expect(remove).toBeEnabled();
   await remove.click();
+  await app.getByRole("alertdialog").getByRole("button", { name: "削除", exact: true }).click();
   await expect(app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true })).toBeEnabled();
   await expect(app.getByRole("alert")).toHaveCount(0);
   await app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true }).click();
@@ -278,7 +279,10 @@ for (const [kind, operation, failure] of [
     await expect(back).toBeEnabled();
     await expect(account).toBeEnabled();
     await expect(remove).toBeEnabled();
-    if (operation === "削除") await remove.click();
+    if (operation === "削除") {
+      await remove.click();
+      await app.getByRole("alertdialog").getByRole("button", { name: "削除", exact: true }).click();
+    }
     else { await account.focus(); await selectAccount(account, { label: "旅費" }); }
     await expect(back).toBeEnabled();
     await expect(app.getByRole("alert")).toHaveCount(0);

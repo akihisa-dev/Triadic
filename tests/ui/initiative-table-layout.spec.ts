@@ -13,7 +13,7 @@ test("施策の月別入力を罫線付きのコンパクトな表で表示す�
   const layout = await row.evaluate(element => {
     const cell = element.querySelector("td")!;
     const select = element.querySelector('[role="combobox"]')!;
-    const remove = element.querySelector("button")!;
+    const remove = element.querySelector(".initiative-row-delete")!;
     return {
       border: getComputedStyle(cell).borderRightWidth,
       bottom: getComputedStyle(cell).borderBottomWidth,
@@ -30,7 +30,7 @@ test("施策の月別入力を罫線付きのコンパクトな表で表示す�
   const amount = table.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true });
   await amount.fill("123.456");
   await expect(amount).toHaveValue("123.456");
-  await expect(app.getByRole("button", { name: "1行目を削除", exact: true })).toBeDisabled();
+  await expect(app.getByRole("button", { name: "1行目を削除", exact: true })).toBeEnabled();
 });
 
 test("狭い画面でも長い科目名をコードなしで全文表示し、最後の月を編集できる", async ({ page, app }) => {
@@ -61,7 +61,7 @@ test("狭い画面でも長い科目名をコードなしで全文表示し、�
     const context = canvas.getContext("2d")!;
     context.font = style.font;
     const cell = select.closest("th")!;
-    const remove = cell.querySelector("button")!;
+    const remove = cell.querySelector(".initiative-row-delete")!;
     const container = select.closest(".initiative-grid-scroll")!;
     return {
       available: select.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 20,
@@ -80,7 +80,7 @@ test("狭い画面でも長い科目名をコードなしで全文表示し、�
   expect(await scroll.evaluate(node => node.scrollLeft)).toBeGreaterThan(0);
   const edges = await table.getByRole("combobox").evaluateAll(nodes => nodes.map(node => {
     const rect = node.getBoundingClientRect();
-    const remove = node.closest("th")!.querySelector("button")!.getBoundingClientRect();
+    const remove = node.closest("th")!.querySelector(".initiative-row-delete")!.getBoundingClientRect();
     return { left: rect.left, right: rect.right, remove: remove.left };
   }));
   expect(edges[0]).toEqual(edges[1]);
@@ -89,6 +89,6 @@ test("狭い画面でも長い科目名をコードなしで全文表示し、�
   await expect(lastMonth).toBeInViewport();
   await lastMonth.fill("12.345");
   await expect(lastMonth).toHaveValue("12.345");
-  await expect(select).toBeDisabled();
+  await expect(select).toBeEnabled();
   await expect(select).toHaveValue("固定資産減価償却費");
 });

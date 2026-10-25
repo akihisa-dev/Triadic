@@ -164,6 +164,8 @@ The input screen places initiative name, notes, and registration button in that 
 
 Account changes and row deletion are available even when current or saved amounts are nonzero. Changing an account preserves initial amounts and final-budget overrides, including explicit zero and inheritance. Deleting a row removes its amounts for both budget kinds. These actions wait only during autosave; continuous amount entry remains available.
 
+The trash icon opens a confirmation naming the account and the removal of both budgets. Cancel or Esc keeps the input. Drag the handle to the left of the account, or use its up/down keys, to reorder rows. The order is shared by both budgets and preserves row identity, amounts, explicit zero, manual overrides, and inheritance. New input stays in the draft until registration; registered changes use autosave and undo.
+
 Notifications stack vertically in a shared bottom-right area, so simultaneous total errors and save failures do not cover recovery buttons. They do not shift fields or tables.
 
 Blank rows without selected accounts are not saved. An existing all-kinds/all-months-zero row is also deleted when all months are blank and its account is deselected. Unselected rows with entered amounts or overrides remain as input errors.
@@ -741,6 +743,8 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 施策入力は、上段に施策名・備考・新規施策の登録ボタンをこの順で並べ、その下の行の左端に展開名・展開区分・部署名・期間名・業種名のドロップダウンリストを配置します。施策名と備考は同じ横幅の一行入力で、それぞれ最大20remです。狭い画面では上段を順に折り返し、選択欄を2列にします。選択欄は高さ36pxで、開いた候補一覧から選びます。新規入力は入力欄と登録ボタンの高さを36pxに揃えます。展開・部署・業種は必須、期間は任意です。
 
 施策入力・施策詳細では、入力中・保存済みの金額が非0でも科目変更・行削除ができます。科目変更では一次予算と確定予算の金額・明示0・手修正・引き継ぎを保持します。行削除では両種別の金額も削除します。自動保存の実行中は科目変更と行削除を待ち、金額の連続入力は続けられます。
+
+削除アイコンは科目名と両予算の金額を削除する旨の確認を開き、キャンセル・Escでは入力を保持します。科目名の左のハンドルのドラッグ、またはハンドル上の上下キーで科目行を並べ替えます。並び順は両予算で共通とし、月別金額・明示0・手修正・引き継ぎと行識別子を保持します。登録前は入力内だけを変更し、登録済みは自動保存・操作取消の対象にします。
 
 通知は共通の右下領域で縦に並び、合計エラーと保存失敗が同時に出ても復旧ボタンに重なりません。通知の表示で入力欄や表は移動しません。
 

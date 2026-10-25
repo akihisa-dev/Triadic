@@ -184,6 +184,7 @@ test("金額項目の3合計は入力と種別に追従する", async ({ app }) 
   await expect(footer.getByRole("rowheader", { name: "売上原価合計", exact: true })).toHaveCount(0);
   await expect(footer.getByRole("rowheader", { name: "利益合計", exact: true })).toHaveCount(1);
   await app.getByRole("button", { name: "3行目を削除", exact: true }).click();
+  await app.getByRole("alertdialog").getByRole("button", { name: "削除", exact: true }).click();
   await expect(footer.getByRole("row")).toHaveCount(3);
 });
 
@@ -252,6 +253,7 @@ for (const kind of ["一次予算", "確定予算"]) {
     await selectAccount(app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }), { label: "旅費" });
     await expect(app.getByRole("spinbutton", { name: "旅費 4月の金額", exact: true })).toHaveValue("100.125");
     await app.getByRole("button", { name: "1行目を削除", exact: true }).click();
+    await app.getByRole("alertdialog").getByRole("button", { name: "削除", exact: true }).click();
     await expect(app.getByRole("spinbutton", { name: "旅費 4月の金額", exact: true })).toHaveCount(0);
     await expect(app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true })).toHaveValue("0");
     await expect(app.getByRole("button", { name: "2行目を削除", exact: true })).toHaveCount(0);

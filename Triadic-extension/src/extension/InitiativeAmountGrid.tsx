@@ -1,3 +1,4 @@
+import { ConfirmationDialog } from "./ConfirmationDialog";
 import { GridAmountInput } from "./GridAmountInput";
 import { hasUnclassifiedAmount } from "../core/domain/budgetHints";
 import { AccountRowSelect } from "./AccountRowSelect";
@@ -27,6 +28,13 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, rowOpera
   const { selection, setSelection, setEditing, table, original, bounds, extendSelection } = grid;
   const [error, setError] = useState("");
   const [activeAccount, setActiveAccount] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [dragged, setDragged] = useState<string | null>(null);
+  const [drop, setDrop] = useState<{ key: string; before: boolean } | null>(null);
+  const rowKeyAt = (index: number) => draft.rows[index]!.id ?? `draft:${index}`;
+  const rowOperationsBlocked = readOnly || isSaving || rowOperationsDisabled;
+  const deletingIndex = draft.rows.findIndex((_, index) => rowKeyAt(index) === deleting);
+  const deletingRow = draft.rows[deletingIndex];
   const originalInherited = useRef(false);
   const accountsById = useMemo(() => new Map(accounts.map(account => [account.id, account])), [accounts]);
   const { rows, invalidNumbers } = draft;
@@ -64,7 +72,26 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, rowOpera
     if (isSaving || !canEditInitiativeCell(draft, kind, cell)) return;
     onDraftChange(changeInitiativeCell(draft, kind, cell, value, badInput || value !== "" && !isValidAmount(value) ? { original: original.current, inherited: originalInherited.current } : undefined));
   };
+  const reorder = (source: string, target: string, before: boolean) => {
+    if (rowOperationsBlocked || source === target) return;
+    const from = draft.rows.findIndex((_, index) => rowKeyAt(index) === source);
+    const to = draft.rows.findIndex((_, index) => rowKeyAt(index) === target);
+    if (from < 0 || to < 0) return;
+    const rows = [...draft.rows];
+    const [moved] = rows.splice(from, 1);
+    rows.splice(to - (from < to ? 1 : 0) + (before ? 0 : 1), 0, moved!);
+    if (rows.every((row, index) => row === draft.rows[index])) return;
+    onDraftChange({ ...draft, rows });
+  };
   return <>
+    <ConfirmationDialog open={deleting !== null} title="勘定科目行を削除" confirmLabel="削除"
+      message={`${deletingIndex + 1}行目「${deletingRow ? accountsById.get(deletingRow.accountId!)?.accountName ?? "科目未選択" : "削除済みの行"}」を削除します。一次予算・確定予算の金額も削除されます。`}
+      busy={isSaving || rowOperationsDisabled}
+      onCancel={() => setDeleting(null)} onConfirm={() => {
+        if (rowOperationsBlocked) return;
+        if (deletingIndex >= 0) onDraftChange({ ...draft, rows: draft.rows.filter((_, index) => index !== deletingIndex) });
+        setDeleting(null);
+      }} />
     <StatusNotice message={error || totals.error || selectedTotal?.error || ""} error {...(error ? { onDismiss: () => setError("") } : {})} />
     <GridSelectionTotal total={selectedTotal} compact selectionDescription={selectionDescription} />
     <div className="initiative-grid-scroll">
@@ -77,19 +104,50 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, rowOpera
           </thead>
           <tbody>
             {draft.rows.map((row, index) => {
-              const rowKey = row.id ?? `draft:${index}`;
+              const rowKey = rowKeyAt(index);
               const accountName = accountsById.get(row.accountId!)?.accountName ?? `${index + 1}行目`;
               const unclassified = hints[index]!.unclassified;
-              return <tr key={row.id ?? index}>
+              return <tr key={row.id ?? index} className={drop?.key === rowKey ? drop.before ? "initiative-drop-before" : "initiative-drop-after" : undefined}
+                onDragOver={event => {
+                  if (!dragged || rowOperationsBlocked) return;
+                  event.preventDefault(); event.dataTransfer.dropEffect = "move";
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  setDrop({ key: rowKey, before: event.clientY < rect.top + rect.height / 2 });
+                }} onDrop={event => {
+                  if (!dragged) return;
+                  event.preventDefault();
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  reorder(dragged, rowKey, event.clientY < rect.top + rect.height / 2);
+                  setDragged(null); setDrop(null);
+                }}>
                 <th scope="row">
                   <div className="initiative-account-cell">
+                  <button type="button" className="text-button initiative-row-handle" aria-label={`${index + 1}行目を並べ替え`}
+                    disabled={rowOperationsBlocked || draft.rows.length < 2} draggable={!rowOperationsBlocked && draft.rows.length > 1}
+                    onDragStart={event => {
+                      if (rowOperationsBlocked) { event.preventDefault(); return; }
+                      event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", rowKey);
+                      setDragged(rowKey); setDrop(null);
+                    }} onDragEnd={() => { setDragged(null); setDrop(null); }}
+                    onKeyDown={event => {
+                      if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+                      event.preventDefault();
+                      const target = index + (event.key === "ArrowUp" ? -1 : 1);
+                      if (draft.rows[target]) reorder(rowKey, rowKeyAt(target), event.key === "ArrowUp");
+                    }}>
+                    <svg width="16" height="20" viewBox="0 0 16 20" fill="currentColor" aria-hidden="true">
+                      {[5, 10, 15].map(y => <g key={y}><circle cx="5" cy={y} r="1.25"/><circle cx="11" cy={y} r="1.25"/></g>)}
+                    </svg>
+                  </button>
                   <AccountRowSelect label={`${index + 1}行目の勘定科目`} value={row.accountId} accounts={accounts} account={accountsById.get(row.accountId!)}
                     disabled={readOnly || isSaving || rowOperationsDisabled || accounts.length === 0}
                     active={activeAccount === rowKey} onActivate={() => setActiveAccount(rowKey)}
                     onDeactivate={() => setActiveAccount(current => current === rowKey ? null : current)}
                     onChange={accountId => onDraftChange({ ...draft, rows: draft.rows.map((current, currentIndex) => currentIndex === index
                       ? { ...current, accountId } : current) })} />
-                  <button type="button" className="text-button" aria-label={`${index + 1}行目を削除`} disabled={readOnly || isSaving || rowOperationsDisabled} onClick={() => onDraftChange({ ...draft, rows: draft.rows.filter((_, position) => position !== index) })}>削除</button>
+                  <button type="button" className="text-button initiative-row-delete" aria-label={`${index + 1}行目を削除`} disabled={rowOperationsBlocked} onClick={() => setDeleting(rowKey)}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg>
+                  </button>
                   </div>
                   {unclassified && <span className="budget-attribute-hint" title="科目属性がなく、売上・費用・利益に含まれていません。勘定科目マスタで設定できます。">属性未設定</span>}
                 </th>
