@@ -18,8 +18,8 @@ import { StatusNotice } from "./StatusNotice";
 import { previousSelectionTotal } from "../core/tables/selectionTotal";
 import { GridSelectionTotal } from "./GridSelectionTotal";
 
-export function PreviousAmountGrid({ contents, draft, onChange }: {
-  contents: PlanContents; draft: PreviousInput | undefined; onChange: (draft: PreviousInput) => void;
+export function PreviousAmountGrid({ contents, draft, onChange, readOnly = false }: {
+  contents: PlanContents; draft: PreviousInput | undefined; onChange: (draft: PreviousInput) => void; readOnly?: boolean;
 }) {
   const calculate = useMemo(() => previousGridCalculator(contents), [contents.accounts, contents.aggregations, contents.fiscalYear]);
   const { rows, calculationFailed } = useMemo(() => {
@@ -33,11 +33,11 @@ export function PreviousAmountGrid({ contents, draft, onChange }: {
   // A coordinate selection belongs to this exact displayed row structure.
   // Remount interaction state before painting reordered/inserted/deleted rows.
   const structure = rows.map(row => `${row.kind}:${row.id}`).join("|");
-  return <PreviousAmountGridBody key={structure} contents={contents} draft={draft} onChange={onChange} rows={rows} calculationFailed={calculationFailed} />;
+  return <PreviousAmountGridBody key={structure} contents={contents} draft={draft} onChange={onChange} readOnly={readOnly} rows={rows} calculationFailed={calculationFailed} />;
 }
 
-function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFailed }: {
-  contents: PlanContents; draft: PreviousInput | undefined; onChange: (draft: PreviousInput) => void;
+function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFailed, readOnly }: {
+  contents: PlanContents; draft: PreviousInput | undefined; onChange: (draft: PreviousInput) => void; readOnly?: boolean;
   rows: ReturnType<typeof buildCostTable>; calculationFailed: boolean;
 }) {
   const grid = useGridInteraction();
@@ -87,16 +87,18 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
     return `${first.index + 1}行目 ${first.row.name} ${initiativeMonths[bounds.left]}月から${last.index + 1}行目 ${last.row.name} ${initiativeMonths[bounds.right]}月まで、${selected.length * (bounds.right - bounds.left + 1)}セルを選択`;
   })() : "";
   // Cached row elements keep handlers, so cross-row operations read current input/selection.
-  const latest = useRef({ grid, draft, onChange, rows, rowIds, inputsByAccount, calculationFailed });
-  latest.current = { grid, draft, onChange, rows, rowIds, inputsByAccount, calculationFailed };
+  const latest = useRef({ grid, draft, onChange, readOnly, rows, rowIds, inputsByAccount, calculationFailed });
+  latest.current = { grid, draft, onChange, readOnly, rows, rowIds, inputsByAccount, calculationFailed };
   const accountOrder = draft?.rows.map(row => row.accountId).join("|");
   const inputIndices = useMemo(() => new Map(draft?.rows.map((row, index) => [row.accountId, index])), [accountOrder]);
   const latestIndices = useRef(inputIndices); latestIndices.current = inputIndices;
   const apply = (operation: () => PreviousInput) => {
+    if (latest.current.readOnly) return;
     try { latest.current.onChange(operation()); setError(""); setEditing(false); }
     catch (failure) { setError(failure instanceof Error ? failure.message : "入力できませんでした。"); }
   };
   const changeCell = (accountId: number, month: number, value: string) => {
+    if (latest.current.readOnly) return;
     const { draft, onChange } = latest.current;
     const index = latestIndices.current.get(accountId);
     if (!draft || index === undefined) return;
@@ -109,14 +111,14 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
     onChange({ ...draft, rows });
   };
   // Reuse exact elements: React can skip unchanged rows without rebuilding their inputs.
-  const rowCache = useRef(new Map<string, { row: CostRow; input: PreviousInput["rows"][number] | undefined; periods: (number | undefined)[] | undefined; selected: string; failed: boolean; editable: boolean; activeEdit: number | null; element: ReactElement }>());
+  const rowCache = useRef(new Map<string, { row: CostRow; input: PreviousInput["rows"][number] | undefined; periods: (number | undefined)[] | undefined; selected: string; failed: boolean; editable: boolean; readOnly: boolean | undefined; activeEdit: number | null; element: ReactElement }>());
   const renderRow = (row: CostRow, rowIndex: number) => {
     const key = `${row.kind}:${row.id}`, input = row.kind === "account" ? inputsByAccount.get(row.id) : undefined;
     const selected = bounds && rowIndex >= bounds.top && rowIndex <= bounds.bottom ? `${bounds.left}:${bounds.right}` : "";
     const activeEdit = grid.editing && selection?.end.row === rowIndex ? selection.end.column : null;
     const periods = periodAmounts.values[rowIndex], cached = rowCache.current.get(key);
     if (cached && cached.row === row && cached.input === input && cached.periods === periods && cached.selected === selected
-      && cached.failed === calculationFailed && cached.editable === !!draft && cached.activeEdit === activeEdit) return cached.element;
+      && cached.failed === calculationFailed && cached.readOnly === readOnly && cached.editable === !!draft && cached.activeEdit === activeEdit) return cached.element;
     const element = <tr key={`${row.kind}:${row.id}`} className={`cost-data-row${row.kind !== "account" ? ` cost-subtotal${row.required ? " cost-required" : ""}` : ""}${row.kind === "group" && row.id === salesGroupId ? " cost-sales-anchor" : ""}`}>
           <th scope="row" className="initiative-list-name">{row.name}</th>
           {initiativeMonths.map((month, column) => {
@@ -151,7 +153,7 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
             return <td key={month} className={`${row.kind === "account" && draft ? "previous-input-cell" : ""}${selected ? " previous-cell-selected" : ""}`}
               onPointerEnter={event => extendSelection(cell, event.buttons)}>
               {row.kind !== "account" || !draft ? (calculationFailed ? "" : row.kind === "ratio" ? formatRate(row.previous[month]) : formatYen(row.previous[month])) :
-                <GridAmountInput editing={activeEdit === column} type="text" inputMode="text" data-row={rowIndex} data-column={column}
+                <GridAmountInput readOnly={readOnly} editing={activeEdit === column} type="text" inputMode="text" data-row={rowIndex} data-column={column}
                   aria-label={`${row.name} ${month}月の前年金額`} aria-invalid={value !== undefined && value !== "" && !isValidAmount(value)} value={value}
                   onPointerDown={events!.onPointerDown}
                   {...events!.input} />}
@@ -161,7 +163,7 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
             {calculationFailed ? "" : row.kind === "ratio" ? formatRate(periodAmounts.values[rowIndex]?.[index]) : formatYen(periodAmounts.values[rowIndex]?.[index])}
           </td>)}
         </tr>;
-    rowCache.current.set(key, { row, input, periods, selected, failed: calculationFailed, editable: !!draft, activeEdit, element });
+    rowCache.current.set(key, { row, input, periods, selected, failed: calculationFailed, editable: !!draft, readOnly, activeEdit, element });
     return element;
   };
   return <>

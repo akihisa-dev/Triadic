@@ -25,22 +25,25 @@ export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange,
   const readOnly = useHistoryReadOnly();
   const [name, setName] = useState("");
   const [relationIds, setRelationIds] = useState<number[]>([]);
-  const relationChoices = (selected: number[], change: (ids: number[]) => void, disabled: boolean, label: string) => <fieldset className="department-industry-choices"><legend>{label}</legend>{relationOptions?.map(item => <label key={item.id}><input type="checkbox" checked={selected.includes(item.id)} disabled={disabled} onChange={event => change(event.target.checked ? [...selected, item.id] : selected.filter(id => id !== item.id))} />{item.name}</label>)}</fieldset>;
+  const relationChoices = (selected: number[], change: (ids: number[]) => void, disabled: boolean, label: string, options = relationOptions) => <fieldset className="department-industry-choices"><legend>{label}</legend>{options?.map(item => <label key={item.id}><input type="checkbox" checked={selected.includes(item.id)} disabled={disabled} onChange={event => change(event.target.checked ? [...selected, item.id] : selected.filter(id => id !== item.id))} />{item.name}</label>)}</fieldset>;
   const [deleting, setDeleting] = useState<NamedMasterRow | null>(null);
   const autoSave = useAutoSave<Extract<NamedMasterChange, { type: "update" }>>(onChange, onPendingChange);
   const { draft, controller } = autoSave;
   const savedSource = useRef<string | null>(null);
+  const retained = useRef<{ row: NamedMasterRow; options: typeof relationOptions } | null>(null);
   useLayoutEffect(() => {
     const editing = controller.getSnapshot().draft;
-    if (!editing) { savedSource.current = null; return; }
+    if (!editing) { savedSource.current = null; retained.current = null; return; }
     const row = rows.find(item => item.id === editing.id);
-    if (!row) return;
+    if (!row) { controller.sourceMissing(); return; }
     const saved = { type: "update" as const, ...row };
     const key = JSON.stringify(saved);
     if (key === savedSource.current) return;
     savedSource.current = key;
     controller.syncSaved(saved, JSON.stringify([row.id, row.identity]));
+    if (!controller.hasSourceChange()) retained.current = { row, options: relationOptions };
   }, [rows, controller, draft?.id]);
+  const protectedInput = autoSave.pending && !!draft && (controller.hasSourceChange() || !rows.some(row => row.id === draft.id));
   const { notice, dismiss: dismissNotice, save } = useMasterOperation<NamedMasterChange>({
     onChange,
     onSuccess: change => { if (change.type === "add") { setCode(""); setName(""); setRelationIds([]); } setDeleting(null); },
@@ -54,7 +57,9 @@ export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange,
   ];
   const tableView = useTableView(rows, columns);
   const cellFilter = useTableCellFilter(tableView, !!draft || isSaving);
-  const displayed = useEditingTableRows(tableView.rows, rows, draft ? String(draft.id) : null, row => String(row.id));
+  const editorRows = protectedInput && retained.current
+    ? [...rows.filter(row => row.id !== draft!.id), retained.current.row] : rows;
+  const displayed = useEditingTableRows(tableView.rows, editorRows, draft ? String(draft.id) : null, row => String(row.id));
   return <main className="master-page account-master-page master-data-page named-master-page" aria-labelledby={`${slug}-master-title`} aria-busy={isSaving}
     onCompositionStart={() => controller.pause()} onCompositionEnd={() => controller.resume()}>
     <div className="account-master-heading"><button className="text-button master-back" type="button" disabled={isSaving || autoSave.pending} onClick={onBack}>← マスタへ戻る</button>
@@ -94,12 +99,12 @@ export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange,
                 if (!autoSave.pending) controller.end();
               }
             }}>
-              {coded && <td className="account-code">{editing ? <input autoFocus aria-label={`${item.name}の${subject}コード`} inputMode="numeric" value={editing.code} onChange={event => controller.change({ ...editing, code: event.target.value })} /> : item.code}</td>}
-              <th {...cellFilter.props("name", item.name)} scope="row" className="account-master-name">{editing ? <input autoFocus={!coded} aria-label={`${item.name}の${subject}名`} value={editing.name} onChange={event => controller.change({ ...editing, name: event.target.value })} /> : item.name}</th>
-              {relationOptions && <td {...cellFilter.props("relations", relationOptions.filter(option => item.relationIds?.includes(option.id)).map(option => option.name))}>{editing ? relationChoices(editing.relationIds ?? [], relationIds => controller.change({ ...editing, relationIds }), readOnly, `${item.name}の${relationLabel}`) : relationOptions.filter(option => item.relationIds?.includes(option.id)).map(option => option.name).join("・")}</td>}
+              {coded && <td className="account-code">{editing ? <input readOnly={protectedInput} autoFocus aria-label={`${item.name}の${subject}コード`} inputMode="numeric" value={editing.code} onChange={event => controller.change({ ...editing, code: event.target.value })} /> : item.code}</td>}
+              <th {...cellFilter.props("name", item.name)} scope="row" className="account-master-name">{editing && protectedInput && <span className="field-hint">{item.name}</span>}{editing ? <input readOnly={protectedInput} autoFocus={!coded} aria-label={`${item.name}の${subject}名`} value={editing.name} onChange={event => controller.change({ ...editing, name: event.target.value })} /> : item.name}</th>
+              {relationOptions && <td {...cellFilter.props("relations", relationOptions.filter(option => item.relationIds?.includes(option.id)).map(option => option.name))}>{editing ? relationChoices(editing.relationIds ?? [], relationIds => controller.change({ ...editing, relationIds }), readOnly || protectedInput, `${item.name}の${relationLabel}`, protectedInput ? retained.current?.options : relationOptions) : relationOptions.filter(option => item.relationIds?.includes(option.id)).map(option => option.name).join("・")}</td>}
               <td><div className="form-actions">{editing
                 ? <button className="text-button" type="button" disabled={readOnly || autoSave.pending} onClick={() => controller.end()}>完了</button>
-                : <><button className="text-button" type="button" aria-label={`${item.name}を編集`} disabled={readOnly || isSaving || draft !== null} onClick={() => { dismissNotice(); controller.begin({ type: "update", ...item }, JSON.stringify([item.id, item.identity])); }}>編集</button>
+                : <><button className="text-button" type="button" aria-label={`${item.name}を編集`} disabled={readOnly || isSaving || draft !== null} onClick={() => { dismissNotice(); retained.current = { row: item, options: relationOptions }; controller.begin({ type: "update", ...item }, JSON.stringify([item.id, item.identity])); }}>編集</button>
                   <button className="text-button" type="button" aria-label={`${item.name}を削除`} title={usedIds.has(item.id) ? "施策で使用中" : undefined} disabled={readOnly || isSaving || draft !== null || usedIds.has(item.id)} onClick={() => { dismissNotice(); setDeleting(item); }}>削除</button></>}
               </div></td>
             </tr>;

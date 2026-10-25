@@ -22,17 +22,18 @@ export function PreviousInputPage({ contents, onSave, onPendingChange, onPrepare
   const industryId = industryIds.length === 1 ? industryIds[0]! : null;
   const departmentId = departmentIds.length === 1 ? departmentIds[0]! : null;
   const validPair = industryId !== null && departmentId !== null && contents.departments.some(item => item.id === departmentId && item.industryIds.includes(industryId));
-  const allowedIndustries = contents.departments.filter(item => !departmentIds.length || departmentIds.includes(item.id)).flatMap(item => item.industryIds);
   const autoSave = useAutoSave(onSave, onPendingChange);
   const { controller, draft, revision } = autoSave;
   const savedSource = useRef<PlanContents | null>(null);
   useLayoutEffect(() => {
+    if (!validPair && controller.getSnapshot().draft) controller.sourceMissing();
     if (validPair && industryId !== null && departmentId !== null && (savedSource.current !== contents || !controller.getSnapshot().draft)) {
-      savedSource.current = contents;
       controller.syncSaved(createPreviousInput(contents, industryId, departmentId, previousKind), JSON.stringify([
         previousKind, industryId, contents.industries.find(item => item.id === industryId)?.identity,
         departmentId, contents.departments.find(item => item.id === departmentId)?.identity,
       ]));
+      if (!controller.hasSourceChange()) savedSource.current = contents;
+      else if (!savedSource.current) savedSource.current = contents;
     }
     if (controller.getSnapshot().pending) return;
     const departments = departmentIds.filter(id => contents.departments.some(item => item.id === id));
@@ -44,9 +45,12 @@ export function PreviousInputPage({ contents, onSave, onPendingChange, onPrepare
     if (!validPair || industryId === null || departmentId === null || controller.getSnapshot().draft) return;
     controller.begin(createPreviousInput(contents, industryId, departmentId, previousKind));
   }, [controller, contents, industryIds, departmentIds, industryId, departmentId, validPair, previousKind, revision]);
-  const filtered = useMemo(() => filterPlan({ ...contents, previousKind }, {
+  const protectedInput = autoSave.pending && !!draft && (!validPair || controller.hasSourceChange());
+  const shownContents = protectedInput ? savedSource.current ?? contents : contents;
+  const shownIndustries = shownContents.departments.filter(item => !departmentIds.length || departmentIds.includes(item.id)).flatMap(item => item.industryIds);
+  const filtered = useMemo(() => filterPlan({ ...shownContents, previousKind }, {
     industries: industryIds.length ? industryIds : null, departments: departmentIds.length ? departmentIds : null,
-  }), [contents, industryIds, departmentIds, previousKind]);
+  }), [shownContents, industryIds, departmentIds, previousKind]);
   return <main className="initiative-entry-page previous-input-page" aria-labelledby="previous-input-title" onCompositionStart={() => controller.pause()} onCompositionEnd={() => controller.resume()}>
     <div className="initiative-list-heading">
       <h1 id="previous-input-title">前年入力</h1>
@@ -67,7 +71,7 @@ export function PreviousInputPage({ contents, onSave, onPendingChange, onPrepare
               setIndustries(current => value.length === 1 && ids.length === 1 ? ids : current.filter(id => ids.includes(id)));
             }}>
             <option value="">全部署の合計</option>
-            {contents.departments.map(item => <option key={item.id} value={item.id}>{item.departmentName}</option>)}
+            {shownContents.departments.map(item => <option key={item.id} value={item.id}>{item.departmentName}</option>)}
           </select>
         </div>
         <div className="classification-field">
@@ -75,13 +79,13 @@ export function PreviousInputPage({ contents, onSave, onPendingChange, onPrepare
           <select id="previous-industry" value={industryId ?? ""} disabled={autoSave.pending}
             onChange={event => { controller.end(); setIndustries(event.target.value === "" ? [] : [Number(event.target.value)]); }}>
             <option value="">全業種の合計</option>
-            {contents.industries.filter(item => allowedIndustries.includes(item.id)).map(item => <option key={item.id} value={item.id}>{item.industryName}</option>)}
+            {shownContents.industries.filter(item => shownIndustries.includes(item.id)).map(item => <option key={item.id} value={item.id}>{item.industryName}</option>)}
           </select>
         </div>
       </div>
       <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave} />
     </div>
-    <PreviousAmountGrid key={`${previousKind}:${industryIds.join(",")}:${departmentIds.join(",")}`} contents={filtered} draft={!readOnly && validPair ? draft ?? undefined : undefined} onChange={value => controller.change(value)} />
+    <PreviousAmountGrid key={`${previousKind}:${industryIds.join(",")}:${departmentIds.join(",")}`} contents={filtered} readOnly={protectedInput} draft={!readOnly && (validPair || protectedInput) ? draft ?? undefined : undefined} onChange={value => controller.change(value)} />
     <ConfirmationDialog open={copyRequested} title="前年見込からコピー" message={`${contents.departments.find(item => item.id === departmentId)?.departmentName ?? ""}・${contents.industries.find(item => item.id === industryId)?.industryName ?? ""}の12か月分を前年見込から前年実績へコピーします。入力済みの前年実績は上書きされます。`} confirmLabel="コピー" busy={autoSave.pending}
       onCancel={() => setCopyRequested(false)} onConfirm={() => {
         if (readOnly || !validPair || industryId === null || departmentId === null) return;

@@ -38,17 +38,20 @@ export function AccountMasterPage({ accounts, groups, usedAccountIds, isSaving, 
   const autoSave = useAutoSave<Draft>(draft => changeAccount({type:"update",id:draft.id,accountCode:draft.code,accountName:draft.name,accountType:draft.attribute,displayName:draft.displayName}),onPendingChange);
   const {draft:editing,controller} = autoSave;
   const savedSource = useRef<string | null>(null);
+  const retained = useRef<Account | null>(null);
   useLayoutEffect(() => {
-    if (!editing) { savedSource.current = null; return; }
+    if (!editing) { savedSource.current = null; retained.current = null; return; }
     const account = accounts.find(item => item.id === editing.id);
-    if (!account) return;
+    if (!account) { controller.sourceMissing(); return; }
     const saved: Draft = { kind: "account", id: account.id, code: account.accountCode ?? "", name: account.accountName,
       displayName: account.displayName ?? account.accountName, attribute: account.accountType ?? "" };
     const key = JSON.stringify(saved);
     if (key === savedSource.current) return;
     savedSource.current = key;
     controller.syncSaved(saved);
+    if (!controller.hasSourceChange()) retained.current = account;
   }, [accounts, controller, editing?.id]);
+  const protectedInput = autoSave.pending && !!editing && (controller.hasSourceChange() || !byAccount.has(editing.id));
   const {notice,dismiss,save} = useMasterOperation<Operation>({onChange:perform,onSuccess:operation => { if(operation.change.type === "add") setAdding(empty()); setDeleting(null); },onFailure:() => {positions.current=null;setDeleting(null);},successMessage:() => "マスタを保存しました。",cancelledMessage:() => "保存をキャンセルしました。元の内容を保っています。"});
   const columns: TableColumn<MasterRow>[] = [
     { id: "code", label: "科目コード", value: row => byAccount.get(row.id)?.accountCode },
@@ -58,7 +61,9 @@ export function AccountMasterPage({ accounts, groups, usedAccountIds, isSaving, 
   ];
   const tableView = useTableView(accountRows, columns);
   const cellFilter = useTableCellFilter(tableView, !!editing || isSaving);
-  const displayed = useEditingTableRows(tableView.rows, accountRows, editing ? masterRowKey(editing) : null, masterRowKey);
+  const editorRows = protectedInput && retained.current
+    ? [...accountRows.filter(row => row.id !== editing!.id), { kind: "account" as const, id: editing!.id }] : accountRows;
+  const displayed = useEditingTableRows(tableView.rows, editorRows, editing ? masterRowKey(editing) : null, masterRowKey);
   const presentationChanged = tableView.filtered || !!tableView.state.sort;
   const disabled = readOnly || isSaving || editing !== null;
   useLayoutEffect(() => {
@@ -105,17 +110,17 @@ export function AccountMasterPage({ accounts, groups, usedAccountIds, isSaving, 
     <div className="account-master-list" role="region" aria-label="勘定科目一覧" tabIndex={0}><table className="account-master-table" aria-label="勘定科目一覧"><thead><tr><th scope="col">順序</th>{columns.map(column => <TableViewHeader key={column.id} view={tableView} column={column.id} disabled={!!editing || isSaving} />)}<th scope="col">操作</th></tr></thead><tbody>
       {displayed.length === 0 && <tr><td colSpan={6} className="table-view-empty">条件に合う行がありません。</td></tr>}
       {displayed.map((row,index) => {
-        const key=masterRowKey(row),account=byAccount.get(row.id)!;
+        const key=masterRowKey(row),account=(protectedInput && row.id === editing?.id ? retained.current : byAccount.get(row.id))!;
         const name=account.accountName;
         const draft=editing && masterRowKey(editing) === key ? editing : null;
         const cannotDelete=account.inUse || usedAccountIds.has(account.id);
         return <tr key={key} ref={element => {if(element) elements.current.set(key,element);else elements.current.delete(key);}} className={`${draft ? "master-row-editing" : ""} ${drop?.key === key ? drop.before ? "drop-before" : "drop-after" : ""}`} onDragOver={event => {if(!dragged || disabled) return;event.preventDefault();setDrop({key,before:event.clientY < event.currentTarget.getBoundingClientRect().top+event.currentTarget.getBoundingClientRect().height/2});}} onDrop={event => {event.preventDefault();if(dragged && drop) reorder(dragged,row,drop.before);setDragged(null);setDrop(null);}} onKeyDown={event => {if(draft && event.key === "Escape" && !autoSave.pending){event.preventDefault();event.stopPropagation();end();}}}>
           <td><button type="button" className="text-button account-drag-handle" aria-label={`${name}を並べ替え`} disabled={disabled || presentationChanged} title={presentationChanged ? "表示の絞り込みと並べ替えを解除すると登録順を変更できます。" : undefined} draggable={!disabled && !presentationChanged} onDragStart={event => {event.dataTransfer.effectAllowed="move";event.dataTransfer.setData("text/plain",key);setDragged(row);}} onDragEnd={() => {setDragged(null);setDrop(null);}} onKeyDown={event => {if(event.key !== "ArrowUp" && event.key !== "ArrowDown") return;event.preventDefault();const target=accountRows[index+(event.key === "ArrowUp" ? -1 : 1)];if(target && reorder(row,target,event.key === "ArrowUp")) keyboardFocus.current={key,button:event.currentTarget};}}>⠿</button></td>
-          <td className="account-code">{draft ? <input autoFocus aria-label={`${name}の科目コード`} value={draft.code} inputMode="numeric" onChange={event => controller.change({...draft,code:event.target.value})}/> : account.accountCode}</td>
-          <th {...cellFilter.props("name", name)} scope="row">{draft ? <input aria-label={`${name}の名称`} value={draft.name} onChange={event => controller.change(rename(draft,event.target.value))}/> : name}</th>
-          <td {...cellFilter.props("display", account.displayName ?? name)}>{draft ? <input aria-label={`${name}の表示名`} value={draft.displayName} onChange={event => controller.change({...draft,displayName:event.target.value})}/> : account.displayName ?? name}</td>
-          <td {...cellFilter.props("type", account.accountType ? accountTypes[account.accountType] : "未設定")}>{draft ? <select aria-label={`${name}の科目属性`} value={draft.attribute} onChange={event => controller.change({...draft,attribute:event.target.value as Draft["attribute"]})}><option value="">属性を選択</option>{Object.entries(accountTypes).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select> : <span className="master-type-badge">{account.accountType ? accountTypes[account.accountType] : "未設定"}</span>}</td>
-          <td><div className="form-actions">{draft ? <button type="button" className="text-button" disabled={autoSave.pending} onClick={end}>完了</button> : <><button type="button" data-edit className="text-button" aria-label={`${name}を編集`} disabled={disabled} onClick={() => {dismiss();controller.begin({...row,code:account.accountCode ?? "",name,displayName:account.displayName ?? name,attribute:account.accountType ?? ""});}}>編集</button><button type="button" className="text-button" aria-label={`${name}を削除`} disabled={disabled || cannotDelete} onClick={() => {dismiss();setDeleting(row);}}>削除</button></>}</div></td>
+          <td className="account-code">{draft ? <input readOnly={protectedInput} autoFocus aria-label={`${name}の科目コード`} value={draft.code} inputMode="numeric" onChange={event => controller.change({...draft,code:event.target.value})}/> : account.accountCode}</td>
+          <th {...cellFilter.props("name", name)} scope="row">{draft && protectedInput && <span className="field-hint">{name}</span>}{draft ? <input readOnly={protectedInput} aria-label={`${name}の名称`} value={draft.name} onChange={event => controller.change(rename(draft,event.target.value))}/> : name}</th>
+          <td {...cellFilter.props("display", account.displayName ?? name)}>{draft ? <input readOnly={protectedInput} aria-label={`${name}の表示名`} value={draft.displayName} onChange={event => controller.change({...draft,displayName:event.target.value})}/> : account.displayName ?? name}</td>
+          <td {...cellFilter.props("type", account.accountType ? accountTypes[account.accountType] : "未設定")}>{draft ? <select disabled={protectedInput} aria-label={`${name}の科目属性`} value={draft.attribute} onChange={event => controller.change({...draft,attribute:event.target.value as Draft["attribute"]})}><option value="">属性を選択</option>{Object.entries(accountTypes).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select> : <span className="master-type-badge">{account.accountType ? accountTypes[account.accountType] : "未設定"}</span>}</td>
+          <td><div className="form-actions">{draft ? <button type="button" className="text-button" disabled={autoSave.pending} onClick={end}>完了</button> : <><button type="button" data-edit className="text-button" aria-label={`${name}を編集`} disabled={disabled} onClick={() => {dismiss();retained.current=account;controller.begin({...row,code:account.accountCode ?? "",name,displayName:account.displayName ?? name,attribute:account.accountType ?? ""});}}>編集</button><button type="button" className="text-button" aria-label={`${name}を削除`} disabled={disabled || cannotDelete} onClick={() => {dismiss();setDeleting(row);}}>削除</button></>}</div></td>
         </tr>;
       })}
     </tbody></table></div>

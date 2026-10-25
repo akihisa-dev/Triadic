@@ -62,6 +62,29 @@ export async function verifyAutoSaveSource(api) {
     assert.equal(delayed.hasSourceChange(), false); assert.equal(delayed.getSnapshot().draft.note, '他ウィンドウの備考');
     assert.equal(delayed.getSnapshot().draft.name, '保存中の追加入力'); delayed.discard(); delayed.end();
   }
+  for (const delayedResult of ['idle', 'success', 'failure']) {
+    let finish, writes = 0;
+    const missing = new api.AutoSave(async () => {
+      writes++;
+      if (delayedResult !== 'idle') await new Promise(resolve => { finish = resolve; });
+      if (delayedResult === 'failure') throw new Error('遅い保存失敗');
+    }, 100000);
+    missing.begin({ name: '削除前の対象' }); missing.change({ name: '回収する未保存入力' });
+    const saving = delayedResult === 'idle' ? Promise.resolve() : missing.flush();
+    missing.sourceMissing(); finish?.(); await saving;
+    await missing.flush();
+    assert.equal(writes, delayedResult === 'idle' ? 0 : 1, '消失後は自動保存・再試行を開始しない');
+    assert.equal(missing.getSnapshot().draft.name, '回収する未保存入力');
+    assert.match(missing.getSnapshot().error, /削除されています/);
+    missing.syncSaved({ name: '同じ番号で作り直した対象' });
+    await missing.flush();
+    assert.equal(missing.getSnapshot().draft.name, '回収する未保存入力', '同番号の再登場へ旧入力を転用しない');
+    assert.equal(missing.hasSourceChange(), true);
+    missing.sourceMissing(); missing.discard();
+    assert.equal(missing.getSnapshot().draft, null);
+    assert.equal(missing.getSnapshot().pending, false);
+    missing.end();
+  }
   // Focus changes and explicit navigation may flush the same pending editor together.
   // A second input must complete without an already-running write causing a busy loop.
   let releaseFirst, startedFirst;

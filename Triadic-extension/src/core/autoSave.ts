@@ -12,8 +12,11 @@ export class AutoSave<T> {
   private saved: T | null = null;
   private incoming: T | null = null;
   private identity: string | undefined;
-  private replacement: { draft: T; identity: string | undefined } | null = null;
-  private readonly replacementError = "編集対象が別のデータに変更されています。";
+  private replacement: { draft: T | null; identity: string | undefined } | null = null;
+  private missingSource = false;
+  private get replacementError() { return this.missingSource
+    ? "編集対象が削除されています。入力をコピーして控えるか、入力を取り消してください。"
+    : "編集対象が別のデータに変更されています。"; }
   private timer: ReturnType<typeof setTimeout> | undefined;
   private listeners = new Set<() => void>();
   private composing = false;
@@ -27,13 +30,13 @@ export class AutoSave<T> {
   private equal(a: T | null, b: T | null) { return JSON.stringify(a) === JSON.stringify(b); }
   begin(draft: T, identity?: string) {
     if (this.state.pending) return;
-    this.identity = identity; this.replacement = null;
+    this.identity = identity; this.replacement = null; this.missingSource = false;
     this.saved = draft;
     this.publish({ draft, pending: false, saving: false, error: "" });
   }
   /** The page supplies the actual saved source, including any external merge. */
   syncSaved(draft: T, identity = this.identity) {
-    if (this.saved !== null && this.state.pending && identity !== this.identity) {
+    if (this.saved !== null && this.state.pending && (identity !== this.identity || this.missingSource)) {
       // Do not rebase unfinished input onto a different owner, even while its save is returning.
       this.replacement = { draft, identity };
       this.cancelTimer();
@@ -57,6 +60,15 @@ export class AutoSave<T> {
     const pending = !this.equal(current, draft);
     if (!pending) clearTimeout(this.timer);
     this.publish({ ...this.state, draft: current, pending, error: pending && !wasReplaced ? this.state.error : "" });
+  }
+  /** Freeze unfinished input when its saved target disappears; never retry it against a reused ID. */
+  sourceMissing() {
+    if (!this.state.pending) { this.end(); return; }
+    if (this.missingSource && this.replacement?.draft === null) return;
+    this.missingSource = true;
+    this.replacement = { draft: null, identity: undefined };
+    this.cancelTimer();
+    this.publish({ ...this.state, error: this.replacementError });
   }
   change(draft: T) {
     clearTimeout(this.timer);
@@ -115,7 +127,7 @@ export class AutoSave<T> {
     if (this.state.saving) return;
     clearTimeout(this.timer);
     if (this.replacement) {
-      this.saved = this.replacement.draft; this.identity = this.replacement.identity; this.replacement = null; this.incoming = null;
+      this.saved = this.replacement.draft; this.identity = this.replacement.identity; this.replacement = null; this.incoming = null; this.missingSource = false;
     }
     this.publish({ draft: this.saved, pending: false, saving: false, error: "" });
   }
@@ -123,7 +135,7 @@ export class AutoSave<T> {
     if (this.state.pending) return;
     clearTimeout(this.timer);
     this.saved = null;
-    this.identity = undefined; this.replacement = null; this.incoming = null;
+    this.identity = undefined; this.replacement = null; this.incoming = null; this.missingSource = false;
     this.publish({ draft: null, pending: false, saving: false, error: "" });
   }
   cancelTimer() { clearTimeout(this.timer); }
