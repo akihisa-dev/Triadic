@@ -5,7 +5,7 @@
 .initiative-search-heading h2 { margin: 0; }
 .initiative-search-heading button { flex-shrink: 0; }
 .initiative-search-query { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
-.initiative-search-query input { width: 100%; min-width: 0; box-sizing: border-box; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+.initiative-search-query input { width: 100%; min-width: 0; box-sizing: border-box; padding: 8px; border: 1px solid var(--control-line); border-radius: 6px; background: var(--surface); color: var(--ink); }
 .initiative-search-count, .initiative-search-pages { font-size: 13px; }
 .initiative-search-results { list-style: none; padding: 0; margin: 0; min-height: 0; overflow: auto; }
 .initiative-search-results li { padding: 10px 2px; border-top: 1px solid var(--line); overflow-wrap: anywhere; }

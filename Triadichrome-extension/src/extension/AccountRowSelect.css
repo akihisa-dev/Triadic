@@ -1,7 +1,7 @@
 .initiative-amount-table input.account-row-select {
   min-width: 100%;
   width: auto;
-  border-color: var(--line);
+  border-color: var(--control-line);
   background: var(--surface);
   text-align: left;
   font-variant-numeric: normal;
@@ -16,7 +16,7 @@
   color: var(--ink);
   font-size: 13px;
   font-weight: 400;
-  box-shadow: 0 4px 12px #0002;
+  box-shadow: 0 4px 12px rgb(var(--shadow-rgb) / 13%);
 }
 .account-row-option, .account-row-empty { padding: 7px 8px; overflow-wrap: anywhere; }
 .account-row-option { cursor: pointer; }

@@ -3,8 +3,8 @@ import { installCloneableFiles } from "./cloneable-files";
 import type { FrameLocator, Locator } from "@playwright/test";
 
 const blue = "rgb(0, 51, 255)";
-const ink = "rgb(32, 32, 32)";
-const soft = "rgb(242, 242, 242)";
+const ink = "rgb(52, 52, 52)";
+const soft = "rgb(234, 229, 217)";
 const routes = ["Home", "前年入力", "施策一覧", "総原価表", "展開表", "マスタ", "履歴", "入出力"];
 
 async function navigate(app: FrameLocator, name: string) {
@@ -25,7 +25,7 @@ async function expectEditingColor(input: Locator, startCellEditing = false) {
   await expect(input).toBeFocused();
   await expect(input).toHaveCSS("outline-color", blue);
   await expect(input).toHaveCSS("caret-color", blue);
-  await expect(input).toHaveCSS("background-color", /rgba?\((\d+), \1, \1(?:, [\d.]+)?\)/);
+  await expect(input).toHaveCSS("background-color", /^(rgb\((250, 247, 239|244, 240, 230|234, 229, 217)\)|rgba\(0, 0, 0, 0\))$/);
 }
 
 test.beforeEach(async ({ page, app }) => {
@@ -157,8 +157,8 @@ test("前年金額は編集位置だけ青く、範囲選択の背景と罫線�
   await expect(april).not.toHaveCSS("outline-color", blue);
   await expect(app.locator(".previous-cell-selected")).toHaveCount(2);
   for (const selected of await app.locator(".previous-cell-selected").all()) {
-    await expect(selected).toHaveCSS("background-color", "rgb(250, 250, 250)");
-    await expect(selected).toHaveCSS("box-shadow", "rgb(163, 163, 163) 0px 0px 0px 1px inset");
+    await expect(selected).toHaveCSS("background-color", "rgb(244, 240, 230)");
+    await expect(selected).toHaveCSS("box-shadow", "rgb(140, 135, 124) 0px 0px 0px 1px inset");
   }
 });
 
@@ -184,7 +184,7 @@ test("全マスタの登録・編集欄と集計編集にも青を適用する",
   await expect(target).not.toHaveCSS("outline-color", blue);
   await target.focus();
   for (const property of ["outline-color", "border-color", "caret-color"]) {
-    await expect(target).toHaveCSS(property, "rgb(128, 153, 255)");
+    await expect(target).toHaveCSS(property, "rgb(214, 184, 108)");
   }
   await theme.click();
   await expect(target).not.toHaveCSS("outline-color", blue);
@@ -251,7 +251,7 @@ test("入口のファイルドロップ先だけ背景と破線を青で示し�
   const section = app.locator(".entry-open-section");
   await expect(section).toHaveCSS("background-color", "rgb(238, 242, 255)");
   await expect(section).toHaveCSS("color", ink);
-  await expect(app.locator(".entry-drop-description")).toHaveCSS("color", "rgb(98, 98, 98)");
+  await expect(app.locator(".entry-drop-description")).toHaveCSS("color", "rgb(104, 102, 95)");
   expect(await section.evaluate(node => getComputedStyle(node, "::after").borderColor)).toBe(blue);
   await entry.dispatchEvent("dragleave", { relatedTarget: null });
   await expect(entry).not.toHaveClass(/is-drag-active/);

@@ -13,16 +13,17 @@ test("全マスタを共通の表で表示し、登録欄と一覧のスクロ�
     await app.locator(".master-menu").getByRole("button", { name: new RegExp(`^${name}マスタ`) }).click();
     await settleMotion(app.locator("body"));
     const main = app.getByRole("main", { name: `${name}マスタ`, exact: true });
-    await expect(main.locator(".master-count")).toContainText(/件|集計/);
+    await expect(main.locator(".master-count")).toHaveText(/^\d+(件|科目)$/);
     const table = main.getByRole("table");
     const colors = await main.locator("h1, .master-count, .primary-button, thead th, button[aria-label$=\"を編集\"]").evaluateAll(nodes => nodes.flatMap(node => {
       const style = getComputedStyle(node);
-      return [style.color, style.backgroundColor].map(color => color.match(/[\d.]+/g)!.slice(0, 3).map(Number));
+      return [style.color, style.backgroundColor];
     }));
-    for (const [red, green, blue] of colors) { expect(red).toBe(green); expect(green).toBe(blue); }
+    const neutralPalette = ["rgb(52, 52, 52)", "rgb(104, 102, 95)", "rgb(244, 240, 230)", "rgb(250, 247, 239)", "rgb(234, 229, 217)", "rgba(0, 0, 0, 0)"];
+    for (const color of colors) expect(neutralPalette, "通常のマスタ要素へアクセント色を広げない").toContain(color);
     await expect(table).toBeVisible();
     const region = main.getByRole("region");
-    await expect(region).toHaveCSS("background-color", "rgb(255, 255, 255)");
+    await expect(region).toHaveCSS("background-color", "rgb(250, 247, 239)");
     expect(await app.locator(".home-content").evaluate(node => node.scrollWidth <= node.clientWidth && node.scrollHeight <= node.clientHeight)).toBe(true);
     const header = table.getByRole("columnheader").first();
     const top = (await header.boundingBox())!.y;

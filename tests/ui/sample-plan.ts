@@ -1,3 +1,4 @@
+// 墨色・象牙色と青・金のパレットは palette.spec.ts で明暗の色・読みやすさ・強調を確認する。保存データは変更しない。
 // 内訳の全列並べ替えは既存サンプルの前年・科目・分類・正負額で cost-breakdown.spec.ts、大量行は breakdown-window.spec.ts で確認する。保存データは変更しない。
 // 密集する展開IDの伸縮・移動・大量行は expansion-scrollbar-dense.html と expansion-scrollbar-dense.spec.ts で確認する。既存サンプルを基にした画面内データで、保存項目は追加しない。
 // 展開表の縦バー移動は既存の展開・空グループと大規模データを使い expansion-scrollbar.spec.ts で確認する。保存データは変更しない。

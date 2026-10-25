@@ -89,19 +89,19 @@ for (const surface of ["initiative", "previous"]) {
     await cell.click();
     const selected = app.locator("th.grid-month-selected");
     await expect(selected).toHaveText("4月");
-    await expect(selected).toHaveCSS("background-color", "rgb(163, 163, 163)");
-    await expect(selected).toHaveCSS("color", "rgb(32, 32, 32)");
+    await expect(selected).toHaveCSS("background-color", "rgb(206, 200, 187)");
+    await expect(selected).toHaveCSS("color", "rgb(52, 52, 52)");
     await app.getByRole("switch", { name: "ダークテーマ" }).check();
     await cell.click();
-    await expect(selected).toHaveCSS("background-color", "rgb(64, 64, 64)");
-    await expect(selected).toHaveCSS("color", "rgb(237, 237, 237)");
+    await expect(selected).toHaveCSS("background-color", "rgb(85, 84, 79)");
+    await expect(selected).toHaveCSS("color", "rgb(244, 240, 230)");
     expect((await cell.boundingBox())!.width).toBe(before!.width);
     expect((await cell.boundingBox())!.height).toBe(before!.height);
     await expect(cell).toHaveValue(original);
   });
 }
 
-test("集計追加の両入力欄は明暗両方で通常枠と青い選択枠を揃える", async ({ page, app }) => {
+test("集計追加の両入力欄は明暗両方で通常枠と青・金の選択枠を揃える", async ({ page, app }) => {
   await openSample(page, app);
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "マスタ", exact: true }).click();
   await app.getByRole("button", { name: /^集計マスタ/ }).click();
@@ -112,10 +112,10 @@ test("集計追加の両入力欄は明暗両方で通常枠と青い選択枠�
     for (const label of ["集計名", "表示名"]) {
       const input = form.getByRole("textbox", { name: label, exact: true });
       await app.getByRole("heading", { name: "集計マスタ", exact: true }).click();
-      await expect(input).toHaveCSS("border-color", dark ? "rgb(72, 72, 72)" : "rgb(217, 217, 217)");
+      await expect(input).toHaveCSS("border-color", dark ? "rgb(143, 140, 130)" : "rgb(140, 135, 124)");
       await input.click();
       await expect(input).toHaveCSS("border-style", "solid");
-      for (const property of ["border-color", "outline-color", "caret-color"]) await expect(input).toHaveCSS(property, dark ? "rgb(128, 153, 255)" : "rgb(0, 51, 255)");
+      for (const property of ["border-color", "outline-color", "caret-color"]) await expect(input).toHaveCSS(property, dark ? "rgb(214, 184, 108)" : "rgb(0, 51, 255)");
       await app.getByRole("heading", { name: "集計マスタ", exact: true }).click();
       await expect(input).toHaveCSS("outline-color", "rgba(0, 0, 0, 0)");
     }

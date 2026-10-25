@@ -27,7 +27,7 @@
 .initiative-entry-compact .initiative-name-row > button { min-height: 36px; padding: 5px 12px; }
 .classification-field { min-width: 0; display: grid; gap: 4px; }
 .classification-field label { font-size: 14px; font-weight: 600; line-height: 1.5; }
-.classification-field select { width: 100%; min-width: 0; height: 36px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; }
+.classification-field select { width: 100%; min-width: 0; height: 36px; padding: 5px 8px; border: 1px solid var(--control-line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; }
 .classification-field select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .classification-field select:disabled { opacity: .5; }
 @media (max-width: 600px) {

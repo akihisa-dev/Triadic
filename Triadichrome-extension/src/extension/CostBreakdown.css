@@ -19,11 +19,11 @@
 .cost-breakdown-heading button { flex-shrink: 0; }
 .cost-breakdown-scroll { overflow: auto; max-height: calc(100dvh - 200px); }
 .cost-breakdown-scroll table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.cost-breakdown-scroll th, .cost-breakdown-scroll td { padding: 6px 8px; border: 1px solid var(--tone-dedede); text-align: left; overflow-wrap: anywhere; min-width: 64px; }
+.cost-breakdown-scroll th, .cost-breakdown-scroll td { padding: 6px 8px; border: 1px solid var(--table-line); text-align: left; overflow-wrap: anywhere; min-width: 64px; }
 .cost-breakdown-scroll th:first-child { min-width: 160px; }
 .cost-breakdown-scroll td:last-child { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.cost-breakdown-scroll thead { position: sticky; top: 0; background: var(--tone-f3f3f3); }
-.cost-breakdown-scroll tfoot { position: sticky; bottom: 0; background: var(--tone-f3f3f3); font-weight: 600; }
+.cost-breakdown-scroll thead { position: sticky; top: 0; background: var(--soft); }
+.cost-breakdown-scroll tfoot { position: sticky; bottom: 0; background: var(--soft); font-weight: 600; }
 .cost-breakdown-sort { display: flex; align-items: center; justify-content: space-between; gap: 4px; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .cost-breakdown-sort span { width: 8px; flex-shrink: 0; font-size: 8px; }
 .cost-breakdown-sort:hover { text-decoration: underline; }

@@ -1,4 +1,4 @@
-.grid-selection-total { position: sticky; top: 0; left: 0; z-index: 6; display: flex; align-items: center; flex-wrap: wrap; gap: 2px 12px; width: fit-content; max-width: 100%; min-height: 26px; padding: 2px 0; box-sizing: border-box; background: var(--surface, var(--tone-ffffff)); color: var(--muted); font-size: 12px; flex-shrink: 0; overflow-wrap: anywhere; }
+.grid-selection-total { position: sticky; top: 0; left: 0; z-index: 6; display: flex; align-items: center; flex-wrap: wrap; gap: 2px 12px; width: fit-content; max-width: 100%; min-height: 26px; padding: 2px 0; box-sizing: border-box; background: var(--surface); color: var(--muted); font-size: 12px; flex-shrink: 0; overflow-wrap: anywhere; }
 .grid-selection-total strong { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 .grid-selection-total-compact { height: 26px; flex-wrap: nowrap; white-space: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
 .grid-selection-total-compact > * { flex-shrink: 0; }

@@ -9,7 +9,7 @@ test("初回ライト・キーボード切替・記憶・画面移動・表・�
   await toggle.press("Space");
   await expect(toggle).toBeChecked();
   await expect(app.locator("html")).toHaveCSS("color-scheme", "dark");
-  await expect(app.locator(".entry-page")).toHaveCSS("background-color", "rgb(24, 24, 24)");
+  await expect(app.locator(".entry-page")).toHaveCSS("background-color", "rgb(41, 41, 41)");
   await page.reload();
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await expect(toggle).toBeChecked();
@@ -22,7 +22,7 @@ test("初回ライト・キーボード切替・記憶・画面移動・表・�
     await expect(toggle).toBeChecked();
     if (name === "総原価表") {
       await expect(app.locator(".cost-table tbody tr").first()).toBeVisible();
-      await expect(app.locator(".cost-table .period-quarter").first()).toHaveCSS("background-color", "rgb(44, 44, 44)");
+      await expect(app.locator(".cost-table .period-quarter").first()).toHaveCSS("background-color", "rgb(64, 64, 61)");
     }
     await settleMotion(app.locator("body"));
     // No horizontal overflow from the new header control, even on narrow screens.
@@ -31,9 +31,9 @@ test("初回ライト・キーボード切替・記憶・画面移動・表・�
   await navigation.getByRole("button", { name: "マスタ", exact: true }).click();
   await app.getByRole("button", { name: /^勘定科目マスタ/ }).click();
   await expect(app.getByRole("heading", { name: "勘定科目マスタ", exact: true })).toBeVisible();
-  await expect(app.locator(".master-data-page input").first()).toHaveCSS("background-color", "rgb(26, 26, 26)");
+  await expect(app.locator(".master-data-page input").first()).toHaveCSS("background-color", "rgb(52, 52, 52)");
   await app.getByRole("button", { name: "施策を検索", exact: true }).click();
-  await expect(app.getByRole("dialog")).toHaveCSS("background-color", "rgb(32, 32, 32)");
+  await expect(app.getByRole("dialog")).toHaveCSS("background-color", "rgb(52, 52, 52)");
   await app.getByRole("dialog").press("Escape");
   await toggle.click();
   await expect(toggle).not.toBeChecked();

@@ -93,7 +93,7 @@
   min-width: 0;
   min-height: 44px;
   padding: 10px 12px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   border-radius: 8px;
   outline: 2px solid transparent;
   outline-offset: 2px;
@@ -210,7 +210,7 @@
 }
 
 .initiative-amount-table input:hover {
-  border-color: var(--line);
+  border-color: var(--control-line);
 }
 
 .initiative-amount-table input:focus {
@@ -222,7 +222,7 @@
   width: 100%;
   min-height: 32px;
   padding: 6px 8px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   border-radius: 0;
   color: var(--ink);
   background: var(--surface);
@@ -350,7 +350,7 @@
   line-height: 1.5;
   cursor: pointer;
 }
-.primary-button { color: var(--surface); background: var(--ink); }
+.primary-button { color: var(--on-ink); background: var(--ink); }
 .primary-button:hover:not(:disabled) { background: var(--muted); }
 .secondary-button { color: var(--ink); background: var(--surface); border-color: var(--line); }
 .secondary-button:hover:not(:disabled) { border-color: var(--control-line); background: var(--soft); }
@@ -381,7 +381,7 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
-  box-shadow: 0 4px 20px #00000014;
+  box-shadow: 0 4px 20px rgb(var(--shadow-rgb) / 8%);
   pointer-events: auto;
 }
 .status-notice p { margin: 0; overflow-wrap: anywhere; font-size: 14px; line-height: 1.7; }
@@ -397,13 +397,13 @@
   border-radius: 16px;
   color: var(--ink);
   background: var(--surface);
-  box-shadow: 0 16px 64px #00000026;
+  box-shadow: 0 16px 64px rgb(var(--shadow-rgb) / 15%);
   opacity: 0;
   transition: opacity var(--motion-fade) var(--motion-ease), display var(--motion-fade) allow-discrete, overlay var(--motion-fade) allow-discrete;
 }
 .confirmation-dialog[open] { opacity: 1; }
 .confirmation-dialog::backdrop {
-  background: #00000040;
+  background: var(--backdrop);
   opacity: 0;
   transition: opacity var(--motion-fade) var(--motion-ease), display var(--motion-fade) allow-discrete, overlay var(--motion-fade) allow-discrete;
 }
