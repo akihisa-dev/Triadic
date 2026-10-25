@@ -14,10 +14,10 @@ export type WindowView = {
 export const WindowViewContext = createContext<WindowViewValues | null>(null);
 
 /** Only display choices enter a clone; saved data and unfinished inputs do not. */
-export function useWindowViewState<K extends keyof WindowViewState>(key: K, initial: WindowViewState[K]): [WindowViewState[K], Dispatch<SetStateAction<WindowViewState[K]>>] {
+export function useWindowViewState<K extends keyof WindowViewState>(key: K, initial: WindowViewState[K], retain = false): [WindowViewState[K], Dispatch<SetStateAction<WindowViewState[K]>>] {
   const values = useContext(WindowViewContext);
   const [value, setValue] = useState<WindowViewState[K]>(() => values?.[key] !== undefined ? values[key] : initial);
-  useLayoutEffect(() => { if (values) values[key] = value; return () => { if (values) delete values[key]; }; }, [values, key, value]);
+  useLayoutEffect(() => { if (values) values[key] = value; return () => { if (values && !retain) delete values[key]; }; }, [values, key, value, retain]);
   return [value, setValue];
 }
 

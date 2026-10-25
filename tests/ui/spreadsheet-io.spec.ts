@@ -34,6 +34,53 @@ test("取込プレビューの罫線と見出しを両テーマで識別でき�
   await expect(preview).toHaveCount(0);
 });
 
+test('見出しで変更確認を絞っても非表示の変更を含む全件を取り込む', async ({ page, app }) => {
+  await page.goto('/tests/ui/preview.html');
+  await expect(page.getByRole('status')).toHaveText('操作できます');
+  await app.locator('body').evaluate(() => {
+    const pick = Reflect.get(window, 'showOpenFilePicker');
+    Reflect.set(window, 'showOpenFilePicker', async () => {
+      const handles = await pick(); Reflect.set(window, 'headerImportHandle', handles[0]); return handles;
+    });
+  });
+  await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
+  await app.getByRole('navigation', { name: 'メインナビゲーション' }).getByRole('button', { name: '入出力', exact: true }).click();
+  const bytes = await app.locator('body').evaluate(async () => {
+    const storagePath = '/Triadichrome-extension/src/core/storage/readPlan.ts';
+    const workbookPath = '/Triadichrome-extension/src/core/spreadsheets/workbook.ts';
+    const { readPlanContents } = await import(storagePath);
+    const { createPreviousWorkbookBytes } = await import(workbookPath);
+    const handle = Reflect.get(window, 'headerImportHandle');
+    const contents = await readPlanContents(new Uint8Array(await (await handle.getFile()).arrayBuffer()));
+    return [...await createPreviousWorkbookBytes(contents, [{ industryId: contents.industries[0].id, departmentId: contents.departments[0].id }], 1)];
+  });
+  const workbook = new ExcelJS.Workbook(); await workbook.xlsx.load(Buffer.from(bytes) as unknown as ExcelJS.Buffer);
+  const sheet = workbook.worksheets.find(sheet => sheet.state === 'visible')!;
+  sheet.getCell('C4').value = 111.001; sheet.getCell('D4').value = 222.002;
+  await app.locator('input[type="file"]').setInputFiles({ name: '見出し確認.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: Buffer.from(await workbook.xlsx.writeBuffer()) });
+  const preview = app.getByRole('region', { name: '前年金額の変更確認', exact: true });
+  await expect(preview.getByRole('heading')).toContainText('2件');
+  const trigger = preview.getByRole('button', { name: '月を絞り込む', exact: true });
+  await trigger.focus(); await trigger.press('Enter');
+  const panel = app.getByRole('dialog', { name: '月', exact: true });
+  await panel.getByRole('checkbox', { name: 'すべて選択', exact: true }).uncheck();
+  await panel.getByRole('checkbox', { name: '4月', exact: true }).check();
+  await panel.getByRole('button', { name: '適用', exact: true }).click();
+  await expect(preview.getByRole('heading')).toContainText('表示 1件 / 取込対象 2件');
+  await expect(preview.locator('tbody tr')).toHaveCount(1);
+  await expect(preview).not.toContainText('222.002');
+  await preview.getByRole('button', { name: '変更後', exact: true }).click();
+  await preview.getByRole('button', { name: '確認した内容を取り込む', exact: true }).click();
+  await expect(preview).toHaveCount(0);
+  const amounts = await app.locator('body').evaluate(async () => {
+    const path = '/Triadichrome-extension/src/core/storage/readPlan.ts';
+    const { readPlanContents } = await import(path), handle = Reflect.get(window, 'headerImportHandle');
+    const contents = await readPlanContents(new Uint8Array(await (await handle.getFile()).arrayBuffer()));
+    return contents.previousAmounts.filter((row: { amount: string }) => ['111.001', '222.002'].includes(row.amount)).map((row: { amount: string }) => row.amount).sort();
+  });
+  expect(amounts).toEqual(['111.001', '222.002']);
+});
+
 test('別ウィンドウの前年取り込み確認を履歴で破棄する前に確認する', async ({page}) => {
   test.setTimeout(120_000);
   await page.goto('/tests/ui/multi-window.html');

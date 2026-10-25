@@ -1,3 +1,7 @@
+import { TableViewHeader, TableViewEmpty, useTableView } from "./TableViewHeader";
+import type { TableColumn } from "../core/tables/columnView";
+import { amountToYen } from "../core/domain/amounts";
+import { emptyTableView } from "../core/tables/columnView";
 import { SpreadsheetOperation, spreadsheetWorking, type SpreadsheetOperationState } from "./spreadsheetOperation";
 import { PreviousKindSelection } from "./PreviousKindSelection";
 import { MeasuredTableBody } from "./MeasuredTableBody";
@@ -58,6 +62,19 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
   useEffect(dismiss, [revision, dismiss]);
   const previewRows = useMemo(() => patches ? previousPatchPresentation(contents, patches) : [],
     [patches, contents.industries, contents.departments, contents.accounts]);
+  type PreviewRow = typeof previewRows[number];
+  const previewColumns: TableColumn<PreviewRow>[] = [
+    { id: "industry", label: "業種", type: "choice", value: row => row.industryName },
+    { id: "department", label: "部署", type: "choice", value: row => row.departmentName },
+    { id: "account", label: "科目", type: "choice", value: row => row.accountName },
+    { id: "month", label: "月", type: "choice", value: row => `${row.patch.month}月` },
+    { id: "before", label: "変更前", type: "number", scale: 1000, value: row => amountToYen(row.patch.before) },
+    { id: "after", label: "変更後", type: "number", scale: 1000, value: row => amountToYen(row.patch.after) },
+  ];
+  const [previewSource, setPreviewSource] = useState(patches);
+  const [previewState, setPreviewState] = useState(emptyTableView);
+  if (previewSource !== patches) { setPreviewSource(patches); setPreviewState(emptyTableView()); }
+  const previewView = useTableView(previewRows, previewColumns, { state: previewState, change: setPreviewState });
   const input = useRef<HTMLInputElement>(null);
   const previewContainer = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -135,11 +152,11 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
         <input ref={input} type="file" accept=".xlsx" hidden onChange={event => { const files = Array.from(event.target.files ?? []); event.target.value = ""; void importFiles(files); }} />
       </div>
       {patches && <div className="io-import-preview" role="region" aria-label="前年金額の変更確認">
-        <h3>変更内容 · {previousKindName(patches[0]!.previousKind)} · {patches.length}件</h3>
-        <div ref={previewContainer} className="io-preview-table"><table><thead><tr>{["業種", "部署", "科目", "月", "変更前", "変更後"].map(label => <th key={label}>{label}</th>)}</tr></thead>
-          <MeasuredTableBody rows={previewRows} container={previewContainer} columns={6} rowKey={({ patch: p }) => `${p.previousKind}:${p.industryId}:${p.departmentId}:${p.accountId}:${p.month}`} render={({ patch: p, industryName, departmentName, accountName }) => <tr>
+        <h3>変更内容 · {previousKindName(patches[0]!.previousKind)} · {previewView.filtered ? `表示 ${previewView.rows.length}件 / 取込対象 ${patches.length}件` : `${patches.length}件`}</h3>
+        <div ref={previewContainer} className="io-preview-table"><table><thead><tr>{previewColumns.map(column => <TableViewHeader key={column.id} view={previewView} column={column.id} disabled={working || busy} />)}</tr></thead>
+          <MeasuredTableBody key={JSON.stringify(previewView.state)} rows={previewView.rows} container={previewContainer} columns={6} rowKey={({ patch: p }) => `${p.previousKind}:${p.industryId}:${p.departmentId}:${p.accountId}:${p.month}`} render={({ patch: p, industryName, departmentName, accountName }) => <tr>
             <td>{industryName}</td><td>{departmentName}</td><td>{accountName}</td><td>{p.month}月</td><td>{p.before}</td><td>{p.after}</td>
-          </tr>} /></table></div>
+          </tr>} />{!previewView.rows.length && <TableViewEmpty columns={6} />}</table></div>
         <div className="form-actions"><button type="button" className="secondary-button" disabled={working || busy} onClick={() => { controller.cancelPreview(); setNotice(""); }}>キャンセル</button>
           <button type="button" className="primary-button" disabled={working || busy || readOnly} onClick={() => { void operation(controller.beginSaving(), async state => {
             await onPrepareSave(); await onChangePlan({ type: "previous-import", patches: state.patches }); setNotice("前年金額を取り込みました。");

@@ -50,3 +50,6 @@ export * from "../../Triadichrome-extension/src/core/domain/initiativeDraftRefer
 export * from "../../Triadichrome-extension/src/core/tables/costBreakdown";
 
 export * from "../../Triadichrome-extension/src/core/tables/previousGridTable";
+
+export { emptyTableView, selectTableRows, matchesTableFilter } from "../../Triadichrome-extension/src/core/tables/columnView";
+export { createExpansionTableView, selectExpansionView } from "../../Triadichrome-extension/src/core/tables/expansionTableView";

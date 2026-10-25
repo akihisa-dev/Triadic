@@ -21,7 +21,7 @@ test("展開名ごとの集計・並び順・編集からの移動と再読込�
   await expect(salesGroup.locator(".expansion-period")).toHaveText(["期間差", "新規"]);
   await expect(salesGroup.locator(".expansion-period").nth(1)).toHaveAttribute("rowspan", "7");
   const registeredOrder = await table.getByRole("button").allTextContents();
-  await expect(table.locator("thead button")).toHaveCount(0);
+  expect(await table.locator("thead .table-view-filter").count()).toBeGreaterThan(0);
   await expect(app.getByRole("button", { name: "クリア", exact: true })).toHaveCount(0);
   await table.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();
   await expect(app.getByRole("combobox", { name: "展開名", exact: true })).toHaveValue("5");

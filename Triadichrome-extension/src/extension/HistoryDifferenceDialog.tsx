@@ -1,3 +1,5 @@
+import { TableViewHeader, TableViewEmpty, useTableView } from "./TableViewHeader";
+import { emptyTableView, type TableColumn } from "../core/tables/columnView";
 import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { HistoryDifference, HistoryIncomeImpact } from "../core/domain/historyDifference";
@@ -11,10 +13,21 @@ export function HistoryDifferenceDialog({ date, differences, impact, onClose, re
   const [previousKind, setPreviousKind] = useState(1);
   const [incomeKind, setIncomeKind] = useState(1), [incomePeriod, setIncomePeriod] = useState("year");
   const sections = useMemo(() => [...new Set(differences.map(item => item.section))], [differences]);
-  const filtered = useMemo(() => {
+  const searched = useMemo(() => {
     const text = query.trim().toLocaleLowerCase("ja");
     return differences.filter(item => (!section || item.section === section) && (!text || [item.subject, item.field, item.before, item.after].some(value => value.toLocaleLowerCase("ja").includes(text))));
   }, [differences, section, query]);
+  const columns: TableColumn<HistoryDifference>[] = [
+    { id: "section", label: "対象", type: "choice", value: row => row.section },
+    { id: "subject", label: "項目", value: row => row.subject },
+    { id: "change", label: "変更", type: "choice", value: row => row.change },
+    { id: "field", label: "変更箇所", type: "choice", value: row => row.field },
+    { id: "before", label: "履歴の値", value: row => row.before },
+    { id: "after", label: "現在の値", value: row => row.after },
+  ];
+  const [viewState, setViewState] = useState(emptyTableView);
+  const tableView = useTableView(searched, columns, { state: viewState, change: state => { setViewState(state); setPage(0); } });
+  const filtered = tableView.rows;
   const pages = Math.max(1, Math.ceil(filtered.length / 50)), currentPage = Math.min(page, pages - 1);
   useLayoutEffect(() => {
     const element = dialog.current!; element.showModal();
@@ -35,11 +48,11 @@ export function HistoryDifferenceDialog({ date, differences, impact, onClose, re
       <output aria-label="差分件数">{filtered.length}件 / 全{differences.length}件</output>
       <span>金額単位：千円</span>
     </div>
-    {differences.length === 0 ? <p>差分はありません。</p> : filtered.length === 0 ? <p>条件に一致する差分はありません。</p> : <div className="history-difference-scroll">
-      <table aria-label="履歴と現在の変更箇所"><thead><tr>{["対象", "項目", "変更", "変更箇所", "履歴の値", "現在の値"].map(name => <th scope="col" key={name}>{name}</th>)}</tr></thead>
+    {differences.length === 0 ? <p>差分はありません。</p> : <div className="history-difference-scroll">
+      <table aria-label="履歴と現在の変更箇所"><thead><tr>{columns.map(column => <TableViewHeader key={column.id} view={tableView} column={column.id} />)}</tr></thead>
         <tbody>{filtered.slice(currentPage * 50, (currentPage + 1) * 50).map((item, index) => <tr key={currentPage * 50 + index}>
           <td>{item.section}</td><th scope="row">{item.subject}</th><td>{item.change}</td><td>{item.field}</td><td>{item.before}</td><td>{item.after}</td>
-        </tr>)}</tbody></table>
+        </tr>)}</tbody>{!filtered.length && <TableViewEmpty columns={6} />}</table>
     </div>}
     {filtered.length > 50 && <nav className="history-difference-pages" aria-label="差分のページ">
       <button type="button" className="secondary-button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>前へ</button>

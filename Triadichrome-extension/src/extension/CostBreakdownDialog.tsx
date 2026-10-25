@@ -1,10 +1,12 @@
-import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { TableViewHeader, TableViewEmpty, useTableView } from "./TableViewHeader";
+import type { TableColumn } from "../core/tables/columnView";
+import { useId, useLayoutEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
-import { buildCostBreakdown, indexCostBreakdown, sortCostBreakdownLines, type CostBreakdownSort, type CostBreakdownTarget } from "../core/tables/costBreakdown";
+import { buildCostBreakdown, indexCostBreakdown, type CostBreakdownTarget } from "../core/tables/costBreakdown";
 import { MeasuredTableBody } from "./MeasuredTableBody";
 import type { Initiative, PlanContents } from "../core/domain/plan";
 import type { KindId } from "../core/domain/kinds";
-import { formatYen } from "../core/domain/amounts";
+import { formatYen, sumYen } from "../core/domain/amounts";
 import "./CostBreakdown.css";
 
 type Props = { contents: PlanContents; selected: KindId[]; target: CostBreakdownTarget; title: string;
@@ -16,17 +18,28 @@ export function CostBreakdownDialog({ contents, selected, target, title, navigat
   const dialog = useRef<HTMLDialogElement>(null);
   const heading = useId();
   const container = useRef<HTMLDivElement>(null);
-  const [sort, setSort] = useState<CostBreakdownSort | null>(null);
   const prepared = useMemo(() => candidates ?? indexCostBreakdown(contents), [candidates, contents.previousAmounts, contents.initiatives]);
   const result = useMemo(() => {
     try { return { detail: buildCostBreakdown(contents, target, selected, prepared), error: "" }; }
     catch (error) { return { detail: null, error: error instanceof Error ? error.message : "内訳を計算できませんでした。" }; }
   }, [contents, target, selected, prepared]);
-  const displayed = useMemo(() => sortCostBreakdownLines(result.detail?.lines ?? [], contents, sort), [result.detail, contents, sort]);
   const accounts = new Map(contents.accounts.map(item => [item.id, item.displayName ?? item.accountName]));
   const departments = new Map(contents.departments.map(item => [item.id, item.departmentName]));
   const industries = new Map(contents.industries.map(item => [item.id, item.industryName]));
   const initiatives = new Map(contents.initiatives.map(item => [item.id, item]));
+  type Line = NonNullable<typeof result.detail>["lines"][number];
+  const definitions: TableColumn<Line>[] = [
+    { id: "name", label: "前年・施策", value: row => row.name },
+    { id: "account", label: "科目", type: "choice", value: row => accounts.get(row.accountId) },
+    { id: "department", label: "部署", type: "choice", value: row => departments.get(row.departmentId!) },
+    { id: "industry", label: "業種", type: "choice", value: row => industries.get(row.industryId!) },
+    { id: "sign", label: "集計の加減", type: "choice", value: row => row.sign === -1 ? "−" : "＋", sortValue: row => row.sign },
+    { id: "amount", label: "反映額", type: "number", scale: 1000, value: row => row.amount },
+  ];
+  const tableView = useTableView(result.detail?.lines ?? [], definitions);
+  const displayed = tableView.rows;
+  let total = "";
+  try { total = formatYen(sumYen(displayed.map(row => row.amount))); } catch { total = "金額が計算範囲を超えています。"; }
   useLayoutEffect(() => {
     const element = dialog.current!;
     element.showModal();
@@ -40,19 +53,15 @@ export function CostBreakdownDialog({ contents, selected, target, title, navigat
       <button autoFocus type="button" className="secondary-button" onClick={onClose}>閉じる</button></div>
     {result.error ? <p role="alert">{result.error}</p> : <>
       <div ref={container} className="cost-breakdown-scroll"><table aria-label="金額の内訳">
-        <thead><tr>{columns.map(([column, label]) => <th key={column} scope="col" aria-sort={sort?.column === column ? sort.direction : undefined}>
-          <button type="button" className="cost-breakdown-sort" onClick={() => {
-            setSort({ column, direction: sort?.column === column && sort.direction === "ascending" ? "descending" : "ascending" });
-            if (container.current) container.current.scrollTop = 0;
-          }}>{label}<span aria-hidden="true">{sort?.column === column ? sort.direction === "ascending" ? "▲" : "▼" : ""}</span></button>
-        </th>)}</tr></thead>
-        <MeasuredTableBody key={sort ? `${sort.column}-${sort.direction}` : "original"} rows={displayed} container={container} columns={6} rowKey={line => line.key} render={line => <tr>
+        <thead><tr>{columns.map(([column]) => <TableViewHeader key={column} view={tableView} column={column} />)}</tr></thead>
+        <MeasuredTableBody key={JSON.stringify(tableView.state)} rows={displayed} container={container} columns={6} rowKey={line => line.key} render={line => <tr>
           <th scope="row">{line.initiativeId === null ? line.name : <button type="button" className="initiative-name-button" disabled={navigationBlocked}
             onClick={() => { const initiative = initiatives.get(line.initiativeId!); if (initiative) { onClose(); onOpenInitiative(initiative, [...selected].sort((a, b) => a - b)[target.column > 0 && target.column <= selected.length ? target.column - 1 : selected.length - 1]); } }}>{line.name}</button>}</th>
           <td>{accounts.get(line.accountId)}</td><td>{departments.get(line.departmentId!) ?? ""}</td><td>{industries.get(line.industryId!) ?? ""}</td>
           <td>{line.sign === -1 ? "−" : "＋"}</td><td>{formatYen(line.amount)}</td>
         </tr>} />
-        <tfoot><tr><th scope="row" colSpan={5}>合計</th><td>{formatYen(result.detail!.total)}</td></tr></tfoot>
+        <tfoot><tr><th scope="row" colSpan={5}>{tableView.filtered ? "表示中の合計" : "合計"}</th><td>{total}</td></tr></tfoot>
+        {tableView.filtered && !displayed.length && <TableViewEmpty columns={6} />}
       </table></div>
       {result.detail!.lines.length === 0 && <p>対象となる金額はありません。</p>}
     </>}

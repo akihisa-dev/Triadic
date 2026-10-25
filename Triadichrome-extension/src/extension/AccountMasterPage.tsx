@@ -1,3 +1,5 @@
+import { TableViewHeader, useTableView, useEditingTableRows } from "./TableViewHeader";
+import type { TableColumn } from "../core/tables/columnView";
 import { useLayoutEffect, useRef, useState } from "react";
 import { type Account, type AccountChange } from "../core/domain/accountMaster";
 import { type Aggregation } from "../core/domain/aggregations";
@@ -47,6 +49,15 @@ export function AccountMasterPage({ accounts, groups, usedAccountIds, isSaving, 
     controller.syncSaved(saved);
   }, [accounts, controller, editing?.id]);
   const {notice,dismiss,save} = useMasterOperation<Operation>({onChange:perform,onSuccess:operation => { if(operation.change.type === "add") setAdding(empty()); setDeleting(null); },onFailure:() => {positions.current=null;setDeleting(null);},successMessage:() => "マスタを保存しました。",cancelledMessage:() => "保存をキャンセルしました。元の内容を保っています。"});
+  const columns: TableColumn<MasterRow>[] = [
+    { id: "code", label: "科目コード", value: row => byAccount.get(row.id)?.accountCode },
+    { id: "name", label: "名称", value: row => byAccount.get(row.id)?.accountName },
+    { id: "display", label: "表示名", value: row => { const account = byAccount.get(row.id)!; return account.displayName ?? account.accountName; } },
+    { id: "type", label: "科目属性", type: "choice", value: row => { const type = byAccount.get(row.id)?.accountType; return type ? accountTypes[type] : "未設定"; } },
+  ];
+  const tableView = useTableView(accountRows, columns);
+  const displayed = useEditingTableRows(tableView.rows, accountRows, editing ? masterRowKey(editing) : null, masterRowKey);
+  const presentationChanged = tableView.filtered || !!tableView.state.sort;
   const disabled = readOnly || isSaving || editing !== null;
   useLayoutEffect(() => {
     if (disabled || !keyboardFocus.current) return;
@@ -66,7 +77,7 @@ export function AccountMasterPage({ accounts, groups, usedAccountIds, isSaving, 
     positions.current=null;
   },[accounts,groups]);
   const reorder = (row:MasterRow,target:MasterRow,before:boolean) => {
-    if(disabled || masterRowKey(row) === masterRowKey(target)) return;
+    if(disabled || presentationChanged || masterRowKey(row) === masterRowKey(target)) return;
     const order=rows.filter(item => masterRowKey(item) !== masterRowKey(row));
     order.splice(order.findIndex(item => masterRowKey(item) === masterRowKey(target))+(before ? 0 : 1),0,row);
     if(order.every((item,index) => masterRowKey(item) === masterRowKey(rows[index]!))) return;
@@ -77,7 +88,7 @@ export function AccountMasterPage({ accounts, groups, usedAccountIds, isSaving, 
   const rename = (draft:Draft,name:string) => ({...draft,name,displayName:draft.displayName.trim() === draft.name.trim() ? name : draft.displayName});
   const end = () => {if(editing) focus(editing);controller.end();dismiss();};
   return <main className="master-page account-master-page master-data-page unified-master-page" aria-labelledby="account-master-title" aria-busy={isSaving} onCompositionStart={() => controller.pause()} onCompositionEnd={() => controller.resume()}>
-    <div className="account-master-heading"><button type="button" className="text-button master-back" disabled={isSaving || autoSave.pending} onClick={onBack}>← マスタへ戻る</button><h1 id="account-master-title">勘定科目マスタ</h1><span className="master-count">{accounts.length}科目</span></div>
+    <div className="account-master-heading"><button type="button" className="text-button master-back" disabled={isSaving || autoSave.pending} onClick={onBack}>← マスタへ戻る</button><h1 id="account-master-title">勘定科目マスタ</h1><span className="master-count">{tableView.filtered ? `${displayed.length} / ${accounts.length}` : accounts.length}科目</span></div>
     <form className="account-master-form" aria-label="勘定科目の新規登録" onSubmit={event => {event.preventDefault();if(disabled) return;void save({kind:"account",change:{type:"add",accountCode:adding.code,accountName:adding.name,accountType:adding.attribute,displayName:adding.displayName}});}}>
       <span className="master-form-label">新規登録</span>
       <div className="initiative-field account-code-field"><label htmlFor="account-code">科目コード</label><input name="accountCode" id="account-code" value={adding.code} disabled={disabled} inputMode="numeric" autoComplete="off" onChange={event => setAdding({...adding,code:event.target.value})}/></div>
@@ -89,14 +100,15 @@ export function AccountMasterPage({ accounts, groups, usedAccountIds, isSaving, 
     <StatusNotice {...notice} onDismiss={dismiss}/>
     <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave}/>
     <ConfirmationDialog open={deleting !== null} title="勘定科目を削除" message={deleting ? `「${byAccount.get(deleting.id)?.accountCode} ${byAccount.get(deleting.id)?.accountName}」を削除しますか？` : ""} confirmLabel="削除する" busy={isSaving} onCancel={() => setDeleting(null)} onConfirm={() => {if(deleting && !isSaving) void save({kind:"account",change:{type:"delete",id:deleting.id}});}}/>
-    <div className="account-master-list" role="region" aria-label="勘定科目一覧" tabIndex={0}><table className="account-master-table" aria-label="勘定科目一覧"><thead><tr>{["順序","科目コード","名称","表示名","科目属性","操作"].map(label => <th scope="col" key={label}>{label}</th>)}</tr></thead><tbody>
-      {accountRows.map((row,index) => {
+    <div className="account-master-list" role="region" aria-label="勘定科目一覧" tabIndex={0}><table className="account-master-table" aria-label="勘定科目一覧"><thead><tr><th scope="col">順序</th>{columns.map(column => <TableViewHeader key={column.id} view={tableView} column={column.id} disabled={!!editing || isSaving} />)}<th scope="col">操作</th></tr></thead><tbody>
+      {displayed.length === 0 && <tr><td colSpan={6} className="table-view-empty">条件に合う行がありません。</td></tr>}
+      {displayed.map((row,index) => {
         const key=masterRowKey(row),account=byAccount.get(row.id)!;
         const name=account.accountName;
         const draft=editing && masterRowKey(editing) === key ? editing : null;
         const cannotDelete=account.inUse || usedAccountIds.has(account.id);
         return <tr key={key} ref={element => {if(element) elements.current.set(key,element);else elements.current.delete(key);}} className={`${draft ? "master-row-editing" : ""} ${drop?.key === key ? drop.before ? "drop-before" : "drop-after" : ""}`} onDragOver={event => {if(!dragged || disabled) return;event.preventDefault();setDrop({key,before:event.clientY < event.currentTarget.getBoundingClientRect().top+event.currentTarget.getBoundingClientRect().height/2});}} onDrop={event => {event.preventDefault();if(dragged && drop) reorder(dragged,row,drop.before);setDragged(null);setDrop(null);}} onKeyDown={event => {if(draft && event.key === "Escape" && !autoSave.pending){event.preventDefault();event.stopPropagation();end();}}}>
-          <td><button type="button" className="text-button account-drag-handle" aria-label={`${name}を並べ替え`} disabled={disabled} draggable={!disabled} onDragStart={event => {event.dataTransfer.effectAllowed="move";event.dataTransfer.setData("text/plain",key);setDragged(row);}} onDragEnd={() => {setDragged(null);setDrop(null);}} onKeyDown={event => {if(event.key !== "ArrowUp" && event.key !== "ArrowDown") return;event.preventDefault();const target=accountRows[index+(event.key === "ArrowUp" ? -1 : 1)];if(target && reorder(row,target,event.key === "ArrowUp")) keyboardFocus.current={key,button:event.currentTarget};}}>⠿</button></td>
+          <td><button type="button" className="text-button account-drag-handle" aria-label={`${name}を並べ替え`} disabled={disabled || presentationChanged} title={presentationChanged ? "表示の絞り込みと並べ替えを解除すると登録順を変更できます。" : undefined} draggable={!disabled && !presentationChanged} onDragStart={event => {event.dataTransfer.effectAllowed="move";event.dataTransfer.setData("text/plain",key);setDragged(row);}} onDragEnd={() => {setDragged(null);setDrop(null);}} onKeyDown={event => {if(event.key !== "ArrowUp" && event.key !== "ArrowDown") return;event.preventDefault();const target=accountRows[index+(event.key === "ArrowUp" ? -1 : 1)];if(target && reorder(row,target,event.key === "ArrowUp")) keyboardFocus.current={key,button:event.currentTarget};}}>⠿</button></td>
           <td className="account-code">{draft ? <input autoFocus aria-label={`${name}の科目コード`} value={draft.code} inputMode="numeric" onChange={event => controller.change({...draft,code:event.target.value})}/> : account.accountCode}</td>
           <th scope="row">{draft ? <input aria-label={`${name}の名称`} value={draft.name} onChange={event => controller.change(rename(draft,event.target.value))}/> : name}</th>
           <td>{draft ? <input aria-label={`${name}の表示名`} value={draft.displayName} onChange={event => controller.change({...draft,displayName:event.target.value})}/> : account.displayName ?? name}</td>

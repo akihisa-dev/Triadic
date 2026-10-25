@@ -13,13 +13,16 @@ import type { Expansion } from "../core/domain/expansionMaster";
 import type { PeriodType } from "../core/domain/periodMaster";
 import type { KindId } from "../core/domain/kinds";
 
-import { sortInitiatives, type InitiativeSort } from "../core/tables/initiativeSort";
+import { type TableColumn, type TableSort, type TableViewState } from "../core/tables/columnView";
+import { TableViewHeader, TableViewEmpty, useTableView } from "./TableViewHeader";
+import { initiativeTotals } from "../core/tables/initiativeTotals";
+import type { InitiativeListRow } from "../core/tables/initiativeListView";
 
 import { formatYen } from "../core/domain/amounts";
 import { useWindowViewState } from "./windowView";
 const amountText = (amount: number | null | undefined) => amount === undefined ? "" : amount === null ? "属性未設定" : formatYen(amount);
 
-export type InitiativeListReturn = { id: number; identity: string; sort: InitiativeSort | null };
+export type InitiativeListReturn = { id: number; identity: string; sort: TableSort | null; filters?: TableViewState["filters"] };
 
 type InitiativeListPageProps = {
   returnTo?: RefObject<InitiativeListReturn | null>;
@@ -39,6 +42,7 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
   const readOnly = useHistoryReadOnly();
   const [returnTarget] = useState(() => returnTo?.current ?? null);
   const [sort, setSort] = useWindowViewState("initiative-list:sort", returnTarget?.sort ?? null);
+  const [filters, setFilters] = useWindowViewState("initiative-list:filters", returnTarget?.filters ?? {});
   const [focusedId, setFocusedId] = useState<number | null>(() => initiatives.find(item => item.id === returnTarget?.id && item.identity === returnTarget.identity)?.id ?? null);
   const container = useRef<HTMLDivElement>(null);
   const addButton = useRef<HTMLButtonElement>(null);
@@ -61,9 +65,26 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
   const periodNames = useMemo(() => new Map(periodTypes.map(item => [item.id, item.periodName])), [periodTypes]);
   const viewForKind = useMemo(() => createInitiativeListView(initiatives, accounts, fiscalYear), [initiatives, accounts, fiscalYear]);
   const view = viewForKind(selectedKind);
-  const { source, errors } = view;
-  const displayed = useMemo(() => sortInitiatives(source, sort, selectedKind, expansionNames, periodNames),
-    [source, sort, selectedKind, expansionNames, periodNames]);
+  const { source } = view;
+  const columns = useMemo<TableColumn<InitiativeListRow>[]>(() => [
+    { id: "expansion", label: "展開名", type: "choice", value: row => expansionNames.get(row.expansionId!) ?? "" },
+    { id: "period", label: "期間名", type: "choice", value: row => periodNames.get(row.periodTypeId!) ?? "" },
+    { id: "name", label: "施策名", value: row => row.name },
+    { id: "start", label: "開始年月", type: "choice", value: row => row.startYearMonths[selectedKind] ?? "" },
+    ...initiativeMonths.flatMap(month => amountItems.map(metric => ({ id: `${month}:${metric.id}`, label: metric.name, name: `${month}月 ${metric.name}`, type: "number" as const, scale: 1000,
+      value: (row: InitiativeListRow) => row.calculation === "ready" ? row.months[month]?.[metric.id] : null }))),
+  ], [expansionNames, periodNames, selectedKind]);
+  const tableView = useTableView(source, columns, { state: { sort, filters }, change: state => {
+    setSort(state.sort); setFilters(state.filters); if (container.current) container.current.scrollTop = 0;
+  } });
+  const displayed = tableView.rows;
+  const displayedView = useMemo(() => {
+    if (!tableView.filtered) return view;
+    const errors = new Map(displayed.flatMap(row => row.calculation === "failed" ? [[row.id, row.error] as const] : []));
+    try { return { source: displayed, errors, totals: errors.size ? null : initiativeTotals(displayed.filter(row => row.calculation === "ready")), totalError: null }; }
+    catch (failure) { return { source: displayed, errors, totals: null, totalError: (failure as Error).message }; }
+  }, [view, displayed, tableView.filtered]);
+  const { errors } = displayedView;
   const window = useRowWindow(container, displayed.length, 28, 200, 56);
   const virtual = displayed.length > 200;
   const focusedIndex = useMemo(() => focusedId === null ? -1 : displayed.findIndex(item => item.id === focusedId), [displayed, focusedId]);
@@ -75,18 +96,12 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
     }
     return [...indices].sort((a, b) => a - b).map(index => ({ item: displayed[index]!, index, key: displayed[index]!.id }));
   }, [displayed, window.start, window.end, focusedIndex]);
-  const sortHeader = (column: InitiativeSort["column"], label: string, className: string) => {
-    const active = sort?.column === column;
-    return <th rowSpan={2} scope="col" className={`initiative-list-fixed ${className}`} aria-sort={active ? sort.direction : undefined}>
-      <button className="initiative-sort-button" type="button" onClick={() => setSort({ column, direction: active && sort.direction === "ascending" ? "descending" : "ascending" })}>
-        {label}{active && <span className="initiative-sort-indicator" aria-hidden="true">{sort.direction === "ascending" ? "▲" : "▼"}</span>}
-      </button>
-    </th>;
-  };
+  const sortHeader = (column: string, _label: string, className: string) => <TableViewHeader view={tableView} column={column} rowSpan={2} className={`initiative-list-fixed ${className}`} />;
   return <main className="initiative-list-page initiative-overview-page" aria-labelledby="initiative-list-title">
     <div className="initiative-list-heading">
       <h1 id="initiative-list-title">施策一覧</h1>
       {selection}
+      {tableView.filtered && <span className="master-count" role="status">{displayed.length} / {source.length}件</span>}
       <button ref={addButton} className="primary-button" type="button" disabled={navigationBlocked || readOnly} onClick={onAddInitiative}>施策を追加</button>
     </div>
     <TableCalculationBoundary resetKeys={[initiatives, accounts, selectedKind, fiscalYear]}>
@@ -108,7 +123,7 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
             {initiativeMonths.map(month => <th key={month} colSpan={3} scope="colgroup">{month}月</th>)}
           </tr>
           <tr>{initiativeMonths.map(month => <Fragment key={month}>
-            {amountItems.map((metric, index) => <th key={metric.id} scope="col" className={index === amountItems.length - 1 ? "initiative-month-end" : undefined}>{metric.name}</th>)}
+            {amountItems.map((metric, index) => <TableViewHeader key={metric.id} view={tableView} column={`${month}:${metric.id}`} className={index === amountItems.length - 1 ? "initiative-month-end" : undefined} />)}
           </Fragment>)}</tr>
         </thead>
         <tbody><WindowRows items={rendered} count={displayed.length} height={28} columns={40} render={(item, index) => <tr key={item.id} aria-rowindex={index + 3}>
@@ -120,7 +135,7 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
                 // Native Tab blurs before focusing its destination. Do not unmount that neighbour between the events.
                 if (!(event.relatedTarget instanceof Node && event.currentTarget.closest("tbody")?.contains(event.relatedTarget))) setFocusedId(null);
               }} onClick={() => {
-                if (returnTo) returnTo.current = { id: item.id, identity: item.identity ?? "", sort };
+                if (returnTo) returnTo.current = { id: item.id, identity: item.identity ?? "", sort, filters };
                 onOpenInitiative(item, selectedKind);
               }}>{item.name}{unclassifiedIds.has(item.id) && <span className="initiative-attribute-hint"> · 属性未設定</span>}</InitiativeNameButton>
           </th>
@@ -129,7 +144,8 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
             {amountItems.map((metric, index) => <td key={metric.id} className={index === amountItems.length - 1 ? "initiative-month-end" : undefined}>{amountText(item.months[month]?.[metric.id])}</td>)}
           </Fragment>)}
         </tr>} />{!virtual && <tr className="initiative-list-fill" aria-hidden="true"><td colSpan={40} /></tr>}</tbody>
-        <tfoot>{errors.size ? <tr className="initiative-total-row"><th colSpan={40} scope="row" style={{ textAlign: "left" }}>計算できない施策があるため、合計を表示できません。</th></tr> : <InitiativeTotalRow view={view} />}</tfoot>
+        {tableView.filtered && displayed.length === 0 && <TableViewEmpty columns={40} />}
+        <tfoot>{errors.size ? <tr className="initiative-total-row"><th colSpan={40} scope="row" style={{ textAlign: "left" }}>計算できない施策があるため、合計を表示できません。</th></tr> : <InitiativeTotalRow view={displayedView} filtered={tableView.filtered} />}</tfoot>
       </table>
     </div>
     </TableCalculationBoundary>
@@ -137,11 +153,11 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
   </main>;
 }
 
-function InitiativeTotalRow({ view }: { view: InitiativeListView }) {
+function InitiativeTotalRow({ view, filtered }: { view: InitiativeListView; filtered: boolean }) {
   if (!view.totals) return <tr className="initiative-total-row"><th colSpan={40} scope="row" role="alert">{view.totalError} 施策を開いて金額を修正してください。</th></tr>;
   const totals = view.totals;
   return <tr className="initiative-total-row">
-    <th colSpan={4} scope="row" className="initiative-total-label"><span>合計</span></th>
+    <th colSpan={4} scope="row" className="initiative-total-label"><span>{filtered ? "表示中の合計" : "合計"}</span></th>
     {initiativeMonths.map(month => <Fragment key={month}>
       {amountItems.map((metric, index) => <td key={metric.id} className={index === amountItems.length - 1 ? "initiative-month-end" : undefined}>{amountText(totals[month]?.[metric.id])}</td>)}
     </Fragment>)}

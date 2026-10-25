@@ -1,10 +1,12 @@
 import type { KindId, KindSelections, PreviousKind, PreviousSelections } from "../core/domain/kinds";
-import type { InitiativeSort } from "../core/tables/initiativeSort";
+import type { TableSort, TableViewState } from "../core/tables/columnView";
 
 export type WindowViewState = {
   "table:kinds": KindSelections;
   "table:previous": PreviousSelections;
-  "initiative-list:sort": InitiativeSort | null;
+  "initiative-list:sort": TableSort | null;
+  "initiative-list:filters": TableViewState["filters"];
+  "expansion:table-view": TableViewState;
   "initiative:kind": KindId;
   "previous:kind": PreviousKind;
   "previous:industries": number[];
@@ -15,7 +17,7 @@ export type WindowViewValues = Partial<WindowViewState>;
 
 // Every state key must explicitly choose whether another window may inherit it.
 const clonePolicy = {
-  "table:kinds": true, "table:previous": true, "initiative-list:sort": true,
+  "table:kinds": true, "table:previous": true, "initiative-list:sort": true, "initiative-list:filters": true, "expansion:table-view": true,
   "initiative:kind": true, "previous:kind": true, "previous:industries": true,
   "previous:departments": true, "home:mode": true,
 } satisfies Record<keyof WindowViewState, boolean>;

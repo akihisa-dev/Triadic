@@ -1,3 +1,4 @@
+import { verifyColumnView } from "../tests/column-view.mjs";
 import { verifyAmountExpression } from "../tests/amount-expression.mjs";
 import { verifySpreadsheetOperation } from "../tests/spreadsheet-operation.mjs";
 import { verifyPreviousGridTable } from "../tests/previous-grid-table.mjs";
@@ -146,6 +147,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   verifyPreviousGridTable(api, await api.readPlanContents(await api.createTriadicDatabase(2026)));
   verifyInitiativeGrid(api);
   verifyAmountExpression(api);
+  await verifyColumnView(api);
   verifySelectionTotal(api);
   verifyBudgetHints(api);
   verifyHomeMasterCoverage(api);

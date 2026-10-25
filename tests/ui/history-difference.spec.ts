@@ -54,7 +54,8 @@ standalone("大量差分を50件ずつ表示し、検索・絞り込み・特殊
   await expect(dialog.getByRole("table")).toContainText("<img src=x onerror=alert(1)> & 日本語");
   await expect(dialog.locator("img")).toHaveCount(0);
   await dialog.getByRole("searchbox", { name: "検索", exact: true }).fill("該当なし");
-  await expect(dialog).toContainText("条件に一致する差分はありません。");
+  await expect(dialog.getByRole("table").getByRole("status")).toHaveText("条件に合う行がありません。");
+  await expect(dialog.getByRole("button", { name: "項目を絞り込む", exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
 

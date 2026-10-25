@@ -12,7 +12,7 @@ for (const count of [200, 201]) {
     await expect(page.getByRole("textbox", { name: "施策名", exact: true })).toHaveValue(/^施策001/);
     await page.getByRole("button", { name: "← 施策一覧へ戻る", exact: true }).click();
     await expect(name).toBeFocused();
-    await expect(sort.locator("..")).toHaveAttribute("aria-sort", "descending");
+    await expect(table.getByRole("columnheader", { name: "施策名", exact: true })).toHaveAttribute("aria-sort", "descending");
     await expect(name).toBeInViewport();
     await page.keyboard.press("Tab");
     await expect(table.getByRole("button", { name: /^施策000/ })).toBeFocused();

@@ -1,3 +1,5 @@
+import { TableViewHeader, useTableView, useEditingTableRows } from "./TableViewHeader";
+import type { TableColumn } from "../core/tables/columnView";
 import { useMasterOperation } from "./useMasterOperation";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
 import { useLayoutEffect, useRef, useState } from "react";
@@ -44,10 +46,17 @@ export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange,
     onFailure: () => setDeleting(null),
     successMessage: change => change.type === "delete" ? `${subject}を削除しました。` : `${subject}を登録しました。`,
   });
+  const columns: TableColumn<NamedMasterRow>[] = [
+    ...(coded ? [{ id: "code", label: `${subject}コード`, value: (row: NamedMasterRow) => row.code }] : []),
+    { id: "name", label: `${subject}名`, value: row => row.name },
+    ...(relationOptions ? [{ id: "relations", label: relationLabel, type: "choice" as const, value: (row: NamedMasterRow) => relationOptions.filter(option => row.relationIds?.includes(option.id)).map(option => option.name) }] : []),
+  ];
+  const tableView = useTableView(rows, columns);
+  const displayed = useEditingTableRows(tableView.rows, rows, draft ? String(draft.id) : null, row => String(row.id));
   return <main className="master-page account-master-page master-data-page named-master-page" aria-labelledby={`${slug}-master-title`} aria-busy={isSaving}
     onCompositionStart={() => controller.pause()} onCompositionEnd={() => controller.resume()}>
     <div className="account-master-heading"><button className="text-button master-back" type="button" disabled={isSaving || autoSave.pending} onClick={onBack}>← マスタへ戻る</button>
-    <h1 id={`${slug}-master-title`}>{subject}マスタ</h1><span className="master-count">{rows.length}件</span></div>
+    <h1 id={`${slug}-master-title`}>{subject}マスタ</h1><span className="master-count">{tableView.filtered ? `${displayed.length} / ${rows.length}` : rows.length}件</span></div>
     <form className="account-master-form" aria-label={`${subject}の新規登録`} onSubmit={event => {
       event.preventDefault();
       if (!isSaving && !draft) void save({ type: "add", code, name, ...(relationOptions ? { relationIds } : {}) });
@@ -72,10 +81,10 @@ export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange,
       confirmLabel="削除する" busy={isSaving} onCancel={() => setDeleting(null)} onConfirm={() => { if (deleting && !isSaving) void save({ type: "delete", id: deleting.id, ...(deleting.deletionKey === undefined ? {} : { deletionKey: deleting.deletionKey }) }); }} />
     <div className="account-master-list" role="region" aria-label={`${subject}一覧`} tabIndex={0}>
       <table className={`account-master-table ${slug}-master-table`} aria-label={`${subject}一覧`}>
-        <thead><tr>{coded && <th scope="col">{subject}コード</th>}<th scope="col">{subject}名</th>{relationOptions && <th scope="col">{relationLabel}</th>}<th scope="col">操作</th></tr></thead>
+        <thead><tr>{columns.map(column => <TableViewHeader key={column.id} view={tableView} column={column.id} disabled={!!draft || isSaving} />)}<th scope="col">操作</th></tr></thead>
         <tbody>
-          {rows.length === 0 && <tr><td colSpan={(coded ? 3 : 2) + (relationOptions ? 1 : 0)} className="page-description">{subject}はまだ登録されていません。</td></tr>}
-          {rows.map(item => {
+          {displayed.length === 0 && <tr><td colSpan={(coded ? 3 : 2) + (relationOptions ? 1 : 0)} className="page-description">{rows.length ? "条件に合う行がありません。" : `${subject}はまだ登録されていません。`}</td></tr>}
+          {displayed.map(item => {
             const editing = draft?.id === item.id ? draft : null;
             return <tr key={item.id} className={editing ? "master-row-editing" : undefined} onKeyDown={event => {
               if (editing && (event.key === "Escape" || event.key === "Enter") && !event.nativeEvent.isComposing) {
