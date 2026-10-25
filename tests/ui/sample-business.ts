@@ -61,7 +61,7 @@ export async function createBusinessSample(fiscalYear: number): Promise<Uint8Arr
   const defaults = await readPlanContents(bytes);
   const accounts = new Map(defaults.accounts.map(account => [account.accountName, account.id]));
   // Business descriptions are not replacement industry names. Select the existing default codes.
-  const industryCodes: Record<string, string> = { "ルート配送": "1", "チャーター配送": "2", "アパレル倉庫": "3", "非衣料品倉庫": "4", "本社管理": "8", "営業外": "9" };
+  const industryCodes: Record<string, string> = { "ルート配送": "1", "チャーター配送": "2", "アパレル倉庫": "4", "非衣料品倉庫": "4", "本社管理": "8", "営業外": "9" };
   const industryId = (business: string) => {
     const industry = defaults.industries.find(item => item.industryCode === industryCodes[business]);
     if (!industry) throw new Error(`サンプルで参照するデフォルト業種がありません: ${business}`);
@@ -72,7 +72,7 @@ export async function createBusinessSample(fiscalYear: number): Promise<Uint8Arr
     for (const department of defaults.departments) applyDepartmentChange(database, { type: "delete", id: department.id });
     companyRegions.forEach((departmentName, i) => applyDepartmentChange(database, { type: "add", departmentName,
       industryIds: i === 7 ? [industryId("本社管理"), industryId("営業外")]
-        : [industryId("ルート配送"), industryId("チャーター配送"), industryId("アパレル倉庫"), ...([0, 3].includes(i) ? [industryId("非衣料品倉庫")] : [])] }));
+        : [industryId("ルート配送"), industryId("チャーター配送"), industryId("アパレル倉庫")] }));
     for (let business = 0; business < 3; business++) for (let region = 0; region < 7; region++) {
       const annual = previousAnnualSales[business]![region]!;
       const weights = workloadWeights[business]!;

@@ -60,14 +60,15 @@ test('基準サンプルの費用UP5区分は目的・科目・確定改定に�
   await app.getByRole('navigation',{name:'メインナビゲーション'}).getByRole('button',{name:'施策一覧',exact:true}).click();
   await app.getByRole('button',{name:'サイドバーを閉じる',exact:true}).last().click();
   const cases = [
-    {name:'大阪・倉庫派遣契約の時間単価上昇',category:'下払いUP',account:'臨時傭員費',month:7,primary:'2000',confirmed:'2000',reason:'時給100円'},
-    {name:'東京・運転職の定着に向けた基本給改定',category:'ベースアップ',account:'給料手当',month:7,primary:'928',confirmed:'928',reason:'116名'},
-    {name:'大阪・仕分け設備の段階導入',category:'設備投資',account:'固定資産減価償却費',month:9,primary:'600',confirmed:'0',reason:'11月に検収延期'},
-    {name:'東京・軽油の契約単価上昇',category:'燃料費UP',account:'燃料油脂費',month:10,primary:'720',confirmed:'540',reason:'共同購入'},
-    {name:'東京・既存倉庫の電力契約更新',category:'電気料金UP',account:'動力光熱費',month:12,primary:'700',confirmed:'700',reason:'暖房需要'},
+    {name:'大阪・倉庫派遣契約の時間単価上昇',category:'下払いUP',industry:'不動産B',account:'臨時傭員費',month:7,primary:'2000',confirmed:'2000',reason:'時給100円'},
+    {name:'東京・運転職の定着に向けた基本給改定',category:'ベースアップ',industry:'直営自動車',account:'給料手当',month:7,primary:'928',confirmed:'928',reason:'116名'},
+    {name:'大阪・仕分け設備の段階導入',category:'設備投資',industry:'不動産B',account:'固定資産減価償却費',month:9,primary:'600',confirmed:'0',reason:'11月に検収延期'},
+    {name:'東京・軽油の契約単価上昇',category:'燃料費UP',industry:'直営自動車',account:'燃料油脂費',month:10,primary:'720',confirmed:'540',reason:'共同購入'},
+    {name:'東京・既存倉庫の電力契約更新',category:'電気料金UP',industry:'不動産B',account:'動力光熱費',month:12,primary:'700',confirmed:'700',reason:'暖房需要'},
   ];
   for(const item of cases) {
     await app.getByRole('button',{name:item.name,exact:true}).click();
+    await expect(app.getByRole('combobox',{name:'業種名',exact:true}).locator('option:checked')).toHaveText(item.industry);
     await expect(app.getByRole('combobox',{name:'展開区分',exact:true}).locator('option:checked')).toHaveText(item.category);
     await expect(app.getByRole('textbox',{name:'備考',exact:true})).toHaveValue(new RegExp(item.reason));
     await app.getByRole('tab',{name:'一次予算',exact:true}).click();
@@ -90,6 +91,7 @@ test('明細の導線を持たず施策の全月を直接編集して保存・�
   await nav.getByRole('button', { name: '施策一覧', exact: true }).click();
   await app.getByRole('button', { name: 'サイドバーを閉じる', exact: true }).last().click();
   await app.getByRole('button', { name: '関東第一倉庫・生活雑貨の保管出荷受託', exact: true }).click();
+  await expect(app.getByRole('combobox', { name: '業種名', exact: true }).locator('option:checked')).toHaveText('不動産B');
   await app.getByRole('tab', { name: '一次予算', exact: true }).click();
   await expect(app.getByRole('button', { name: '明細', exact: true })).toHaveCount(0);
   const row = app.getByRole('table', { name: '月別計画金額', exact: true }).locator('tbody tr').first();
@@ -102,6 +104,7 @@ test('明細の導線を持たず施策の全月を直接編集して保存・�
   await expect(app.getByRole('button', { name: '操作を取り消す', exact: true })).toBeEnabled();
   await app.getByRole('button', { name: '← 施策一覧へ戻る', exact: true }).click();
   await app.getByRole('button', { name: '関東第一倉庫・生活雑貨の保管出荷受託', exact: true }).click();
+  await expect(app.getByRole('combobox', { name: '業種名', exact: true }).locator('option:checked')).toHaveText('不動産B');
   await expect(march).toHaveValue('41000');
   await app.getByRole('button', { name: '操作を取り消す', exact: true }).click();
   await expect(march).toHaveValue('40000');

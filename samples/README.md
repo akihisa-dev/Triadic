@@ -21,8 +21,8 @@
 | 実装済み機能・条件 | 根拠となる実装 | データ・初期状態 | 操作・再現方法 | 期待結果 | 確認方法 |
 |---|---|---|---|---|---|
 | 新規作成・形式・年度 | core/storage/triadicDatabase.ts・triadicSchema.ts | 2027年度一つ、前年見込/実績、一次/確定 | 生成したSQLiteを再読込。不正/旧形式は専用データ | 整合性・参照制約が正常。旧形式は移行せず拒否 | 自動: sample-plan.mjs・file-boundaries.mjs |
-| 前年入力・見込と実績 | core/storage/settings.ts・core/tables/previousGrid.ts | 事業と圏域ごとの前年元帳。1〜3月に見込/実績差 | 基準前年を切替。前年入力は東京圏/不動産Aを選択 | 前年実績の外部売上120億円。見込の未確定売上を独立保持 | 自動: reference-sample.mjs・previous-baselines.mjs。画面: 前年切替 |
-| 部署・業種・所属 | core/storage/departmentMaster.ts・industryMaster.ts | 7圏域＋本社、デフォルト9業種。業種4は東京/福岡だけ | マスタと絞込候補を確認。不正所属は私有コピーで登録 | 未所属の業種を登録拒否。本社は一般管理費・営業外のみ | 自動: sample-plan.mjs・department-data.mjs |
+| 前年入力・見込と実績 | core/storage/settings.ts・core/tables/previousGrid.ts | 事業と圏域ごとの前年元帳。1〜3月に見込/実績差 | 基準前年を切替。前年入力は東京圏/不動産Bを選択 | 前年実績の外部売上120億円。見込の未確定売上を独立保持 | 自動: reference-sample.mjs・previous-baselines.mjs。画面: 前年切替 |
+| 部署・業種・所属 | core/storage/departmentMaster.ts・industryMaster.ts | 7圏域＋本社、デフォルト9業種。営業倉庫は衣料品・非衣料品とも不動産B | マスタと絞込候補を確認。不正所属は私有コピーで登録 | 未所属の業種を登録拒否。不動産Aのテナント収入はなく、本社は一般管理費・営業外のみ | 自動: sample-plan.mjs・department-data.mjs |
 | 展開・区分・期間・開始年月 | core/storage/expansionMaster.ts・core/domain/initiativeStartMonth.ts | 初期8展開/6区分。期間差は前年10月・11月 | 展開表/施策詳細で分類を確認。負ID/0/未選択は専用データ | 業務に合う分類。期間差は前年、設備導入は準備月から活動 | 自動: start-months.mjs・expansion-table-view.mjs。画面: 詳細 |
 | 施策登録・詳細・同科目複数行 | core/storage/initiatives.ts・extension/InitiativeDetailPage.tsx | 東京の倉庫作業料/保管料、AI導入支援/委託削減は同科目別行 | コピーを編集・登録し再読込 | 各行の金額を独立保持、元施策不変 | 自動: initiative-data.mjs・duplicate-initiative.mjs。画面: 月額編集 |
 | 一次の引継ぎ・確定0・同額固定 | core/domain/kinds.ts・core/storage/initiatives.ts | 東京運賃4月3,000の同額固定、関東倉庫10月の確定0 | コピーの一次を変更し再読込、確定値を解除 | 固定中は3,000/0を維持、解除後は一次へ追従 | 自動: reference-sample.mjs・kind-amount-storage.mjs。画面: 種別切替 |
@@ -49,7 +49,7 @@
 
 `npm run samples:generate` は正式な保存処理で生成し、`npm run samples:check` は実ファイルと生成元の全テーブル・全値を照合します。再生成前に、利用者が編集したサンプルは別名へ保護してください。`npm run verify` は標準の型・build・通常テスト・生成一致・版整合を確認します。`.triadic` はローカルで保持し、コミットやGitHub公開へ含めません。
 
-[reference-sample.mjs](../tests/reference-sample.mjs)は会社設定、設計書との施策対応、前年売上配分、開設と延期、期間差、移管、利益維持、両前年×両予算の全月・期間計、保存値の引継ぎ、3履歴、部署以外の全マスタのデフォルト一致と利用者によるマスタ編集が可能なことを検証します。[sample-plan.mjs](../tests/sample-plan.mjs)は通常の小規模データと分類制約も検証します。
+[reference-sample.mjs](../tests/reference-sample.mjs)は会社設定、設計書との施策対応、前年売上配分、開設と延期、期間差、移管、利益維持、両前年×両予算の全月・期間計、保存値の引継ぎ、3履歴、部署以外の全マスタのデフォルト一致、倉庫の分類と業種別収支、利用者によるマスタ編集が可能なことを検証します。[sample-plan.mjs](../tests/sample-plan.mjs)は通常の小規模データと分類制約も検証します。
 
 検証結果は各作業の完了報告とコミット本文に記録します。実ファイルを開けることと、許可拒否・失敗・全画面操作を実施済みであることは区別します。実サイト操作、利用者の実ファイルへの書き込み、実環境の権限拒否、性能測定は、明示された作業範囲に含まれる場合だけ実施します。
 

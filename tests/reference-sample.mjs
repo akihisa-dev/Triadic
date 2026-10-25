@@ -47,6 +47,21 @@ export async function verifyReferenceSample(api, bytes, plan, { excel = false } 
     assert.deepEqual(data.departments.map(x => x.departmentName), ["東京圏", "大阪圏", "名古屋圏", "福岡圏", "仙台圏", "札幌圏", "中四国圏", "本社"]);
     assert.deepEqual(data.industries.map(({ identity, ...definition }) => definition), defaults.industries.map(({ identity, ...definition }) => definition));
     assert.deepEqual(data.kinds, defaults.kinds);
+    const warehouseKeys = new Set(["tokyo-storage-rates", "osaka-storage-rates", "fukuoka-cosmetics", "kanto-warehouse", "tokyo-automation-carryover", "osaka-sorter", "osaka-agency", "tokyo-power", "fukuoka-rent", "tokyo-packaging"]);
+    const charterKeys = new Set(["nagoya-charter", "sapporo-winter"]);
+    const headquartersKeys = new Set(["ai-invoices", "it-foundation", "legacy-retirement"]);
+    for (const value of data.initiatives) {
+      const expectedCode = warehouseKeys.has(key(value)) ? "4" : charterKeys.has(key(value)) ? "2" : headquartersKeys.has(key(value)) ? "8" : key(value) === "funding" ? "9" : "1";
+      assert.equal(data.industries.find(industry => industry.id === value.industryId).industryCode, expectedCode, `${value.name}の業務と業種が一致する`);
+    }
+    for (const department of data.departments) assert.deepEqual(department.industryIds.map(id => data.industries.find(industry => industry.id === id).industryCode).sort(), department.departmentName === "本社" ? ["8", "9"] : ["1", "2", "4"]);
+    for (const record of data.previousAmounts) {
+      const code = data.industries.find(industry => industry.id === record.industryId).industryCode;
+      assert.ok(["1", "2", "4", "8", "9"].includes(code), "今回行わないテナント賃貸等の前年収支を作らない");
+      assert.ok(data.departments.find(department => department.id === record.departmentId).industryIds.includes(record.industryId));
+      const nonOperating = data.accounts.find(account => account.id === record.accountId).accountName.startsWith("営業外");
+      assert.equal(code === "9", nonOperating, "営業外の前年値を営業費用から分離する");
+    }
     assert.equal(new Set(data.initiatives.map(x => x.name)).size, data.initiatives.length);
     assert.ok(data.initiatives.every(x => !/確認用|テスト|ゼロ固定|入力準備|車両整備・|作業手順の改善・/.test(x.name)));
     for (const value of data.initiatives) {
@@ -62,10 +77,10 @@ export async function verifyReferenceSample(api, bytes, plan, { excel = false } 
   assert.ok(!plan.initiatives.some(x => /関東第二倉庫|関西.*倉庫/.test(x.name)), "4〜5年目の開設を今期に詰め込まない");
   const priorSales = (industry, department) => plan.previousAmounts.filter(x => x.previousKind === 2 && x.accountId === accountId("売上高") && (!industry || x.industryId === industry) && (!department || x.departmentId === department)).reduce((sum, x) => sum + yen(x.amount), 0);
   assert.equal(priorSales(), 12_000_000_000);
-  assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => priorSales(i)), [4_800_000_000, 1_200_000_000, 6_000_000_000, 0, 0, 0, 0, 0, 0]);
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => priorSales(i)), [4_800_000_000, 1_200_000_000, 0, 6_000_000_000, 0, 0, 0, 0, 0]);
   assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8].map(d => priorSales(null, d)), [5_040_000_000, 2_856_000_000, 1_908_000_000, 840_000_000, 432_000_000, 312_000_000, 612_000_000, 0]);
   const previous = (industry, department, name, month, kind = 2) => yen(plan.previousAmounts.find(x => x.previousKind === kind && x.industryId === industry && x.departmentId === department && x.accountId === accountId(name) && x.month === month)?.amount ?? "0");
-  assert.equal(previous(3, 1, "売上高", 1, 1) - previous(3, 1, "売上高", 1), 1_500_000);
+  assert.equal(previous(4, 1, "売上高", 1, 1) - previous(4, 1, "売上高", 1), 1_500_000);
   assert.equal(previous(2, 3, "売上高", 3) - previous(2, 3, "売上高", 3, 1), 1_000_000);
   assert.ok(previous(1, 1, "売上高", 8) < previous(1, 1, "売上高", 3), "夏季と春商戦の違い");
   assert.equal(previous(1, 1, "賃借料", 8), previous(1, 1, "賃借料", 3), "家賃を売上波形へ連動させない");
@@ -97,7 +112,7 @@ export async function verifyReferenceSample(api, bytes, plan, { excel = false } 
   assert.equal(item("tokyo-automation-carryover").startYearMonths[1], `${plan.fiscalYear - 1}-10`);
   assert.equal(item("routing-carryover").startYearMonths[1], `${plan.fiscalYear - 1}-11`);
   for (const month of [10, 11, 12, 1, 2, 3]) for (const row of item("tokyo-automation-carryover").rows) assert.equal(sourceValue(row, 2, month), 0);
-  assert.equal(previous(3, 1, "給料手当", 4) + amount("tokyo-automation-carryover", "給料手当", 4), previous(3, 1, "給料手当", 10), "前年未稼働月の差分だけで通年化");
+  assert.equal(previous(4, 1, "給料手当", 4) + amount("tokyo-automation-carryover", "給料手当", 4), previous(4, 1, "給料手当", 10), "前年未稼働月の差分だけで通年化");
   assert.equal(previous(1, 1, "給料手当", 4) + amount("routing-carryover", "給料手当", 4), previous(1, 1, "給料手当", 11));
   assert.equal(amount("ai-invoices", "外注費", 9), 0);
   assert.equal(amount("ai-invoices", "外注費", 10), -2_500_000);
@@ -141,6 +156,20 @@ export async function verifyReferenceSample(api, bytes, plan, { excel = false } 
         assert.equal(annualSales, kind === 1 ? 12_698_561_000 : 12_664_496_000);
         assert.equal(ordinary, kind === 1 ? 830_376_225 : 804_991_225);
         assert.ok(design.includes(annualSales.toLocaleString("en-US")) && design.includes(ordinary.toLocaleString("en-US")), "設計書の全社期待値と一致");
+      }
+    }
+  }
+  // Classification-level checks catch a misplaced warehouse ledger even when company totals match.
+  for (const industry of plan.industries) {
+    const filtered = { ...plan, previousKind: 2, initiatives: plan.initiatives.filter(value => value.industryId === industry.id), previousAmounts: plan.previousAmounts.filter(value => value.industryId === industry.id) };
+    const costs = api.buildKindCostTable(filtered, [1, 2]);
+    for (const [required, field] of [["sales", "sales"], ["ordinary", "profit"]]) {
+      const result = costs.find(row => row.kind === "group" && row.id === plan.aggregations.find(group => group.required === required).id);
+      for (const month of api.initiativeMonths) {
+        const prior = empty();
+        for (const row of filtered.previousAmounts.filter(row => row.previousKind === 2 && row.month === month)) effect(prior, row.accountId, yen(row.amount));
+        assert.equal(result.values[0][month], prior[field]);
+        for (const [index, kind] of [1, 2].entries()) assert.equal(result.values[index + 1][month], prior[field] + filtered.initiatives.reduce((sum, value) => sum + monthly(value, kind, month)[field], 0), `${industry.industryName}の${month}月の業種別収支`);
       }
     }
   }
