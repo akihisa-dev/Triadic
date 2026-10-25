@@ -46,6 +46,16 @@ for (const surface of ["entry", "detail", "previous"]) for (const kind of [1, 2]
     await expect(first).toBeFocused();
     await first.press("Escape");
     await expect(first).toHaveValue("2");
+    await first.press("9");
+    await expect(first).toHaveValue("9");
+    await first.press("Escape");
+    await expect(first).toHaveValue("2");
+    await first.press("F2");
+    await first.press("End");
+    await first.press("9");
+    await expect(first).toHaveValue("29");
+    await first.press("Escape");
+    await expect(first).toHaveValue("2");
     await first.evaluate(node => node.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", keyCode: 229, bubbles: true })));
     await expect(first).toBeFocused();
   });

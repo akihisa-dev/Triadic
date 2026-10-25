@@ -132,6 +132,7 @@ function PreviousAmountGridBody({ contents, draft, onChange, rows, calculationFa
             const value = inputsByAccount.get(row.id)?.amounts[month] ?? "0";
             const events = row.kind === "account" && draft ? gridCellEvents(() => latest.current.grid, cell, value, {
               blocked: Boolean(latest.current.readOnly),
+              onTyping: input => input.select(),
               captureOriginal: () => { original.current = expressionOriginals.current.get(`${row.id}:${month}`) ?? value; },
               change: value => changeCell(row.id, month, value),
               cancel: editing => {
