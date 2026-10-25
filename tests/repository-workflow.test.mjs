@@ -1,3 +1,4 @@
+import { withNodeBundle } from "../scripts/node-bundle.mjs";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
@@ -412,4 +413,26 @@ test("ストア原稿の名前・説明・ポリシーURLの不一致と欠落�
   await rm(path.join(directory, 'privacy-policy-url.txt'));
   await assert.rejects(checkStoreListingText(root), /ENOENT/);
   await checkStoreListingText(projectRoot);
+});
+
+test("画面確認データは選んだ種類だけを一度生成し、切替と失敗後の再試行を保持する", async () => {
+  await withNodeBundle("tests/ui/lazy-fixtures.ts", async ({ lazyFixtures }) => {
+    const calls = { empty: 0, legacy: 0, defaults: 0, full: 0 };
+    const source = Object.fromEntries(Object.keys(calls).map((name, index) => [name, async () => { calls[name]++; return [index, 0, 255]; }]));
+    const load = lazyFixtures(source);
+    const empty = load("empty");
+    assert.equal(load("empty"), empty, "同じ初回生成を共有");
+    assert.deepEqual(await empty, [0, 0, 255]);
+    assert.equal(calls.full, 0, "空データの準備ではフルサンプルを生成しない");
+    for (const name of Object.keys(calls)) {
+      const value = await load(name);
+      assert.equal(await load(name), value, "切替後の再選択とリセットで生成結果を再利用");
+      assert.deepEqual(value, await source[name]());
+      assert.equal(calls[name], 2, "初回と比較用の明示生成だけ");
+    }
+    let attempts = 0;
+    const retry = lazyFixtures({ empty: async () => { if (++attempts === 1) throw Error("準備失敗"); return [1]; } });
+    await assert.rejects(retry("empty"), /準備失敗/);
+    assert.deepEqual(await retry("empty"), [1]);
+  });
 });

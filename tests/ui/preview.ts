@@ -1,3 +1,4 @@
+import { lazyFixtures } from "./lazy-fixtures";
 import { createTallSalesPlan } from "./tall-sales-plan";
 import { createSignedPeriodPlan } from "./signed-period-plan";
 import { saveKindSelection } from "../../Triadic-extension/src/core/storage/settings";
@@ -17,10 +18,12 @@ const scenario = document.querySelector<HTMLSelectElement>("#scenario")!;
 const dataset = document.querySelector<HTMLSelectElement>("#dataset")!;
 const status = document.querySelector<HTMLOutputElement>("#status")!;
 const reset = document.querySelector<HTMLButtonElement>("#reset")!;
-const emptyBytes = Array.from(await createCurrentEmptyTestPlan());
-const legacyBytes = Array.from(await createEmptyTestPlan());
-const defaultBytes = Array.from(await createTriadicDatabase());
-const sampleBytes = Array.from(await createSamplePlan());
+const standardBytes = lazyFixtures<number[]>({
+  empty: async () => Array.from(await createCurrentEmptyTestPlan()),
+  legacy: async () => Array.from(await createEmptyTestPlan()),
+  defaults: async () => Array.from(await createTriadicDatabase()),
+  full: async () => Array.from(await createSamplePlan()),
+});
 let largeSampleBytes: Uint8Array | undefined;
 let concurrent: Awaited<ReturnType<typeof createConcurrentInitiativeFixture>> | undefined;
 let recreated: Awaited<ReturnType<typeof createRecreatedInitiativeFixture>> | undefined;
@@ -28,7 +31,7 @@ const requested = new URLSearchParams(location.search).get("data");
 const requestedScenario = new URLSearchParams(location.search).get("scenario");
 if ([...scenario.options].some(option => option.value === requestedScenario)) scenario.value = requestedScenario!;
 dataset.value = [...dataset.options].some(option => option.value === requested) ? requested! : "full";
-export let fixtureBytes: number[] | Uint8Array = dataset.value === "legacy" ? legacyBytes : dataset.value === "empty" ? emptyBytes : dataset.value === "defaults" ? defaultBytes : sampleBytes;
+export let fixtureBytes: number[] | Uint8Array = new Uint8Array();
 
 frame.addEventListener("load", async () => {
   const target = frame.contentWindow as Window & typeof globalThis;
@@ -46,7 +49,7 @@ async function reload() {
   status.textContent = "準備中";
   frame.inert = true;
   const bytes = value === "tall-sales" ? await createTallSalesPlan() : value === "recreated-initiative" ? (recreated ??= await createRecreatedInitiativeFixture()).base : value === "concurrent-initiative" ? (concurrent ??= await createConcurrentInitiativeFixture()).base : value === "cost-unassigned-industry" ? await createCostUnassignedIndustryPlan() : value.startsWith("signed-categories") ? await createSignedCategoryPlan(value.endsWith("-large")) : value.startsWith("signed-periods") ? await createSignedPeriodPlan(value.endsWith("-large")) : value === "large" ? (largeSampleBytes ??= new Uint8Array(await (await fetch("/samples/2027年度サンプル予算.triadic")).arrayBuffer())) : value === "previous-export-limit" ? await createPreviousExportPlan() : value.startsWith("overflow-") ? Array.from(await createOverflowPlan(value.slice(9) as OverflowScenario)) :
-    value === "legacy" ? legacyBytes : value === "empty" ? emptyBytes : value === "defaults" ? defaultBytes : sampleBytes;
+    await standardBytes(value === "legacy" || value === "empty" || value === "defaults" ? value : "full");
   if (version !== reloadVersion) return;
   fixtureBytes = bytes;
   frame.src = "/?local-session";
