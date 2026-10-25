@@ -39,12 +39,52 @@ export async function verifyDashboard(api) {
   assert.deepEqual(api.dashboardChange(0, -100), { amount: 100, rate: undefined });
   assert.deepEqual(api.dashboardChange(120, 100), { amount: 20, rate: (120 / 100 - 1) * 100 });
   assert.throws(() => api.dashboardAmounts({ 4: { sales: Number.MAX_SAFE_INTEGER, profit: 0 }, 5: { sales: 1, profit: 0 } }), /範囲/);
+  const breakdown = api.buildDashboardBreakdowns(plan, [1, 2]);
+  const amount = (group, kind, metric) => api.analysisAnnual(group.budgets.find(item => item.kind === kind).months)[metric];
+  for (const kind of [1, 2]) {
+    const total = api.dashboardAmounts(dashboard.budgets.find(item => item.kind === kind).months);
+    for (const metric of ["sales", "profit"]) {
+      for (const dimension of ["industries", "departments"]) assert.equal(breakdown[dimension].reduce((sum, group) => sum + amount(group, kind, metric), 0), total[metric], `${dimension}と全体の一致`);
+      const changes = total[metric] - api.dashboardAmounts(dashboard.previous)[metric];
+      for (const dimension of ["expansions", "periods"]) assert.equal(breakdown[dimension].reduce((sum, group) => sum + amount(group, kind, metric), 0), changes, `${dimension}は施策増減だけ`);
+      assert.equal([...breakdown.cells.values()].reduce((sum, group) => sum + amount(group, kind, metric), 0), total[metric], "部署×業種と全体の一致");
+      for (const expansion of breakdown.expansions) assert.equal((breakdown.categoriesByExpansion.get(expansion.id) ?? []).reduce((sum, group) => sum + amount(group, kind, metric), 0), amount(expansion, kind, metric), "展開区分は対象展開の増減だけ");
+    }
+    assert.equal(breakdown.accounts.reduce((sum, group) => sum + amount(group, kind, "expense"), 0), 820000, "費用属性の科目だけに前年と施策増減を加算");
+  }
+  assert.equal(breakdown.industries.find(item => item.id === source.industryId).name, sample.industries.find(item => item.id === source.industryId).industryName);
+  const unassigned = { ...plan, initiatives: plan.initiatives.map(item => ({ ...item, expansionId: null, expansionCategoryId: null, industryId: null, periodTypeId: null })) };
+  const unknown = api.buildDashboardBreakdowns(unassigned, [1]);
+  for (const dimension of ["expansions", "periods"]) assert.equal(amount(unknown[dimension].find(item => item.id === null), 1, "profit"), 40001, "未所属の増減を失わない");
+  assert.equal(amount(unknown.categoriesByExpansion.get(null).find(item => item.id === null), 1, "profit"), 40001);
+  for (const [width, height] of [[640, 450], [1250, 450]]) {
+    const amounts = [3155186, 2383260, 1580100, 1345900, 500000, 400000, 300000, 1979206];
+    const tiles = api.treemapTiles(amounts, width, height);
+    const total = amounts.reduce((sum, value) => sum + value, 0);
+    assert.equal(tiles.length, amounts.length);
+    for (const tile of tiles) {
+      assert.ok(Math.abs(tile.width * tile.height / (width * height) - amounts[tile.index] / total) < 1e-10, "面積は金額の構成比と一致");
+      assert.ok(tile.x >= 0 && tile.y >= 0 && tile.x + tile.width <= width + 1e-7 && tile.y + tile.height <= height + 1e-7, "全項目が図の内側に収まる");
+    }
+  }
+  assert.equal(api.compositionMode([0, 0]), "empty");
+  assert.equal(api.compositionMode([100, -1]), "signed", "負数を面積に変換しない");
+  assert.equal(api.compositionMode([0, 1]), "area");
+  assert.deepEqual(api.waterfallSteps(200000, [-50000, 100000, -10000]), [{ from: 200000, to: 150000, change: -50000 }, { from: 150000, to: 250000, change: 100000 }, { from: 250000, to: 240000, change: -10000 }]);
+  assert.throws(() => api.waterfallSteps(Number.MAX_SAFE_INTEGER, [1]), /範囲/);
+  const noData = api.buildDashboardBreakdowns({ ...sample, previousAmounts: [], initiatives: [] }, [1]);
+  assert.ok(noData.industries.every(group => amount(group, 1, "sales") === 0));
   assert.deepEqual(plan, before, "閲覧・比較・順位で入力を書き換えない");
   for (const previousKind of [1, 2]) for (const selected of [[1], [2], [1, 2], [2, 1]]) {
     const context = { ...sample, previousKind };
     const actual = api.buildDashboard(context, selected);
     const expansion = api.buildKindExpansionTable(context, selected, "registered");
     assert.deepEqual(actual.previous, expansion.previous[0]);
+    const grouped = api.buildDashboardBreakdowns(context, selected);
+    for (const kind of selected) for (const metric of ["sales", "profit"]) {
+      const total = api.dashboardAmounts(actual.budgets.find(item => item.kind === kind).months)[metric];
+      assert.equal(grouped.industries.reduce((sum, group) => sum + amount(group, kind, metric), 0), total);
+    }
     actual.budgets.forEach((entry, index) => assert.deepEqual(entry.months, expansion.total[index], "展開表の収支と月別に一致"));
   }
 }

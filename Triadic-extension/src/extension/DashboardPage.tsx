@@ -4,6 +4,7 @@ import { initiativeMonths } from "../core/domain/calendar";
 import { previousKindName, type KindId, type PreviousKind } from "../core/domain/kinds";
 import type { Initiative, PlanContents } from "../core/domain/plan";
 import { buildDashboard, dashboardAmounts, dashboardChange, rankDashboardInitiatives, type Dashboard, type DashboardMetric, type DashboardPeriod, type DashboardSeries } from "../core/tables/dashboard";
+import { DashboardAnalysis } from "./DashboardAnalysis";
 import { KindSelectionSlots } from "./KindSelectionSlots";
 import { TableCalculationBoundary } from "./TableCalculationBoundary";
 import { useWindowViewState } from "./windowView";
@@ -19,7 +20,7 @@ const growth = (value: number, previous: number) => { const change = dashboardCh
 
 export function DashboardPage({ contents, selected, previousKind, disabled, onKinds, onPrevious, ...navigation }: Props) {
   const context = useMemo(() => ({ ...contents, previousKind }), [contents, previousKind]);
-  return <main className="dashboard-page" aria-labelledby="dashboard-title">
+  return <main className={`dashboard-page ${selected.length === 1 ? "dashboard-single-kind" : ""}`} aria-labelledby="dashboard-title">
     <div className="initiative-list-heading"><h1 id="dashboard-title">ダッシュボード</h1>
       <KindSelectionSlots screen="dashboard" selected={selected} previousKind={previousKind} disabled={disabled} onChange={onKinds} onPreviousChange={onPrevious} />
     </div>
@@ -31,6 +32,7 @@ export function DashboardPage({ contents, selected, previousKind, disabled, onKi
 
 function DashboardContents({ contents, selected, disabled, onDepartment, onInitiative }: Pick<Props, "contents" | "selected" | "disabled" | "onDepartment" | "onInitiative">) {
   const dashboard = useMemo(() => buildDashboard(contents, selected), [contents, selected]);
+  const [departmentPeriod, setDepartmentPeriod] = useWindowViewState("dashboard:department-period", "annual", true);
   const [period, setPeriod] = useWindowViewState("dashboard:period", "annual", true);
   const [ranking, setRanking] = useWindowViewState("dashboard:ranking", selected[0]!, true);
   const rankKind = selected.includes(ranking) ? ranking : selected[0]!;
@@ -52,16 +54,17 @@ function DashboardContents({ contents, selected, disabled, onDepartment, onIniti
     </div>
     <div className="dashboard-legend" aria-label="グラフの凡例"><span className="dashboard-prior">{priorName}</span>{selected.map((kind, index) => <span className={`dashboard-series-${index}`} key={kind}>{kindName(kind)}</span>)}</div>
     <div className="dashboard-pair">{metrics.map(metric => <section key={metric.id} className="dashboard-panel"><h2>{metric.name}の月別推移</h2><MonthlyChart series={dashboard} metric={metric.id} priorName={priorName} kindName={kindName} /></section>)}</div>
-    <section className="dashboard-panel"><h2>部署別比較</h2>
+    <section className="dashboard-panel dashboard-comparison"><div className="dashboard-panel-heading"><h2>部署別比較</h2><div className="dashboard-controls"><label>部署の対象期間<select value={departmentPeriod} onChange={event => setDepartmentPeriod(event.target.value === "annual" ? "annual" : Number(event.target.value) as DashboardPeriod)}><option value="annual">年間</option>{initiativeMonths.map(month => <option key={month} value={month}>{month}月</option>)}</select></label></div></div>
+      <div className="dashboard-legend"><span className="dashboard-prior">{priorName}</span>{selected.map((kind, index) => <span className={`dashboard-series-${index}`} key={kind}>{kindName(kind)}</span>)}<span>金額：千円</span></div>
       <div className="dashboard-department dashboard-department-header" aria-hidden="true"><span>部署</span><span>売上 / 前年増減</span><span>利益 / 前年増減</span><span>利益率 / 前年差</span></div>
       {dashboard.departments.map(department => {
-        const prior = dashboardAmounts(department.previous);
+        const prior = dashboardAmounts(department.previous, departmentPeriod);
         return <div className="dashboard-department" key={department.id ?? "unassigned"}>
           <div className="dashboard-department-name">{department.id === null ? department.name : <button className="initiative-name-button" disabled={disabled} onClick={() => onDepartment(department.id!)}>{department.name}</button>}</div>
           {metrics.map(metric => {
-            const maximum = Math.max(1, ...dashboard.departments.flatMap(item => item.budgets.map(value => Math.abs(dashboardAmounts(value.months)[metric.id]))));
+            const maximum = Math.max(1, ...dashboard.departments.flatMap(item => item.budgets.map(value => Math.abs(dashboardAmounts(value.months, departmentPeriod)[metric.id]))));
             return <div key={metric.id} className="dashboard-department-metric"><span className="dashboard-mobile-label">{metric.name}</span>{department.budgets.map((entry, index) => {
-              const amount = dashboardAmounts(entry.months)[metric.id];
+              const amount = dashboardAmounts(entry.months, departmentPeriod)[metric.id];
               return <div key={entry.kind} className={`dashboard-department-kind dashboard-series-${index}`}>
                 <span className="dashboard-series-label">{kindName(entry.kind)}</span>
                 {department.id === null ? <span>{formatYen(amount)}</span> : <button className="dashboard-number" disabled={disabled} aria-label={`${department.name} ${kindName(entry.kind)} ${metric.name} ${formatYen(amount)}の総原価表`} onClick={() => onDepartment(department.id!)}>{formatYen(amount)}</button>}
@@ -71,8 +74,8 @@ function DashboardContents({ contents, selected, disabled, onDepartment, onIniti
             })}</div>;
           })}
           <div className="dashboard-department-metric"><span className="dashboard-mobile-label">利益率 / 前年差</span>{department.budgets.map((entry, index) => {
-            const value = dashboardAmounts(entry.months).margin;
-            const maximum = Math.max(1, ...dashboard.departments.flatMap(item => item.budgets.map(value => Math.abs(dashboardAmounts(value.months).margin ?? 0))));
+            const value = dashboardAmounts(entry.months, departmentPeriod).margin;
+            const maximum = Math.max(1, ...dashboard.departments.flatMap(item => item.budgets.map(value => Math.abs(dashboardAmounts(value.months, departmentPeriod).margin ?? 0))));
             return <div key={entry.kind} className={`dashboard-department-kind dashboard-series-${index}`}><span className="dashboard-series-label">{kindName(entry.kind)}</span><span>{rate(value)}</span>
               {value !== undefined && <div className="dashboard-margin-track"><span style={{ left: `${50 + value / maximum * 46}%` }} /></div>}
               <span className="dashboard-delta">{rate(value === undefined || prior.margin === undefined ? undefined : value - prior.margin, true)}</span></div>;
@@ -81,12 +84,13 @@ function DashboardContents({ contents, selected, disabled, onDepartment, onIniti
       })}
       {!dashboard.departments.length && <p className="dashboard-empty">部署は登録されていません。</p>}
     </section>
-    <section className="dashboard-panel"><div className="dashboard-panel-heading"><h2>施策の影響</h2><div className="dashboard-controls">
+    <section className="dashboard-panel dashboard-impact"><div className="dashboard-panel-heading"><h2>施策の影響</h2><div className="dashboard-controls">
       <label>対象期間<select value={period} onChange={event => setPeriod(event.target.value === "annual" ? "annual" : Number(event.target.value) as DashboardPeriod)}><option value="annual">年間</option>{initiativeMonths.map(month => <option key={month} value={month}>{month}月</option>)}</select></label>
       {selected.length > 1 && <label>並び順の基準<select value={rankKind} onChange={event => setRanking(Number(event.target.value) as KindId)}>{selected.map(kind => <option key={kind} value={kind}>{kindName(kind)}</option>)}</select></label>}
     </div></div>
       <div className="dashboard-pair">{metrics.map(metric => <div key={metric.id}><h3>{metric.name}への影響</h3>{(["increase", "decrease"] as const).map(direction => <Ranking key={`${metric.id}:${direction}:${rankKind}:${period}`} dashboard={dashboard} metric={metric.id} kind={rankKind} period={period} direction={direction} kindName={kindName} disabled={disabled} onOpen={onInitiative} />)}</div>)}</div>
     </section>
+    <DashboardAnalysis contents={contents} selected={selected} />
   </>;
 }
 

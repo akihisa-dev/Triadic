@@ -1,0 +1,75 @@
+.dashboard-analysis {
+  --analysis-color-0: var(--accent); --analysis-color-1: var(--muted);
+  --analysis-color-2: color-mix(in srgb, var(--accent) 60%, var(--surface));
+  --analysis-color-3: color-mix(in srgb, var(--ink) 75%, var(--surface));
+  --analysis-color-4: color-mix(in srgb, var(--accent) 40%, var(--muted));
+  --analysis-color-5: color-mix(in srgb, var(--ink) 45%, var(--surface));
+  container-type: inline-size; min-width: 0; font-variant-numeric: tabular-nums;
+}
+.dashboard-analysis-section { min-width: 0; padding: 28px 0; border-top: 1px solid var(--line); }
+.dashboard-analysis-section h2 { font-size: 16px; margin-bottom: 6px; }
+.analysis-context { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+.analysis-kind { justify-content: flex-end; margin: 14px 0; }
+.analysis-scroll { max-width: 100%; min-width: 0; overflow: auto; max-height: 620px; scrollbar-gutter: stable; }
+.analysis-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.analysis-plot svg { display: block; color: var(--ink); font-size: 13px; }
+.analysis-plot text { fill: var(--ink); font: 13px sans-serif; }
+.analysis-plot .analysis-total { font-size: 22px; font-weight: 600; }
+.analysis-axis line { stroke: var(--line); stroke-width: .7; }
+.analysis-axis text { fill: var(--muted); font-size: 11px; }
+.analysis-zero { stroke: var(--muted); stroke-width: 1; }
+.analysis-connector { stroke: var(--muted); stroke-width: 1.5; }
+.analysis-hatch-line { stroke: var(--muted); stroke-width: 1; }
+.analysis-negative-base { fill: var(--soft); }
+.analysis-plot g[tabindex]:focus { outline: none; }
+.analysis-plot g[tabindex]:focus-visible > :is(rect, path, circle) { stroke: var(--ink); stroke-width: 3; }
+.analysis-plot .analysis-inverse { fill: var(--surface); font-weight: 600; }
+.analysis-axis-name { text-align: center; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.analysis-row-name { font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; max-height: 100%; overflow: auto; }
+.analysis-tile-label { color: var(--surface); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; overflow: hidden; }
+.analysis-tile-label strong { display: block; font-weight: 500; font-size: 17px; margin: 5px 0; white-space: nowrap; }
+.analysis-focus { display: block; min-height: 36px; padding: 6px 0; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.analysis-values { font-size: 12px; margin-top: 6px; }
+.analysis-values summary { cursor: pointer; color: var(--accent); width: fit-content; }
+.analysis-values table, .analysis-heatmap table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.analysis-values :is(td, th), .analysis-heatmap :is(td, th) { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.analysis-values th:first-child, .analysis-heatmap th:first-child { text-align: left; min-width: 150px; max-width: 250px; white-space: normal; overflow-wrap: anywhere; }
+.analysis-values th, .analysis-heatmap th { font-weight: 500; background: var(--surface); }
+.analysis-values thead th, .analysis-heatmap thead th { position: sticky; top: 0; z-index: 1; }
+.analysis-heatmap th:first-child { position: sticky; left: 0; z-index: 2; }
+.analysis-heatmap thead th:first-child { z-index: 3; }
+.analysis-heatmap td { min-width: 105px; }
+.analysis-heat-negative, .analysis-negative-swatch { background-image: repeating-linear-gradient(135deg, transparent 0 4px, color-mix(in srgb, var(--muted) 20%, transparent) 4px 5px); }
+.analysis-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 12px 0 18px; font-size: 12px; color: var(--muted); }
+.analysis-legend span { display: inline-flex; align-items: center; gap: 6px; overflow-wrap: anywhere; }
+.analysis-legend i, .analysis-heat-swatch, .analysis-negative-swatch { display: inline-block; width: 24px; height: 10px; }
+.analysis-heat-swatch { background: linear-gradient(to right, var(--surface), var(--accent)); }
+/* Adopted comparison and ranking: shared rows and aligned amounts, without changing the approved top section. */
+.dashboard-comparison, .dashboard-impact { border: 0; border-top: 1px solid var(--line); padding: 24px 0; border-radius: 0; background: transparent; }
+.dashboard-comparison h2, .dashboard-impact h2 { font-size: 17px; }
+.dashboard-single-kind :is(.dashboard-department-kind, .dashboard-rank-value) > .dashboard-series-label { display: none; }
+.dashboard-department-kind { grid-template-columns: 1fr auto; align-items: center; column-gap: 14px; row-gap: 7px; }
+.dashboard-department-kind > .dashboard-series-label { grid-column: 1 / -1; }
+.dashboard-department-kind > .dashboard-bar, .dashboard-department-kind > .dashboard-margin-track { grid-row: 2; grid-column: 1; width: 100%; }
+.dashboard-department-kind > .dashboard-delta { grid-column: 2; grid-row: 1 / 3; text-align: right; }
+.dashboard-department-kind > .dashboard-number { font-size: 14px; }
+.dashboard-department-kind > .dashboard-margin-track { min-width: 60px; }
+.dashboard-department-header { font-size: 12px; }
+.dashboard-ranking h4 { font-size: 13px; color: var(--ink); font-weight: 500; }
+.dashboard-rank { display: grid; grid-template-columns: minmax(130px, 1fr) minmax(110px, 1fr); align-items: center; gap: 6px 16px; margin: 0; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.dashboard-rank > .initiative-name-button { text-align: left; font-size: 13px; grid-column: 1; grid-row: 1 / span 2; margin: 0; }
+.dashboard-rank-value { grid-column: 2; margin: 0; align-items: center; }
+.dashboard-rank-value .dashboard-bar { grid-row: 2; }
+.dashboard-rank-value > span:not(.dashboard-series-label) { justify-self: end; }
+@container (max-width: 1280px) { .dashboard-analysis > .dashboard-pair { grid-template-columns: 1fr; } }
+@media (max-width: 680px) {
+  .dashboard-department-kind { grid-template-columns: 1fr; }
+  .dashboard-department-kind > .dashboard-delta { grid-column: 1; grid-row: 3; text-align: left; }
+  .dashboard-rank { grid-template-columns: minmax(110px, 1fr) minmax(100px, 1fr); gap: 8px; }
+  .dashboard-controls label { max-width: 100%; }
+  .dashboard-controls select { max-width: 100%; }
+}
+.dashboard-analysis .dashboard-panel-heading > *, .dashboard-analysis .dashboard-controls { min-width: 0; max-width: 100%; }
+.dashboard-analysis .dashboard-controls label { min-width: 0; max-width: 100%; }
+.dashboard-analysis .dashboard-controls select { min-width: 0; max-width: 100%; width: 260px; }
+.analysis-legend span { min-width: 0; max-width: 100%; }

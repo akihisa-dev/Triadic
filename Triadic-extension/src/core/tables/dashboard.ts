@@ -52,3 +52,5 @@ export function rankDashboardInitiatives(dashboard: Dashboard, kind: KindId, per
     return [{ initiative, amount, values: indexes.map(entry => ({ kind: entry.kind, amount: entry.amounts.get(initiative.id)! })) }];
   }).sort((left, right) => Math.abs(right.amount) - Math.abs(left.amount) || left.initiative.id - right.initiative.id);
 }
+
+export { buildDashboardBreakdowns, analysisAnnual, compositionMode, waterfallSteps, treemapTiles } from "./dashboardBreakdowns";
