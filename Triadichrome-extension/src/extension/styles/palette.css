@@ -2,13 +2,13 @@
    Plan data, exported spreadsheets and packaged logo assets are independent. */
 :root {
   color-scheme: light;
-  --canvas: #f4f0e6;
-  --surface: #faf7ef;
-  --soft: #eae5d9;
+  --canvas: #f7f7f3;
+  --surface: #fbfbf8;
+  --soft: #eeeee9;
   --ink: #343434;
-  --muted: #68665f;
-  --line: #cec8bb;
-  --control-line: #8c877c;
+  --muted: #666660;
+  --line: #d5d5ce;
+  --control-line: #8b8b84;
   --accent: #0033ff;
 
   /* Existing restrained blue for aggregation membership. */

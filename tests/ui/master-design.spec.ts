@@ -19,11 +19,11 @@ test("全マスタを共通の表で表示し、登録欄と一覧のスクロ�
       const style = getComputedStyle(node);
       return [style.color, style.backgroundColor];
     }));
-    const neutralPalette = ["rgb(52, 52, 52)", "rgb(104, 102, 95)", "rgb(244, 240, 230)", "rgb(250, 247, 239)", "rgb(234, 229, 217)", "rgba(0, 0, 0, 0)"];
+    const neutralPalette = ["rgb(52, 52, 52)", "rgb(102, 102, 96)", "rgb(247, 247, 243)", "rgb(251, 251, 248)", "rgb(238, 238, 233)", "rgba(0, 0, 0, 0)"];
     for (const color of colors) expect(neutralPalette, "通常のマスタ要素へアクセント色を広げない").toContain(color);
     await expect(table).toBeVisible();
     const region = main.getByRole("region");
-    await expect(region).toHaveCSS("background-color", "rgb(250, 247, 239)");
+    await expect(region).toHaveCSS("background-color", "rgb(251, 251, 248)");
     expect(await app.locator(".home-content").evaluate(node => node.scrollWidth <= node.clientWidth && node.scrollHeight <= node.clientHeight)).toBe(true);
     const header = table.getByRole("columnheader").first();
     const top = (await header.boundingBox())!.y;

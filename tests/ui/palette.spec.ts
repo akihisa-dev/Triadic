@@ -29,7 +29,7 @@ test("象牙色・墨色の面と文字、青・金の操作対象、期間列�
   for (const dark of [false, true]) {
     await toggle.setChecked(dark);
     await settleMotion(app.locator("body"));
-    await expect(app.locator(".entry-page")).toHaveCSS("background-color", dark ? "rgb(41, 41, 41)" : "rgb(244, 240, 230)");
+    await expect(app.locator(".entry-page")).toHaveCSS("background-color", dark ? "rgb(41, 41, 41)" : "rgb(247, 247, 243)");
     await expect(app.locator(".entry-page")).toHaveCSS("color", dark ? "rgb(244, 240, 230)" : "rgb(52, 52, 52)");
     await expectReadable(app.locator(".entry-drop-description"));
     await expectReadable(app.getByRole("button", { name: "ファイルを開く", exact: true }));
@@ -62,7 +62,7 @@ test("象牙色・墨色の面と文字、青・金の操作対象、期間列�
     await expectReadable(app.locator(".master-form-label"));
     await expectReadable(app.locator(".master-count"));
     const input = app.locator(".master-data-page input").first();
-    await expect(input).toHaveCSS("background-color", dark ? "rgb(52, 52, 52)" : "rgb(250, 247, 239)");
+    await expect(input).toHaveCSS("background-color", dark ? "rgb(52, 52, 52)" : "rgb(251, 251, 248)");
     await input.focus();
     await expect(input).toHaveCSS("outline-color", accent);
   }

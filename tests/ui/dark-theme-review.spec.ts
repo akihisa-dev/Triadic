@@ -89,7 +89,7 @@ for (const surface of ["initiative", "previous"]) {
     await cell.click();
     const selected = app.locator("th.grid-month-selected");
     await expect(selected).toHaveText("4月");
-    await expect(selected).toHaveCSS("background-color", "rgb(206, 200, 187)");
+    await expect(selected).toHaveCSS("background-color", "rgb(213, 213, 206)");
     await expect(selected).toHaveCSS("color", "rgb(52, 52, 52)");
     await app.getByRole("switch", { name: "ダークテーマ" }).check();
     await cell.click();
@@ -112,7 +112,7 @@ test("集計追加の両入力欄は明暗両方で通常枠と青・金の選�
     for (const label of ["集計名", "表示名"]) {
       const input = form.getByRole("textbox", { name: label, exact: true });
       await app.getByRole("heading", { name: "集計マスタ", exact: true }).click();
-      await expect(input).toHaveCSS("border-color", dark ? "rgb(143, 140, 130)" : "rgb(140, 135, 124)");
+      await expect(input).toHaveCSS("border-color", dark ? "rgb(143, 140, 130)" : "rgb(139, 139, 132)");
       await input.click();
       await expect(input).toHaveCSS("border-style", "solid");
       for (const property of ["border-color", "outline-color", "caret-color"]) await expect(input).toHaveCSS(property, dark ? "rgb(214, 184, 108)" : "rgb(0, 51, 255)");
