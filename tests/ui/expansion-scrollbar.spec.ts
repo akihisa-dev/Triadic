@@ -28,12 +28,14 @@ test("展開名を縦バー内に表示し、先頭行へ移動しても横位�
     const box = node.getBoundingClientRect();
     const region = node.parentElement!.querySelector<HTMLElement>(".initiative-list-container")!;
     const parent = region.getBoundingClientRect();
-    const marks = [...node.querySelectorAll("button")].map(button => button.getBoundingClientRect());
-    return { inside: box.left >= parent.left + region.clientWidth - 1 && box.right <= parent.right + 1,
+    const buttons = [...node.querySelectorAll("button")];
+    const marks = buttons.map(button => button.getBoundingClientRect());
+    const glyphs = buttons.map(button => { const range = document.createRange(); range.selectNodeContents(button); return range.getBoundingClientRect(); });
+    return { glyphsInsideWidth: glyphs.every(glyph => glyph.left >= box.left && glyph.right <= box.right), inside: box.left >= parent.left + region.clientWidth - 1 && box.right <= parent.right + 1,
       labelsInside: marks.every(mark => mark.top >= box.top - 1 && mark.bottom <= box.bottom + 1 && mark.left >= box.left - 1 && mark.right <= box.right + 1),
       overlap: marks.some((mark, i) => marks.slice(i + 1).some(other => mark.top < other.bottom && other.top < mark.bottom)) };
   });
-  expect(layout).toEqual({ inside: true, labelsInside: true, overlap: false });
+  expect(layout).toEqual({ glyphsInsideWidth: true, inside: true, labelsInside: true, overlap: false });
   const target = await table.evaluate(node => {
     const rows = [...node.querySelectorAll<HTMLElement>("tr[data-expansion-start]")];
     const row = rows.find(row => row.textContent?.includes("売上拡販"))!;
@@ -55,6 +57,8 @@ test("展開名を縦バー内に表示し、先頭行へ移動しても横位�
   if (page.viewportSize()!.width > 600) await page.screenshot({ path: "/tmp/triadichrome-expansion-vertical-scrollbar.png" });
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "総原価表", exact: true }).click();
   await expect(app.locator(".expansion-scrollbar")).toHaveCount(0);
+  const cost = app.getByRole("table", { name: "総原価表", exact: true }).locator("..");
+  expect(await cost.evaluate(node => (node as HTMLElement).offsetWidth - node.clientWidth)).toBe(12);
 });
 
 test("縦バーの展開名からのドラッグとキーボード操作を維持する", async ({ page, app }) => {
