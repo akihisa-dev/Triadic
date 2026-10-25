@@ -20,9 +20,11 @@ test("削除はアイコンで確認し、キャンセル・Escでは両予算�
   await expect(remove(app, 1).locator("svg")).toHaveCount(1);
   await expect(remove(app, 1)).toHaveText("");
   await remove(app, 1).click();
-  const dialog = app.getByRole("alertdialog", { name: "勘定科目行を削除", exact: true });
-  await expect(dialog).toContainText("1行目「売上高」");
-  await expect(dialog).toContainText("一次予算・確定予算の金額も削除されます。");
+  const dialog = app.getByRole("alertdialog", { name: "削除しますか？", exact: true });
+  await expect(dialog.locator("p")).toHaveCount(0);
+  const dialogSize = (await dialog.boundingBox())!;
+  expect(dialogSize.width).toBeLessThan(300);
+  expect(dialogSize.height).toBeLessThan(170);
   await expect(dialog.getByRole("button", { name: "キャンセル", exact: true })).toBeFocused();
   await dialog.getByRole("button", { name: "キャンセル", exact: true }).click();
   await expect(remove(app, 1)).toBeFocused();

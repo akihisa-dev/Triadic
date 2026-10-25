@@ -34,7 +34,6 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, rowOpera
   const rowKeyAt = (index: number) => draft.rows[index]!.id ?? `draft:${index}`;
   const rowOperationsBlocked = readOnly || isSaving || rowOperationsDisabled;
   const deletingIndex = draft.rows.findIndex((_, index) => rowKeyAt(index) === deleting);
-  const deletingRow = draft.rows[deletingIndex];
   const originalInherited = useRef(false);
   const accountsById = useMemo(() => new Map(accounts.map(account => [account.id, account])), [accounts]);
   const { rows, invalidNumbers } = draft;
@@ -84,8 +83,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, rowOpera
     onDraftChange({ ...draft, rows });
   };
   return <>
-    <ConfirmationDialog open={deleting !== null} title="勘定科目行を削除" confirmLabel="削除"
-      message={`${deletingIndex + 1}行目「${deletingRow ? accountsById.get(deletingRow.accountId!)?.accountName ?? "科目未選択" : "削除済みの行"}」を削除します。一次予算・確定予算の金額も削除されます。`}
+    <ConfirmationDialog open={deleting !== null} title="削除しますか？" confirmLabel="削除" compact
       busy={isSaving || rowOperationsDisabled}
       onCancel={() => setDeleting(null)} onConfirm={() => {
         if (rowOperationsBlocked) return;

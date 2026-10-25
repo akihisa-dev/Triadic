@@ -4,14 +4,15 @@ import { createPortal } from "react-dom";
 type ConfirmationDialogProps = {
   open: boolean;
   title: string;
-  message: string;
+  message?: string;
+  compact?: boolean;
   confirmLabel: string;
   busy: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 };
 
-export function ConfirmationDialog({ open, title, message, confirmLabel, busy, onConfirm, onCancel }: ConfirmationDialogProps) {
+export function ConfirmationDialog({ open, title, message, confirmLabel, busy, onConfirm, onCancel, compact = false }: ConfirmationDialogProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const messageId = useId();
@@ -21,7 +22,7 @@ export function ConfirmationDialog({ open, title, message, confirmLabel, busy, o
     else if (!open && element.open) element.close();
   }, [open]);
 
-  return createPortal(<dialog ref={dialog} className="confirmation-dialog" role="alertdialog" aria-labelledby={titleId} aria-describedby={messageId} aria-busy={busy}
+  return createPortal(<dialog ref={dialog} className={compact ? "confirmation-dialog confirmation-dialog-compact" : "confirmation-dialog"} role="alertdialog" aria-labelledby={titleId} aria-describedby={message ? messageId : undefined} aria-busy={busy}
     onCancel={event => { event.preventDefault(); if (!busy) onCancel(); }}
     onKeyDown={event => {
       if (event.key === "Tab") {
@@ -38,7 +39,7 @@ export function ConfirmationDialog({ open, title, message, confirmLabel, busy, o
       }
     }}>
     <h2 id={titleId}>{title}</h2>
-    <p id={messageId}>{message}</p>
+    {message && <p id={messageId}>{message}</p>}
     <div className="form-actions">
       <button autoFocus className="secondary-button" type="button" disabled={busy} onClick={onCancel}>キャンセル</button>
       <button className="primary-button" type="button" disabled={busy} onClick={onConfirm}>{confirmLabel}</button>
