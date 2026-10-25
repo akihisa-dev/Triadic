@@ -10,6 +10,26 @@ export type CostBreakdownLine = {
   departmentId: number | null; industryId: number | null; sign: number; amount: number;
 };
 
+export type CostBreakdownSort = {
+  column: "name" | "account" | "department" | "industry" | "sign" | "amount";
+  direction: "ascending" | "descending";
+};
+const nameOrder = new Intl.Collator("ja", { numeric: true });
+
+/** Sort the entire detail by displayed names or unrounded numeric values, without changing its source. */
+export function sortCostBreakdownLines(lines: CostBreakdownLine[], contents: PlanContents, sort: CostBreakdownSort | null) {
+  if (!sort) return lines;
+  const { column, direction } = sort;
+  const names = column === "account" ? new Map(contents.accounts.map(item => [item.id, item.displayName ?? item.accountName]))
+    : column === "department" ? new Map(contents.departments.map(item => [item.id, item.departmentName]))
+    : column === "industry" ? new Map(contents.industries.map(item => [item.id, item.industryName])) : new Map<number, string>();
+  const label = (line: CostBreakdownLine) => column === "name" ? line.name
+    : names.get((column === "account" ? line.accountId : column === "department" ? line.departmentId : line.industryId)!) ?? "";
+  const order = direction === "ascending" ? 1 : -1;
+  return [...lines].sort((left, right) => order * (column === "amount" || column === "sign"
+    ? left[column] - right[column] : nameOrder.compare(label(left), label(right))));
+}
+
 /** A display snapshot can reuse candidates across periods, columns and reopen. */
 export function indexCostBreakdown(contents: Pick<PlanContents, "previousAmounts" | "initiatives">) {
   const { previousAmounts, initiatives: sourceInitiatives } = contents;

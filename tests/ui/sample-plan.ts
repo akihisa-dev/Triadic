@@ -1,3 +1,4 @@
+// 内訳の全列並べ替えは既存サンプルの前年・科目・分類・正負額で cost-breakdown.spec.ts、大量行は breakdown-window.spec.ts で確認する。保存データは変更しない。
 // 密集する展開IDの伸縮・移動・大量行は expansion-scrollbar-dense.html と expansion-scrollbar-dense.spec.ts で確認する。既存サンプルを基にした画面内データで、保存項目は追加しない。
 // 展開表の縦バー移動は既存の展開・空グループと大規模データを使い expansion-scrollbar.spec.ts で確認する。保存データは変更しない。
 // 入出力の分類候補は light-theme-review.spec.ts で通常幅・狭幅・明暗両方の全文表示と選択を確認する。保存データは変更しない。

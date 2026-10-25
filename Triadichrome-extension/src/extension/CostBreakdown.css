@@ -24,3 +24,7 @@
 .cost-breakdown-scroll td:last-child { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .cost-breakdown-scroll thead { position: sticky; top: 0; background: var(--tone-f3f3f3); }
 .cost-breakdown-scroll tfoot { position: sticky; bottom: 0; background: var(--tone-f3f3f3); font-weight: 600; }
+.cost-breakdown-sort { display: flex; align-items: center; justify-content: space-between; gap: 4px; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.cost-breakdown-sort span { width: 8px; flex-shrink: 0; font-size: 8px; }
+.cost-breakdown-sort:hover { text-decoration: underline; }
+.cost-breakdown-sort:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }

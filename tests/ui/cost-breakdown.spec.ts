@@ -112,3 +112,40 @@ test("過去の内訳から開いた施策は同じ時点の参照専用にな�
   await expect(app.getByRole("textbox", { name: "施策名", exact: true })).toBeDisabled();
   await expect(app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).first()).toBeDisabled();
 });
+
+
+test("内訳の全6列を昇降順に並べ替え、合計と施策への移動を保つ", async ({ page, app }) => {
+  await page.goto("/tests/ui/preview.html");
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("complementary", { name: "メニュー", exact: true }).getByRole("button", { name: "総原価表", exact: true }).click();
+  await closeMenu(app);
+  const amount = app.getByRole("button", { name: "営業利益 4月 一次予算の内訳", exact: true });
+  await amount.focus(); await amount.press("Enter");
+  const dialog = app.getByRole("dialog"), rows = dialog.locator("tbody tr[data-window-row]");
+  const readRows = () => rows.evaluateAll(nodes => nodes.map(node => Array.from(node.children, cell => cell.textContent ?? "")));
+  const original = await readRows(), total = await dialog.locator("tfoot").textContent();
+  expect(original.length).toBeGreaterThan(3);
+  expect(original.some(row => row[4] === "−")).toBe(true);
+  const labels = ["前年・施策", "科目", "部署", "業種", "集計の加減", "反映額"];
+  for (const [column, label] of labels.entries()) {
+    const button = dialog.getByRole("button", { name: label, exact: true });
+    for (const direction of ["ascending", "descending"]) {
+      await button.press("Enter");
+      await expect(dialog.getByRole("columnheader", { name: label, exact: true })).toHaveAttribute("aria-sort", direction);
+      await expect(dialog.locator("th[aria-sort]")).toHaveCount(1);
+      const sign = direction === "ascending" ? 1 : -1;
+      const numeric = (value: string) => value === "−" ? -1 : value === "＋" ? 1 : Number(value.replaceAll(",", ""));
+      const expected = [...original].sort((a, b) => sign * (column >= 4 ? numeric(a[column]!) - numeric(b[column]!) : a[column]!.localeCompare(b[column]!, "ja", { numeric: true })));
+      await expect.poll(readRows).toEqual(expected);
+      await expect(dialog.locator("tfoot")).toHaveText(total!);
+    }
+  }
+  await dialog.getByRole("button", { name: "閉じる", exact: true }).click();
+  await expect(amount).toBeFocused();
+  await amount.press("Enter");
+  await expect.poll(readRows).toEqual(original);
+  await expect(dialog.locator("th[aria-sort]")).toHaveCount(0);
+  await dialog.getByRole("button", { name: "前年・施策", exact: true }).click();
+  await dialog.getByRole("button", { name: "既存商品の販売拡大（1行目）", exact: true }).click();
+  await expect(app.getByRole("tab", { name: "一次予算", exact: true })).toHaveAttribute("aria-selected", "true");
+});

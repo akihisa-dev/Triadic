@@ -54,5 +54,27 @@ export async function verifyCostBreakdown(api) {
   assert.equal(repeated.lines.length, 1); assert.equal(repeated.lines[0].amount, 0);
   assert.equal(rowReads, 0, '期間変更と再表示は無関係な施策行を再走査しない');
   assert.deepEqual(repeated, api.buildCostBreakdown(many, { ...target, column: 1, period: api.tablePeriods.find(item => item.id === 'annual') }, [1]));
+  const sortContents = { ...contents,
+    accounts: [{ id: 1, accountName: "科目Z", displayName: "科目2" }, { id: 2, accountName: "科目10" }],
+    departments: [{ id: 1, departmentName: "部署2" }, { id: 2, departmentName: "部署10" }],
+    industries: [{ id: 1, industryName: "業種2" }, { id: 2, industryName: "業種10" }],
+  };
+  const sortLines = [
+    { key: "a", name: "施策10（1行目）", accountId: 2, departmentId: 2, industryId: 1, sign: 1, amount: 2 },
+    { key: "b", name: "施策2（1行目）", accountId: 1, departmentId: null, industryId: 2, sign: -1, amount: -1 },
+    { key: "c", name: "施策2（1行目）", accountId: 1, departmentId: 1, industryId: null, sign: -1, amount: 1 },
+    { key: "d", name: "施策2（1行目）", accountId: 1, departmentId: 1, industryId: null, sign: -1, amount: 1 },
+  ];
+  const beforeSort = JSON.stringify({ sortLines, sortContents });
+  const expected = {
+    name: ["bcda", "abcd"], account: ["bcda", "abcd"], department: ["bcda", "acdb"],
+    industry: ["cdab", "bacd"], sign: ["bcda", "abcd"], amount: ["bcda", "acdb"],
+  };
+  for (const [column, orders] of Object.entries(expected)) for (const [i, direction] of ["ascending", "descending"].entries()) {
+    assert.equal(api.sortCostBreakdownLines(sortLines, sortContents, { column, direction }).map(line => line.key).join(""), orders[i], `${column}/${direction}: 表示名・数字・空欄・同値の元順序`);
+  }
+  assert.equal(api.sortCostBreakdownLines(sortLines, sortContents, null), sortLines);
+  assert.deepEqual(api.sortCostBreakdownLines([], sortContents, { column: "amount", direction: "ascending" }), []);
+  assert.equal(JSON.stringify({ sortLines, sortContents }), beforeSort, "並べ替えで元明細・計画を変更しない");
   console.log("総原価表の内訳: 全金額列・期間・分類・集計符号・1円精度・手修正0・相殺・範囲超過を確認しました。");
 }

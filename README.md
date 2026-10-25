@@ -176,6 +176,8 @@ Previous-year input places heading, department, and industry in that order, with
 
 ### Cost summary and breakdown comparisons and period totals
 
+The cost-summary amount-detail dialog sorts by all six column headers: source, account, department, industry, aggregation sign, and contribution. A new column starts ascending; subsequent activations alternate ascending ▲ and descending ▼. Display names use Japanese ordering with numeric digit sequences; blanks come first ascending and last descending. Signs and unrounded yen amounts sort numerically, with ties retaining original order. Sorting covers all detail rows, returns to the first row, and resets when the dialog closes. Totals and stored data do not change.
+
 Hovering over the horizontal scrollbar reveals Q1–Q4, first-half, second-half, and annual labels inside the scrollbar itself. Click a label to scroll to its columns, bounded by the right edge. Table height and bottom spacing stay unchanged. Dragging and normal scrolling remain available. Narrow views show labels near the pointer when all labels cannot fit. Keyboard focus also reveals the labels; Esc dismisses them. Navigation does not save or change amounts, filters, undo, or history. Quarterly headings in both tables and Excel use Q1–Q4.
 
 The expansion table shows names in its vertical scrollbar, using the actual expansion ID only where names are too close. Hover or keyboard focus stretches that ID vertically into its name while neighbouring IDs move aside. The hovered target remains stable, and a press retains its expansion ID until release before scrolling its first row below the fixed headers. Name space is reserved before expansion; very crowded bars show nearby IDs. Reduced motion makes expansion and movement immediate. Offscreen virtual rows and empty groups remain reachable. The gutter contains every label; dragging, wheel scrolling, and the cost summary are unchanged.
@@ -228,7 +230,7 @@ Monthly revenue/expense/profit totals sit at the initiative table's bottom, at t
 
 In the cost summary, “all departments” offers every industry in the master, including industries without assignments or amounts. Selecting one department restricts candidates to its industries and auto-selects a sole candidate. Returning to all departments restores all candidates and keeps a valid industry selection. These display changes do not save the plan.
 
-Click category/period/name/start-date headers to toggle ascending ▲/descending ▼, initially ascending and resetting ascending on a different column. Names use Japanese name order; dates use the displayed kind's year/month; blanks always last and ties retain registration order. Unselected classifications are distinct from numeric IDs, including 0 and negative IDs. Only display order changes, returning to registration order on leaving and never saving to the file. Sorting also works in past viewing. Other tables and master headers show names only, without filters or “Clear.” Account-master drag/keyboard reorder remains available. See [Monthly amount requirements](REQUIREMENTS.md#月別金額と保存データ) and [Monthly amounts and storage](DATA_MODEL.md).
+Click category/period/name/start-date headers to toggle ascending ▲/descending ▼, initially ascending and resetting ascending on a different column. Names use Japanese name order; dates use the displayed kind's year/month; blanks always last and ties retain registration order. Unselected classifications are distinct from numeric IDs, including 0 and negative IDs. Only display order changes, returning to registration order on leaving and never saving to the file. Sorting also works in past viewing. The cost-summary amount-detail dialog also sorts by all six headers. Other table and master headers show names only, without filters or “Clear.” Account-master drag/keyboard reorder remains available. See [Monthly amount requirements](REQUIREMENTS.md#月別金額と保存データ) and [Monthly amounts and storage](DATA_MODEL.md).
 
 ## Excel import and export
 
@@ -641,6 +643,8 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 計画・マスタ・時点履歴は同じ`.triadic`ファイルに保存します。既存データの文字・数値の編集は、入力が600ミリ秒止まってから自動保存します。新規登録と削除は、それぞれの操作で確定します。保存先の許可や外部でのファイル更新により保存できない場合は、理由と復旧操作を表示します。
 
 「操作を取り消す」は、このファイルを開いている間の直近100操作を戻す機能です。「履歴」はファイルに残した過去の状態を閲覧・復元する機能で、開き直した後も利用できます。時点履歴は最初の未記録の変更の保存成功から5分後と、正常なファイル終了時・過去閲覧への移動時に記録します。保持期限はなく、必要に応じて削除します。詳しくは[データの履歴](#データの履歴)を参照してください。
+
+内訳の全6列（前年・施策、科目、部署、業種、集計の加減、反映額）は見出しから昇順・降順を切り替えます。初回と別列は昇順、同じ列は昇降順を交互に切り替え、▲・▼で示します。文字列は表示名の日本語順（数字部分は数値順）、空欄は昇順で先・降順で後、加減は−1／＋1、反映額は丸める前の円整数で比較し、同値は元の順序を保ちます。全明細を対象にし、切り替え後は先頭行へ戻します。並べ替えは内訳を閉じると破棄し、合計・保存内容を変更しません。
 
 総原価表の科目・設定済み集計の金額から内訳を開けます。月別・期間計・比較差額と部署・業種の条件に合わせ、前年額と施策の科目行別の増減、集計の加減符号を確認できます。施策名から編集へ進み、「総原価表へ戻る」で元の分類・スクロール位置へ戻ります。利益率・未設定集計は対象外です。過去閲覧では編集できません。内訳と合計は円単位で計算し、各表示だけ整数千円に丸めるため、表示値の足し算と合計が一致しない場合があります。同じ計画の表示中は科目・月別の候補を再利用し、対象外の施策行を期間切り替えや再表示ごとに走査しません。200行を超える内訳は行の高さを測って表示範囲の周辺だけを描画し、名称の折り返し、相殺後0の行、全体の合計と施策への移動を維持します。内訳は保存せず、保存形式・追加権限・外部送信に変更はありません。
 

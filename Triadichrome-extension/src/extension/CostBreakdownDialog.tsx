@@ -1,6 +1,6 @@
-import { useId, useLayoutEffect, useMemo, useRef } from "react";
+import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { buildCostBreakdown, indexCostBreakdown, type CostBreakdownTarget } from "../core/tables/costBreakdown";
+import { buildCostBreakdown, indexCostBreakdown, sortCostBreakdownLines, type CostBreakdownSort, type CostBreakdownTarget } from "../core/tables/costBreakdown";
 import { MeasuredTableBody } from "./MeasuredTableBody";
 import type { Initiative, PlanContents } from "../core/domain/plan";
 import type { KindId } from "../core/domain/kinds";
@@ -10,15 +10,19 @@ import "./CostBreakdown.css";
 type Props = { contents: PlanContents; selected: KindId[]; target: CostBreakdownTarget; title: string;
   navigationBlocked: boolean; onClose: () => void; onOpenInitiative: (initiative: Initiative, kind?: KindId) => void; candidates?: ReturnType<typeof indexCostBreakdown> };
 
+const columns = [["name", "前年・施策"], ["account", "科目"], ["department", "部署"], ["industry", "業種"], ["sign", "集計の加減"], ["amount", "反映額"]] as const;
+
 export function CostBreakdownDialog({ contents, selected, target, title, navigationBlocked, onClose, onOpenInitiative, candidates }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
   const heading = useId();
   const container = useRef<HTMLDivElement>(null);
+  const [sort, setSort] = useState<CostBreakdownSort | null>(null);
   const prepared = useMemo(() => candidates ?? indexCostBreakdown(contents), [candidates, contents.previousAmounts, contents.initiatives]);
   const result = useMemo(() => {
     try { return { detail: buildCostBreakdown(contents, target, selected, prepared), error: "" }; }
     catch (error) { return { detail: null, error: error instanceof Error ? error.message : "内訳を計算できませんでした。" }; }
   }, [contents, target, selected, prepared]);
+  const displayed = useMemo(() => sortCostBreakdownLines(result.detail?.lines ?? [], contents, sort), [result.detail, contents, sort]);
   const accounts = new Map(contents.accounts.map(item => [item.id, item.displayName ?? item.accountName]));
   const departments = new Map(contents.departments.map(item => [item.id, item.departmentName]));
   const industries = new Map(contents.industries.map(item => [item.id, item.industryName]));
@@ -36,8 +40,13 @@ export function CostBreakdownDialog({ contents, selected, target, title, navigat
       <button autoFocus type="button" className="secondary-button" onClick={onClose}>閉じる</button></div>
     {result.error ? <p role="alert">{result.error}</p> : <>
       <div ref={container} className="cost-breakdown-scroll"><table aria-label="金額の内訳">
-        <thead><tr><th scope="col">前年・施策</th><th scope="col">科目</th><th scope="col">部署</th><th scope="col">業種</th><th scope="col">集計の加減</th><th scope="col">反映額</th></tr></thead>
-        <MeasuredTableBody rows={result.detail!.lines} container={container} columns={6} rowKey={line => line.key} render={line => <tr>
+        <thead><tr>{columns.map(([column, label]) => <th key={column} scope="col" aria-sort={sort?.column === column ? sort.direction : undefined}>
+          <button type="button" className="cost-breakdown-sort" onClick={() => {
+            setSort({ column, direction: sort?.column === column && sort.direction === "ascending" ? "descending" : "ascending" });
+            if (container.current) container.current.scrollTop = 0;
+          }}>{label}<span aria-hidden="true">{sort?.column === column ? sort.direction === "ascending" ? "▲" : "▼" : ""}</span></button>
+        </th>)}</tr></thead>
+        <MeasuredTableBody key={sort ? `${sort.column}-${sort.direction}` : "original"} rows={displayed} container={container} columns={6} rowKey={line => line.key} render={line => <tr>
           <th scope="row">{line.initiativeId === null ? line.name : <button type="button" className="initiative-name-button" disabled={navigationBlocked}
             onClick={() => { const initiative = initiatives.get(line.initiativeId!); if (initiative) { onClose(); onOpenInitiative(initiative, [...selected].sort((a, b) => a - b)[target.column > 0 && target.column <= selected.length ? target.column - 1 : selected.length - 1]); } }}>{line.name}</button>}</th>
           <td>{accounts.get(line.accountId)}</td><td>{departments.get(line.departmentId!) ?? ""}</td><td>{industries.get(line.industryId!) ?? ""}</td>
