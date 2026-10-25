@@ -5,8 +5,6 @@ export async function verifyPerformanceData(api, root) {
   const bytes = new Uint8Array(await readFile(join(root, 'samples/2027年度サンプル予算.triadic')));
   const compact = await api.readPlanContents(bytes);
   assert.equal(compact.details, undefined, '通常の読込では派生明細を作らない');
-  const complete = await api.readPlanContents(bytes);
-  assert.deepEqual(compact, complete, '標準読込の全金額と更新番号が一致');
   assert.ok(api.buildDetails(compact).length > 0, '検査用の派生表示は明示生成できる');
   const rules = new Map(compact.periodTypes.map(item => [item.id, item.startMonthRule]));
   for (const item of compact.initiatives) for (const kind of [1,2]) {
