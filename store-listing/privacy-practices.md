@@ -40,7 +40,7 @@ Manifestに`permissions`、`optional_permissions`、`host_permissions`の指定�
 
 https://gist.github.com/akihisa-dev/a97db44fddd4ff38f8c0f21bde35be18
 
-公開先は上記のGitHub Gistです。[privacy-policy.md](privacy-policy.md)は配色設定と検索語の扱いを追記した2026年10月25日改訂原稿です。この改訂原稿の公開先への反映は未確認です。ストア提出前に同じGistの本文をこの原稿と一致させてください。[privacy-policy-url.txt](privacy-policy-url.txt)からURLだけをコピーできます。
+公開先は上記のGitHub Gistです。[privacy-policy.md](privacy-policy.md)は配色設定と検索語の扱いを追記した2026年10月25日改訂版で、同じ本文を公開Gistへ反映済みです。[privacy-policy-url.txt](privacy-policy-url.txt)からURLだけをコピーできます。
 
 ## 根拠
 
