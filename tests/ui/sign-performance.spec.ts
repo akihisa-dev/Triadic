@@ -1,11 +1,16 @@
 import { test, expect } from './fixtures';
+import type { PlanContents } from '../../Triadic-extension/src/core/domain/plan';
 for (const dataset of ['defaults', 'large']) test(`加減計測 ${dataset}`, async({app,page})=>{
   test.setTimeout(120000);
   await page.getByRole('combobox',{name:'テストデータ',exact:true}).selectOption(dataset);
   await expect(page.getByRole('status')).toHaveText('操作できます');
   await app.getByRole('button',{name:'ファイルを開く',exact:true}).click();
+  const sidebar=app.getByRole('button',{name:'サイドバーを開く',exact:true});
+  if (await sidebar.isVisible()) await sidebar.click();
   await app.getByRole('button',{name:'マスタ',exact:true}).click();
-  await app.getByRole('button',{name:/^勘定科目マスタ /}).click();
+  await app.getByRole('button',{name:/^集計マスタ/}).click();
+  const closeSidebar=app.getByRole('button',{name:'サイドバーを閉じる',exact:true}).first();
+  if(await closeSidebar.isVisible()) await closeSidebar.click();
   const group=app.getByRole('group',{name:'売上高の加減',exact:true});
   const minus=group.getByRole('button',{name:'減算',exact:true});
   await expect(minus).toBeEnabled();
@@ -15,5 +20,14 @@ for (const dataset of ['defaults', 'large']) test(`加減計測 ${dataset}`, asy
   await expect(minus).toBeEnabled({timeout:30000});
   const saved=Date.now()-start;
   expect(saved).toBeLessThan(dataset==='large'?3500:1500);
+  const savedSign=await app.locator('body').evaluate(async()=>{
+    const entry='/Triadic-extension/src/core/storage/readPlan.ts';
+    const { readPlanContents }=await import(entry);
+    const [handle]=await Reflect.get(window, "showOpenFilePicker")();
+    const contents: PlanContents=await readPlanContents(new Uint8Array(await (await handle.getFile()).arrayBuffer()));
+    const sales=contents.accounts.find(account=>account.accountName==='売上高')!;
+    return contents.aggregations.flatMap(item=>item.members).find(member=>member.kind==='account'&&member.id===sales.id)?.sign;
+  });
+  expect(savedSign).toBe(-1);
   console.log(`SIGN_PERF ${dataset} feedback ${feedback}ms saved ${Date.now()-start}ms`);
 });
