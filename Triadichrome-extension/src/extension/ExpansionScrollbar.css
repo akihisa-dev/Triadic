@@ -1,0 +1,12 @@
+.expansion-scrollbar { position: absolute; right: 0; top: 0; z-index: 4; background: var(--soft); }
+.expansion-scrollbar input { appearance: none; writing-mode: vertical-lr; direction: ltr; display: block; width: 100%; height: 100%; margin: 0; padding: 0; background: transparent; cursor: grab; }
+.expansion-scrollbar input:active { cursor: grabbing; }
+.expansion-scrollbar input:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.expansion-scrollbar input::-webkit-slider-runnable-track { width: 6px; background: var(--soft); }
+.expansion-scrollbar input::-webkit-slider-thumb { appearance: none; height: var(--expansion-scroll-thumb); width: 6px; border-radius: 6px; background: var(--control-line); }
+.expansion-scrollbar:is(:hover, :has(:focus-visible), .expansion-scrollbar-touch) input::-webkit-slider-thumb { background: var(--line); }
+.expansion-scroll-marks { position: absolute; inset: 0; pointer-events: none; visibility: hidden; }
+.expansion-scrollbar:not(.expansion-scrollbar-dismissed):is(:hover, :has(:focus-visible), .expansion-scrollbar-touch) .expansion-scroll-marks { visibility: visible; }
+.expansion-scroll-mark { position: absolute; left: 0; width: 100%; writing-mode: vertical-rl; text-orientation: mixed; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 3px 0; border: 0; border-radius: 0; background: transparent; color: var(--ink); font: inherit; font-size: 11px; line-height: 12px; pointer-events: auto; }
+.expansion-scroll-mark:hover { text-decoration: underline; text-underline-offset: 1px; }
+.expansion-scroll-mark:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }

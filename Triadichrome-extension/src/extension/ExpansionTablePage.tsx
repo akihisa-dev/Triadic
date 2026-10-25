@@ -1,4 +1,5 @@
 import type { ExpansionMonths } from "../core/tables/expansionTable";
+import { ExpansionScrollbar, expansionScrollRegionId } from "./ExpansionScrollbar";
 import { PeriodScrollFrame } from "./PeriodScrollbar";
 import { useRowWindow, WindowRows } from "./VirtualTableRows";
 import { TableCalculationBoundary } from "./TableCalculationBoundary";
@@ -68,6 +69,8 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
   const container = useRef<HTMLDivElement>(null);
   const window = useRowWindow(container, flat.length, 28, 200, 165);
   const virtual = flat.length > 200;
+  const scrollTargets = useMemo(() => flat.flatMap((row, index) => row.groupOffset === 0
+    ? [{ id: row.group.expansion.id, name: row.group.expansion.expansionName, index }] : []), [flat]);
   const [focusedId, setFocusedId] = useState<number | null>(null);
   const focusedIndex = useMemo(() => focusedId === null ? -1 : flat.findIndex(row => row.item?.id === focusedId), [flat, focusedId]);
   const rendered = useMemo(() => {
@@ -100,7 +103,7 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
     },
   });
   const labels = [...selected.map(id => contents.kinds.find(kind => kind.id === id)!.kindName), ...(selected.length === 2 ? ["比較"] : [])];
-  return <PeriodScrollFrame container={container} label="展開表" layoutKey={selected.join(",")}><div ref={container} className="initiative-list-container" role="region" aria-label="展開表の月別種別・比較" tabIndex={0}>
+  return <PeriodScrollFrame container={container} label="展開表" layoutKey={selected.join(",")}><div id={expansionScrollRegionId} ref={container} className="initiative-list-container" role="region" aria-label="展開表の月別種別・比較" tabIndex={0}>
       <table className={`initiative-list-table expansion-table${virtual ? " virtual-table" : ""}`} style={{ "--virtual-row-height": "28px" } as React.CSSProperties} aria-label="展開表" aria-rowcount={flat.length + 6}>
         <colgroup>
           <col className="expansion-group-col" /><col className="expansion-period-col" /><col className="expansion-category-col" /><col className="expansion-name-col" />
@@ -126,7 +129,7 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
         const firstCategory = row.categoryOffset === 0 || index === range.start;
         const categorySpan = Math.min(row.categoryCount - row.categoryOffset, range.end - index);
         const periodSpan = Math.min((row.period?.initiatives.length ?? 0) - row.periodOffset, range.end - index);
-        return <tr key={row.item?.id ?? `subtotal:${row.group.expansion.id}`} className={row.subtotal ? "expansion-subtotal" : undefined} aria-rowindex={index + 7}>
+        return <tr data-expansion-start={row.groupOffset === 0 ? row.group.expansion.id : undefined} key={row.item?.id ?? `subtotal:${row.group.expansion.id}`} className={row.subtotal ? "expansion-subtotal" : undefined} aria-rowindex={index + 7}>
           {firstGroup && <ExpansionGroupCell name={row.group.expansion.expansionName} span={groupSpan} title={row.group.expansion.expansionName} />}
           {row.subtotal ? <ExpansionSubtotalCells name={row.group.expansion.expansionName} values={row.group.values} />
             : <ExpansionInitiativeCells item={row.item!} source={sourceInitiatives.get(row.item!.id)!} kind={selected[0]!} onOpen={onOpenInitiative}
@@ -137,15 +140,15 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
       }} /></tbody> : groups.map(({ group, periods }) => { return <tbody key={group.expansion.id}>
         {periods.map((period, periodIndex) => period.categories.flatMap((category, categoryGroupIndex) => category.initiatives.map((item, categoryIndex) => {
           const firstPeriod = categoryGroupIndex === 0 && categoryIndex === 0;
-          return <tr key={item.id}>
+          return <tr key={item.id} data-expansion-start={periodIndex === 0 && firstPeriod ? group.expansion.id : undefined}>
           {periodIndex === 0 && firstPeriod && <ExpansionGroupCell name={group.expansion.expansionName} span={group.initiatives.length + 1} />}
           <ExpansionInitiativeCells item={item} source={sourceInitiatives.get(item.id)!} kind={selected[0]!} onOpen={onOpenInitiative}
             period={firstPeriod ? { name: period.name, span: period.initiatives.length } : null}
             category={categoryIndex === 0 ? { name: categoryName(item), span: category.initiatives.length } : null} />
         </tr>; }))) }
-        <tr className="expansion-subtotal">{group.initiatives.length === 0 && <ExpansionGroupCell name={group.expansion.expansionName} />}
+        <tr className="expansion-subtotal" data-expansion-start={group.initiatives.length === 0 ? group.expansion.id : undefined}>{group.initiatives.length === 0 && <ExpansionGroupCell name={group.expansion.expansionName} />}
           <ExpansionSubtotalCells name={group.expansion.expansionName} values={group.values} />
         </tr>
       </tbody>; })}</table>
-    </div></PeriodScrollFrame>;
+    </div><ExpansionScrollbar container={container} targets={scrollTargets} virtual={virtual} /></PeriodScrollFrame>;
 }
