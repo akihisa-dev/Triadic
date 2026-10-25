@@ -5,7 +5,7 @@ import type { InitiativeRow } from "../../Triadic-extension/src/core/domain/plan
 // Design authority: docs/sample-budget-design.md. Money below is in thousands of yen.
 // Explicit business cases, never a Cartesian product of regions, industries and expansions.
 export const companyRegions = ["東京圏", "大阪圏", "名古屋圏", "福岡圏", "仙台圏", "札幌圏", "中四国圏", "本社"];
-export const companyIndustries = ["ルート配送", "チャーター配送", "アパレル倉庫", "非衣料品倉庫", "本社管理"];
+export const companyBusinesses = ["ルート配送", "チャーター配送", "アパレル倉庫", "非衣料品倉庫", "本社管理"];
 export const previousAnnualSales = [
   [1_920_000, 1_152_000, 768_000, 384_000, 192_000, 144_000, 240_000],
   [420_000, 264_000, 240_000, 96_000, 60_000, 48_000, 72_000],
@@ -22,7 +22,7 @@ export const months = (fn: (index: number) => number): Monthly => initiativeMont
 const from = (index: number, amount: number) => months(i => i >= index ? amount : 0);
 const once = (index: number, amount: number) => months(i => i === index ? amount : 0);
 const scale = (values: Monthly, factor: number) => values.map(value => value * factor);
-export type BusinessScenario = { key: string; name: string; note: string; region: string; industry: string; expansion: string; category?: string | undefined; carryover?: boolean; rows: InitiativeRow[] };
+export type BusinessScenario = { key: string; name: string; note: string; region: string; business: string; expansion: string; category?: string | undefined; carryover?: boolean; rows: InitiativeRow[] };
 
 export function businessScenarios(accounts: Map<string, number>): BusinessScenario[] {
   const result: BusinessScenario[] = [];
@@ -33,8 +33,8 @@ export function businessScenarios(accounts: Map<string, number>): BusinessScenar
     return { accountId, amounts: Object.fromEntries(initiativeMonths.map((m, i) => [m, amount(primary[i]!)])),
       overrides: { 2: Object.fromEntries(initiativeMonths.flatMap((m, i) => amount(primary[i]!) !== amount(confirmed[i]!) || equalMonths.includes(m) ? [[m, amount(confirmed[i]!)]] : [])) } };
   };
-  const add = (key: string, name: string, region: string, industry: string, expansion: string, note: string, rows: InitiativeRow[], category?: string, carryover = false) => {
-    result.push({ key, name, region, industry, expansion, note, category, carryover,
+  const add = (key: string, name: string, region: string, business: string, expansion: string, note: string, rows: InitiativeRow[], category?: string, carryover = false) => {
+    result.push({ key, name, region, business, expansion, note, category, carryover,
       rows: rows.map((value, index) => ({ ...value, id: `sanmen:${key}:${index}` })) });
   };
   add("tokyo-rates", "東京・既存アパレル荷主の運賃是正", "東京圏", "ルート配送", "料金改定",

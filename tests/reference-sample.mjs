@@ -9,6 +9,24 @@ const key = item => item.rows[0].id.split(":")[1];
 
 export async function verifyReferenceSample(api, bytes, plan, { excel = false } = {}) {
   const before = bytes.slice();
+  const defaultBytes = await api.createTriadicDatabase(plan.fiscalYear);
+  const defaults = await api.readPlanContents(defaultBytes);
+  const allowedSampleTables = new Set(["triadic_metadata", "document_info", "departments", "department_industries", "initiatives", "initiative_rows", "initiative_amounts", "previous_amounts", "kind_selections"]);
+  const masterRows = async (input, snapshot = false) => {
+    const db = await (snapshot ? api.openBusinessSnapshot(input) : api.openTriadicDatabase(input));
+    try {
+      return api.BUSINESS_TABLES.filter(table => !allowedSampleTables.has(table)).map(table => {
+        const records = db.exec(`SELECT * FROM ${table}`)[0];
+        // Creation identities differ between independent new files; compare every definition column.
+        const columns = records.columns.filter(column => column !== "identity");
+        const values = records.values.map(row => JSON.stringify(row.filter((_, index) => records.columns[index] !== "identity"))).sort();
+        return [table, columns, values];
+      });
+    } finally { db.close(); }
+  };
+  const defaultMasters = await masterRows(defaultBytes);
+  assert.deepEqual(await masterRows(bytes), defaultMasters, "実ファイルの部署以外の全マスタ定義が新規作成時のデフォルトと一致する");
+
   const accounts = new Map(plan.accounts.map(item => [item.id, item]));
   const accountId = name => plan.accounts.find(item => item.accountName === name).id;
   const item = id => { const value = plan.initiatives.find(value => key(value) === id); assert.ok(value, id); return value; };
@@ -27,7 +45,8 @@ export async function verifyReferenceSample(api, bytes, plan, { excel = false } 
     assert.equal(data.accounts.length, 57);
     assert.equal(data.aggregations.length, 15);
     assert.deepEqual(data.departments.map(x => x.departmentName), ["東京圏", "大阪圏", "名古屋圏", "福岡圏", "仙台圏", "札幌圏", "中四国圏", "本社"]);
-    assert.deepEqual(data.industries.map(x => x.industryName), ["ルート配送", "チャーター配送", "アパレル倉庫", "非衣料品倉庫", "本社管理"]);
+    assert.deepEqual(data.industries.map(({ identity, ...definition }) => definition), defaults.industries.map(({ identity, ...definition }) => definition));
+    assert.deepEqual(data.kinds, defaults.kinds);
     assert.equal(new Set(data.initiatives.map(x => x.name)).size, data.initiatives.length);
     assert.ok(data.initiatives.every(x => !/確認用|テスト|ゼロ固定|入力準備|車両整備・|作業手順の改善・/.test(x.name)));
     for (const value of data.initiatives) {
@@ -43,7 +62,7 @@ export async function verifyReferenceSample(api, bytes, plan, { excel = false } 
   assert.ok(!plan.initiatives.some(x => /関東第二倉庫|関西.*倉庫/.test(x.name)), "4〜5年目の開設を今期に詰め込まない");
   const priorSales = (industry, department) => plan.previousAmounts.filter(x => x.previousKind === 2 && x.accountId === accountId("売上高") && (!industry || x.industryId === industry) && (!department || x.departmentId === department)).reduce((sum, x) => sum + yen(x.amount), 0);
   assert.equal(priorSales(), 12_000_000_000);
-  assert.deepEqual([1, 2, 3, 4, 5].map(i => priorSales(i)), [4_800_000_000, 1_200_000_000, 6_000_000_000, 0, 0]);
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => priorSales(i)), [4_800_000_000, 1_200_000_000, 6_000_000_000, 0, 0, 0, 0, 0, 0]);
   assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8].map(d => priorSales(null, d)), [5_040_000_000, 2_856_000_000, 1_908_000_000, 840_000_000, 432_000_000, 312_000_000, 612_000_000, 0]);
   const previous = (industry, department, name, month, kind = 2) => yen(plan.previousAmounts.find(x => x.previousKind === kind && x.industryId === industry && x.departmentId === department && x.accountId === accountId(name) && x.month === month)?.amount ?? "0");
   assert.equal(previous(3, 1, "売上高", 1, 1) - previous(3, 1, "売上高", 1), 1_500_000);
@@ -132,7 +151,9 @@ export async function verifyReferenceSample(api, bytes, plan, { excel = false } 
   assert.equal(history.dirtySince, null);
   const snapshots = [];
   for (const entry of history.entries) {
-    const snapshot = await api.readSnapshotContents(await api.readHistorySnapshot(bytes, entry.id));
+    const snapshotBytes = await api.readHistorySnapshot(bytes, entry.id);
+    assert.deepEqual(await masterRows(snapshotBytes, true), defaultMasters, "全履歴でも部署以外のデフォルトマスタを維持する");
+    const snapshot = await api.readSnapshotContents(snapshotBytes);
     businessData(snapshot);
     assert.deepEqual(snapshot.initiatives.slice(1), plan.initiatives.slice(1));
     assert.deepEqual(snapshot.previousAmounts, plan.previousAmounts);
@@ -150,6 +171,11 @@ export async function verifyReferenceSample(api, bytes, plan, { excel = false } 
     const restored = (await api.readPlanContents(cleared)).initiatives.find(x => x.id === original.id);
     assert.equal(api.initiativesForKind([restored], plan.accounts, 2)[0].rows[0].amounts[month], "3100");
   }
+  // Sample-authoring protection must not prohibit users from editing their own file.
+  const userIndustry = defaults.industries[0];
+  const userEdited = await api.changeIndustryMaster(bytes, { type: "update", id: userIndustry.id, industryCode: userIndustry.industryCode, industryName: "利用者が変更した業種" });
+  assert.equal((await api.readPlanContents(userEdited)).industries.find(x => x.id === userIndustry.id).industryName, "利用者が変更した業種");
+  assert.deepEqual(await masterRows(bytes), defaultMasters, "利用者編集の確認でも原本を変更しない");
   if (excel) {
     const workbook = await api.serializeWorkbook(api.createReportWorkbook(plan, { tables: ["cost-table", "expansion-table", "initiative-list"], selections: { "cost-table": [1, 2], "expansion-table": [1, 2], "initiative-list": [1] }, costFilter: { industries: null, departments: null } }));
     const reopened = new ExcelJS.Workbook(); await reopened.xlsx.load(workbook);

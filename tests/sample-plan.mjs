@@ -116,6 +116,7 @@ export async function verifySamplePlan(api, { excel = false } = {}) {
   const large = await readPlanContents(largeBytes);
   assert.equal(large.fiscalYear, 2027, "表示名と実ファイルの基準年度を一致させる");
   assert.deepEqual(large.expansionCategories, plan.expansionCategories, "再生成した実ファイルもデフォルトの区分だけを含む");
+  assert.deepEqual(large.industries.map(({ identity, ...definition }) => definition), plan.industries.map(({ identity, ...definition }) => definition), "業種もデフォルト9件を改名・削除・追加しない");
   assert.deepEqual(large.departments.map(item => item.departmentName), ["東京圏", "大阪圏", "名古屋圏", "福岡圏", "仙台圏", "札幌圏", "中四国圏", "本社"]);
   assert.ok(large.initiatives.every(item => large.departments.find(d => d.id === item.departmentId).industryIds.includes(item.industryId)));
   assert.ok(large.previousAmounts.every(item => large.departments.find(d => d.id === item.departmentId).industryIds.includes(item.industryId)));

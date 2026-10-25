@@ -32,6 +32,7 @@ test('基準サンプルの全件・末尾・総原価表・展開表・施策�
   await expect(nav.getByRole('button',{name:'明細',exact:true})).toHaveCount(0);
   await navigate('総原価表');
   await expect(app.getByRole('heading',{name:'総原価表',exact:true})).toBeVisible();
+  await expect(app.getByRole('combobox',{name:'業種名',exact:true}).locator('option')).toHaveText(['全業種の合計','直営自動車','自動車取扱','不動産A','不動産B','納品代行','雑作業','業務費B','一般管理費','営業外']);
   await navigate('施策一覧');
   await app.locator('.initiative-list-container').evaluate(el=>{el.scrollTop=0;});
   await list.getByRole('button',{name:'東京・既存アパレル荷主の運賃是正',exact:true}).click();

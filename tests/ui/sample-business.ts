@@ -1,6 +1,7 @@
 import { createTriadicDatabase, openTriadicDatabase, exportTriadicDatabase } from "../../Triadic-extension/src/core/storage/triadicDatabase";
 import { editDatabase } from "../../Triadic-extension/src/core/storage/transaction";
-import { applyIndustryChange } from "../../Triadic-extension/src/core/storage/industryMaster";
+import { BUSINESS_TABLES } from "../../Triadic-extension/src/core/storage/triadicSchema";
+import type { Database } from "../../Triadic-extension/src/core/storage/sqliteRuntime";
 import { applyDepartmentChange } from "../../Triadic-extension/src/core/storage/departmentMaster";
 import { applyPreviousAmounts } from "../../Triadic-extension/src/core/storage/settings";
 import { applyInitiativeRegistration, updateInitiative } from "../../Triadic-extension/src/core/storage/initiatives";
@@ -8,7 +9,7 @@ import { readPlanContents } from "../../Triadic-extension/src/core/storage/readP
 import { trackHistoryChange, recordDataHistory } from "../../Triadic-extension/src/core/storage/dataHistory";
 import { initiativeMonths } from "../../Triadic-extension/src/core/domain/calendar";
 import { yenToAmount } from "../../Triadic-extension/src/core/domain/amounts";
-import { businessScenarios, companyRegions, companyIndustries, previousAnnualSales, workloadWeights, months } from "./sample-portfolio";
+import { businessScenarios, companyRegions, companyBusinesses, previousAnnualSales, workloadWeights, months } from "./sample-portfolio";
 
 // The delivered sample has a fixed year; ordinary new files still use the app calendar.
 export const BUSINESS_SAMPLE_FISCAL_YEAR = 2027;
@@ -37,17 +38,41 @@ function allocate(annualThousands: number, weights: number[]): number[] {
   });
 }
 
+// Only department definitions/memberships and budget data may change in this generator.
+// This guard belongs to sample authoring, not the product's user-editing operations.
+const sampleDataTables = new Set<string>(["triadic_metadata", "document_info", "departments", "department_industries", "initiatives", "initiative_rows", "initiative_amounts", "previous_amounts", "kind_selections"]);
+function protectedSampleMasters(database: Database): string {
+  return JSON.stringify(BUSINESS_TABLES.filter(table => !sampleDataTables.has(table)).map(table => [table,
+    (database.exec(`SELECT * FROM ${table}`)[0]?.values ?? []).map(row => JSON.stringify(row)).sort(),
+  ]));
+}
+
 export async function createBusinessSample(fiscalYear: number): Promise<Uint8Array> {
-  let bytes = await createTriadicDatabase(fiscalYear);
+  const initial = await editDatabase(await createTriadicDatabase(fiscalYear), database => {
+    // Seed opaque creation identities once for reproducible new files, before authoring begins.
+    // Codes, names, IDs, memberships, attributes and presentation remain the defaults.
+    for (const [id] of database.exec("SELECT id FROM industries")[0]?.values ?? []) {
+      database.run("UPDATE industries SET identity = ? WHERE id = ?", ["1" + Number(id).toString(16).padStart(31, "0"), Number(id)]);
+    }
+    return protectedSampleMasters(database);
+  });
+  let bytes = initial.bytes;
+  const expectedMasters = initial.result;
   const defaults = await readPlanContents(bytes);
   const accounts = new Map(defaults.accounts.map(account => [account.accountName, account.id]));
+  // Business descriptions are not replacement industry names. Select the existing default codes.
+  const industryCodes: Record<string, string> = { "ルート配送": "1", "チャーター配送": "2", "アパレル倉庫": "3", "非衣料品倉庫": "4", "本社管理": "8", "営業外": "9" };
+  const industryId = (business: string) => {
+    const industry = defaults.industries.find(item => item.industryCode === industryCodes[business]);
+    if (!industry) throw new Error(`サンプルで参照するデフォルト業種がありません: ${business}`);
+    return industry.id;
+  };
   bytes = (await editDatabase(bytes, database => {
-    // Empty initial defaults can be replaced through the same master operations used by the app.
+    // Departments are the only user-authorized exception to default master preservation.
     for (const department of defaults.departments) applyDepartmentChange(database, { type: "delete", id: department.id });
-    for (const industry of defaults.industries) applyIndustryChange(database, { type: "delete", id: industry.id });
-    companyIndustries.forEach((industryName, i) => applyIndustryChange(database, { type: "add", industryCode: String(i + 1), industryName }));
     companyRegions.forEach((departmentName, i) => applyDepartmentChange(database, { type: "add", departmentName,
-      industryIds: i === 7 ? [5] : [1, 2, 3, ...([0, 3].includes(i) ? [4] : [])] }));
+      industryIds: i === 7 ? [industryId("本社管理"), industryId("営業外")]
+        : [industryId("ルート配送"), industryId("チャーター配送"), industryId("アパレル倉庫"), ...([0, 3].includes(i) ? [industryId("非衣料品倉庫")] : [])] }));
     for (let business = 0; business < 3; business++) for (let region = 0; region < 7; region++) {
       const annual = previousAnnualSales[business]![region]!;
       const weights = workloadWeights[business]!;
@@ -74,7 +99,7 @@ export async function createBusinessSample(fiscalYear: number): Promise<Uint8Arr
         change("給料手当", 7, -400); change("ＥＤＰ処理料", 7, 250);
       }
       for (const previousKind of [1, 2] as const) applyPreviousAmounts(database, {
-        previousKind, industryId: business + 1, departmentId: region + 1,
+        previousKind, industryId: industryId(companyBusinesses[business]!), departmentId: region + 1,
         rows: [...source].map(([name, values]) => ({ accountId: accounts.get(name)!, amounts: Object.fromEntries(initiativeMonths.map((month, i) => {
           let value = values[i]!;
           // Forecast January–March contained unconfirmed orders; actuals retain the balanced annual ledger.
@@ -92,12 +117,13 @@ export async function createBusinessSample(fiscalYear: number): Promise<Uint8Arr
       ["研修教育費", months(() => 500)], ["旅費", months(() => 500)], ["固定資産減価償却費", months(() => 1000)],
       ["営業外収益", months(() => 500)], ["営業外費用", months(() => 1000)],
     ];
-    for (const previousKind of [1, 2] as const) applyPreviousAmounts(database, { previousKind, industryId: 5, departmentId: 8,
-      rows: hq.map(([name, amounts]) => ({ accountId: accounts.get(name)!, amounts: Object.fromEntries(initiativeMonths.map((month, i) => [month, yenToAmount(amounts[i]! * 1000)])) })) });
+    for (const previousKind of [1, 2] as const) for (const nonOperating of [false, true]) applyPreviousAmounts(database, {
+      previousKind, industryId: industryId(nonOperating ? "営業外" : "本社管理"), departmentId: 8,
+      rows: hq.filter(([name]) => name.startsWith("営業外") === nonOperating).map(([name, amounts]) => ({ accountId: accounts.get(name)!, amounts: Object.fromEntries(initiativeMonths.map((month, i) => [month, yenToAmount(amounts[i]! * 1000)])) })) });
     const scenarios = businessScenarios(accounts);
     for (const scenario of scenarios) applyInitiativeRegistration(database, {
       name: scenario.name, note: scenario.note, fiscalYear: String(fiscalYear),
-      departmentId: companyRegions.indexOf(scenario.region) + 1, industryId: companyIndustries.indexOf(scenario.industry) + 1,
+      departmentId: companyRegions.indexOf(scenario.region) + 1, industryId: industryId(scenario.key === "funding" ? "営業外" : scenario.business),
       expansionId: defaults.expansions.find(item => item.expansionName === scenario.expansion)!.id,
       expansionCategoryId: scenario.category ? defaults.expansionCategories.find(item => item.categoryName === scenario.category)!.id : null,
       periodTypeId: scenario.carryover ? 1 : 2, rows: scenario.rows,
@@ -109,9 +135,10 @@ export async function createBusinessSample(fiscalYear: number): Promise<Uint8Arr
     try {
       database.run("UPDATE document_info SET created_at = ?, updated_at = ?", [created, at]);
       database.run("UPDATE data_history_state SET saved_at = ?", [at]);
-      for (const [table, prefix] of [["industries", "1"], ["departments", "2"], ["initiatives", "3"]]) {
+      for (const [table, prefix] of [["departments", "2"], ["initiatives", "3"]]) {
         for (const [id] of database.exec(`SELECT id FROM ${table}`)[0]?.values ?? []) database.run(`UPDATE ${table} SET identity = ? WHERE id = ?`, [prefix + Number(id).toString(16).padStart(31, "0"), Number(id)]);
       }
+      if (protectedSampleMasters(database) !== expectedMasters) throw new Error("サンプル生成で部署以外のデフォルトマスタが変更されました。");
       return exportTriadicDatabase(database);
     } finally { database.close(); }
   };
