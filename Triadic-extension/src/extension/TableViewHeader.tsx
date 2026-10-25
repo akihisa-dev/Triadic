@@ -28,7 +28,8 @@ export function TableViewHeader<T>({ view, column: id, disabled = false, ...prop
   const trigger = useRef<HTMLButtonElement>(null);
   const active = view.state.sort?.column === id, filter = view.state.filters[id];
   const name = column.name ?? column.label;
-  return <th {...props} data-table-view-column={id} scope="col" aria-label={name} aria-sort={active ? view.state.sort!.direction : undefined}>
+  return <th {...props} data-table-view-column={id} scope="col" aria-label={name} aria-sort={active ? view.state.sort!.direction : undefined}
+    onFocusCapture={event => { props.onFocusCapture?.(event); revealHeaderFocus(event.currentTarget, event.target as HTMLElement); }}>
     <div className="table-view-heading">
       {column.sortable === false ? <span className="table-view-label">{column.label}</span> : <button type="button" className="table-view-sort" disabled={disabled}
         aria-label={column.name ? `${name}で並べ替え` : undefined} onClick={() => view.change({ ...view.state, sort: { column: id, direction: active && view.state.sort!.direction === "ascending" ? "descending" : "ascending" } })}>
@@ -43,6 +44,21 @@ export function TableViewHeader<T>({ view, column: id, disabled = false, ...prop
       onClose={() => setOpen(false)} onApply={filter => { const filters = { ...view.state.filters }; if (filter) filters[id] = filter; else delete filters[id]; view.change({ ...view.state, filters }); }}
       onOriginalOrder={() => view.change({ ...view.state, sort: null })} />}
   </th>;
+}
+function revealHeaderFocus(cell: HTMLTableCellElement, target: HTMLElement) {
+  // Popover controls are portaled outside the header and have their own focus policy.
+  if (!cell.contains(target)) return;
+  const fixed = (element: Element) => { const style = getComputedStyle(element); return style.position === "sticky" && style.left !== "auto"; };
+  if (fixed(cell)) return;
+  let region = cell.parentElement;
+  while (region && !(region.scrollWidth > region.clientWidth && /auto|scroll/.test(getComputedStyle(region).overflowX))) region = region.parentElement;
+  if (!region) return;
+  const bounds = region.getBoundingClientRect(), right = bounds.left + region.clientLeft + region.clientWidth;
+  let left = bounds.left + region.clientLeft;
+  for (const header of cell.closest("table")!.querySelectorAll("thead th")) if (fixed(header)) left = Math.max(left, header.getBoundingClientRect().right);
+  const rect = target.getBoundingClientRect();
+  if (rect.left < left) region.scrollLeft -= left - rect.left;
+  else if (rect.right > right) region.scrollLeft += rect.right - right;
 }
 export function TableFilterIcon() { return <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4h12M4 8h8M6 12h4" /></svg>; }
 function TableFilterPanel<T>({ column, source, filter, sorted, trigger, onClose, onApply, onOriginalOrder }: {
