@@ -27,10 +27,13 @@ export function diffPlanContents(before: PlanContents, after: PlanContents, limi
 
 /** Apply an ordered port message atomically, retaining unaffected calculation references. */
 export function applyPlanContentsPatch(contents: PlanContents, changes: PlanContentsPatch): PlanContents {
+  const owned = new WeakSet<object>();
   const apply = (current: unknown, change: PlanContentsPatch[number], depth: number): unknown => {
     if (depth === change.path.length) return change.value;
     const key = change.path[depth]!;
-    const clone = Array.isArray(current) ? current.slice() : { ...(current as Record<string, unknown>) };
+    const clone = current && typeof current === "object" && owned.has(current)
+      ? current : Array.isArray(current) ? current.slice() : { ...(current as Record<string, unknown>) };
+    owned.add(clone);
     if (depth === change.path.length - 1 && change.remove) Reflect.deleteProperty(clone, key);
     else Object.defineProperty(clone, key, { value: apply(Reflect.get(clone, key), change, depth + 1), enumerable: true, writable: true, configurable: true });
     return clone;

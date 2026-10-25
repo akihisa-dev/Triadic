@@ -1,5 +1,27 @@
 import assert from 'node:assert/strict';
 export function verifyPlanContentsPatch(api, seed) {
+  for (const cells of [1, 100, 500]) {
+    const base = { ...seed, previousAmounts: Array.from({ length: 100000 }, (_, index) => ({ id: index, amount: '1', revision: 0 })) };
+    const next = { ...base, previousAmounts: base.previousAmounts.map((row, index) => index < cells ? { ...row, amount: '2', revision: 1 } : row) };
+    const delta = api.diffPlanContents(base, next);
+    let copies = 0;
+    const slice = Array.prototype.slice;
+    let result;
+    Array.prototype.slice = function (...args) { if (this.length === 100000) copies++; return slice.apply(this, args); };
+    try { result = api.applyPlanContentsPatch(base, delta); } finally { Array.prototype.slice = slice; }
+    assert.deepEqual(result, next);
+    assert.equal(copies, 1, '同じ金額配列はメッセージごとに一度だけ複製');
+    assert.equal(base.previousAmounts[0].amount, '1');
+    assert.equal(result.previousAmounts.at(-1), base.previousAmounts.at(-1));
+    assert.equal(result.accounts, base.accounts);
+  }
+  const replacement = { amount: '3' };
+  const ordered = api.applyPlanContentsPatch(seed, [
+    { path: ['extra'], value: replacement }, { path: ['extra', 'amount'], value: '4' },
+    { path: ['extra', 'temporary'], value: 1 }, { path: ['extra', 'temporary'], remove: true },
+  ]);
+  assert.deepEqual(ordered.extra, { amount: '4' });
+  assert.equal(replacement.amount, '3', '後続差分で受信値自体を書き換えない');
   const before = { ...seed, previousKind: 2 };
   const after = structuredClone(before);
   delete after.previousKind;
