@@ -1,6 +1,6 @@
 {
   "amount": {
-    "implementation": "f9b37c3a38ea215e5209d6419080348314074663eb249720253ccb70e3dec282",
+    "implementation": "819aad74424b5a52e86d4fc1619b6533b7f1d43430f30758482c41ece1bd192b",
     "description": "3d7f53d865f28405dd5e9c9d938a2339ff43fdf2443bc6604a50338ea3932ceb"
   },
   "inheritance": {
@@ -32,7 +32,7 @@
     "description": "24afe48ca23046736d3e5f6d37b392e18794a40a3258f4e71e37590081f51a2d"
   },
   "open": {
-    "implementation": "0ddbb79d6d82e15daf896340f8bcb4fe721205023e410ec144c63103a9853701",
+    "implementation": "2ec56345783805083ba4f120bf01e11aacd6e27e2fbafaf96ed6efeb24e9667a",
     "description": "656f7d269868cdfdfe08cbd9bbb323bc51bacb1882f9007fe43afeb864db02a2"
   },
   "save": {
@@ -52,7 +52,7 @@
     "description": "d81feeeafec5360dfa6f1c3665674fa92ad93581a5014b58fa45e0839b7c90a9"
   },
   "storage": {
-    "implementation": "26de614ecc5017f55d9219a82529dde9c0ec3622336b5e5e0360677d7d0376c8",
+    "implementation": "74d1159f7d2d4a201d95a40d88ed6a2647a4dda098f394b784efb2755397f352",
     "description": "4e59880cb1a69c3114397699c4be086eed0dd16cfa3855bdf3f96f94dfe5129e"
   },
   "validation": {
@@ -68,11 +68,11 @@
     "description": "330d0308c61c7f319c8a02ed37ba6c8b8fa61692d1d3832abb1d686be74d4af4"
   },
   "initiative-sort": {
-    "implementation": "8f9f6d389d06a19101ec7ba670d261f1c957833faec3caa42cb5b0d3e3f8d085",
+    "implementation": "65cbd0ee911dd0a63ecc038f89dd4b0af1836e82849e7b9d0090feb1ac8db887",
     "description": "1982b760c772e9ef24c96fb1a3c05d0604f0830837fcdd56a0a8a3518f8a0d69"
   },
   "initiative-total": {
-    "implementation": "a337e723cdf5d656031dfe1740e8054739dff535d633c7ff186988d19121bb4b",
+    "implementation": "95deaf0834d57dc80bb6e39a46ac9a598939031d31427e67ffc09c8ad59a1e08",
     "description": "7b303171b6f1c7eb2384ce031960baa1951c17042ae3173dc09fe7d90648f9f7"
   },
   "attribute-totals": {
@@ -80,11 +80,11 @@
     "description": "6d891026de89454c87c98b7213646930d60fd05fc2312aac5f3b4f8c94b568cf"
   },
   "department-industries": {
-    "implementation": "6c5c2144390e6810dfffff9f282f85692cee336fb7dff1acafa21c97056d5a16",
+    "implementation": "3e355d6c80edc7178de9472923ded16230182bc4a6a1e58da9757b286c1b47dd",
     "description": "b182d61be8b26a65534cb12f1d2716571273939ae2ccf37a909468360a01ba47"
   },
   "expansion-categories": {
-    "implementation": "a18f9412288983a855aa173fd4d95994bef1b5f8d66ca84e0c8973cd138c4674",
+    "implementation": "e17e04e8eb9a25ebd706edc97a1068449e2126bce7fdaa62612819e73cc793f2",
     "description": "e2be83d3150dcaddfafba95592603e8af8fbb4c296f69965636657abc98cecdd"
   },
   "cost-breakdown": {
@@ -100,7 +100,7 @@
     "description": "b3765db1402586b38f4de288d45a62757097a2feff4022a34f7c350780fc88d2"
   },
   "duplicate-initiative": {
-    "implementation": "310377386ad3861ef2456c70eaed66d5a207dac76e5839ca9a73e4a81d245231",
+    "implementation": "d336d54097842d083bc8bde0070f45e7817303bcc09e6905d5e3a7b0c1dac2b9",
     "description": "d8b221732eacdaa56005287c6ea74d17a0578253579cb94d72f3ed1ac99e437a"
   },
   "initiative-search": {
@@ -112,7 +112,7 @@
     "description": "ea1e0ef41f16fd1d6131433b97fc6a3a125bcf1c0caa74d28bab2870bc08833c"
   },
   "budget-hints": {
-    "implementation": "804436335729f7a7968e1aecc1d36b1f09f18d5c969e40e04a7cf9f19bb642ee",
+    "implementation": "94d1baf39a2e4bc8af2c5a2a20a600d76d53dd97f9fef683ae35e909a3caa19f",
     "description": "c999c0bc049a1f04903075a668fc1a474570d551cf450dac039ffb05915d62cd"
   },
   "selection-total": {
@@ -124,11 +124,11 @@
     "description": "1639dcf3e34e998fd71504fdd548a04cdfd231f0900d891c2349207adbb12a5c"
   },
   "color-theme": {
-    "implementation": "930f7e6415c957a7742ecaaab5dc4bf2245664e3ecac66c1b7e07f1b311d2e45",
+    "implementation": "6c2417a45c6a002babee252d2409377bc059228436f7f2f32b7439398ecff26b",
     "description": "918ed1195631f126292f899a88ecd8c633e6413dbbb73a16b664f18955b5d45d"
   },
   "header-view": {
-    "implementation": "dc625963419e92c6b19ba313f1db32903de0d0c9d582d74251e301a58006d32f",
+    "implementation": "60fe8e47da6dff9584ad98071220105b604f4a663514b057d4a68654545bbdc4",
     "description": "ffbcd18a4a4b978f6e6a4492689ea6878e920d7651cb54ec3a6a0af2e6c75ee6"
   },
   "dashboard": {

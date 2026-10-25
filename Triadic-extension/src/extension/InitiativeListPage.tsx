@@ -43,8 +43,8 @@ type InitiativeListPageProps = {
 export function InitiativeListPage({ returnTo, selection, selectedKind, initiatives, accounts, expansions, periodTypes, fiscalYear, onAddInitiative, onOpenInitiative, navigationBlocked }: InitiativeListPageProps) {
   const readOnly = useHistoryReadOnly();
   const [returnTarget] = useState(() => returnTo?.current ?? null);
-  const [sort, setSort] = useWindowViewState("initiative-list:sort", returnTarget?.sort ?? null);
-  const [filters, setFilters] = useWindowViewState("initiative-list:filters", returnTarget?.filters ?? {});
+  const [sort, setSort] = useWindowViewState("initiative-list:sort", returnTarget?.sort ?? null, true);
+  const [filters, setFilters] = useWindowViewState("initiative-list:filters", returnTarget?.filters ?? {}, true);
   const [focusedId, setFocusedId] = useState<number | null>(() => initiatives.find(item => item.id === returnTarget?.id && item.identity === returnTarget.identity)?.id ?? null);
   const container = useRef<HTMLDivElement>(null);
   const addButton = useRef<HTMLButtonElement>(null);
