@@ -57,3 +57,4 @@ export { createExpansionTableView, selectExpansionView } from "../../Triadic-ext
 export { windowCommandBase, reconcileWindowCommand } from "../../Triadic-extension/src/core/domain/windowCommand";
 
 export * from "../../Triadic-extension/src/core/domain/initiativeDraft";
+export * from "../../Triadic-extension/src/core/domain/windowCommand";

@@ -1,5 +1,5 @@
 import type { PlanCommand } from "./planCommands";
-import type { PlanContents } from "./plan";
+import type { PlanContents, InitiativeEntryDraft } from "./plan";
 import { initiativeDraft } from "./initiativeDraft";
 import { reconcileSavedDraft } from "../reconcileSavedDraft";
 import { createPreviousInput } from "./previousAmounts";
@@ -12,13 +12,38 @@ import { reconcileInitiativeDraftReferences } from "./initiativeDraftReferences"
 const collections = { account: "accounts", aggregation: "aggregations", expansion: "expansions", "expansion-category": "expansionCategories", department: "departments", industry: "industries", period: "periodTypes" } as const;
 export type WindowCommandBase = Partial<Pick<PlanContents, typeof collections[keyof typeof collections] | "initiatives" | "previousAmounts">>;
 
+/** Only references selected by this edit need their original master baseline. */
+function selectedUpdateReferences(draft: InitiativeEntryDraft, original: InitiativeEntryDraft): InitiativeEntryDraft {
+  const classificationChanged = draft.departmentId !== original.departmentId || draft.industryId !== original.industryId;
+  const expansionChanged = draft.expansionId !== original.expansionId || draft.expansionCategoryId !== original.expansionCategoryId;
+  const originalAccounts = new Map(original.rows.map(row => [row.id, row.accountId]));
+  return { ...draft,
+    departmentId: classificationChanged ? draft.departmentId ?? null : null,
+    industryId: classificationChanged ? draft.industryId ?? null : null,
+    expansionId: expansionChanged ? draft.expansionId : null,
+    expansionCategoryId: expansionChanged ? draft.expansionCategoryId ?? null : null,
+    periodTypeId: draft.periodTypeId !== original.periodTypeId ? draft.periodTypeId ?? null : null,
+    rows: draft.rows.filter(row => originalAccounts.get(row.id) !== row.accountId),
+  };
+}
+
 /** Capture the same reconciliation baseline without copying unrelated plans. */
 export function windowCommandBase(command: PlanCommand, contents: PlanContents): WindowCommandBase {
-  if (command.type === "initiative.register" || command.type === "initiative.update") return {
-    ...(command.type === "initiative.update" ? { initiatives: contents.initiatives.filter(item => item.id === command.id) } : {}),
+  if (command.type === "initiative.register") return {
     accounts: contents.accounts, expansions: contents.expansions, expansionCategories: contents.expansionCategories,
     periodTypes: contents.periodTypes, departments: contents.departments, industries: contents.industries,
   };
+  if (command.type === "initiative.update") {
+    const before = contents.initiatives.find(item => item.id === command.id);
+    if (!before) return { initiatives: [] };
+    const selected = selectedUpdateReferences(command.draft, initiativeDraft(before));
+    const byId = <T extends { id: number }>(rows: T[], id: number | null | undefined) => id == null ? [] : rows.filter(item => item.id === id);
+    const accounts = new Set(selected.rows.flatMap(row => row.accountId == null ? [] : [row.accountId]));
+    return { initiatives: [before], accounts: accounts.size ? contents.accounts.filter(item => accounts.has(item.id)) : [],
+      departments: byId(contents.departments, selected.departmentId), industries: byId(contents.industries, selected.industryId),
+      expansions: byId(contents.expansions, selected.expansionId), expansionCategories: byId(contents.expansionCategories, selected.expansionCategoryId),
+      periodTypes: byId(contents.periodTypes, selected.periodTypeId) };
+  }
   if (command.type === "account" || command.type === "aggregation") return { accounts: contents.accounts, aggregations: contents.aggregations };
   if (command.type === "settings" && command.change.type === "previous") {
     const { industryId, departmentId, previousKind } = command.change.input;
@@ -89,18 +114,8 @@ export function reconcileWindowCommand(command: PlanCommand, base: WindowCommand
     const saved = current.initiatives.find(item => item.id === command.id);
     if (!before || !saved || !before.identity || before.identity !== saved.identity) throw new Error("対象の施策が変更されています。入力は保持しています。");
     const original = initiativeDraft(before), draft = command.draft;
-    const classificationChanged = draft.departmentId !== original.departmentId || draft.industryId !== original.industryId;
-    const expansionChanged = draft.expansionId !== original.expansionId || draft.expansionCategoryId !== original.expansionCategoryId;
-    const originalAccounts = new Map(original.rows.map(row => [row.id, row.accountId]));
-    // Check newly selected references only; unrelated edits must still merge with ordinary master updates.
-    const selected = { ...draft,
-      departmentId: classificationChanged ? draft.departmentId ?? null : null,
-      industryId: classificationChanged ? draft.industryId ?? null : null,
-      expansionId: expansionChanged ? draft.expansionId : null,
-      expansionCategoryId: expansionChanged ? draft.expansionCategoryId ?? null : null,
-      periodTypeId: draft.periodTypeId !== original.periodTypeId ? draft.periodTypeId ?? null : null,
-      rows: draft.rows.filter(row => originalAccounts.get(row.id) !== row.accountId),
-    };
+    // Unchanged references can merge with ordinary master updates.
+    const selected = selectedUpdateReferences(draft, original);
     const references = {
       accounts: base.accounts ?? [], expansions: base.expansions ?? [], expansionCategories: base.expansionCategories ?? [],
       periodTypes: base.periodTypes ?? [], departments: base.departments ?? [], industries: base.industries ?? [],

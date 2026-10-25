@@ -20,6 +20,14 @@ export async function verifyWindowRegisterReferences(api) {
         existing = a.getSnapshot().contents.initiatives[0];
       }
       const requested = update ? { ...api.initiativeDraft(existing), departmentId: draft.departmentId, industryId: draft.industryId } : draft;
+      if (update) {
+        const baseline = api.windowCommandBase({type:'initiative.update',id:existing.id,draft:requested},a.getSnapshot().contents);
+        assert.deepEqual(baseline.departments.map(item=>item.id),[department.id]);
+        assert.equal(baseline.accounts.length,0,'未変更の科目マスタを送らない');
+        assert.equal(baseline.expansions.length,0);
+        const unchanged = api.windowCommandBase({type:'initiative.update',id:existing.id,draft:api.initiativeDraft(existing)},a.getSnapshot().contents);
+        for(const key of ['accounts','expansions','expansionCategories','periodTypes','departments','industries']) assert.deepEqual(unchanged[key],[],'通常編集は対象施策だけを基準にする');
+      }
       let release;a.activation=new Promise(resolve=>{release=resolve;});
       const pending=a.dispatch(update ? {type:'initiative.update',id:existing.id,draft:requested} : {type:'initiative.register',draft:requested});
       if (replaced) {
