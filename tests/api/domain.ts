@@ -55,3 +55,5 @@ export { emptyTableView, selectTableRows, matchesTableFilter } from "../../Triad
 export { createExpansionTableView, selectExpansionView } from "../../Triadic-extension/src/core/tables/expansionTableView";
 
 export { windowCommandBase, reconcileWindowCommand } from "../../Triadic-extension/src/core/domain/windowCommand";
+
+export * from "../../Triadic-extension/src/core/domain/initiativeDraft";

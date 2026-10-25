@@ -32,11 +32,11 @@
     "description": "24afe48ca23046736d3e5f6d37b392e18794a40a3258f4e71e37590081f51a2d"
   },
   "open": {
-    "implementation": "258913203aa2691f80b02c53520fcb590fbaff62b6670b55841b5a048f265207",
+    "implementation": "f414d62ee5e5d046adf864cf49cb8f39e3f60c9b9cf9af7bdb78569879c99eea",
     "description": "656f7d269868cdfdfe08cbd9bbb323bc51bacb1882f9007fe43afeb864db02a2"
   },
   "save": {
-    "implementation": "288429350cd60e77e30c89f1d0f8c4423cdd8e85a05bf17da11d75e003882965",
+    "implementation": "3b58039fa33b51ae46f6ae321d6507d27ca220084d9cf4fb99ebb2f14b0094d2",
     "description": "55f87bf809ad90068277448caf685051f99a263d5086f25b4fc983356b656944"
   },
   "failure": {
@@ -44,15 +44,15 @@
     "description": "30f76cc53ead23d015876d0e510fdc3113a5a5856812d0856c6f8dcd08fd7037"
   },
   "history": {
-    "implementation": "97f0d0d908a3794522827071d2996c3778f5012c29730692439fa26f635b3462",
+    "implementation": "84724fd9f04bd63ec3dd161414fe735da64b7b70066ca83332b5ffb26b1d81a0",
     "description": "e7a214e485f0ae9f1df606222b17fd89bfab723b2cff2df28f8f9ec623d70673"
   },
   "undo": {
-    "implementation": "a3912ccf1033295379b7c1376cb85c6cede5b7053d9693d768bda567cc21ee5a",
+    "implementation": "70b110be5faf3d5290e433595666ccae45ba17ae61115ac861fcac766e082d7f",
     "description": "d81feeeafec5360dfa6f1c3665674fa92ad93581a5014b58fa45e0839b7c90a9"
   },
   "storage": {
-    "implementation": "c80fb176375e64411e94e65194ca97d4d163d1b1c2889f847d200a5bf1873266",
+    "implementation": "0b3d003b8317c03ddce871bb4593570d4e07ef66ad9ab0953d188ba304d964af",
     "description": "4e59880cb1a69c3114397699c4be086eed0dd16cfa3855bdf3f96f94dfe5129e"
   },
   "validation": {
@@ -92,7 +92,7 @@
     "description": "afdb972ec0d4b5dcd70536785bccd8c23d6ae4983864a7bb9bf486c0b83b306b"
   },
   "save-as": {
-    "implementation": "55c4e6ae687df02ffcd75b9a3f7f96d17eb88f845918a251a2aa6e6b88f5e638",
+    "implementation": "e03d180964aa77dab784f7b0cfbbce60fa323fbb3cf98829ae1712bfd3c04b7a",
     "description": "181d7bb8ee946569fa70dd7b71c6ab944fdf29fcc649f864acf41f0edf99fb8a"
   },
   "history-difference": {
@@ -124,7 +124,7 @@
     "description": "1639dcf3e34e998fd71504fdd548a04cdfd231f0900d891c2349207adbb12a5c"
   },
   "color-theme": {
-    "implementation": "0c264dadce25643e485e4b762394cf7a4213b8c68b3b5d0195cbc7910c2e2f2e",
+    "implementation": "db06f1d1a1735e7308a675f54ef93ffd01e3a0b77ea9754a914689207826187d",
     "description": "918ed1195631f126292f899a88ecd8c633e6413dbbb73a16b664f18955b5d45d"
   },
   "header-view": {

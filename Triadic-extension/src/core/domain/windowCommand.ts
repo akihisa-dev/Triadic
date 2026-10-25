@@ -14,12 +14,12 @@ export type WindowCommandBase = Partial<Pick<PlanContents, typeof collections[ke
 
 /** Capture the same reconciliation baseline without copying unrelated plans. */
 export function windowCommandBase(command: PlanCommand, contents: PlanContents): WindowCommandBase {
-  if (command.type === "initiative.register") return {
+  if (command.type === "initiative.register" || command.type === "initiative.update") return {
+    ...(command.type === "initiative.update" ? { initiatives: contents.initiatives.filter(item => item.id === command.id) } : {}),
     accounts: contents.accounts, expansions: contents.expansions, expansionCategories: contents.expansionCategories,
     periodTypes: contents.periodTypes, departments: contents.departments, industries: contents.industries,
   };
   if (command.type === "account" || command.type === "aggregation") return { accounts: contents.accounts, aggregations: contents.aggregations };
-  if (command.type === "initiative.update") return { initiatives: contents.initiatives.filter(item => item.id === command.id) };
   if (command.type === "settings" && command.change.type === "previous") {
     const { industryId, departmentId, previousKind } = command.change.input;
     return { industries: contents.industries.filter(item => item.id === industryId), departments: contents.departments.filter(item => item.id === departmentId),
@@ -88,7 +88,27 @@ export function reconcileWindowCommand(command: PlanCommand, base: WindowCommand
     const before = base.initiatives?.find(item => item.id === command.id);
     const saved = current.initiatives.find(item => item.id === command.id);
     if (!before || !saved || !before.identity || before.identity !== saved.identity) throw new Error("対象の施策が変更されています。入力は保持しています。");
-    return { ...command, draft: reconcileSavedDraft(initiativeDraft(before), command.draft, initiativeDraft(saved)) };
+    const original = initiativeDraft(before), draft = command.draft;
+    const classificationChanged = draft.departmentId !== original.departmentId || draft.industryId !== original.industryId;
+    const expansionChanged = draft.expansionId !== original.expansionId || draft.expansionCategoryId !== original.expansionCategoryId;
+    const originalAccounts = new Map(original.rows.map(row => [row.id, row.accountId]));
+    // Check newly selected references only; unrelated edits must still merge with ordinary master updates.
+    const selected = { ...draft,
+      departmentId: classificationChanged ? draft.departmentId ?? null : null,
+      industryId: classificationChanged ? draft.industryId ?? null : null,
+      expansionId: expansionChanged ? draft.expansionId : null,
+      expansionCategoryId: expansionChanged ? draft.expansionCategoryId ?? null : null,
+      periodTypeId: draft.periodTypeId !== original.periodTypeId ? draft.periodTypeId ?? null : null,
+      rows: draft.rows.filter(row => originalAccounts.get(row.id) !== row.accountId),
+    };
+    const references = {
+      accounts: base.accounts ?? [], expansions: base.expansions ?? [], expansionCategories: base.expansionCategories ?? [],
+      periodTypes: base.periodTypes ?? [], departments: base.departments ?? [], industries: base.industries ?? [],
+    };
+    if (reconcileInitiativeDraftReferences(selected, references, current) !== selected) {
+      throw new Error("施策の選択先が別のデータに変更されています。入力を保持しました。分類と科目を選び直してください。");
+    }
+    return { ...command, draft: reconcileSavedDraft(original, draft, initiativeDraft(saved)) };
   }
   if (command.type === "settings" && command.change.type === "previous") {
     const input = command.change.input;
