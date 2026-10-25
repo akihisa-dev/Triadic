@@ -1,13 +1,13 @@
-import { createTriadicDatabase, openTriadicDatabase, exportTriadicDatabase } from "../../Triadichrome-extension/src/core/storage/triadicDatabase";
-import { editDatabase } from "../../Triadichrome-extension/src/core/storage/transaction";
-import { applyIndustryChange } from "../../Triadichrome-extension/src/core/storage/industryMaster";
-import { applyDepartmentChange } from "../../Triadichrome-extension/src/core/storage/departmentMaster";
-import { applyPreviousAmounts } from "../../Triadichrome-extension/src/core/storage/settings";
-import { applyInitiativeRegistration, updateInitiative } from "../../Triadichrome-extension/src/core/storage/initiatives";
-import { readPlanContents } from "../../Triadichrome-extension/src/core/storage/readPlan";
-import { trackHistoryChange, recordDataHistory } from "../../Triadichrome-extension/src/core/storage/dataHistory";
-import { initiativeMonths } from "../../Triadichrome-extension/src/core/domain/calendar";
-import { yenToAmount } from "../../Triadichrome-extension/src/core/domain/amounts";
+import { createTriadicDatabase, openTriadicDatabase, exportTriadicDatabase } from "../../Triadic-extension/src/core/storage/triadicDatabase";
+import { editDatabase } from "../../Triadic-extension/src/core/storage/transaction";
+import { applyIndustryChange } from "../../Triadic-extension/src/core/storage/industryMaster";
+import { applyDepartmentChange } from "../../Triadic-extension/src/core/storage/departmentMaster";
+import { applyPreviousAmounts } from "../../Triadic-extension/src/core/storage/settings";
+import { applyInitiativeRegistration, updateInitiative } from "../../Triadic-extension/src/core/storage/initiatives";
+import { readPlanContents } from "../../Triadic-extension/src/core/storage/readPlan";
+import { trackHistoryChange, recordDataHistory } from "../../Triadic-extension/src/core/storage/dataHistory";
+import { initiativeMonths } from "../../Triadic-extension/src/core/domain/calendar";
+import { yenToAmount } from "../../Triadic-extension/src/core/domain/amounts";
 import { businessScenarios, companyRegions, companyIndustries, previousAnnualSales, workloadWeights, months } from "./sample-portfolio";
 
 // The delivered sample has a fixed year; ordinary new files still use the app calendar.

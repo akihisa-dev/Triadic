@@ -1,9 +1,9 @@
 import { createRoot } from "react-dom/client";
-import { DataHistoryPage } from "../../Triadichrome-extension/src/extension/DataHistoryPage";
-import { createTriadicDatabase, openTriadicDatabase, exportTriadicDatabase } from "../../Triadichrome-extension/src/core/storage/triadicDatabase";
-import { createBusinessSnapshot } from "../../Triadichrome-extension/src/core/storage/dataHistory";
-import { PlanSession } from "../../Triadichrome-extension/src/extension/PlanSession";
-import "../../Triadichrome-extension/src/extension/ExtensionPage.css";
+import { DataHistoryPage } from "../../Triadic-extension/src/extension/DataHistoryPage";
+import { createTriadicDatabase, openTriadicDatabase, exportTriadicDatabase } from "../../Triadic-extension/src/core/storage/triadicDatabase";
+import { createBusinessSnapshot } from "../../Triadic-extension/src/core/storage/dataHistory";
+import { PlanSession } from "../../Triadic-extension/src/extension/PlanSession";
+import "../../Triadic-extension/src/extension/ExtensionPage.css";
 if (!import.meta.env.DEV) throw new Error("確認専用画面です。");
 const bytes = await createTriadicDatabase(2026);
 const db = await openTriadicDatabase(bytes);

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { SpreadsheetIOPage } from '../../Triadichrome-extension/src/extension/SpreadsheetIOPage';
-import { readPlanContents } from '../../Triadichrome-extension/src/core/storage/readPlan';
+import { SpreadsheetIOPage } from '../../Triadic-extension/src/extension/SpreadsheetIOPage';
+import { readPlanContents } from '../../Triadic-extension/src/core/storage/readPlan';
 import { createSamplePlan } from './sample-plan';
-import '../../Triadichrome-extension/src/extension/ExtensionPage.css';
+import '../../Triadic-extension/src/extension/ExtensionPage.css';
 if (!import.meta.env.DEV) throw new Error('開発専用です。');
 const contents = await readPlanContents(await createSamplePlan());
 let showResult: (text: string) => void = () => {};

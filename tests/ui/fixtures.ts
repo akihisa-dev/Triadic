@@ -23,10 +23,10 @@ export const test = base.extend<{ app: FrameLocator }>({
       if (["error", "warning"].includes(message.type())) errors.push(message.text());
     });
     await page.goto("/tests/ui/preview.html?data=empty");
-    await expect(page).toHaveTitle("Triadichrome 画面テスト");
+    await expect(page).toHaveTitle("Triadic 画面テスト");
     await expect(page.getByRole("status")).toHaveText("操作できます");
     const app = page.frameLocator("#app-preview");
-    await expect(app.getByRole("heading", { name: "Triadichrome" })).toBeVisible();
+    await expect(app.getByRole("heading", { name: "Triadic" })).toBeVisible();
     await settleMotion(app.locator("body"));
     await use(app);
     await expect(app.locator("vite-error-overlay")).toHaveCount(0);

@@ -41,7 +41,7 @@ test("新規計画に承認済みマスタを用意し、千円入力・比較�
   await app.getByRole("banner").getByRole("button", { name: "サイドバーを閉じる", exact: true }).click();
   await settleMotion(app.locator("body"));
   expect(await app.locator(".home-content").evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
-  await page.screenshot({ path: join(tmpdir(), `triadichrome-default-cost-${testInfo.project.name}.png`) });
+  await page.screenshot({ path: join(tmpdir(), `triadic-default-cost-${testInfo.project.name}.png`) });
   await app.getByRole("button", { name: "サイドバーを開く", exact: true }).click();
   await app.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();

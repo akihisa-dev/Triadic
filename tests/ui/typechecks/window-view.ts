@@ -1,4 +1,4 @@
-import { useWindowViewState } from "../../../Triadichrome-extension/src/extension/windowView";
+import { useWindowViewState } from "../../../Triadic-extension/src/extension/windowView";
 
 // Compiled by the normal typecheck; never mounted as a component.
 export function WindowViewTypeChecks() {

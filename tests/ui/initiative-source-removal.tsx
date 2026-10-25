@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { HomePage } from "../../Triadichrome-extension/src/extension/HomePage";
-import type { HomePageProps } from "../../Triadichrome-extension/src/extension/workspace/types";
-import { readPlanContents } from "../../Triadichrome-extension/src/core/storage/readPlan";
+import { HomePage } from "../../Triadic-extension/src/extension/HomePage";
+import type { HomePageProps } from "../../Triadic-extension/src/extension/workspace/types";
+import { readPlanContents } from "../../Triadic-extension/src/core/storage/readPlan";
 import { createSamplePlan } from "./sample-plan";
-import "../../Triadichrome-extension/src/extension/ExtensionPage.css";
+import "../../Triadic-extension/src/extension/ExtensionPage.css";
 
 if (!import.meta.env.DEV) throw new Error("確認専用画面です。");
 const initial = await readPlanContents(await createSamplePlan());

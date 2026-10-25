@@ -1,4 +1,4 @@
-import { WindowSessionHub } from "../../Triadichrome-extension/src/extension/WindowSessionHub";
+import { WindowSessionHub } from "../../Triadic-extension/src/extension/WindowSessionHub";
 
 /** Only transport is replaced: existing memory handles contain methods and cannot be structured-cloned. */
 export function installInPageSession() {
@@ -14,6 +14,6 @@ export function installInPageSession() {
       }, start() {}, close() { connection.disconnect(); },
     } as unknown as MessagePort };
   };
-  Reflect.set(window, "__triadichromePreviewTransport", transport);
+  Reflect.set(window, "__triadicPreviewTransport", transport);
   return transport;
 }

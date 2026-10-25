@@ -4,8 +4,8 @@ import { createRequire } from "node:module";
 import assert from "node:assert/strict";
 
 // ロゴ制作専用のsharpは通常の拡張機能ビルドから分離して解決します。
-const require = createRequire(process.env.TRIADICHROME_ART_MODULES
-  ? path.join(path.resolve(process.env.TRIADICHROME_ART_MODULES), "package.json")
+const require = createRequire(process.env.TRIADIC_ART_MODULES
+  ? path.join(path.resolve(process.env.TRIADIC_ART_MODULES), "package.json")
   : import.meta.url);
 const sharp = require("sharp");
 const root = path.resolve(import.meta.dirname, "..");

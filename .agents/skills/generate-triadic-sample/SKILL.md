@@ -1,6 +1,6 @@
 ---
 name: generate-triadic-sample
-description: Triadichromeの.triadicサンプル・確認用データの作成や更新で使用する。作成時点の実装済み全機能を調べ、正常系・境界値・失敗系を試せるデータと確認手順を整え、検証済みの.triadicファイルを出力する。
+description: Triadicの.triadicサンプル・確認用データの作成や更新で使用する。作成時点の実装済み全機能を調べ、正常系・境界値・失敗系を試せるデータと確認手順を整え、検証済みの.triadicファイルを出力する。
 ---
 
 # 全機能確認用の.triadicサンプルを作る
@@ -18,7 +18,7 @@ description: Triadichromeの.triadicサンプル・確認用データの作成�
 
 ## 作成時点の全機能を確定する
 
-[REQUIREMENTS.md](../../../REQUIREMENTS.md)の意図と[README](../../../README.md)の実装範囲を読み、現在の[編集用ソース](../../../Triadichrome-extension/src)、保存形式、[テスト](../../../tests)、[package.json](../../../package.json)で裏付ける。コミット前の変更も対象の実装に含まれるため、HEADだけで判断しない。
+[REQUIREMENTS.md](../../../REQUIREMENTS.md)の意図と[README](../../../README.md)の実装範囲を読み、現在の[編集用ソース](../../../Triadic-extension/src)、保存形式、[テスト](../../../tests)、[package.json](../../../package.json)で裏付ける。コミット前の変更も対象の実装に含まれるため、HEADだけで判断しない。
 
 毎回、次の対応表を作ってからデータを設計する。作業中は応答内で整理し、引き渡し時には利用者が使える形で示す。既存の件数やこのスキルの例を「全機能」の固定リストにしない。
 

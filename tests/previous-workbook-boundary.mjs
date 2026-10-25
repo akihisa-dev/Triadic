@@ -104,7 +104,7 @@ export async function verifyPreviousWorkbookBoundary(api, plan) {
 }
 
 export async function verifyPreviousWorkbookProcessing() {
-  await withNodeBundle('Triadichrome-extension/src/extension/previousWorkbookProcessing.ts', async ({ processPreviousWorkbook }) => {
+  await withNodeBundle('Triadic-extension/src/extension/previousWorkbookProcessing.ts', async ({ processPreviousWorkbook }) => {
     const original = { Worker: globalThis.Worker, setTimeout: globalThis.setTimeout, clearTimeout: globalThis.clearTimeout };
     let active, timeout, terminated = 0;
     class FakeWorker { constructor() { active = this; } postMessage() {} terminate() { terminated++; } }

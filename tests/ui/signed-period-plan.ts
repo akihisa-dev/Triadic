@@ -1,5 +1,5 @@
 import { createSamplePlan } from "./sample-plan";
-import { exportTriadicDatabase, openTriadicDatabase } from "../../Triadichrome-extension/src/core/storage/triadicDatabase";
+import { exportTriadicDatabase, openTriadicDatabase } from "../../Triadic-extension/src/core/storage/triadicDatabase";
 
 /** Valid SQLite fixtures distinguish numeric IDs from an unselected period. */
 export async function createSignedPeriodPlan(large = false): Promise<Uint8Array> {

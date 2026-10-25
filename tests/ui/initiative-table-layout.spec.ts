@@ -44,7 +44,7 @@ test("狭い画面でも長い科目名をコードなしで全文表示し、�
   await select.fill("減価");
   await expect(app.getByRole("listbox").getByRole("option")).toHaveText(["固定資産減価償却費"]);
   await settleMotion(app.locator("body"));
-  await page.screenshot({ path: `/tmp/triadichrome-account-field-${page.viewportSize()!.width}.png` });
+  await page.screenshot({ path: `/tmp/triadic-account-field-${page.viewportSize()!.width}.png` });
   await selectAccount(select, { label: "固定資産減価償却費" });
   await app.getByRole("button", { name: "＋ 勘定科目を追加", exact: true }).click();
   const shortName = table.getByRole("combobox", { name: "2行目の勘定科目", exact: true });

@@ -10,7 +10,7 @@ for (const year of [2026, 2027]) for (const duringSave of [false, true]) test(`$
     Object.defineProperty(target,'showOpenFilePicker',{value:async()=>{
       const [handle]=await picker();
       const get=handle!.getFile.bind(handle),create=handle!.createWritable.bind(handle);
-      const path='/Triadichrome-extension/src/core/storage/';
+      const path='/Triadic-extension/src/core/storage/';
       const {readPlanContents}=await import(path+'readPlan.ts');
       const {updateInitiative}=await import(path+'initiatives.ts');
       const base=new Uint8Array(await (await get()).arrayBuffer());
@@ -47,7 +47,7 @@ for (const year of [2026, 2027]) for (const duringSave of [false, true]) test(`$
   await expect(back).toBeEnabled();
   await back.click();await app.getByRole('button',{name:'既存商品の販売拡大',exact:true}).click();
   await expect(april).toHaveValue('121');await expect(may).toHaveValue('777');await expect(june).toHaveValue('131');
-  await page.screenshot({path:`/tmp/triadichrome-rebased-draft-${year}-${testInfo.project.name}-${duringSave}.png`});
+  await page.screenshot({path:`/tmp/triadic-rebased-draft-${year}-${testInfo.project.name}-${duringSave}.png`});
   await app.getByRole('button',{name:'操作を取り消す',exact:true}).click();
   // May already has the external value before undo; wait for the operation itself.
   await expect(app.getByText('操作を取り消しました。',{exact:true})).toBeVisible();

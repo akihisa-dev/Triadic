@@ -65,6 +65,6 @@ test('出力中も応答し、中止・上限拒否・再出力を保持して�
   const baseline = await readExport(1), previousBook = new ExcelJS.Workbook();
   await previousBook.xlsx.load(Buffer.from(baseline.bytes) as unknown as ExcelJS.Buffer);
   expect(previousBook.worksheets.filter(sheet => sheet.state === 'visible')).toHaveLength(17);
-  expect(previousBook.getWorksheet('_triadichrome')!.getCell('C1').value).toBe(1);
+  expect(previousBook.getWorksheet('_triadic')!.getCell('C1').value).toBe(1);
   expect(await hash()).toBe(original);
 });

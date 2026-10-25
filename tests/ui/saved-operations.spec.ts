@@ -53,7 +53,7 @@ test("保存済み施策の編集・登録を取り消してやり直し、新�
   await redo.click();
   await expect(app.getByRole("button", { name: "取消確認施策", exact: true })).toBeVisible();
   await settleMotion(app.locator("body"));
-  await page.screenshot({ path: `/tmp/triadichrome-saved-operations-${testInfo.project.name}.png` });
+  await page.screenshot({ path: `/tmp/triadic-saved-operations-${testInfo.project.name}.png` });
   await app.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();

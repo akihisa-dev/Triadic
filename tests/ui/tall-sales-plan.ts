@@ -1,7 +1,7 @@
-import { createTriadicDatabase } from "../../Triadichrome-extension/src/core/storage/triadicDatabase";
-import { readPlanContents } from "../../Triadichrome-extension/src/core/storage/readPlan";
-import { changeAggregationMaster } from "../../Triadichrome-extension/src/core/storage/aggregationMaster";
-import { orderedMasterRows } from "../../Triadichrome-extension/src/core/domain/masterRows";
+import { createTriadicDatabase } from "../../Triadic-extension/src/core/storage/triadicDatabase";
+import { readPlanContents } from "../../Triadic-extension/src/core/storage/readPlan";
+import { changeAggregationMaster } from "../../Triadic-extension/src/core/storage/aggregationMaster";
+import { orderedMasterRows } from "../../Triadic-extension/src/core/domain/masterRows";
 export async function createTallSalesPlan() {
   const bytes = await createTriadicDatabase(2026);
   const plan = await readPlanContents(bytes);

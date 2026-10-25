@@ -1,4 +1,4 @@
-# Triadichrome 開発エージェント指示
+# Triadic 開発エージェント指示
 
 ## 正本と製品方針
 
@@ -16,10 +16,10 @@
 
 - 作業はmainで行い、新しいブランチを作成しません。別作業との重複回避を理由にブランチへ分離することも禁止します。
 - パッケージ管理と実行手順はnpmを使用します。依存パッケージは完全な版で指定し、`package.json`と`package-lock.json`を揃えます。依存の更新を意図しない環境再現には`npm ci`を使います。追加・更新時には導入理由とライセンスを確認します。
-- `Triadichrome-extension/src/`は編集用のTypeScript/React正本です。Chrome APIに依存しないデータ処理は`Triadichrome-extension/src/core/`、`chrome.*`や拡張環境に依存する入口・adapterは`Triadichrome-extension/src/extension/`へ置きます。
-- Manifest V3を使います。`Triadichrome-extension/src/extension/`はservice worker、独立拡張ページ、Chrome adapterを所有します。保存形式の処理と、File System Access APIによる実ファイルの読み書きを分離します。
-- `Triadichrome-extension/manifest.template.json`はManifestの編集用正本です。同ディレクトリ直下の`manifest.json`・独立ページ・assetsなどはbuildが同期する配布物であり、直接編集しません。ソース変更で配布物が変わる場合は正式なbuildで更新し、同じコミットに含めます。
-- Chrome読み込み用の生成先は`dist/extension/`、配布ZIPは`dist/Triadichrome-<version>.zip`です。ZIPには配布物だけを含め、ソース・確認用データ・一時ファイルを含めません。`dist/extension/`はGit管理し、成果物が変わる変更と同じコミットに含めます。配布ZIPはローカルで生成・保持し、Git管理・commit・pushから除外します。`dist/`内の一時作業ファイルも除外します。
+- `Triadic-extension/src/`は編集用のTypeScript/React正本です。Chrome APIに依存しないデータ処理は`Triadic-extension/src/core/`、`chrome.*`や拡張環境に依存する入口・adapterは`Triadic-extension/src/extension/`へ置きます。
+- Manifest V3を使います。`Triadic-extension/src/extension/`はservice worker、独立拡張ページ、Chrome adapterを所有します。保存形式の処理と、File System Access APIによる実ファイルの読み書きを分離します。
+- `Triadic-extension/manifest.template.json`はManifestの編集用正本です。同ディレクトリ直下の`manifest.json`・独立ページ・assetsなどはbuildが同期する配布物であり、直接編集しません。ソース変更で配布物が変わる場合は正式なbuildで更新し、同じコミットに含めます。
+- Chrome読み込み用の生成先は`dist/extension/`、配布ZIPは`dist/Triadic-<version>.zip`です。ZIPには配布物だけを含め、ソース・確認用データ・一時ファイルを含めません。`dist/extension/`はGit管理し、成果物が変わる変更と同じコミットに含めます。配布ZIPはローカルで生成・保持し、Git管理・commit・pushから除外します。`dist/`内の一時作業ファイルも除外します。
 - 画面不要と指定された作業では、Reactの起動確認用入口を除き、UI・デザイン・業務機能・サンプルデータを追加しません。
 - 既存のAGPLv3 LICENSEを維持します。
 

@@ -7,7 +7,7 @@ CREATE TABLE triadic_metadata (
 );
 
 INSERT INTO triadic_metadata (key, value) VALUES
-  ('format_id', 'triadichrome'),
+  ('format_id', 'triadic'),
   ('format_version', '1'),
   ('container', 'sqlite');
 

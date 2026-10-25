@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { CostTablePage, type CostTableView } from '../../Triadichrome-extension/src/extension/CostTablePage';
-import { readPlanContents } from '../../Triadichrome-extension/src/core/storage/readPlan';
+import { CostTablePage, type CostTableView } from '../../Triadic-extension/src/extension/CostTablePage';
+import { readPlanContents } from '../../Triadic-extension/src/core/storage/readPlan';
 import { createSamplePlan } from './sample-plan';
-import '../../Triadichrome-extension/src/extension/ExtensionPage.css';
+import '../../Triadic-extension/src/extension/ExtensionPage.css';
 if (!import.meta.env.DEV) throw new Error('開発専用です。');
 const seed = await readPlanContents(await createSamplePlan());
 const rank = Math.max(...seed.accounts.map(item => item.masterOrder ?? 0), ...seed.aggregations.map(item => item.masterOrder ?? 0));

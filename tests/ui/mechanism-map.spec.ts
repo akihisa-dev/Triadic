@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures";
-import { mechanisms } from "../../Triadichrome-extension/src/extension/mechanismModel";
+import { mechanisms } from "../../Triadic-extension/src/extension/mechanismModel";
 
 test("仕組みの全対象を閲覧し、条件・保存範囲を確認して業務の関連図へ戻る", async ({ app, page }) => {
   await page.goto("/tests/ui/preview.html?data=full");

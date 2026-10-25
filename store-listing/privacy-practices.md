@@ -44,10 +44,10 @@ https://gist.github.com/akihisa-dev/a97db44fddd4ff38f8c0f21bde35be18
 
 ## 根拠
 
-- `Triadichrome-extension/manifest.template.json`：追加権限なし、同梱service worker、同梱コード用の実行制限
-- `Triadichrome-extension/src/extension/theme.ts`：配色の選択をlocalStorageへ保持
-- `Triadichrome-extension/src/extension/WorkspaceChrome.tsx`：作業中の検索語をメモリへ保持
-- `Triadichrome-extension/src/extension/recentFile.ts`：直近のファイル参照をIndexedDBへ保持
-- `Triadichrome-extension/src/core/storage/`：計画・マスタ・履歴の保存処理
+- `Triadic-extension/manifest.template.json`：追加権限なし、同梱service worker、同梱コード用の実行制限
+- `Triadic-extension/src/extension/theme.ts`：配色の選択をlocalStorageへ保持
+- `Triadic-extension/src/extension/WorkspaceChrome.tsx`：作業中の検索語をメモリへ保持
+- `Triadic-extension/src/extension/recentFile.ts`：直近のファイル参照をIndexedDBへ保持
+- `Triadic-extension/src/core/storage/`：計画・マスタ・履歴の保存処理
 - [Chrome公式：プライバシー欄](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy)
 - [Chrome公式：端末内だけの処理も開示対象（質問3）](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq)

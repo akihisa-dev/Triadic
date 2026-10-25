@@ -6,8 +6,8 @@ import { projectRoot } from "./paths.mjs";
 const files = [
   "package.json",
   "package-lock.json",
-  "Triadichrome-extension/manifest.template.json",
-  "Triadichrome-extension/manifest.json",
+  "Triadic-extension/manifest.template.json",
+  "Triadic-extension/manifest.json",
   "dist/extension/manifest.json",
 ];
 const args = process.argv.slice(2);

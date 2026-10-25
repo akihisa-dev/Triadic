@@ -5,7 +5,7 @@ import { projectRoot } from '../scripts/paths.mjs';
 export async function verifyHistoryDependencies(api) {
  assert.equal(api.HISTORY_INTERVAL_MS,5*60*1000);
  assert.deepEqual(api.emptyDataHistory,{entries:[],dirtySince:null});
- const result=await build({entryPoints:{main:join(projectRoot,'Triadichrome-extension/src/extension/main.tsx'),worker:join(projectRoot,'Triadichrome-extension/src/extension/planProcessing.worker.ts')},
+ const result=await build({entryPoints:{main:join(projectRoot,'Triadic-extension/src/extension/main.tsx'),worker:join(projectRoot,'Triadic-extension/src/extension/planProcessing.worker.ts')},
   outdir:join(projectRoot,'dist','.history-dependencies'),bundle:true,splitting:true,format:'esm',platform:'browser',write:false,metafile:true,loader:{'.css':'empty'},define:{'process.env.NODE_ENV':'"production"'},
   plugins:[{name:'asset-references',setup(builder){builder.onResolve({filter:/\?(url|no-inline)$/},args=>({path:args.path,namespace:'asset-reference'}));builder.onLoad({filter:/.*/,namespace:'asset-reference'},()=>({contents:'export default "asset"',loader:'js'}));}}]});
  const outputs=result.metafile.outputs;

@@ -13,7 +13,7 @@ test("履歴と現在の年間・月別収支を一次と確定で比較し、�
   await expect(table.getByRole("row").filter({ hasText: "費用" }).getByRole("cell").last()).toHaveText("0");
   await expect(table.getByRole("row").filter({ hasText: "利益" }).getByRole("cell").last()).toHaveText("+20");
   await settleMotion(app.locator("body"));
-  await page.screenshot({ path: `/tmp/triadichrome-history-income-${info.project.name}.png` });
+  await page.screenshot({ path: `/tmp/triadic-history-income-${info.project.name}.png` });
   await dialog.getByRole("combobox", { name: "表示期間", exact: true }).selectOption("months");
   await expect(table.locator("tbody tr")).toHaveCount(36);
   await expect(table.getByRole("row").filter({ hasText: "4月" }).filter({ hasText: "売上" }).getByRole("cell").last()).toHaveText("+20");

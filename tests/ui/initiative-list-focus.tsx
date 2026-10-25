@@ -1,13 +1,13 @@
 import { useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { InitiativeListPage, type InitiativeListReturn } from "../../Triadichrome-extension/src/extension/InitiativeListPage";
-import { InitiativeDetailPage } from "../../Triadichrome-extension/src/extension/InitiativeDetailPage";
-import type { Initiative } from "../../Triadichrome-extension/src/core/domain/plan";
-import { HistoryReadOnlyContext } from "../../Triadichrome-extension/src/extension/HistoryReadOnly";
+import { InitiativeListPage, type InitiativeListReturn } from "../../Triadic-extension/src/extension/InitiativeListPage";
+import { InitiativeDetailPage } from "../../Triadic-extension/src/extension/InitiativeDetailPage";
+import type { Initiative } from "../../Triadic-extension/src/core/domain/plan";
+import { HistoryReadOnlyContext } from "../../Triadic-extension/src/extension/HistoryReadOnly";
 import { createSamplePlan } from "./sample-plan";
-import { readPlanContents } from "../../Triadichrome-extension/src/core/storage/readPlan";
-import type { KindId } from "../../Triadichrome-extension/src/core/domain/kinds";
-import "../../Triadichrome-extension/src/extension/ExtensionPage.css";
+import { readPlanContents } from "../../Triadic-extension/src/core/storage/readPlan";
+import type { KindId } from "../../Triadic-extension/src/core/domain/kinds";
+import "../../Triadic-extension/src/extension/ExtensionPage.css";
 
 const params = new URLSearchParams(location.search);
 const count = Number(params.get("count") ?? 201);

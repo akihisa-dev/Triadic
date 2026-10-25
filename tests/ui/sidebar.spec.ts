@@ -99,6 +99,6 @@ test.describe("タッチ操作", () => {
     await expect(trigger).toHaveAttribute("aria-expanded", "false");
     await sidebar.getByRole("button", { name: "閉じる", exact: true }).tap();
     await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).tap();
-    await expect(app.getByRole("heading", { name: "Triadichrome", exact: true })).toBeVisible();
+    await expect(app.getByRole("heading", { name: "Triadic", exact: true })).toBeVisible();
   });
 });

@@ -1,5 +1,5 @@
-import { WindowPlanSession } from "../../Triadichrome-extension/src/extension/WindowPlanSession";
-import { readPlanContents } from "../../Triadichrome-extension/src/core/storage/readPlan";
+import { WindowPlanSession } from "../../Triadic-extension/src/extension/WindowPlanSession";
+import { readPlanContents } from "../../Triadic-extension/src/core/storage/readPlan";
 import { createReplacedEmptyInitiativeFixture } from "./sample-plan";
 import { installInPageSession } from "./in-page-session";
 

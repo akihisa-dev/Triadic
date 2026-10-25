@@ -3,7 +3,7 @@ import type { Page } from "@playwright/test";
 // This synthetic plan belongs to classification tests, not the business sample.
 export async function installClassificationPlan() {
   const { createSamplePlan } = await import("./sample-plan");
-  const { changeDepartmentMaster } = await import("../../Triadichrome-extension/src/core/storage/departmentMaster");
+  const { changeDepartmentMaster } = await import("../../Triadic-extension/src/core/storage/departmentMaster");
   const { installMemoryFiles } = await import("./memory-files");
   let bytes = await createSamplePlan();
   bytes = await changeDepartmentMaster(bytes, { type: "add", departmentName: "単一業種確認部署", industryIds: [3] });

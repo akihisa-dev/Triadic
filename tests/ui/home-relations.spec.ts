@@ -28,7 +28,7 @@ test("操作説明を置かず、ホームのキャンバスを画面下端ま�
     await page.setViewportSize({ width: 1920, height: 1080 });
     await settleMotion(app.locator("body"));
   }
-  await page.screenshot({ path: `/private/tmp/triadichrome-home-canvas-${testInfo.project.name}.png` });
+  await page.screenshot({ path: `/private/tmp/triadic-home-canvas-${testInfo.project.name}.png` });
 });
 
 test("相関図の各入口と、選択後クリック・キーボードの画面移動", async ({ app }) => {
@@ -388,7 +388,7 @@ test("別項目は選択だけを切り替え、背景とEscapeで解除し、�
   await initiative.click();
   await expect(initiative).toHaveAttribute("aria-pressed", "true");
   await expect(account).toHaveAttribute("aria-pressed", "false");
-  await page.screenshot({ path: `/private/tmp/triadichrome-relations-selected-${testInfo.project.name}.png` });
+  await page.screenshot({ path: `/private/tmp/triadic-relations-selected-${testInfo.project.name}.png` });
   await initiative.press("Escape");
   await expect(initiative).toHaveAttribute("aria-pressed", "false");
   await account.click();

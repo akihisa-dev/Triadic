@@ -1,6 +1,6 @@
-import { initiativeMonths } from "../../Triadichrome-extension/src/core/domain/calendar";
-import { yenToAmount } from "../../Triadichrome-extension/src/core/domain/amounts";
-import type { InitiativeRow } from "../../Triadichrome-extension/src/core/domain/plan";
+import { initiativeMonths } from "../../Triadic-extension/src/core/domain/calendar";
+import { yenToAmount } from "../../Triadic-extension/src/core/domain/amounts";
+import type { InitiativeRow } from "../../Triadic-extension/src/core/domain/plan";
 
 // Design authority: docs/sample-budget-design.md. Money below is in thousands of yen.
 // Explicit business cases, never a Cartesian product of regions, industries and expansions.

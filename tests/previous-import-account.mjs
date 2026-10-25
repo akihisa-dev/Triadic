@@ -27,7 +27,7 @@ export async function verifyPreviousImportAccount(api) {
     const before = a.getSnapshot().contents, old = before.accounts.at(-1);
     const pair = { industryId: before.departments[0].industryIds[0], departmentId: before.departments[0].id };
     const book = api.createPreviousWorkbook(before, [pair]);
-    const sheet = book.worksheets.find(item => item.name !== '_triadichrome');
+    const sheet = book.worksheets.find(item => item.name !== '_triadic');
     sheet.getCell(before.accounts.findIndex(item => item.id === old.id) + 4, 3).value = 123.456;
     sheet.getCell(4, 4).value = 1; // A valid earlier patch must not partially save on rejection.
     const encoded = await api.serializeWorkbook(book);

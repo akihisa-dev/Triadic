@@ -75,7 +75,7 @@ for (const screen of ["総原価表", "展開表"]) {
     await expect(mark).toBeHidden();
     if (page.viewportSize()!.width > 600) {
       await rail.hover();
-      await page.screenshot({ path: `/tmp/triadichrome-${screen === "総原価表" ? "cost" : "expansion"}-period-scrollbar.png` });
+      await page.screenshot({ path: `/tmp/triadic-${screen === "総原価表" ? "cost" : "expansion"}-period-scrollbar.png` });
     }
   });
 

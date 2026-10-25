@@ -12,7 +12,7 @@ test("共通検索から備考で施策を探し、詳細へ移動して閉じ�
   await input.fill("代理店 販売");
   await expect(dialog.getByLabel("検索結果件数")).toHaveText("1件 / 全14件");
   await settleMotion(app.locator("body"));
-  await page.screenshot({ path: `/tmp/triadichrome-search-${info.project.name}.png` });
+  await page.screenshot({ path: `/tmp/triadic-search-${info.project.name}.png` });
   await input.press("Escape");
   await expect(dialog).toHaveCount(0);
   await expect(trigger).toBeFocused();

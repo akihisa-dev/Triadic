@@ -26,8 +26,8 @@ Chromeウェブストアの掲載欄へ使う文章と画像をこのフォル�
 ## ストア画面で入力する項目
 
 1. 言語は日本語、カテゴリは業務の効率化に対応する「仕事効率化 / Productivity」を選びます。最終的なカテゴリ名は提出画面の表示に合わせます。
-2. `listing-ja.txt`の詳細説明を貼り付け、表にある画像を登録します。スクリーンショットは番号順です。動画は用意していません。名前と短い説明は提出パッケージのManifestから取得されます。名前は`Triadichrome`、短い説明は「施策ごとの月別増減を積み上げて年間予算を作成。施策一覧・総原価表・展開表を同じデータから確認できます。」を設定済みです。
-3. ホームページには `https://github.com/akihisa-dev/Triadichrome`、サポートURLには `https://github.com/akihisa-dev/Triadichrome/issues`を使えます。
+2. `listing-ja.txt`の詳細説明を貼り付け、表にある画像を登録します。スクリーンショットは番号順です。動画は用意していません。名前と短い説明は提出パッケージのManifestから取得されます。名前は`Triadic`、短い説明は「施策ごとの月別増減を積み上げて年間予算を作成。施策一覧・総原価表・展開表を同じデータから確認できます。」を設定済みです。
+3. ホームページには `https://github.com/akihisa-dev/Triadic`、サポートURLには `https://github.com/akihisa-dev/Triadic/issues`を使えます。
 4. プライバシー欄には`privacy-practices.md`の内容を反映します。
 5. ポリシー欄には、公開済みのURL `https://gist.github.com/akihisa-dev/a97db44fddd4ff38f8c0f21bde35be18` を入力します。[privacy-policy-url.txt](privacy-policy-url.txt)からコピーできます。
 6. 審査用説明欄がある場合は`reviewer-instructions.txt`を貼り付けます。
@@ -49,8 +49,8 @@ Chromeウェブストアの掲載欄へ使う文章と画像をこのフォル�
 ロゴとアイコンだけを書き出す場合は`node scripts/render-branding-icons.mjs`を使います。制作専用のsharpが必要です。通常のビルドと掲載画像の生成には不要です。
 
 ```sh
-npm install --prefix /tmp/triadichrome-art-tools --no-save sharp@0.35.4
-TRIADICHROME_ART_MODULES=/tmp/triadichrome-art-tools/node_modules node scripts/render-branding-icons.mjs
+npm install --prefix /tmp/triadic-art-tools --no-save sharp@0.35.4
+TRIADIC_ART_MODULES=/tmp/triadic-art-tools/node_modules node scripts/render-branding-icons.mjs
 ```
 
 ロゴ変更後は、掲載画像を再生成し、`npm run build`で拡張機能へアイコンを同期してください。
@@ -64,7 +64,7 @@ node scripts/prepare-store-listing.mjs
 node scripts/prepare-store-listing.mjs --check
 ```
 
-撮影先は環境変数`TRIADICHROME_CAPTURE_URL`で変更できます。再生成はこのフォルダの画像と`assets.json`だけを更新し、文章は変更しません。検証では文章とポリシーURL専用ファイルの存在、掲載名・短い説明とManifestの一致、README・プライバシー入力原稿と専用ファイルのポリシーURL一致、画像の寸法・透過の有無、撮影時の版、照合値、ZIP・計画ファイルの混入がないことを確認します。
+撮影先は環境変数`TRIADIC_CAPTURE_URL`で変更できます。再生成はこのフォルダの画像と`assets.json`だけを更新し、文章は変更しません。検証では文章とポリシーURL専用ファイルの存在、掲載名・短い説明とManifestの一致、README・プライバシー入力原稿と専用ファイルのポリシーURL一致、画像の寸法・透過の有無、撮影時の版、照合値、ZIP・計画ファイルの混入がないことを確認します。
 
 ## 公式の提出要件
 

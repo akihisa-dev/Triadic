@@ -3,8 +3,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 const projectRoot = process.cwd();
-const buildOutputRoot = process.env.TRIADICHROME_BUILD_OUTPUT
-  ? path.resolve(process.env.TRIADICHROME_BUILD_OUTPUT)
+const buildOutputRoot = process.env.TRIADIC_BUILD_OUTPUT
+  ? path.resolve(process.env.TRIADIC_BUILD_OUTPUT)
   : path.resolve(projectRoot, "dist", "vite");
 
 export default defineConfig({
@@ -23,7 +23,7 @@ export default defineConfig({
         index: path.resolve(projectRoot, "index.html"),
         background: path.resolve(
           projectRoot,
-          "Triadichrome-extension",
+          "Triadic-extension",
           "src",
           "extension",
           "background.ts",

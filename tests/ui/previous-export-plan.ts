@@ -1,6 +1,6 @@
 import { createCurrentEmptyTestPlan } from "./empty-plan";
-import { openTriadicDatabase } from "../../Triadichrome-extension/src/core/storage/triadicDatabase";
-import { savePreviousAmounts } from "../../Triadichrome-extension/src/core/storage/settings";
+import { openTriadicDatabase } from "../../Triadic-extension/src/core/storage/triadicDatabase";
+import { savePreviousAmounts } from "../../Triadic-extension/src/core/storage/settings";
 
 /** Accepted 330-account plan: all 18 pairs exceed the import cell limit. */
 export async function createPreviousExportPlan(): Promise<Uint8Array> {

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { projectRoot } from "./paths.mjs";
 
 // These are the build-owned paths synchronized by build.mjs, in both distributions.
-const paths = ["dist/extension", ...["manifest.json", "index.html", "assets", "icons", "src/extension/background.js"].map(name => `Triadichrome-extension/${name}`)];
+const paths = ["dist/extension", ...["manifest.json", "index.html", "assets", "icons", "src/extension/background.js"].map(name => `Triadic-extension/${name}`)];
 const git = (...args) => execFileSync("git", args, { cwd: projectRoot, encoding: "utf8" });
 const args = process.argv.slice(2);
 if (args.length > 1 || (args.length && args[0] !== "--push")) throw new Error("引数は --push のみ指定できます。");

@@ -75,7 +75,7 @@ test("更新を自動保存して再読込でき、失敗・入力不備で入�
   await app.getByRole("button", { name: "保存する施策", exact: true }).click();
   await expect(app.getByRole("textbox", { name: "備考", exact: true })).toHaveValue("失敗しても残す備考");
   await settleMotion(app.locator("body"));
-  await page.screenshot({ path: join(tmpdir(), `triadichrome-auto-save-${testInfo.project.name}.png`) });
+  await page.screenshot({ path: join(tmpdir(), `triadic-auto-save-${testInfo.project.name}.png`) });
 });
 
 test("開く操作で書き込み許可を得て、最初の編集から自動保存する", async ({ app }) => {
@@ -115,7 +115,7 @@ test("書き込み許可を拒否したときは編集を開始せず、選び�
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await expect(app.getByRole("alert")).toContainText("読み書きが許可されませんでした");
-  await expect(app.getByRole("heading", { name: "Triadichrome", exact: true })).toBeVisible();
+  await expect(app.getByRole("heading", { name: "Triadic", exact: true })).toBeVisible();
   await expect(app.getByRole("heading", { name: "Home", exact: true })).toHaveCount(0);
   await page.getByLabel("ファイル操作", { exact: true }).selectOption("write-permission");
   await expect(page.getByRole("status")).toHaveText("操作できます");

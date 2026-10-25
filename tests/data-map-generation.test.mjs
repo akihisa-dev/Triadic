@@ -14,7 +14,7 @@ test("実際の画面・仕組みの依存グラフと確認用ハッシュがPO
       access(path.join(projectRoot, pathApi.relative(root, file).split(pathApi.sep).join("/"))) });
   });
   const screens = await screenImplementations(read);
-  await withNodeBundle("Triadichrome-extension/src/extension/mechanismModel.ts", async ({ mechanisms }) => {
+  await withNodeBundle("Triadic-extension/src/extension/mechanismModel.ts", async ({ mechanisms }) => {
     const topics = await mechanismImplementations(mechanisms, read);
     for (const resolve of resolvers) {
       assert.deepEqual(await screenImplementations(read, resolve), screens);
@@ -24,7 +24,7 @@ test("実際の画面・仕組みの依存グラフと確認用ハッシュがPO
 });
 
 test("両OSで相対import・再export・動的import・Worker・循環を追跡し、不正参照を拒否する", async () => {
-  const prefix = "Triadichrome-extension/src/";
+  const prefix = "Triadic-extension/src/";
   const files = new Map([
     [prefix + "extension/HomePage.tsx", "export const HomePage = null;"],
     [prefix + "extension/WorkspacePage.tsx", 'import { Entry } from "../core/entry"; switch (displayed.page) { case "test": return <Entry />; }'],
@@ -78,14 +78,14 @@ test("両OSで相対import・再export・動的import・Worker・循環を追跡
 });
 
 test("保存項目の追加・削除・参照先変更を説明用の表へ自動反映する", async () => {
-  const SQL = await withNodeBundle("Triadichrome-extension/src/core/storage/sqliteRuntime.ts", ({ initializeSqlite }) => initializeSqlite());
+  const SQL = await withNodeBundle("Triadic-extension/src/core/storage/sqliteRuntime.ts", ({ initializeSqlite }) => initializeSqlite());
   const database = new SQL.Database();
   try {
     database.run("CREATE TABLE owners (id INTEGER PRIMARY KEY); CREATE TABLE children (owner_id INTEGER REFERENCES owners(id), obsolete TEXT);");
     database.run("ALTER TABLE children DROP COLUMN obsolete; ALTER TABLE children ADD COLUMN new_amount INTEGER; CREATE TABLE newer (child_id INTEGER REFERENCES children(new_amount));");
     const schema = describeSchema(database);
     assert.deepEqual(schema.find(table => table.name === "children").columns, [{ name: "owner_id", reference: "owners.id" }, { name: "new_amount" }]);
-    await withNodeBundle("Triadichrome-extension/src/core/storage/dataMapDescription.ts", ({ describeDataTables }) => {
+    await withNodeBundle("Triadic-extension/src/core/storage/dataMapDescription.ts", ({ describeDataTables }) => {
       const described = describeDataTables(schema, {}, {});
       assert.equal(described.find(table => table.name === "newer").columns[0].reference, "children.new_amount");
       assert.equal(described.find(table => table.name === "children").columns[1].label, "new_amount", "新しい項目は日本語名の登録前でも表示する");
@@ -114,8 +114,8 @@ test("画面・計算・接続・対応説明の変更と画面の追加漏れ�
     const text = await read(file);
     return file.endsWith('/WorkspacePage.tsx') ? text.replace(before, after) : text;
   }), error, '曖昧・重複・非定数の描画分岐は確認を止める');
-  const review = JSON.parse(await read("Triadichrome-extension/src/extension/screenDataReview.json"));
-  await withNodeBundle("Triadichrome-extension/src/extension/screenDataModel.ts", async ({ screenData }) => {
+  const review = JSON.parse(await read("Triadic-extension/src/extension/screenDataReview.json"));
+  await withNodeBundle("Triadic-extension/src/extension/screenDataModel.ts", async ({ screenData }) => {
     assert.deepEqual(staleScreens(review, implementations, screenData), []);
     const changed = await screenImplementations(async file => {
       const text = await read(file);

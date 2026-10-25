@@ -20,13 +20,46 @@ async function filePicker(page: Page, name = "再開テスト.triadic", bytes = 
 async function closeFile(page: Page) {
   await page.getByRole("button", { name: "閉じる", exact: true }).click();
   await page.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Triadichrome", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Triadic", exact: true })).toBeVisible();
 }
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("#recent-file-name")).toHaveText("まだ開いていません");
   await expect(page.getByRole("button", { name: "続きから", exact: true })).toBeDisabled();
+});
+
+test("旧名のファイル参照は引き継がず、新しい保存先で再開できる", async ({ page }) => {
+  await page.evaluate(async () => {
+    const root = await navigator.storage.getDirectory();
+    const oldHandle = await root.getFileHandle("旧参照.triadic", { create: true });
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.open("triadichrome-recent-file", 1);
+      request.onupgradeneeded = () => request.result.createObjectStore("files");
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const db = request.result;
+        const transaction = db.transaction("files", "readwrite");
+        transaction.objectStore("files").put(oldHandle, "last");
+        transaction.oncomplete = () => { db.close(); resolve(); };
+        transaction.onabort = () => { db.close(); reject(transaction.error); };
+      };
+    });
+  });
+  await page.reload();
+  await expect(page.locator("#recent-file-name")).toHaveText("まだ開いていません");
+  await expect(page.getByRole("button", { name: "続きから", exact: true })).toBeDisabled();
+  await filePicker(page);
+  await page.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await expect(page.locator(".home-header .home-brand")).toContainText("Triadic");
+  await closeFile(page);
+  await page.reload();
+  await expect(page.locator("#recent-file-name")).toHaveText("再開テスト.triadic");
+  const names = await page.evaluate(async () => (await indexedDB.databases()).map(db => db.name));
+  expect(names).toContain("triadic-recent-file");
+  expect(names).toContain("triadichrome-recent-file");
+  await page.getByRole("button", { name: "続きから", exact: true }).click();
+  await expect(page.locator(".home-file-name")).toHaveText("再開テスト.triadic");
 });
 
 test("再読み込み後に記憶したファイルを開き、最新の内容を読み直す", async ({ page }, testInfo) => {
@@ -141,7 +174,7 @@ test("ドロップからも記憶し、参照のないドロップでは編集�
     element.dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: transfer }));
   });
   await expect(page.getByRole("alert")).toContainText("「ファイルを開く」から選択");
-  await expect(page.getByRole("heading", { name: "Triadichrome", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Triadic", exact: true })).toBeVisible();
   await expect(page.locator("#recent-file-name")).toHaveText("再開テスト.triadic");
   await page.reload();
   await expect(page.locator("#recent-file-name")).toHaveText("再開テスト.triadic");
@@ -266,7 +299,7 @@ test.describe("複数タブの再開先", () => {
           // A native exclusive writer also blocks the shared worker; patching this window's prototype does not.
           Reflect.set(window, "testWriter", await handle.createWritable({ mode: "exclusive" } as FileSystemCreateWritableOptions));
         } else if (outcome === "取消") {
-          const path = "/Triadichrome-extension/src/core/storage/accountMaster.ts";
+          const path = "/Triadic-extension/src/core/storage/accountMaster.ts";
           const { readAccountMaster, changeAccountMaster } = await import(path);
           const handle = await (await navigator.storage.getDirectory()).getFileHandle("A.triadic");
           const bytes = new Uint8Array(await (await handle.getFile()).arrayBuffer());

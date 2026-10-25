@@ -25,7 +25,7 @@ test("金額と期間計・差額の内訳を開き、閉じると元の金額�
   await expect(dialog).toBeVisible();
   await settleMotion(app.locator("body"));
   await expect(dialog.getByRole("row").last()).toContainText("25,640");
-  await page.screenshot({ path: `/tmp/triadichrome-cost-breakdown-${testInfo.project.name}.png` });
+  await page.screenshot({ path: `/tmp/triadic-cost-breakdown-${testInfo.project.name}.png` });
   await expect(dialog.getByRole("rowheader", { name: "前年見込", exact: true }).first()).toBeVisible();
   await expect(dialog.getByRole("button", { name: "既存商品の販売拡大（1行目）", exact: true })).toBeVisible();
   await dialog.getByRole("button", { name: "閉じる", exact: true }).press("Escape");

@@ -22,7 +22,7 @@ test("ファイル終了は確認を挟み、キャンセルとEscで入力を�
   await expect(name).toHaveValue("登録前の入力を保持");
   await close.click();
   await dialog.getByRole("button", { name: "閉じる", exact: true }).click();
-  await expect(app.getByRole("heading", { name: "Triadichrome", exact: true })).toBeVisible();
+  await expect(app.getByRole("heading", { name: "Triadic", exact: true })).toBeVisible();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await openInitiativeEntry(app);
   await expect(name).toHaveValue("");
@@ -39,20 +39,20 @@ test("保存済みでも再読み込みに確認を表示し、中止すると�
   const retry = page.waitForEvent("dialog");
   await page.evaluate(() => { setTimeout(() => location.reload(), 0); });
   await (await retry).accept();
-  await expect(app.getByRole("heading", { name: "Triadichrome", exact: true })).toBeVisible();
+  await expect(app.getByRole("heading", { name: "Triadic", exact: true })).toBeVisible();
 });
 
 test("入口でもタブ終了の中止と確定を選べる", async ({ context }) => {
   const tab = await context.newPage();
   await tab.goto("/");
-  await tab.getByRole("heading", { name: "Triadichrome", exact: true }).click();
+  await tab.getByRole("heading", { name: "Triadic", exact: true }).click();
   const pending = tab.waitForEvent("dialog");
   await tab.close({ runBeforeUnload: true });
   const dialog = await pending;
   expect(dialog.type()).toBe("beforeunload");
   await dialog.dismiss();
   expect(tab.isClosed()).toBe(false);
-  await expect(tab.getByRole("heading", { name: "Triadichrome", exact: true })).toBeVisible();
+  await expect(tab.getByRole("heading", { name: "Triadic", exact: true })).toBeVisible();
   const retry = tab.waitForEvent("dialog");
   const closed = tab.waitForEvent("close");
   await tab.close({ runBeforeUnload: true });

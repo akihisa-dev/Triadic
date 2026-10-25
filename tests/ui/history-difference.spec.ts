@@ -19,7 +19,7 @@ test("履歴から現在の変更箇所を確認し、履歴や画面を変更�
   await expect(dialog.getByRole("cell", { name: "120", exact: true })).toBeVisible();
   await expect(dialog.getByLabel("差分件数")).toHaveText("2件 / 全2件");
   await settleMotion(app.locator("body"));
-  await page.screenshot({ path: `/tmp/triadichrome-history-difference-${testInfo.project.name}.png` });
+  await page.screenshot({ path: `/tmp/triadic-history-difference-${testInfo.project.name}.png` });
   await dialog.getByRole("combobox", { name: "対象", exact: true }).selectOption("施策の月別金額");
   await expect(dialog.getByLabel("差分件数")).toHaveText("1件 / 全2件");
   await dialog.getByRole("button", { name: "閉じる", exact: true }).press("Escape");

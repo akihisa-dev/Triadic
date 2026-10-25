@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { ExpansionTablePage } from "../../Triadichrome-extension/src/extension/ExpansionTablePage";
+import { ExpansionTablePage } from "../../Triadic-extension/src/extension/ExpansionTablePage";
 import { createSamplePlan } from "./sample-plan";
-import { readPlanContents } from "../../Triadichrome-extension/src/core/storage/readPlan";
-import type { KindId } from "../../Triadichrome-extension/src/core/domain/kinds";
-import "../../Triadichrome-extension/src/extension/ExtensionPage.css";
+import { readPlanContents } from "../../Triadic-extension/src/core/storage/readPlan";
+import type { KindId } from "../../Triadic-extension/src/core/domain/kinds";
+import "../../Triadic-extension/src/extension/ExtensionPage.css";
 const base = await readPlanContents(await createSamplePlan(2026));
 const count = Number(new URLSearchParams(location.search).get("count") ?? 1000);
 const contents = { ...base, initiatives: Array.from({ length: count }, (_, index) => ({ ...base.initiatives[0]!, id: index + 1,

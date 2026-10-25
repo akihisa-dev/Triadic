@@ -9,7 +9,7 @@ const dir=await mkdtemp(join(projectRoot,'dist','.open-measure-'));
 const baseline=process.env.OPEN_BASELINE || 'b10f99b';
 const observe=`function observed<T>(phase:string,operation:()=>T):T{const start=performance.now();try{return operation();}finally{console.info('OPEN_PHASE '+JSON.stringify({phase,ms:performance.now()-start,context:typeof window==='undefined'?'worker':'window'}));}}`;
 function plugin(before){return {name:'open-observation',enforce:'pre',async transform(source,id){
- if(!id.includes('/Triadichrome-extension/src/')||!id.endsWith('.ts')&&!id.endsWith('.tsx'))return;
+ if(!id.includes('/Triadic-extension/src/')||!id.endsWith('.ts')&&!id.endsWith('.tsx'))return;
  const revision=before?baseline:process.env.OPEN_TARGET;
  if(revision){try{source=execFileSync('git',['show',`${revision}:${relative(projectRoot,id)}`],{encoding:'utf8',stdio:['ignore','pipe','ignore']});}catch{}}
  if(id.endsWith('/sqliteRuntime.ts')){

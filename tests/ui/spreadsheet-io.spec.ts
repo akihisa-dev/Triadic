@@ -1,6 +1,6 @@
 import ExcelJS from "exceljs";
 import JSZip from "jszip";
-import { currentFiscalYear } from "../../Triadichrome-extension/src/core/domain/calendar";
+import { currentFiscalYear } from "../../Triadic-extension/src/core/domain/calendar";
 import { readFile } from "node:fs/promises";
 import { test, expect } from "./fixtures";
 import { settleMotion } from "./fixtures";
@@ -46,8 +46,8 @@ test('見出しで変更確認を絞っても非表示の変更を含む全件�
   await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
   await app.getByRole('navigation', { name: 'メインナビゲーション' }).getByRole('button', { name: '入出力', exact: true }).click();
   const bytes = await app.locator('body').evaluate(async () => {
-    const storagePath = '/Triadichrome-extension/src/core/storage/readPlan.ts';
-    const workbookPath = '/Triadichrome-extension/src/core/spreadsheets/workbook.ts';
+    const storagePath = '/Triadic-extension/src/core/storage/readPlan.ts';
+    const workbookPath = '/Triadic-extension/src/core/spreadsheets/workbook.ts';
     const { readPlanContents } = await import(storagePath);
     const { createPreviousWorkbookBytes } = await import(workbookPath);
     const handle = Reflect.get(window, 'headerImportHandle');
@@ -73,7 +73,7 @@ test('見出しで変更確認を絞っても非表示の変更を含む全件�
   await preview.getByRole('button', { name: '確認した内容を取り込む', exact: true }).click();
   await expect(preview).toHaveCount(0);
   const amounts = await app.locator('body').evaluate(async () => {
-    const path = '/Triadichrome-extension/src/core/storage/readPlan.ts';
+    const path = '/Triadic-extension/src/core/storage/readPlan.ts';
     const { readPlanContents } = await import(path), handle = Reflect.get(window, 'headerImportHandle');
     const contents = await readPlanContents(new Uint8Array(await (await handle.getFile()).arrayBuffer()));
     return contents.previousAmounts.filter((row: { amount: string }) => ['111.001', '222.002'].includes(row.amount)).map((row: { amount: string }) => row.amount).sort();
@@ -136,8 +136,8 @@ test("330科目17組の前年変更確認で全名称・値・保存失敗後の
   // Prepare fixture bytes without triggering a browser download. The picker
   // below is the preview's in-memory test adapter, never a user's real file.
   const format = await app.locator('body').evaluate(async () => {
-    const storagePath = '/Triadichrome-extension/src/core/storage/readPlan.ts';
-    const workbookPath = '/Triadichrome-extension/src/core/spreadsheets/workbook.ts';
+    const storagePath = '/Triadic-extension/src/core/storage/readPlan.ts';
+    const workbookPath = '/Triadic-extension/src/core/spreadsheets/workbook.ts';
     const { readPlanContents } = await import(storagePath);
     const { createPreviousWorkbookBytes } = await import(workbookPath);
     const handle = Reflect.get(window, 'largePlanTestHandle');
@@ -176,7 +176,7 @@ test("330科目17組の前年変更確認で全名称・値・保存失敗後の
   await expect(preview).toHaveCount(0, { timeout: 60_000 });
   await expect(app.getByText('前年金額を取り込みました。', { exact: true })).toBeVisible({ timeout: 60_000 });
   const savedCount = await app.locator('body').evaluate(async () => {
-    const path = '/Triadichrome-extension/src/core/storage/readPlan.ts';
+    const path = '/Triadic-extension/src/core/storage/readPlan.ts';
     const { readPlanContents } = await import(path);
     const handle = Reflect.get(window, 'largePlanTestHandle');
     const contents = await readPlanContents(new Uint8Array(await (await handle.getFile()).arrayBuffer()));
@@ -356,7 +356,7 @@ test("前年取り込みの保存失敗で確認内容を保持する", async ({
   await page.goto("/tests/ui/preview.html");
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await page.getByLabel("ファイル操作").selectOption("save-failure");
-  await expect(app.getByRole("heading", { name: "Triadichrome", exact: true })).toBeVisible();
+  await expect(app.getByRole("heading", { name: "Triadic", exact: true })).toBeVisible();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("button", { name: "サイドバーを開く", exact: true }).click();
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "入出力", exact: true }).click();

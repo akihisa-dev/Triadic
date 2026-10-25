@@ -1,9 +1,9 @@
 import { useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
-import { DataHistoryPage } from "../../Triadichrome-extension/src/extension/DataHistoryPage";
-import { PlanSession } from "../../Triadichrome-extension/src/extension/PlanSession";
+import { DataHistoryPage } from "../../Triadic-extension/src/extension/DataHistoryPage";
+import { PlanSession } from "../../Triadic-extension/src/extension/PlanSession";
 import { createSamplePlan } from "./sample-plan";
-import "../../Triadichrome-extension/src/extension/ExtensionPage.css";
+import "../../Triadic-extension/src/extension/ExtensionPage.css";
 
 let bytes = await createSamplePlan(2026);
 let writable = true;

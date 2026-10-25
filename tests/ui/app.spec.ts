@@ -94,7 +94,7 @@ test("ファイルを開き、サイドバーを操作して入口へ戻る", as
   await trigger.click();
   await sidebar.getByRole("button", { name: "閉じる" }).click();
   await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
-  await expect(app.getByRole("heading", { name: "Triadichrome" })).toBeVisible();
+  await expect(app.getByRole("heading", { name: "Triadic" })).toBeVisible();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await expect(sidebar).toBeVisible();
@@ -151,7 +151,7 @@ test("サイドバーを開いたまま施策一覧とホームを往復でき�
   await initiativeEntry.click();
   await sidebar.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
-  await expect(app.getByRole("heading", { name: "Triadichrome" })).toBeVisible();
+  await expect(app.getByRole("heading", { name: "Triadic" })).toBeVisible();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await expect(app.getByRole("main", { name: "ホーム", exact: true })).toBeVisible();
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
@@ -366,7 +366,7 @@ test("選択・新規作成のキャンセル後も入口を操作できる", as
     await app.getByRole("button", { name, exact: true }).click();
     await expect(app.getByRole("button", { name, exact: true })).toBeEnabled();
     await expect(app.getByRole("alert")).toHaveCount(0);
-    await expect(app.getByRole("heading", { name: "Triadichrome" })).toBeVisible();
+    await expect(app.getByRole("heading", { name: "Triadic" })).toBeVisible();
   }
 });
 
@@ -375,7 +375,7 @@ test("壊れたファイルを拒否し、正常なファイルで再開でき�
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await expect(app.getByRole("alert")).toHaveText("Triadicファイルを読み込めませんでした。");
-  await expect(app.getByRole("heading", { name: "Triadichrome" })).toBeVisible();
+  await expect(app.getByRole("heading", { name: "Triadic" })).toBeVisible();
   await settleMotion(app.locator("body"));
   await attachImage(testInfo, "不正ファイル", await page.locator("#app-preview").screenshot());
   await page.getByLabel("ファイル操作", { exact: true }).selectOption("normal");
@@ -405,10 +405,10 @@ test("確認用画面と配布用ビルドの表示・操作が一致する", as
     const bounds = (await page.locator("#app-preview").boundingBox())!;
     await production.setViewportSize({ width: Math.round(bounds.width), height: Math.round(bounds.height) });
     const bytes = await page.evaluate(async path => (await import(path)).fixtureBytes as number[], "/tests/ui/preview.ts");
-    await production.goto("/Triadichrome-extension/index.html");
+    await production.goto("/Triadic-extension/index.html");
     await production.evaluate(installCloneableFiles, { bytes, name: "画面テスト.triadic" });
-    await expect(production).toHaveTitle("Triadichrome");
-    await expect(production.getByRole("heading", { name: "Triadichrome" })).toBeVisible();
+    await expect(production).toHaveTitle("Triadic");
+    await expect(production.getByRole("heading", { name: "Triadic" })).toBeVisible();
     for (const state of ["入口", "ホーム", "サイドバー", "施策入力"] as const) {
       if (state !== "入口") {
         const name = state === "ホーム" ? "ファイルを開く" : state === "サイドバー" ? "サイドバーを開く" : "施策入力";

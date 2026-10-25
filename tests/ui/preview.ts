@@ -1,9 +1,9 @@
 import { createTallSalesPlan } from "./tall-sales-plan";
 import { createSignedPeriodPlan } from "./signed-period-plan";
-import { saveKindSelection } from "../../Triadichrome-extension/src/core/storage/settings";
+import { saveKindSelection } from "../../Triadic-extension/src/core/storage/settings";
 import { createOverflowPlan, type OverflowScenario } from "./overflow-plan";
 import { createEmptyTestPlan, createCurrentEmptyTestPlan } from "./empty-plan";
-import { createTriadicDatabase } from "../../Triadichrome-extension/src/core/storage/triadicDatabase";
+import { createTriadicDatabase } from "../../Triadic-extension/src/core/storage/triadicDatabase";
 import { installMemoryFiles, type FileScenario } from "./memory-files";
 import { createRecreatedInitiativeFixture, createConcurrentInitiativeFixture, createCostUnassignedIndustryPlan, createSamplePlan, createSignedCategoryPlan } from "./sample-plan";
 import { createPreviousExportPlan } from "./previous-export-plan";

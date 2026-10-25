@@ -54,7 +54,7 @@ test("展開名を縦バー内に表示し、先頭行へ移動しても横位�
   await app.getByRole("heading", { name: "展開表", exact: true }).click();
   await expect(app.locator(".expansion-scroll-marks")).toBeHidden();
   await rail.hover();
-  if (page.viewportSize()!.width > 600) await page.screenshot({ path: "/tmp/triadichrome-expansion-vertical-scrollbar.png" });
+  if (page.viewportSize()!.width > 600) await page.screenshot({ path: "/tmp/triadic-expansion-vertical-scrollbar.png" });
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "総原価表", exact: true }).click();
   await expect(app.locator(".expansion-scrollbar")).toHaveCount(0);
   const cost = app.getByRole("table", { name: "総原価表", exact: true }).locator("..");

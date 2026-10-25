@@ -5,16 +5,16 @@ import {join,relative} from 'node:path';import {execFileSync} from 'node:child_p
 import {projectRoot as root} from './paths.mjs';
 const temporary=await mkdtemp(join(root,'dist','.save-measure-'));
 const reference=process.argv[2];
-const sourceAt=async path=>reference&&path.startsWith(root+"/Triadichrome-extension/src/")?execFileSync("git",["show",`${reference}:${relative(root,path)}`],{encoding:"utf8"}):readFile(path,"utf8");
+const sourceAt=async path=>reference&&path.startsWith(root+"/Triadic-extension/src/")?execFileSync("git",["show",`${reference}:${relative(root,path)}`],{encoding:"utf8"}):readFile(path,"utf8");
 let metrics;
 const record=(name,start)=>{if(metrics){const entry=metrics[name]??={count:0,ms:0};entry.count++;entry.ms+=performance.now()-start;}};
 globalThis.__triadicMeasure=record;
 try {
-const entry=join(temporary,'source.ts');await writeFile(entry,`export * from ${JSON.stringify(join(root,'tests/core-api.ts'))}; export {initializeSqlite} from ${JSON.stringify(join(root,'Triadichrome-extension/src/core/storage/sqliteRuntime.ts'))};`);
+const entry=join(temporary,'source.ts');await writeFile(entry,`export * from ${JSON.stringify(join(root,'tests/core-api.ts'))}; export {initializeSqlite} from ${JSON.stringify(join(root,'Triadic-extension/src/core/storage/sqliteRuntime.ts'))};`);
 const outfile=join(temporary,'entry.mjs');
 await build({entryPoints:[entry],outfile,bundle:true,format:'esm',platform:'node',packages:'external',loader:{'.css':'empty'},plugins:[
 {name:'measure-code',setup(api){api.onLoad({filter:/\.ts$/},async args=>{
-if(!args.path.startsWith(root+'/Triadichrome-extension/src/'))return;
+if(!args.path.startsWith(root+'/Triadic-extension/src/'))return;
 let source=await sourceAt(args.path);
 const wrap=(name,label)=>{const signature=new RegExp(`export (async )?function ${name}\\(`);const match=source.match(signature);if(!match)return;source=source.replace(signature,`export ${match[1]??''}function measured_${name}(`);source+=`\nexport ${match[1]??''}function ${name}(...args: Parameters<typeof measured_${name}>) {const start=performance.now();try{return ${match[1]?'await ':''}measured_${name}(...args);}finally{globalThis.__triadicMeasure('${label}',start);}}`;};
 if(args.path.endsWith('/triadicDatabase.ts')) {const signature='function assertDatabase(db: Database, documentType: DocumentType): void {';if(!source.includes(signature))throw Error('検査関数の測定入口が変わっています。');source=source.replace(signature,'function checkedDatabase(db: Database, documentType: DocumentType): void {')+`\nfunction assertDatabase(db: Database, documentType: DocumentType): void {const start=performance.now();try{checkedDatabase(db,documentType);}finally{globalThis.__triadicMeasure('assert:'+documentType,start);}}`;}

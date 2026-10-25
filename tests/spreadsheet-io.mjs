@@ -67,7 +67,7 @@ export async function verifySpreadsheetIO(api) {
   }
   assert.throws(() => api.readPreviousWorkbook(indexed, { ...sparse, departments: sparse.departments.map(d => ({ ...d, industryIds: [] })) }), /業種設定/);
   const duplicate = api.createPreviousWorkbook(sparse, pairsForIndex);
-  const metadata = duplicate.getWorksheet("_triadichrome");
+  const metadata = duplicate.getWorksheet("_triadic");
   for (let column = 4; column <= 20; column++) metadata.getCell(4, column).value = metadata.getCell(3, column).value;
   duplicate.worksheets[0].getCell("A5").value = duplicate.worksheets[0].getCell("A4").value;
   duplicate.worksheets[0].getCell("B5").value = duplicate.worksheets[0].getCell("B4").value;
@@ -77,6 +77,19 @@ export async function verifySpreadsheetIO(api) {
   await verifyPreviousWorkbookExport(api);
   await verifyReportWorkbooks(api, plan);
   const pairs = [{ industryId: plan.industries[0].id, departmentId: plan.departments[0].id }, { industryId: plan.industries[1].id, departmentId: plan.departments[1].id }];
+  const branded = await roundtrip(api.createPreviousWorkbook(plan, pairs));
+  assert.equal(branded.creator, "Triadic");
+  const brandedMetadata = branded.getWorksheet("_triadic");
+  assert.equal(brandedMetadata.getCell("A1").value, "Triadic previous v3");
+  assert.deepEqual(await api.parsePreviousWorkbook(await api.serializeWorkbook(branded), plan), []);
+  for (const previousSheetName of ["_triadic", "_triadichrome"]) {
+    brandedMetadata.name = previousSheetName;
+    brandedMetadata.getCell("A1").value = "Triadichrome previous v3";
+    const previousTemplate = await api.serializeWorkbook(branded);
+    const originalPlan = structuredClone(plan);
+    await assert.rejects(api.parsePreviousWorkbook(previousTemplate, plan), /最新の前年入力フォーマット/);
+    assert.deepEqual(plan, originalPlan, "旧識別子のExcelを拒否しても計画を変更しない");
+  }
   // #15: real XLSX round trips must preserve every yen, including Excel's 15-digit boundary.
   const boundaryAmounts = ["9007199254740.991", "-9007199254740.991", "9007199254740.99", "-9007199254740.99", "1000000000000.001", "-1000000000000.001", "999999999999.999", "123.456", "-123.456", "0", "9007199254740", "0.001"];
   const precise = { ...plan, previousAmounts: boundaryAmounts.map((amount, index) => ({ ...pairs[0], previousKind: 1, accountId: plan.accounts[0].id, month: [4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3][index], amount })) };
@@ -112,7 +125,7 @@ export async function verifySpreadsheetIO(api) {
     assert.ok(ws.name.length <= 31);
     assert.doesNotMatch(ws.name, /^'|'$/);
     if (departmentName === "検証") assert.equal(ws.name, "1_業_検証");
-    assert.equal(loaded.getWorksheet("_triadichrome").getCell("A3").value, ws.name);
+    assert.equal(loaded.getWorksheet("_triadic").getCell("A3").value, ws.name);
     assert.deepEqual(await api.parsePreviousWorkbook(output, input), []);
     ws.getCell("C4").value = 123.456;
     const imported = await api.parsePreviousWorkbook(await api.serializeWorkbook(loaded), input);
@@ -123,7 +136,7 @@ export async function verifySpreadsheetIO(api) {
   }
   const template = await roundtrip(api.createPreviousWorkbook(plan, pairs));
   assert.equal(template.worksheets.length, 3);
-  assert.equal(template.getWorksheet("_triadichrome").state, "veryHidden");
+  assert.equal(template.getWorksheet("_triadic").state, "veryHidden");
   assert.deepEqual(api.readPreviousWorkbook(template, plan), []);
   const first = template.worksheets[0];
   const originalAmount = first.getCell("C4").value;
@@ -187,7 +200,7 @@ export async function verifySpreadsheetIO(api) {
   const renamedPlan = await api.readPlanContents(renamed);
   assert.deepEqual(await api.parsePreviousWorkbook(oldBytes, renamedPlan), confirmed, '改名は同じ分類として取り込める');
   await api.changePlanSettings(renamed, { type: 'previous-import', patches: confirmed });
-  oldBook.getWorksheet('_triadichrome').getCell('A1').value = 'Triadichrome previous v1';
+  oldBook.getWorksheet('_triadic').getCell('A1').value = 'Triadic previous v1';
   await assert.rejects(api.parsePreviousWorkbook(await api.serializeWorkbook(oldBook), initial), /出力し直し/);
   console.log("spreadsheet io ok: all selections, formulas, styles, precision, import and atomic failure");
 }

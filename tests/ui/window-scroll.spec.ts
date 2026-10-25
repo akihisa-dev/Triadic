@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 test('1万要素があってもスクロール領域だけを探索し、遅れて現れる領域も復元する', async ({ page }) => {
   await page.goto('/tests/ui/table-window.html');
   const result = await page.evaluate(async () => {
-    const path = '/Triadichrome-extension/src/extension/windowView.tsx';
+    const path = '/Triadic-extension/src/extension/windowView.tsx';
     const { captureWindowScroll, restoreWindowScroll } = await import(path);
     const root = document.createElement('section'); root.className = 'home-page'; document.body.append(root);
     const region = document.createElement('div'); region.className = 'home-content'; region.style.cssText = 'height:100px;width:100px;overflow:auto'; root.append(region);

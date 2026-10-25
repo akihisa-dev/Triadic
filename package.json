@@ -1,8 +1,8 @@
 {
-  "name": "triadichrome",
+  "name": "triadic",
   "private": true,
   "version": "32.9.0",
-  "description": "Triadichrome Chrome Extension development environment",
+  "description": "Triadic Chrome Extension development environment",
   "type": "module",
   "engines": {
     "node": ">=22.12.0"

@@ -1,5 +1,5 @@
 import { test, expect, settleMotion } from "./fixtures";
-import { layoutExpansionScrollMarks } from "../../Triadichrome-extension/src/extension/expansionScrollLayout";
+import { layoutExpansionScrollMarks } from "../../Triadic-extension/src/extension/expansionScrollLayout";
 
 test.use({ launchOptions: { ignoreDefaultArgs: ["--hide-scrollbars"] } });
 
@@ -56,7 +56,7 @@ for (const virtual of [false, true]) test(`密集IDが伸びても押した展�
   }
   await rail.hover();
   await settleMotion(rail);
-  if (!virtual && page.viewportSize()!.width > 600) await page.screenshot({ path: "/tmp/triadichrome-dense-expansion-ids.png" });
+  if (!virtual && page.viewportSize()!.width > 600) await page.screenshot({ path: "/tmp/triadic-dense-expansion-ids.png" });
 });
 
 test("小さいバーと長いIDでも拡大時に重ならず、選択対象を入れ替えない", () => {

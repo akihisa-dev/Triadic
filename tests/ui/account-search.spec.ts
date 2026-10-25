@@ -14,7 +14,7 @@ test('既存欄で部分一致検索し、決定するまで科目と金額を�
   await expect(page.getByRole('option')).toHaveCount(13);
   await field.fill('目5');
   await expect(page.getByRole('option')).toHaveText(['科目5']);
-  await page.screenshot({ path: `/tmp/triadichrome-account-search-${page.viewportSize()!.width}.png` });
+  await page.screenshot({ path: `/tmp/triadic-account-search-${page.viewportSize()!.width}.png` });
   await expect(cell).toHaveAttribute('aria-label', '科目0 4月の金額');
   await expect(cell).toHaveValue('0');
   await field.press('Escape');

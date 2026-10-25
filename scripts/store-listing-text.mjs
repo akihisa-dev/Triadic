@@ -10,7 +10,7 @@ export async function checkStoreListingText(root) {
   const texts = Object.fromEntries(await Promise.all(names.map(async name => {
     const text = (await read(name)).trim(); assert.ok(text, name); return [name, text];
   })));
-  const manifest = JSON.parse(await fs.readFile(path.join(root, 'Triadichrome-extension/manifest.template.json'), 'utf8'));
+  const manifest = JSON.parse(await fs.readFile(path.join(root, 'Triadic-extension/manifest.template.json'), 'utf8'));
   const section = name => texts['listing-ja.txt'].match(new RegExp(`【${name}】\\s*\\n([^\\n]+)`))?.[1]?.trim();
   assert.equal(section('名前'), manifest.name, '掲載名とManifestの名前が一致しません');
   assert.equal(section('短い説明'), manifest.description, '短い説明とManifestの説明が一致しません');

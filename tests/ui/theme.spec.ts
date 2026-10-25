@@ -1,5 +1,20 @@
 import { test, expect, settleMotion } from "./fixtures";
 
+test("旧名の配色を引き継がず、新しい保存先で選択を復元する", async ({ page, app }) => {
+  await page.evaluate(() => localStorage.setItem("triadichrome.theme", "dark"));
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText("操作できます");
+  const toggle = app.getByRole("switch", { name: "ダークテーマ" });
+  await expect(toggle).not.toBeChecked();
+  await toggle.click();
+  expect(await page.evaluate(() => localStorage.getItem("triadic.theme"))).toBe("dark");
+  await page.evaluate(() => localStorage.setItem("triadichrome.theme", "light"));
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText("操作できます");
+  await expect(toggle).toBeChecked();
+  expect(await page.evaluate(() => localStorage.getItem("triadichrome.theme"))).toBe("light");
+});
+
 test("初回ライト・キーボード切替・記憶・画面移動・表・ダイアログ", async ({ page, app }) => {
   await page.goto("/tests/ui/preview.html");
   await expect(page.getByRole("status")).toHaveText("操作できます");
@@ -42,7 +57,7 @@ test("初回ライト・キーボード切替・記憶・画面移動・表・�
 
 test("記憶が不正・利用不可でも起動と切替ができる", async ({ page, app }) => {
   await page.addInitScript(() => {
-    localStorage.setItem("triadichrome.theme", "invalid");
+    localStorage.setItem("triadic.theme", "invalid");
     Storage.prototype.setItem = () => { throw new DOMException("保存不可", "QuotaExceededError"); };
   });
   await page.reload();
@@ -60,7 +75,7 @@ test("テーマ設定を読めなくてもライトで開始し切替できる",
   await page.addInitScript(() => {
     const getItem = Storage.prototype.getItem;
     Storage.prototype.getItem = function (key) {
-      if (key === "triadichrome.theme") throw new DOMException("利用不可", "SecurityError");
+      if (key === "triadic.theme") throw new DOMException("利用不可", "SecurityError");
       return getItem.call(this, key);
     };
   });

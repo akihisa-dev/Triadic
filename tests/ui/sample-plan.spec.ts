@@ -82,7 +82,7 @@ test("予算選択の列構成・重複防止・比較の符号と画面別の�
   await expect(first).toHaveAttribute("aria-valuetext", "確定予算");
   await expect(second).toHaveAttribute("aria-valuetext", "一次予算");
   await settleMotion(app.locator("body"));
-  await page.screenshot({ path: `/private/tmp/triadichrome-budget-slots-${testInfo.project.name}.png` });
+  await page.screenshot({ path: `/private/tmp/triadic-budget-slots-${testInfo.project.name}.png` });
 });
 
 test("一次予算の引き継ぎ・手修正0と前年入力を操作できる", async ({ page, app }) => {

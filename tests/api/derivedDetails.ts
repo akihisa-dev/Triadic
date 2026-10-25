@@ -1,8 +1,8 @@
-import { amountToYen } from "../../Triadichrome-extension/src/core/domain/amounts";
-import { accountEffects } from "../../Triadichrome-extension/src/core/domain/accountEffects";
-import { calendarYear, initiativeMonths } from "../../Triadichrome-extension/src/core/domain/calendar";
-import { INITIAL_KINDS, kindIds, resolvedAmount } from "../../Triadichrome-extension/src/core/domain/kinds";
-import type { PlanContents } from "../../Triadichrome-extension/src/core/domain/plan";
+import { amountToYen } from "../../Triadic-extension/src/core/domain/amounts";
+import { accountEffects } from "../../Triadic-extension/src/core/domain/accountEffects";
+import { calendarYear, initiativeMonths } from "../../Triadic-extension/src/core/domain/calendar";
+import { INITIAL_KINDS, kindIds, resolvedAmount } from "../../Triadic-extension/src/core/domain/kinds";
+import type { PlanContents } from "../../Triadic-extension/src/core/domain/plan";
 import { detailKey, type DetailTarget, type DetailRecord } from "./derivedDetailTypes";
 /** All detail views are derived from the same loaded plan, without opening SQLite. */
 export function buildDetails(contents: PlanContents): DetailRecord[] {

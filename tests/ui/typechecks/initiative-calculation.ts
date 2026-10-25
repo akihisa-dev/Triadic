@@ -1,8 +1,8 @@
-import type { Account } from '../../../Triadichrome-extension/src/core/domain/accountMaster';
-import type { Initiative } from '../../../Triadichrome-extension/src/core/domain/plan';
-import { initiativesForKind } from '../../../Triadichrome-extension/src/core/tables/initiatives';
-import { initiativeTotals } from '../../../Triadichrome-extension/src/core/tables/initiativeTotals';
-import type { InitiativeListRow } from '../../../Triadichrome-extension/src/core/tables/initiativeListView';
+import type { Account } from '../../../Triadic-extension/src/core/domain/accountMaster';
+import type { Initiative } from '../../../Triadic-extension/src/core/domain/plan';
+import { initiativesForKind } from '../../../Triadic-extension/src/core/tables/initiatives';
+import { initiativeTotals } from '../../../Triadic-extension/src/core/tables/initiativeTotals';
+import type { InitiativeListRow } from '../../../Triadic-extension/src/core/tables/initiativeListView';
 export function checkCalculationBoundary(saved: Initiative[], accounts: Account[], rows: InitiativeListRow[]) {
   // @ts-expect-error Saved inputs do not contain calculated monetary values.
   initiativeTotals(saved);

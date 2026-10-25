@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { DataHistoryPage } from '../../Triadichrome-extension/src/extension/DataHistoryPage';
-import '../../Triadichrome-extension/src/extension/ExtensionPage.css';
+import { DataHistoryPage } from '../../Triadic-extension/src/extension/DataHistoryPage';
+import '../../Triadic-extension/src/extension/ExtensionPage.css';
 if (!import.meta.env.DEV) throw new Error('開発専用です。');
 function Example() {
   const [entries, setEntries] = useState(() => Array.from({ length: 10000 }, (_, index) => ({ id: index + 1, recordedAt: new Date(new Date(2026, 3, 1).getTime() + index * 300000).toISOString() })).reverse());

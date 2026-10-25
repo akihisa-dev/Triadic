@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="branding/logo-512.png" alt="Triadichrome logo" width="96" height="96">
+  <img src="branding/logo-512.png" alt="Triadic logo" width="96" height="96">
 </p>
 
-# Triadichrome
+# Triadic
 
 [English](#english) · [日本語](#日本語)
 
@@ -266,7 +266,7 @@ The account-attribute master, also reached from Masters or Home, shows revenue, 
 
 At table viewport widths of 650px or less, initiative and breakdown tables freeze only the initiative name, sizing it to leave room for amounts. Wider tables keep four fixed columns. Selected month headers use gray with dark text in light mode, and dark gray with light text in dark mode. Both aggregation-creation inputs use the app border colors and theme accent focus outline.
 
-The file name sits immediately to the left of the theme toggle; they remain together at the right edge when the header wraps. The sun/moon toggle at the right end of the header switches the whole app, including entry, tables, masters, and dialogs, between light and dark. The first launch uses light. The choice is retained in browser localStorage (`triadichrome.theme`) until changed or browser storage is cleared, and shared with other windows in the same browser. It does not follow the OS theme. If preference storage fails, switching still works in the current screen. Tab and Space support keyboard operation; reduced-motion settings shorten the transition. No plan-file, data-history, undo, Excel-output, permission, or external-transmission changes are made. Dark mode uses gold `#D6B86C`; light mode retains blue `#0033FF`.
+The file name sits immediately to the left of the theme toggle; they remain together at the right edge when the header wraps. The sun/moon toggle at the right end of the header switches the whole app, including entry, tables, masters, and dialogs, between light and dark. The first launch uses light. The choice is retained in browser localStorage (`triadic.theme`) until changed or browser storage is cleared, and shared with other windows in the same browser. It does not follow the OS theme. If preference storage fails, switching still works in the current screen. Tab and Space support keyboard operation; reduced-motion settings shorten the transition. No plan-file, data-history, undo, Excel-output, permission, or external-transmission changes are made. Dark mode uses gold `#D6B86C`; light mode retains blue `#0033FF`.
 
 
 Ivory and ink are the base; the theme accent (light blue `#0033FF`, dark gold `#D6B86C`) marks the selected sidebar icon, active input/selection borders and text caret, and the active Home icon with directly connected lines. It applies to initiative input/details, classification choices, previous-year amounts, master registration/editing, and aggregation editing. There is no selection bar. Normal buttons, kind tabs, tables, graph names/backgrounds/descriptions, and notifications remain monochrome. Entry file-drop targets use the required pale accent background and matching dashed border with monochrome text. Import/export drop instructions use gray backgrounds/black dashed borders; history-selection checkboxes remain monochrome.
@@ -325,7 +325,7 @@ Plans use dedicated `.triadic` files, initially named `Untitled.triadic`. Each f
 
 Initiatives, accounts, months, and plan amounts are shared data represented differently in the three tables. Aggregation results are not duplicated as a separate authority. Implemented features include creation, validated loading, viewing account/aggregation/category/industry/department/period/fixed-kind/fixed-attribute masters, and saving initiatives/previous-year input.
 
-Storage format is 30. Compatibility with 29 and earlier has been removed; start from new files. Unsupported old or unknown formats are rejected without migration/overwriting. New-format files cannot open in older apps.
+The file identifier is `triadic`, with MIME type `application/vnd.triadic+sqlite`; storage format remains 30. Files with the former app identifier are rejected without conversion or rewriting, even if their format number is 30. Create new files. Previous-year Excel templates use the hidden `_triadic` sheet and `Triadic previous v3` identifier; templates bearing the former identifiers are rejected. Export a new template before importing. Device preferences use localStorage `triadic.theme` and IndexedDB `triadic-recent-file`. Previous namespaces are not read, migrated, or deleted; choose the theme and reopen a file to remember it in the new namespaces. Compatibility with 29 and earlier has been removed; start from new files. Unsupported old or unknown formats are rejected without migration/overwriting. New-format files cannot open in older apps.
 
 “Basic information” (`document_info`) stores fiscal year and creation/update timestamps, covering the entire saved document. Format metadata uses `triadic_metadata`. Initial/final budgets are fixed business definitions; kind tables and per-initiative years are not stored. Start year/month derives on loading from fiscal year, period rules, and effective monthly amounts by kind/account row, with no saved column. Common attributes use `initiatives`, common account rows `initiative_rows`, using the same string identifiers from addition onward. `initiative_amounts` stores whole-yen integers by row/kind ID/month. Kind 1 (initial) retains 12 months; kind 2 (final) only overridden months. Explicit 0 and overrides equal to initial values remain records; only unspecified months inherit. Shared resolution computes inheritance without duplicating stored values. Previous-year forecast/actuals use `previous_amounts` by account/industry/department/month. Screen-specific ordered kind choices use `kind_selections`. See [Monthly amounts and storage](DATA_MODEL.md) and [Implementation design](docs/single-year-plan-design.md). Nothing is transmitted externally.
 
@@ -335,7 +335,7 @@ Master IDs are separate from names, preserving references across name/code chang
 
 Use Node.js 22.12 or later and npm.
 
-For comprehensive internal restructuring, use the [Triadichrome refactoring skill](.agents/skills/refactor-triadichrome/SKILL.md). It surveys the entire repository every time and proposes an overall design preserving features, operations, and stored data. Migration/validation follows design approval; existing defects are plainly reported for a decision on fixing them.
+For comprehensive internal restructuring, use the [Triadic refactoring skill](.agents/skills/refactor-triadic/SKILL.md). It surveys the entire repository every time and proposes an overall design preserving features, operations, and stored data. Migration/validation follows design approval; existing defects are plainly reported for a decision on fixing them.
 
 ```sh
 npm ci
@@ -351,7 +351,7 @@ The development/build tool Vite is pinned to 7.3.7 (MIT), and its indirect sourc
 
 SQLite is bundled and works in memory without external communication or extra permissions. Storage/history structures remain. The official npm distribution is Apache-2.0, SQLite itself is public domain, and supporting code is MIT/NCSA. Keep bundled license notices when distributing.
 
-`npm run build` typechecks, builds/validates in temporary storage, and generates loadable `dist/extension/` and distributable `dist/Triadichrome-<version>.zip`. ZIPs remain local and are excluded from Git/commit/push. Manifest is at ZIP root; source, test data, and temporary files are excluded. Tracked Manifest, standalone pages, assets, icons, and service worker continue to synchronize to `Triadichrome-extension/`. ZIP generation and runtime Excel ZIP inspection use runtime JSZip with the MIT license selected. Build then regenerates the [test .triadic file](#test-triadic-file).
+`npm run build` typechecks, builds/validates in temporary storage, and generates loadable `dist/extension/` and distributable `dist/Triadic-<version>.zip`. ZIPs remain local and are excluded from Git/commit/push. Manifest is at ZIP root; source, test data, and temporary files are excluded. Tracked Manifest, standalone pages, assets, icons, and service worker continue to synchronize to `Triadic-extension/`. ZIP generation and runtime Excel ZIP inspection use runtime JSZip with the MIT license selected. Build then regenerates the [test .triadic file](#test-triadic-file).
 
 ## Verification and Git hooks
 
@@ -388,7 +388,7 @@ Database validation, updates, history, and pre-save file comparison run on-devic
 
 Dependency identifiers use repository-relative paths with forward slashes, so identical source contents produce the same screen/mechanism review hashes on Windows and POSIX systems. Regular tests compare both path conventions using TypeScript dependency analysis; they do not replace running the commands on a Windows machine.
 
-Mapping table names, fields, and references are generated from the authoritative storage schema using an empty in-memory database into `Triadichrome-extension/src/core/storage/dataMapSchema.generated.ts`. Japanese names, per-screen mappings, and calculation explanations live in `Triadichrome-extension/src/extension/screenDataModel.ts`. New items show storage names before Japanese labels are registered. User files are neither read nor written.
+Mapping table names, fields, and references are generated from the authoritative storage schema using an empty in-memory database into `Triadic-extension/src/core/storage/dataMapSchema.generated.ts`. Japanese names, per-screen mappings, and calculation explanations live in `Triadic-extension/src/extension/screenDataModel.ts`. New items show storage names before Japanese labels are registered. User files are neither read nor written.
 
 `dev`, `dev:ui`, typechecks, and build generate mappings; regular tests check matching results. Changes to screen routing, screen components and their statically referenced TypeScript logic, calculation/loading logic, or mapping explanations since review stop processing with the affected screen ID. CSS-only changes are excluded, as are Home/master entry because they do not show business data in their body.
 
@@ -451,7 +451,7 @@ Regular cost-summary/aggregation-master tests check required aggregations, signe
 3. Use “Load unpacked” and select `dist/extension/`.
 4. Click the extension icon to open file entry.
 
-After changes, rebuild and reload on the extensions page. Distribute `dist/Triadichrome-<version>.zip`; earlier ZIPs remain local. Distribution and same-version ZIP are copied/written/validated on the same filesystem before switching. Failed updates restore old distribution. If restoration also fails, the backup location is shown and old files remain undeleted. Automatic recovery across forced process termination/power loss is not guaranteed.
+After changes, rebuild and reload on the extensions page. Distribute `dist/Triadic-<version>.zip`; earlier ZIPs remain local. Distribution and same-version ZIP are copied/written/validated on the same filesystem before switching. Failed updates restore old distribution. If restoration also fails, the backup location is shown and old files remain undeleted. Automatic recovery across forced process termination/power loss is not guaranteed.
 
 ## Store images
 
@@ -459,26 +459,26 @@ After changes, rebuild and reload on the extensions page. Distribute `dist/Triad
 
 ## Structure
 
-- `Triadichrome-extension/src/core/domain/`: Types/rules for amounts, fiscal year, kinds, classifications, initiatives; independent of SQL/Chrome APIs. `aggregationOrder.ts` manages child-to-parent traversal shared by cost-summary calculations and initial master order, prioritizing saved order.
-- `Triadichrome-extension/src/core/tables/`: Display calculations for cost summary, breakdown, aggregation graph, and bulk input-table operations.
-- `Triadichrome-extension/src/core/storage/`: Direct SQLite creation, validation, loading, updates, history. `transaction.ts` handles updates on copies and connection cleanup.
-- `Triadichrome-extension/src/core/autoSave.ts`: Input waiting, Japanese composition, additional input during saving, retries.
-- `Triadichrome-extension/src/extension/PlanSession.ts`: Prepares history display information before file commit, then updates save baseline/undo history. Owns saved-plan authority and serializes saving, permission preparation, history, and closing; publishes to the screen only after successful file commit.
-- `Triadichrome-extension/src/core/domain/planCommands.ts`: Typed update commands, autosave decisions, input validation before destination selection. `core/storage/planCommands.ts` connects them to SQLite updates and is directly used by the calculation worker.
-- `Triadichrome-extension/src/extension/preparePlanCommand.ts`: Prepares save data/undo states from commands. `PlanSession.ts` owns destination choice, save ordering, and publication. `planFile.ts` checks external changes; `triadicFile.ts` commits to real files.
-- `Triadichrome-extension/src/core/storage/prepareOrdinarySave.ts`: Applies ordinary updates once in a dedicated connection; `commandComparison.ts` compares stored fields for target initiatives, previous-year classifications, related masters/order. Revision-only changes are not content changes; override addition/removal and explicit 0 remain distinct. Avoids full-plan reconstruction solely for change detection and screen-side string comparisons.
-- `Triadichrome-extension/src/extension/ExtensionPage.tsx`: File-operation entry. `filePicker.ts` chooses destinations; `usePlanSession.ts` subscribes to saved state and five-minute recording deadlines. If a backward clock shift ends recording before its deadline, it reschedules with the latest deadline.
-- `Triadichrome-extension/src/extension/HomePage.tsx`: Connects common screens. `useHomeWorkspace.tsx` composes the separate draft, navigation, history, save-command and undo controllers in `extension/workspace/`; `WorkspacePage.tsx` renders screens; `WorkspaceChrome.tsx` displays header/sidebar. `useScreenHistory.ts` holds navigation history.
-- `Triadichrome-extension/src/extension/useFileEntry.ts`: Controls selection/loading/last reference. `EntryPage.tsx` renders entry.
-- `Triadichrome-extension/src/core/storage/prepareSave.ts`: Shares final undo snapshots, history preparation, validated export and projection across ordinary, aggregation and kind-selection updates. Unchanged ordinary input returns its original bytes without projection; selection changes reuse existing calculation inputs.
-- `Triadichrome-extension/src/core/tables/grid.ts`: Input ranges, amount normalization, pasted-text parsing; initiative/previous-year-specific constraints live in their table logic.
+- `Triadic-extension/src/core/domain/`: Types/rules for amounts, fiscal year, kinds, classifications, initiatives; independent of SQL/Chrome APIs. `aggregationOrder.ts` manages child-to-parent traversal shared by cost-summary calculations and initial master order, prioritizing saved order.
+- `Triadic-extension/src/core/tables/`: Display calculations for cost summary, breakdown, aggregation graph, and bulk input-table operations.
+- `Triadic-extension/src/core/storage/`: Direct SQLite creation, validation, loading, updates, history. `transaction.ts` handles updates on copies and connection cleanup.
+- `Triadic-extension/src/core/autoSave.ts`: Input waiting, Japanese composition, additional input during saving, retries.
+- `Triadic-extension/src/extension/PlanSession.ts`: Prepares history display information before file commit, then updates save baseline/undo history. Owns saved-plan authority and serializes saving, permission preparation, history, and closing; publishes to the screen only after successful file commit.
+- `Triadic-extension/src/core/domain/planCommands.ts`: Typed update commands, autosave decisions, input validation before destination selection. `core/storage/planCommands.ts` connects them to SQLite updates and is directly used by the calculation worker.
+- `Triadic-extension/src/extension/preparePlanCommand.ts`: Prepares save data/undo states from commands. `PlanSession.ts` owns destination choice, save ordering, and publication. `planFile.ts` checks external changes; `triadicFile.ts` commits to real files.
+- `Triadic-extension/src/core/storage/prepareOrdinarySave.ts`: Applies ordinary updates once in a dedicated connection; `commandComparison.ts` compares stored fields for target initiatives, previous-year classifications, related masters/order. Revision-only changes are not content changes; override addition/removal and explicit 0 remain distinct. Avoids full-plan reconstruction solely for change detection and screen-side string comparisons.
+- `Triadic-extension/src/extension/ExtensionPage.tsx`: File-operation entry. `filePicker.ts` chooses destinations; `usePlanSession.ts` subscribes to saved state and five-minute recording deadlines. If a backward clock shift ends recording before its deadline, it reschedules with the latest deadline.
+- `Triadic-extension/src/extension/HomePage.tsx`: Connects common screens. `useHomeWorkspace.tsx` composes the separate draft, navigation, history, save-command and undo controllers in `extension/workspace/`; `WorkspacePage.tsx` renders screens; `WorkspaceChrome.tsx` displays header/sidebar. `useScreenHistory.ts` holds navigation history.
+- `Triadic-extension/src/extension/useFileEntry.ts`: Controls selection/loading/last reference. `EntryPage.tsx` renders entry.
+- `Triadic-extension/src/core/storage/prepareSave.ts`: Shares final undo snapshots, history preparation, validated export and projection across ordinary, aggregation and kind-selection updates. Unchanged ordinary input returns its original bytes without projection; selection changes reuse existing calculation inputs.
+- `Triadic-extension/src/core/tables/grid.ts`: Input ranges, amount normalization, pasted-text parsing; initiative/previous-year-specific constraints live in their table logic.
 - JSZip used directly for Excel ZIP inspection is a runtime dependency. Version/distributed contents remain; it uses MIT.
-- `Triadichrome-extension/src/extension/*Page.tsx`: Initiative, previous-year, three-table, master, and history screens. Name masters share `NamedMasterPage.tsx`, manual-save notices `useMasterOperation.ts`, monthly input selection/focus `useGridInteraction.ts`.
-- `Triadichrome-extension/src/extension/ExtensionPage.css`: Imports base, entry, form, navigation, master, graph, table, and editor styles from `styles/` in the original application order.
-- `Triadichrome-extension/src/extension/main.tsx` and `background.ts`: React startup and extension-icon entry.
-- `Triadichrome-extension/manifest.template.json`: Authoritative Manifest source.
+- `Triadic-extension/src/extension/*Page.tsx`: Initiative, previous-year, three-table, master, and history screens. Name masters share `NamedMasterPage.tsx`, manual-save notices `useMasterOperation.ts`, monthly input selection/focus `useGridInteraction.ts`.
+- `Triadic-extension/src/extension/ExtensionPage.css`: Imports base, entry, form, navigation, master, graph, table, and editor styles from `styles/` in the original application order.
+- `Triadic-extension/src/extension/main.tsx` and `background.ts`: React startup and extension-icon entry.
+- `Triadic-extension/manifest.template.json`: Authoritative Manifest source.
 - `scripts/build.mjs`: Generates/synchronizes distribution. `node-bundle.mjs` shares temporary bundling/Wasm resolution for regular tests and sample generation.
-- `Triadichrome-extension/src/extension/home/`: Home relation definitions and pointer/camera interactions. Master CSS has one owner in `styles/masters.css`; common Excel sheet formatting lives in `core/spreadsheets/workbookLayout.ts`. `core/storage/rebaseLayout.ts` resolves merge column positions from the validated SQLite schema.
+- `Triadic-extension/src/extension/home/`: Home relation definitions and pointer/camera interactions. Master CSS has one owner in `styles/masters.css`; common Excel sheet formatting lives in `core/spreadsheets/workbookLayout.ts`. `core/storage/rebaseLayout.ts` resolves merge column positions from the validated SQLite schema.
 - `tests/core-api.ts` and `tests/sample-api.ts`: Explicit entries for regular tests and sample generation. `tests/api/` separates domain, SQLite, session/file, rendering and fixture boundaries while retaining one shared test bundle.
 - `dist/`: Loadable `extension/` is tracked so clones can immediately load the extension. ZIPs are generated locally by build and excluded from Git along with temporary build/verification files. When tracked artifacts change, update through build and include them in the same commit.
 
@@ -563,10 +563,10 @@ History types, empty state, and five-minute interval use shared SQLite-independe
 [English](#english) · [日本語](#日本語)
 
 <p align="center">
-  <img src="branding/logo-512.png" alt="Triadichromeのロゴ" width="96" height="96">
+  <img src="branding/logo-512.png" alt="Triadicのロゴ" width="96" height="96">
 </p>
 
-# Triadichrome
+# Triadic
 
 **施策を積み上げて予算を作り、三つの表で確かめるChrome拡張機能。**
 
@@ -839,7 +839,7 @@ ExcelJS 4.4.0（MIT）と、ExcelJSが既に使用するXML解析器saxes 5.0.1�
 
 施策一覧・展開表は、表に割り当てられた表示幅が650px以下なら施策名だけを固定し、施策名と金額を並べて確認できる幅へ調整します。650pxを超える場合は従来の4列固定です。金額セルの選択月は、ライトでは暖かみのあるグレーの背景と墨色の文字、ダークでは濃いグレーの背景と象牙色の文字で表示します。集計追加の「集計名」「表示名」も通常枠と選択中のアクセント色の枠をアプリの配色に揃えます。
 
-ファイル名はテーマ切替のすぐ左に並び、狭い画面でヘッダーが折り返す場合も一緒に右端へ寄せます。ヘッダー右端の太陽・月のトグルで、ライト（象牙色の背景・墨色の文字）とダーク（墨色の背景・象牙色の文字）を切り替えられます。ファイルを開く前の入口でも使え、表・マスタ・ダイアログも連動します。初回はライトで、端末の明暗設定には追従しません。選択はブラウザ内のlocalStorage（`triadichrome.theme`）へ保存し、次回起動・同じブラウザの別ウィンドウへ反映します。選び直すかブラウザの保存領域を消すまで保持します。保存領域が使えない場合は現在の画面だけに適用します。計画ファイル・時点履歴・操作取消・Excel出力は変えず、追加権限・外部送信はありません。Tabでトグルへ移動し、Spaceで切り替えられます。
+ファイル名はテーマ切替のすぐ左に並び、狭い画面でヘッダーが折り返す場合も一緒に右端へ寄せます。ヘッダー右端の太陽・月のトグルで、ライト（象牙色の背景・墨色の文字）とダーク（墨色の背景・象牙色の文字）を切り替えられます。ファイルを開く前の入口でも使え、表・マスタ・ダイアログも連動します。初回はライトで、端末の明暗設定には追従しません。選択はブラウザ内のlocalStorage（`triadic.theme`）へ保存し、次回起動・同じブラウザの別ウィンドウへ反映します。選び直すかブラウザの保存領域を消すまで保持します。保存領域が使えない場合は現在の画面だけに適用します。計画ファイル・時点履歴・操作取消・Excel出力は変えず、追加権限・外部送信はありません。Tabでトグルへ移動し、Spaceで切り替えられます。
 
 
 象牙色と墨色を基本に、選択中のサイドバーのアイコンと、操作中の入力・選択欄の枠・文字カーソル、ホームの操作対象アイコンと直接つながる線にライトでは青 `#0033FF`、ダークでは金 `#D6B86C` を使います。施策入力と登録済み施策、分類の選択欄、前年の金額、マスタの登録・編集、集計の編集が対象です。選択を示す棒は付けません。選択中の種別タブは文字と下線、三表の種別・比較対象は選択中の文字だけを同じアクセント色で示し、背景はグレーを保ちます。通常のボタン、未選択の種別タブ、表、相関図の名称・背景・関係の説明、通知はモノクロを保ちます。入口のファイルドロップ先は要件に従い淡いアクセント色の背景と同色の破線で強調し、文字はモノクロを保ちます。入出力のファイルドロップ案内はグレーの背景と黒い破線で示し、履歴選択のチェックボックスもモノクロに揃えます。
@@ -912,7 +912,7 @@ Chromeのファイル選択、新規作成、ファイル参照を取得でき�
 
 Node.js 22.12以上とnpmを使用します。
 
-全面的な内部再構成には[Triadichrome専用リファクタリングスキル](.agents/skills/refactor-triadichrome/SKILL.md)を使います。毎回リポジトリ全体を調査し、現在の機能・操作・保存データを維持した全体設計を提示します。設計への承認後に移行と検証へ進み、既存の不具合は平易に報告して修正判断を仰ぎます。
+全面的な内部再構成には[Triadic専用リファクタリングスキル](.agents/skills/refactor-triadic/SKILL.md)を使います。毎回リポジトリ全体を調査し、現在の機能・操作・保存データを維持した全体設計を提示します。設計への承認後に移行と検証へ進み、既存の不具合は平易に報告して修正判断を仰ぎます。
 
 ```sh
 npm ci
@@ -928,7 +928,7 @@ TypeScript、React、Vite、SQLite公式のWebAssembly配布（`@sqlite.org/sqli
 
 SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外部通信・追加権限は不要です。保存形式と履歴の構造は維持します。SQLite公式のnpm配布部分はApache-2.0、SQLite本体は著作権放棄、補助コードはMIT・NCSAで提供されています。配布時には同梱のライセンス表示を保持します。
 
-`npm run build`は型チェック後に一時領域でビルド・検証し、Chrome読み込み用の`dist/extension/`と配布用の`dist/Triadichrome-<version>.zip`を生成します。配布ZIPはローカルに保持し、Git管理・commit・pushから除外します。ZIPの直下にManifestを置き、ソース・確認用データ・一時ファイルは含めません。Git管理されるManifest・独立ページ・assets・icons・service workerは、引き続き`Triadichrome-extension/`へ同期します。ZIP生成と実行時のExcel内容の検査には、実行用依存のJSZip（MITライセンスを選択）を使用します。続いて[確認用の.triadicファイル](#確認用のtriadicファイル)を再生成します。
+`npm run build`は型チェック後に一時領域でビルド・検証し、Chrome読み込み用の`dist/extension/`と配布用の`dist/Triadic-<version>.zip`を生成します。配布ZIPはローカルに保持し、Git管理・commit・pushから除外します。ZIPの直下にManifestを置き、ソース・確認用データ・一時ファイルは含めません。Git管理されるManifest・独立ページ・assets・icons・service workerは、引き続き`Triadic-extension/`へ同期します。ZIP生成と実行時のExcel内容の検査には、実行用依存のJSZip（MITライセンスを選択）を使用します。続いて[確認用の.triadicファイル](#確認用のtriadicファイル)を再生成します。
 
 ## 検証とGitフック
 
@@ -971,7 +971,7 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 
 依存ファイルの識別子はリポジトリ相対のスラッシュ区切りに統一し、同じソース内容ならWindowsとPOSIX環境で画面・仕組みの確認用ハッシュが一致します。通常テストでは、TypeScriptの依存解析に両環境のパス処理を適用して照合します。Windows実機でのコマンド実行を代替する検証ではありません。
 
-対応図のテーブル名・項目・参照先は、保存形式の正本から空のメモリ内データベースを作り、自動生成します。生成先は`Triadichrome-extension/src/core/storage/dataMapSchema.generated.ts`です。日本語の名称と画面ごとの対応・計算説明は`Triadichrome-extension/src/extension/screenDataModel.ts`で管理します。新しい項目は、日本語名の登録前でも保存名で表示します。利用者のファイルは読み書きしません。
+対応図のテーブル名・項目・参照先は、保存形式の正本から空のメモリ内データベースを作り、自動生成します。生成先は`Triadic-extension/src/core/storage/dataMapSchema.generated.ts`です。日本語の名称と画面ごとの対応・計算説明は`Triadic-extension/src/extension/screenDataModel.ts`で管理します。新しい項目は、日本語名の登録前でも保存名で表示します。利用者のファイルは読み書きしません。
 
 `dev`・`dev:ui`・型検査・buildでは生成を行い、通常テストでは生成結果の一致を確認します。画面の切り替え実装、画面部品と静的に参照するTypeScriptの処理、計算・読込処理、対応説明が確認済みの状態から変わった場合は、該当する画面IDを示して停止します。CSSだけの変更は対象外です。ホームとマスタ入口は、画面本文に業務データを表示しないため確認対象から除きます。
 
@@ -1064,7 +1064,7 @@ npm run test:ui:report
 3. 「パッケージ化されていない拡張機能を読み込む」で`dist/extension/`を選択します。
 4. 拡張機能のアイコンを押すと、ファイルを開く入口画面が開きます。
 
-変更後は再ビルドし、拡張機能管理画面で更新してください。配布する場合は`dist/Triadichrome-<version>.zip`を使用します。以前のバージョンのZIPはローカルで保持します。配布物と同版ZIPは、同じファイルシステム上にコピー・書き込み・検証を済ませてから切り替えます。更新途中の失敗では旧配布物へ戻します。復元自体も失敗した場合は退避先を表示し、旧配布物を削除せず残します。プロセスの強制終了や電源断をまたぐ自動復旧は保証しません。
+変更後は再ビルドし、拡張機能管理画面で更新してください。配布する場合は`dist/Triadic-<version>.zip`を使用します。以前のバージョンのZIPはローカルで保持します。配布物と同版ZIPは、同じファイルシステム上にコピー・書き込み・検証を済ませてから切り替えます。更新途中の失敗では旧配布物へ戻します。復元自体も失敗した場合は退避先を表示し、旧配布物を削除せず残します。プロセスの強制終了や電源断をまたぐ自動復旧は保証しません。
 
 ## ストア掲載画像
 
@@ -1074,28 +1074,28 @@ Chrome Web Store用の説明文・プライバシー申告・アイコン・販�
 
 ## 構成
 
-- `Triadichrome-extension/src/core/domain/`：金額・年度・種別・分類・施策の型と規則。SQLやChrome APIへ依存しません。`aggregationOrder.ts`が子集計から親集計へたどる順序を管理し、総原価表の計算とマスタの初期表示順で共有します。保存済みの表示順を優先します。
-- `Triadichrome-extension/src/core/tables/`：総原価表・展開表・集計図の表示用計算と入力表の一括操作。保存から読み出す施策には月別計算値を持たせず、必要な指標を計算した型だけを集計へ渡します。一覧の計算失敗行は元の入力とエラーを保持し、成功行と型で区別します。
-- `Triadichrome-extension/src/core/spreadsheets/reportSourceColumns.ts`：三表Excelの計算元シート・説明列・月額列・識別列を定義し、行生成・集計条件・書式・精度保持用の補助列で共有します。
-- `Triadichrome-extension/src/extension/spreadsheetOperation.ts`：Excel画面の読込・出力・確認・保存の状態を管理し、確認内容・再試行・画面移動の保留を同じ状態から通知します。二重実行は同期的に拒否し、終了時は出力を中止します。
-- `Triadichrome-extension/src/core/storage/`：SQLiteの直接生成・検証・読込・更新・履歴。各`apply...`関数は呼び出し元が所有する検証済み接続だけを更新し、ファイル操作・接続の生成や解放は行いません。バイト列を受け取る公開関数は`transaction.ts`でコピー上の更新・書き出し・接続解放を行います。通常保存の準備は開いた接続へ変更を直接適用し、変更なしでは元のバイト列・更新日時・履歴を保持します。
-- `Triadichrome-extension/src/core/autoSave.ts`：入力待ち、日本語変換、保存中の追加入力、再試行。
-- `Triadichrome-extension/src/extension/PlanSession.ts`：履歴の表示情報をファイル確定前に準備し、確定後は保存基準と操作履歴を更新します。保存済み計画の正本と保存・許可準備・履歴・終了の直列実行。ファイル確定の成功後だけ画面へ公開します。
-- `Triadichrome-extension/src/core/domain/planCommands.ts`：型で区別した更新命令、自動保存の判定、保存先選択前の入力検証。`core/storage/planCommands.ts`が命令をSQLiteの更新処理へ接続し、計算用workerも直接利用します。
-- `Triadichrome-extension/src/extension/preparePlanCommand.ts`：更新命令から保存データと取り消し用の状態を準備します。`PlanSession.ts`が保存先選択・保存順序・保存後の公開を所有します。`planFile.ts`が外部変更を確認し、`triadicFile.ts`が実ファイルへの確定を行います。
-- `Triadichrome-extension/src/core/storage/prepareOrdinarySave.ts`：通常更新を専用接続で一度適用し、`commandComparison.ts`で対象施策・前年分類・関連マスタと順序の保存項目を比較します。改訂番号だけの更新は変更と扱わず、手修正の追加・解除と明示0は区別します。変更判定専用の計画全体の復元と画面側の文字列比較を行いません。
-- `Triadichrome-extension/src/extension/ExtensionPage.tsx`：ファイル操作の入口。`filePicker.ts`が保存先選択、`usePlanSession.ts`が保存済み状態の購読と5分の記録期限を担当します。時計の後退で期限前に記録処理が終わった場合も、最新の期限で予約し直します。
-- `Triadichrome-extension/src/extension/HomePage.tsx`：共通画面の接続。`useHomeWorkspace.tsx`が`extension/workspace/`の登録前入力・画面移動・過去閲覧・保存命令・操作取消を接続し、`WorkspacePage.tsx`が各画面を描画、`WorkspaceChrome.tsx`がヘッダーとサイドバーを表示します。`useScreenHistory.ts`が画面移動の履歴を保持します。
-- `Triadichrome-extension/src/extension/useFileEntry.ts`：ファイル選択・読込・前回参照を制御します。`EntryPage.tsx`は入口画面の表示を担当します。
-- `Triadichrome-extension/src/core/storage/prepareSave.ts`：通常・集計・種別選択の変更後に、取消用の状態、時点履歴、検証付き書き出しと表示用データの準備を共有します。通常入力の無変更時は表示用データを再取得せず元のbytesを返し、種別選択は既存の計算元を再利用します。
-- `Triadichrome-extension/src/core/tables/grid.ts`：表入力の選択範囲、金額の正規化、貼り付け文字列の解析。施策と前年入力の固有制約は各表の処理に置きます。
+- `Triadic-extension/src/core/domain/`：金額・年度・種別・分類・施策の型と規則。SQLやChrome APIへ依存しません。`aggregationOrder.ts`が子集計から親集計へたどる順序を管理し、総原価表の計算とマスタの初期表示順で共有します。保存済みの表示順を優先します。
+- `Triadic-extension/src/core/tables/`：総原価表・展開表・集計図の表示用計算と入力表の一括操作。保存から読み出す施策には月別計算値を持たせず、必要な指標を計算した型だけを集計へ渡します。一覧の計算失敗行は元の入力とエラーを保持し、成功行と型で区別します。
+- `Triadic-extension/src/core/spreadsheets/reportSourceColumns.ts`：三表Excelの計算元シート・説明列・月額列・識別列を定義し、行生成・集計条件・書式・精度保持用の補助列で共有します。
+- `Triadic-extension/src/extension/spreadsheetOperation.ts`：Excel画面の読込・出力・確認・保存の状態を管理し、確認内容・再試行・画面移動の保留を同じ状態から通知します。二重実行は同期的に拒否し、終了時は出力を中止します。
+- `Triadic-extension/src/core/storage/`：SQLiteの直接生成・検証・読込・更新・履歴。各`apply...`関数は呼び出し元が所有する検証済み接続だけを更新し、ファイル操作・接続の生成や解放は行いません。バイト列を受け取る公開関数は`transaction.ts`でコピー上の更新・書き出し・接続解放を行います。通常保存の準備は開いた接続へ変更を直接適用し、変更なしでは元のバイト列・更新日時・履歴を保持します。
+- `Triadic-extension/src/core/autoSave.ts`：入力待ち、日本語変換、保存中の追加入力、再試行。
+- `Triadic-extension/src/extension/PlanSession.ts`：履歴の表示情報をファイル確定前に準備し、確定後は保存基準と操作履歴を更新します。保存済み計画の正本と保存・許可準備・履歴・終了の直列実行。ファイル確定の成功後だけ画面へ公開します。
+- `Triadic-extension/src/core/domain/planCommands.ts`：型で区別した更新命令、自動保存の判定、保存先選択前の入力検証。`core/storage/planCommands.ts`が命令をSQLiteの更新処理へ接続し、計算用workerも直接利用します。
+- `Triadic-extension/src/extension/preparePlanCommand.ts`：更新命令から保存データと取り消し用の状態を準備します。`PlanSession.ts`が保存先選択・保存順序・保存後の公開を所有します。`planFile.ts`が外部変更を確認し、`triadicFile.ts`が実ファイルへの確定を行います。
+- `Triadic-extension/src/core/storage/prepareOrdinarySave.ts`：通常更新を専用接続で一度適用し、`commandComparison.ts`で対象施策・前年分類・関連マスタと順序の保存項目を比較します。改訂番号だけの更新は変更と扱わず、手修正の追加・解除と明示0は区別します。変更判定専用の計画全体の復元と画面側の文字列比較を行いません。
+- `Triadic-extension/src/extension/ExtensionPage.tsx`：ファイル操作の入口。`filePicker.ts`が保存先選択、`usePlanSession.ts`が保存済み状態の購読と5分の記録期限を担当します。時計の後退で期限前に記録処理が終わった場合も、最新の期限で予約し直します。
+- `Triadic-extension/src/extension/HomePage.tsx`：共通画面の接続。`useHomeWorkspace.tsx`が`extension/workspace/`の登録前入力・画面移動・過去閲覧・保存命令・操作取消を接続し、`WorkspacePage.tsx`が各画面を描画、`WorkspaceChrome.tsx`がヘッダーとサイドバーを表示します。`useScreenHistory.ts`が画面移動の履歴を保持します。
+- `Triadic-extension/src/extension/useFileEntry.ts`：ファイル選択・読込・前回参照を制御します。`EntryPage.tsx`は入口画面の表示を担当します。
+- `Triadic-extension/src/core/storage/prepareSave.ts`：通常・集計・種別選択の変更後に、取消用の状態、時点履歴、検証付き書き出しと表示用データの準備を共有します。通常入力の無変更時は表示用データを再取得せず元のbytesを返し、種別選択は既存の計算元を再利用します。
+- `Triadic-extension/src/core/tables/grid.ts`：表入力の選択範囲、金額の正規化、貼り付け文字列の解析。施策と前年入力の固有制約は各表の処理に置きます。
 - ExcelのZIP内容の検査に直接利用するJSZipは実行用依存として宣言します。版と配布内容は維持し、MITライセンスで利用します。
-- `Triadichrome-extension/src/extension/*Page.tsx`：施策・前年・三表・マスタ・履歴の画面。名称マスタは`NamedMasterPage.tsx`、手動保存の通知は`useMasterOperation.ts`、月別入力の選択・フォーカスは`useGridInteraction.ts`を共有します。
-- `Triadichrome-extension/src/extension/ExtensionPage.css`：`styles/`の基本設定・入口・フォーム・ナビゲーション・マスタ・集計図・表・編集部品を元の適用順で読み込みます。
-- `Triadichrome-extension/src/extension/main.tsx`と`background.ts`：Reactの起動と拡張機能アイコンの入口。
-- `Triadichrome-extension/manifest.template.json`：Manifestの正本。
+- `Triadic-extension/src/extension/*Page.tsx`：施策・前年・三表・マスタ・履歴の画面。名称マスタは`NamedMasterPage.tsx`、手動保存の通知は`useMasterOperation.ts`、月別入力の選択・フォーカスは`useGridInteraction.ts`を共有します。
+- `Triadic-extension/src/extension/ExtensionPage.css`：`styles/`の基本設定・入口・フォーム・ナビゲーション・マスタ・集計図・表・編集部品を元の適用順で読み込みます。
+- `Triadic-extension/src/extension/main.tsx`と`background.ts`：Reactの起動と拡張機能アイコンの入口。
+- `Triadic-extension/manifest.template.json`：Manifestの正本。
 - `scripts/build.mjs`：配布物の生成と同期。`node-bundle.mjs`は通常テストと確認用データ生成で使う一時bundle・Wasm解決を共有します。
-- `Triadichrome-extension/src/extension/home/`：関連図の定義とポインター・表示位置の操作。マスタのCSSは`styles/masters.css`、Excel共通書式は`core/spreadsheets/workbookLayout.ts`へ集約します。`core/storage/rebaseLayout.ts`は検証済みSQLiteの列名から外部更新の統合に使う列位置を取得します。
+- `Triadic-extension/src/extension/home/`：関連図の定義とポインター・表示位置の操作。マスタのCSSは`styles/masters.css`、Excel共通書式は`core/spreadsheets/workbookLayout.ts`へ集約します。`core/storage/rebaseLayout.ts`は検証済みSQLiteの列名から外部更新の統合に使う列位置を取得します。
 - `tests/core-api.ts`と`tests/sample-api.ts`：通常テストと確認用データ生成の明示的な入口。`tests/api/`で業務規則・SQLite・保存とファイル・描画・確認用データを分け、一つのテストbundleへ接続します。
 - `dist/`：読み込み用の`extension/`をGit管理し、リポジトリ取得後すぐに拡張機能を読み込めるようにします。配布ZIPはbuildでローカルに生成し、ビルドと検証の一時ファイルとともにGit管理から除外します。管理対象の成果物が変わる変更では、buildで更新して同じコミットに含めます。
 

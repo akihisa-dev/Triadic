@@ -1,16 +1,16 @@
 {
   "version": "32.9.0",
-  "capturedAt": "2026-10-25T03:58:12.953Z",
+  "capturedAt": "2026-10-25T06:55:41.360Z",
   "viewport": "1280x800",
   "source": "ローカルWeb表示・架空サンプル・Chrome",
   "images": {
     "images/icon-128.png": "65af1e59e70f0898ada436bd2169af8f54b1b4ae701feb7c03c42aecc46099ce",
-    "images/promo-small-440x280.png": "17653043d1ea06274f0f0ad91b892c7d081d195a7f308105b3e9e678aa4d4625",
-    "images/promo-marquee-1400x560.png": "793053586e4c534a1603ef81333ec1975def375447764f5cb74546afa5b5740a",
-    "screenshots/01-initiatives-1280x800.png": "ccde5835b068100619aa764ded7fac76742ab584ba83b979c1f266cb6b41df24",
-    "screenshots/02-initiative-1280x800.png": "d401483db8ef503b29d93ce022596e4d15bf376167c9a1eabcd27f36db685a84",
-    "screenshots/03-cost-1280x800.png": "e33c274fcf1ae880fdde94506e0f74f553fda7e2393de68a54687e411f62c172",
-    "screenshots/04-breakdown-1280x800.png": "6e8e70bc824b1c873d5467b099740f1837a23a4833294a55094c2382bd672a4c",
-    "screenshots/05-entry-1280x800.png": "b6fdd2b344267fcd81bd5dfe8955e831e7517a948364118619be7cbcf7c04428"
+    "images/promo-small-440x280.png": "e9ba7c079872c8977c34453b4f93c74e90d4cdb47114ebd421508707d9597d70",
+    "images/promo-marquee-1400x560.png": "0d65c1ae1e6edbd253cac533b65f495e9d7bb119abf8a0ad5eb6414f85898fbe",
+    "screenshots/01-initiatives-1280x800.png": "3ba81edb3730af7cf06a1722ee1088c9ef7364dccb312bc4edb0ff6785c85f14",
+    "screenshots/02-initiative-1280x800.png": "8fe71c3653a672e87d4cbd494eaf611b4f3c22589147d30659bb7f3e0a5e58ee",
+    "screenshots/03-cost-1280x800.png": "6e7d27c6283402b1b5ffbe5bf04df60a715f811afcd1e9a255cf5229151a51a1",
+    "screenshots/04-breakdown-1280x800.png": "f0fab00d8f0224c18bee9b30a2b771b5930abae712a29cfc8f68837cf7d92e2d",
+    "screenshots/05-entry-1280x800.png": "8ac86a7e017136848c8c9a07652fa7bfc1a6faf6043a47a2c8b9b12ccc5c542e"
   }
 }

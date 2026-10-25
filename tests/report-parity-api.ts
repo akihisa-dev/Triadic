@@ -1,11 +1,11 @@
 export * from './core-api';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { CostTablePage } from '../Triadichrome-extension/src/extension/CostTablePage';
-import { ExpansionTablePage } from '../Triadichrome-extension/src/extension/ExpansionTablePage';
-import { InitiativeListPage } from '../Triadichrome-extension/src/extension/InitiativeListPage';
-import type { PlanContents } from '../Triadichrome-extension/src/core/domain/plan';
-import type { KindId } from '../Triadichrome-extension/src/core/domain/kinds';
+import { CostTablePage } from '../Triadic-extension/src/extension/CostTablePage';
+import { ExpansionTablePage } from '../Triadic-extension/src/extension/ExpansionTablePage';
+import { InitiativeListPage } from '../Triadic-extension/src/extension/InitiativeListPage';
+import type { PlanContents } from '../Triadic-extension/src/core/domain/plan';
+import type { KindId } from '../Triadic-extension/src/core/domain/kinds';
 export function renderReportTables(contents: PlanContents, selected: KindId[], kind: KindId, costContents = contents) {
   return {
     総原価表: renderToStaticMarkup(createElement(CostTablePage, { contents: costContents, selected, selection: null, view: { current: { industries: [], departments: [], top: 0, left: 0 } }, navigationBlocked: false, onOpenInitiative() {} })),

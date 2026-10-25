@@ -2,6 +2,14 @@ import assert from "node:assert/strict";
 
 export async function verifyFileBoundaries(api) {
   const bytes = await api.createCurrentEmptyTestPlan(2026);
+  assert.equal(api.TRIADIC_MIME_TYPE, "application/vnd.triadic+sqlite");
+  const identity = await api.openTriadicDatabase(bytes);
+  assert.equal(identity.exec("SELECT value FROM triadic_metadata WHERE key = 'format_id'")[0].values[0][0], "triadic");
+  identity.run("UPDATE triadic_metadata SET value = 'triadichrome' WHERE key = 'format_id'");
+  const previousIdentity = identity.export(); identity.close();
+  const unchangedIdentity = previousIdentity.slice();
+  await assert.rejects(api.readPlanContents(previousIdentity), /形式が正しくありません/);
+  assert.deepEqual(previousIdentity, unchangedIdentity, "旧アプリ名の識別子を拒否しても元ファイルを変更しない");
   const validFile = new File([bytes], "確認.TRIADIC");
   assert.deepEqual(await api.readTriadicFile(validFile), bytes);
   let fullReads = 0;

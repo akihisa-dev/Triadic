@@ -6,8 +6,8 @@ import ts from "typescript";
 import { projectRoot } from "./paths.mjs";
 import { withNodeBundle } from "./node-bundle.mjs";
 
-const extension = "Triadichrome-extension/src/extension/";
-const schemaPath = "Triadichrome-extension/src/core/storage/dataMapSchema.generated.ts";
+const extension = "Triadic-extension/src/extension/";
+const schemaPath = "Triadic-extension/src/core/storage/dataMapSchema.generated.ts";
 const reviewPath = extension + "screenDataReview.json";
 const digest = text => createHash("sha256").update(text).digest("hex");
 const quote = identifier => '"' + identifier.replaceAll('"', '""') + '"';
@@ -105,7 +105,7 @@ export async function screenImplementations(read = readSource, resolve = resolve
   for (const item of cases) {
     const page = ts.isStringLiteral(item.expression) ? item.expression.text : null;
     if (!page || ["home", "master"].includes(page)) continue;
-    const seeds = new Set(["Triadichrome-extension/src/core/storage/readPlan.ts", extension + "useHomeWorkspace.tsx", extension + "ExtensionPage.tsx"]);
+    const seeds = new Set(["Triadic-extension/src/core/storage/readPlan.ts", extension + "useHomeWorkspace.tsx", extension + "ExtensionPage.tsx"]);
     const identifiers = node => {
       if (ts.isIdentifier(node) && renderer.imports.has(node.text)) seeds.add(renderer.imports.get(node.text));
       ts.forEachChild(node, identifiers);
@@ -141,7 +141,7 @@ export async function mechanismImplementations(topics, read = readSource, resolv
     const sources = new Map();
     const collect = async file => {
       if (sources.has(file) || file === extension + "mechanismModel.ts") return;
-      if (!file.startsWith("Triadichrome-extension/src/") || file.includes("..")) throw new Error(`実装参照が不正です: ${file}`);
+      if (!file.startsWith("Triadic-extension/src/") || file.includes("..")) throw new Error(`実装参照が不正です: ${file}`);
       const module = await moduleFor(file);
       sources.set(file, digest(module.text));
       for (const dependency of module.dependencies) await collect(dependency);
@@ -189,7 +189,7 @@ async function main(args) {
     return;
   }
   const implementations = await screenImplementations();
-  await withNodeBundle("Triadichrome-extension/src/extension/screenDataModel.ts", async ({ screenData }) => {
+  await withNodeBundle("Triadic-extension/src/extension/screenDataModel.ts", async ({ screenData }) => {
     let recorded = {};
     try { recorded = JSON.parse(await readFile(path.join(projectRoot, reviewPath), "utf8")); } catch { /* first review */ }
     if (review) {

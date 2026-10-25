@@ -7,7 +7,7 @@ for(const duringSave of [false,true])test(`前年の全セル入力と外部月�
     const picker=target.showOpenFilePicker.bind(target);
     Object.defineProperty(target,'showOpenFilePicker',{value:async()=>{
       const [handle]=await picker(),get=handle!.getFile.bind(handle),create=handle!.createWritable.bind(handle);
-      const path='/Triadichrome-extension/src/core/storage/';
+      const path='/Triadic-extension/src/core/storage/';
       const {readPlanContents}=await import(path+'readPlan.ts'),{savePreviousAmounts}=await import(path+'settings.ts');
       const base=new Uint8Array(await(await get()).arrayBuffer()),contents=await readPlanContents(base);
       const account=contents.accounts.find((item:{accountCode:string})=>item.accountCode==='401');

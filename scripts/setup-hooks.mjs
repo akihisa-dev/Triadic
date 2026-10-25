@@ -6,7 +6,7 @@ import { projectRoot } from "./paths.mjs";
 const options = { cwd: projectRoot, encoding: "utf8" };
 const gitRoot = execFileSync("git", ["rev-parse", "--show-toplevel"], options).trim();
 if (realpathSync(gitRoot) !== realpathSync(projectRoot)) {
-  throw new Error("TriadichromeのGitルートで実行してください。");
+  throw new Error("TriadicのGitルートで実行してください。");
 }
 const current = spawnSync("git", ["config", "--get", "core.hooksPath"], options);
 if (current.status !== 0 && current.status !== 1) throw new Error("Gitフック設定を確認できませんでした。");

@@ -224,7 +224,7 @@ test("配布用ビルドでも選択アイコンと編集枠が同じ青にな�
   const errors: string[] = [];
   production.on("pageerror", error => errors.push(error.message));
   try {
-    await production.goto("/Triadichrome-extension/index.html");
+    await production.goto("/Triadic-extension/index.html");
     await production.evaluate(installCloneableFiles, { bytes, name: "画面テスト.triadic" });
     await production.getByRole("button", { name: "ファイルを開く", exact: true }).click();
     await openInitiativeEntry(production);

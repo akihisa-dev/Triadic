@@ -1,9 +1,9 @@
 import { createExpenseOverflowPlan, createPreviousExpansionCancellationPlan, createCostInitiativeCancellationPlan, createCostCancellationPlan, createInitiativeOverflowPlan } from "./sample-plan";
-import { createTriadicDatabase } from "../../Triadichrome-extension/src/core/storage/triadicDatabase";
-import { readPlanContents } from "../../Triadichrome-extension/src/core/storage/readPlan";
-import { registerInitiative } from "../../Triadichrome-extension/src/core/storage/initiatives";
-import { saveKindSelection, savePreviousAmounts } from "../../Triadichrome-extension/src/core/storage/settings";
-import { createInitiativeDraft } from "../../Triadichrome-extension/src/core/domain/initiativeRules";
+import { createTriadicDatabase } from "../../Triadic-extension/src/core/storage/triadicDatabase";
+import { readPlanContents } from "../../Triadic-extension/src/core/storage/readPlan";
+import { registerInitiative } from "../../Triadic-extension/src/core/storage/initiatives";
+import { saveKindSelection, savePreviousAmounts } from "../../Triadic-extension/src/core/storage/settings";
+import { createInitiativeDraft } from "../../Triadic-extension/src/core/domain/initiativeRules";
 
 export type OverflowScenario = "expense-only" | "previous-cancellation" | "initiative-cancellation" | "monthly" | "period" | "previous" | "difference" | "normal" | "initiative" | "initiative-primary" | "previous-input" | "cancellation";
 

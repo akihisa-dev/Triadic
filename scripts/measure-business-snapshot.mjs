@@ -7,7 +7,7 @@ import os from "node:os";
 const directory = await mkdtemp(join(projectRoot, "dist", ".snapshot-measure-"));
 try {
   const entry = join(directory, "source.ts");
-  await writeFile(entry, `export * from ${JSON.stringify(join(projectRoot, "tests/core-api.ts"))}; export { initializeSqlite } from ${JSON.stringify(join(projectRoot, "Triadichrome-extension/src/core/storage/sqliteRuntime.ts"))};`);
+  await writeFile(entry, `export * from ${JSON.stringify(join(projectRoot, "tests/core-api.ts"))}; export { initializeSqlite } from ${JSON.stringify(join(projectRoot, "Triadic-extension/src/core/storage/sqliteRuntime.ts"))};`);
   await withNodeBundle(relative(projectRoot, entry), async api => {
     const sql = await api.initializeSqlite();
     const legacy = async source => {

@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { MeasuredTableBody } from '../../Triadichrome-extension/src/extension/MeasuredTableBody';
+import { MeasuredTableBody } from '../../Triadic-extension/src/extension/MeasuredTableBody';
 if (!import.meta.env.DEV) throw new Error('開発用の表示確認です。');
 const rows = Array.from({ length: 67320 }, (_, index) => ({ id: index, name: `確認行${index + 1}${index % 7 === 0 ? '・折り返して名称全体を表示する長い科目名'.repeat(3) : ''}` }));
 function Example() {

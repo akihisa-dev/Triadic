@@ -6,7 +6,7 @@ test('保存待ちで履歴と通常画面を連続指定しても最後の行�
   await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
   await app.getByRole('button', { name: 'サイドバーを開く', exact: true }).click();
   await app.locator('body').evaluate(async () => {
-    const path = '/Triadichrome-extension/src/extension/flushAutoSaves.ts';
+    const path = '/Triadic-extension/src/extension/flushAutoSaves.ts';
     const { registerAutoSave } = await import(path);
     let pending = true, release!: () => void;
     const gate = new Promise<void>(resolve => { release = resolve; });

@@ -66,29 +66,29 @@ import { createBusinessSample } from "./sample-business";
 // 多数の展開・非連続集計の数式長と引数上限は tests/report-workbook.mjs の合成計画で確認する。
 // 前年Excelの確認表の名称取得・改名・大量変更の走査量は tests/spreadsheet-io.mjs、取消・保存失敗は tests/ui/spreadsheet-io.spec.ts で確認する。
 // 出力条件は現在の所属・分類へ整合させる。所属追加・マスタ追加の取消とやり直しは tests/ui/spreadsheet-io.spec.ts で確認する。
-import { editDatabase } from "../../Triadichrome-extension/src/core/storage/transaction";
+import { editDatabase } from "../../Triadic-extension/src/core/storage/transaction";
 // 履歴の全選択・解除・日時入力・確認取消・削除失敗は tests/ui/data-history.spec.ts、1000/5000/10000件の選択走査量は tests/data-history.mjs で確認する。
-import { trackHistoryChange, recordDataHistory } from "../../Triadichrome-extension/src/core/storage/dataHistory";
-import { savePreviousAmounts } from "../../Triadichrome-extension/src/core/storage/settings";
-import { INITIAL_KINDS } from "../../Triadichrome-extension/src/core/domain/kinds";
-import { INITIAL_PERIOD_TYPES } from "../../Triadichrome-extension/src/core/storage/periodMasterSchema";
-import { INITIAL_DEPARTMENTS } from "../../Triadichrome-extension/src/core/storage/departmentSchema";
-import { INITIAL_INDUSTRIES } from "../../Triadichrome-extension/src/core/storage/industrySchema";
-import { INITIAL_EXPANSIONS } from "../../Triadichrome-extension/src/core/storage/expansionSchema";
-import { changeDepartmentMaster } from "../../Triadichrome-extension/src/core/storage/departmentMaster";
-import { changeIndustryMaster } from "../../Triadichrome-extension/src/core/storage/industryMaster";
-import { changeAccountMaster } from "../../Triadichrome-extension/src/core/storage/accountMaster";
-import { changeAggregationMaster } from "../../Triadichrome-extension/src/core/storage/aggregationMaster";
-import { createTriadicDatabase, openTriadicDatabase } from "../../Triadichrome-extension/src/core/storage/triadicDatabase";
-import { currentFiscalYear, initiativeMonths } from "../../Triadichrome-extension/src/core/domain/calendar";
-import { readPlanContents } from "../../Triadichrome-extension/src/core/storage/readPlan";
-import { createInitiativeDraft } from "../../Triadichrome-extension/src/core/domain/initiativeRules";
-import type { KindId } from "../../Triadichrome-extension/src/core/domain/kinds";
-import { registerInitiative, updateInitiative } from "../../Triadichrome-extension/src/core/storage/initiatives";
-import { type InitiativeEntryDraft, type InitiativeRow } from "../../Triadichrome-extension/src/core/domain/plan";
+import { trackHistoryChange, recordDataHistory } from "../../Triadic-extension/src/core/storage/dataHistory";
+import { savePreviousAmounts } from "../../Triadic-extension/src/core/storage/settings";
+import { INITIAL_KINDS } from "../../Triadic-extension/src/core/domain/kinds";
+import { INITIAL_PERIOD_TYPES } from "../../Triadic-extension/src/core/storage/periodMasterSchema";
+import { INITIAL_DEPARTMENTS } from "../../Triadic-extension/src/core/storage/departmentSchema";
+import { INITIAL_INDUSTRIES } from "../../Triadic-extension/src/core/storage/industrySchema";
+import { INITIAL_EXPANSIONS } from "../../Triadic-extension/src/core/storage/expansionSchema";
+import { changeDepartmentMaster } from "../../Triadic-extension/src/core/storage/departmentMaster";
+import { changeIndustryMaster } from "../../Triadic-extension/src/core/storage/industryMaster";
+import { changeAccountMaster } from "../../Triadic-extension/src/core/storage/accountMaster";
+import { changeAggregationMaster } from "../../Triadic-extension/src/core/storage/aggregationMaster";
+import { createTriadicDatabase, openTriadicDatabase } from "../../Triadic-extension/src/core/storage/triadicDatabase";
+import { currentFiscalYear, initiativeMonths } from "../../Triadic-extension/src/core/domain/calendar";
+import { readPlanContents } from "../../Triadic-extension/src/core/storage/readPlan";
+import { createInitiativeDraft } from "../../Triadic-extension/src/core/domain/initiativeRules";
+import type { KindId } from "../../Triadic-extension/src/core/domain/kinds";
+import { registerInitiative, updateInitiative } from "../../Triadic-extension/src/core/storage/initiatives";
+import { type InitiativeEntryDraft, type InitiativeRow } from "../../Triadic-extension/src/core/domain/plan";
 
-import { amountItems, amountItemComposition } from "../../Triadichrome-extension/src/core/domain/amountItems";
-import { accountTypes } from "../../Triadichrome-extension/src/core/domain/accountTypes";
+import { amountItems, amountItemComposition } from "../../Triadic-extension/src/core/domain/amountItems";
+import { accountTypes } from "../../Triadic-extension/src/core/domain/accountTypes";
 
 // All amount literals are in thousands of yen; 0.001 represents one yen.
 // Previous amounts span every industry/department pair; varying sales verify full totals and department/industry filters.

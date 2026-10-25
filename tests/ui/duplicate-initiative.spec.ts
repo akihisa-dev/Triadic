@@ -23,7 +23,7 @@ test("複製した全種別を調整して登録し、元の施策と独立し�
   await april.fill("120.001");
   await expect(app.getByRole("button", { name: "操作を取り消す", exact: true })).toBeDisabled();
   await settleMotion(app.locator("body"));
-  await page.screenshot({ path: `/tmp/triadichrome-duplicate-${info.project.name}.png` });
+  await page.screenshot({ path: `/tmp/triadic-duplicate-${info.project.name}.png` });
   await app.getByRole("button", { name: "登録", exact: true }).click();
   await expect(app.getByRole("button", { name: "既存商品の販売拡大（コピー）", exact: true })).toBeVisible();
   await app.getByRole("button", { name: "操作を取り消す", exact: true }).click();

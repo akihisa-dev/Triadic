@@ -1,8 +1,8 @@
 import { createRoot } from "react-dom/client";
-import { ExpansionTablePage } from "../../Triadichrome-extension/src/extension/ExpansionTablePage";
+import { ExpansionTablePage } from "../../Triadic-extension/src/extension/ExpansionTablePage";
 import { createSamplePlan } from "./sample-plan";
-import { readPlanContents } from "../../Triadichrome-extension/src/core/storage/readPlan";
-import "../../Triadichrome-extension/src/extension/ExtensionPage.css";
+import { readPlanContents } from "../../Triadic-extension/src/core/storage/readPlan";
+import "../../Triadic-extension/src/extension/ExtensionPage.css";
 
 const base = await readPlanContents(await createSamplePlan(2026));
 const params = new URLSearchParams(location.search);

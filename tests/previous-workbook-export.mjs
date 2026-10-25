@@ -35,7 +35,7 @@ export async function verifyPreviousWorkbookExport(api) {
       assert.deepEqual(await api.parsePreviousWorkbook(bytes, named), [], `分類名のXLSX往復: ${field} ${name}`);
       const wb = new ExcelJS.Workbook(); await wb.xlsx.load(bytes);
       const ws = wb.worksheets[0];
-      assert.equal(ws.name, wb.getWorksheet("_triadichrome").getCell("A3").value);
+      assert.equal(ws.name, wb.getWorksheet("_triadic").getCell("A3").value);
       assert.equal(ws.name, api.createPreviousWorkbook(named, pairs).worksheets[0].name, "読込でシート名が変わらない");
       // XML normalizes CR/CRLF to LF in cell text; literal entity strings stay literal.
       assert.equal(ws.getCell("A2").value, `${named.fiscalYear}年度 · ${named.industries[0].industryName} · ${named.departments[0].departmentName} · 単位：千円`.replace(/\r\n?/g, "\n"), "シート内の分類名は元の文字列を保持");
@@ -83,7 +83,7 @@ export async function verifyPreviousWorkbookExport(api) {
   const legacy = { ...plan, industries: plan.industries.map(({ identity, ...i }) => i), departments: plan.departments.map(({ identity, ...d }) => d) };
   await assert.rejects(api.createPreviousWorkbookBytes(legacy, pairs.slice(0, 1)), /作成識別子/);
   const oldWorkbook = new ExcelJS.Workbook(); await oldWorkbook.xlsx.load(output);
-  const oldMeta = oldWorkbook.getWorksheet("_triadichrome");
+  const oldMeta = oldWorkbook.getWorksheet("_triadic");
   for (let row = 3; row <= oldMeta.rowCount; row++) { oldMeta.getCell(row,19).value = "legacy"; oldMeta.getCell(row,20).value = "legacy"; }
   const oldBytes = await api.serializeWorkbook(oldWorkbook); const oldBefore = oldBytes.slice();
   await assert.rejects(api.parsePreviousWorkbook(oldBytes,plan), /作り直|識別子/);

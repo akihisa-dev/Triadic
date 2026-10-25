@@ -28,7 +28,7 @@ test('新規科目と新規集計を右側にプールし、掴んで所属さ�
     return { tableRight: table.right, poolLeft: node.getBoundingClientRect().left };
   });
   expect(placement.poolLeft).toBeGreaterThan(placement.tableRight);
-  if (testInfo.project.name === 'desktop') await page.screenshot({ path: '/private/tmp/triadichrome-aggregation-pool.png' });
+  if (testInfo.project.name === 'desktop') await page.screenshot({ path: '/private/tmp/triadic-aggregation-pool.png' });
 
   // Cancelling a drag must keep the new item in the pool and leave the table untouched.
   await pool.getByRole('button', { name: '追加した科目を移動', exact: true }).click();

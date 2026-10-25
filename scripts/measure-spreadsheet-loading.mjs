@@ -10,7 +10,7 @@ const trials=[];
 try {for(let i=0;i<5;i++) {
  const context=await browser.newContext({viewport:{width:1280,height:864},locale:'ja-JP'}),page=await context.newPage(),requests=[],errors=[];
  page.on('request',request=>{if(request.resourceType()==='script')requests.push(request.url());});page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
- const start=performance.now();await page.goto('http://127.0.0.1:4173/Triadichrome-extension/index.html');await page.getByRole('button',{name:'ファイルを開く',exact:true}).waitFor();const entry=performance.now()-start;
+ const start=performance.now();await page.goto('http://127.0.0.1:4173/Triadic-extension/index.html');await page.getByRole('button',{name:'ファイルを開く',exact:true}).waitFor();const entry=performance.now()-start;
  await page.evaluate(installMemoryFiles,{bytes,scenario:'normal'});
  const open=performance.now();await page.getByRole('button',{name:'ファイルを開く',exact:true}).click();await page.getByRole('heading',{name:'Home',exact:true}).waitFor();const home=performance.now()-open;
  const initialRequests=[...requests];

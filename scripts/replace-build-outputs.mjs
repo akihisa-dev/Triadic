@@ -8,7 +8,7 @@ export async function replaceBuildOutputs(entries, { io = fs, validatePrepared, 
   try {
     for (const entry of entries) {
       await io.mkdir(path.dirname(entry.target), { recursive: true });
-      const temporary = await io.mkdtemp(path.join(path.dirname(entry.target), ".triadichrome-replace-"));
+      const temporary = await io.mkdtemp(path.join(path.dirname(entry.target), ".triadic-replace-"));
       const record = { ...entry, temporary, next: path.join(temporary, "next"), backup: path.join(temporary, "previous"), backedUp: false, installed: false };
       prepared.push(record);
       if (entry.source) await io.cp(entry.source, record.next, { recursive: true });

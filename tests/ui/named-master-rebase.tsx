@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
-import { NamedMasterPage, type NamedMasterRow } from "../../Triadichrome-extension/src/extension/NamedMasterPage";
-import { SavedOperationRevisionContext } from "../../Triadichrome-extension/src/extension/SavedOperationRevision";
-import "../../Triadichrome-extension/src/extension/ExtensionPage.css";
+import { NamedMasterPage, type NamedMasterRow } from "../../Triadic-extension/src/extension/NamedMasterPage";
+import { SavedOperationRevisionContext } from "../../Triadic-extension/src/extension/SavedOperationRevision";
+import "../../Triadic-extension/src/extension/ExtensionPage.css";
 if (!import.meta.env.DEV) throw new Error("確認専用画面です。");
 function Preview() {
   const [rows, setRows] = useState<NamedMasterRow[]>([{id:1,name:"同期確認",code:"99",relationIds:[1]}]);

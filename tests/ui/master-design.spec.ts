@@ -30,7 +30,7 @@ test("全マスタを共通の表で表示し、登録欄と一覧のスクロ�
     await region.evaluate(node => { node.scrollTop = node.scrollHeight; });
     expect((await header.boundingBox())!.y).toBeCloseTo(top, 0);
     await region.evaluate(node => { node.scrollTop = 0; node.scrollLeft = 0; });
-    if ([0, 1, 4].includes(index)) await page.screenshot({ path: join(tmpdir(), `triadichrome-master-${index}-${testInfo.project.name}.png`) });
+    if ([0, 1, 4].includes(index)) await page.screenshot({ path: join(tmpdir(), `triadic-master-${index}-${testInfo.project.name}.png`) });
 
   }
 });

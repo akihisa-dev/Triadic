@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { ExtensionPage } from "../../Triadichrome-extension/src/extension/ExtensionPage";
+import { ExtensionPage } from "../../Triadic-extension/src/extension/ExtensionPage";
 import { createSamplePlan } from "./sample-plan";
 import { installCloneableFiles } from "./cloneable-files";
 

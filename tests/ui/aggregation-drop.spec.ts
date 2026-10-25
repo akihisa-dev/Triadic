@@ -73,7 +73,7 @@ test('マウスで開いた行間にドロップでき、移動先を示す仮�
   await page.mouse.move(bounds.x + 30, bounds.y + bounds.height / 2, { steps: 4 });
   await expect(slot).toBeVisible();
   expect(await rows.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-row')))).toEqual(order);
-  if (testInfo.project.name === 'desktop') await page.screenshot({ path: '/private/tmp/triadichrome-lifted-row.png' });
+  if (testInfo.project.name === 'desktop') await page.screenshot({ path: '/private/tmp/triadic-lifted-row.png' });
   await page.mouse.up();
   await expect(slot).toHaveCount(0);
   await expect(handle).toBeEnabled();
@@ -150,7 +150,7 @@ test('所属変更だけが所属先のL字・縦書き名・集計行を一体�
   await expect(target.getByRole('rowheader')).toHaveCSS('color', color);
   expect(await memberSlot.locator('td').last().evaluate(node => getComputedStyle(node).backgroundColor)).not.toBe(orderColor);
   expect(await rows.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-row')))).toEqual(original);
-  if (testInfo.project.name === 'desktop') await page.screenshot({ path: '/private/tmp/triadichrome-membership-intent-final.png' });
+  if (testInfo.project.name === 'desktop') await page.screenshot({ path: '/private/tmp/triadic-membership-intent-final.png' });
 
   await preview(app, '店内売上高', false);
   await expect(app.locator('.aggregation-trays path.is-highlighted')).toHaveCount(0);
@@ -262,7 +262,7 @@ test('集計を掴むと配下の子集計・科目も浮き、行順だけの�
   expect(await slot.evaluate(node => node.getBoundingClientRect().height)).toBe(217);
   await expect(slot).toContainText('行順のみ');
   expect(await rows.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-row')))).toEqual(original);
-  if (testInfo.project.name === 'desktop') await page.screenshot({ path: '/private/tmp/triadichrome-group-block.png' });
+  if (testInfo.project.name === 'desktop') await page.screenshot({ path: '/private/tmp/triadic-group-block.png' });
   await page.mouse.up();
   await expect(block).toHaveCount(0);
   await expect(app.locator('.aggregation-drop-slot')).toHaveCount(0);

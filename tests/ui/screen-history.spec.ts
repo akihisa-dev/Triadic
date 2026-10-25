@@ -48,7 +48,7 @@ test("別々の施策詳細と戻り先を復元し、保存失敗中には移�
   await page.goto("/tests/ui/preview.html?data=full");
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await page.getByLabel("ファイル操作", { exact: true }).selectOption("save-failure");
-  await expect(app.getByRole("heading", { name: "Triadichrome", exact: true })).toBeVisible();
+  await expect(app.getByRole("heading", { name: "Triadic", exact: true })).toBeVisible();
   await settleMotion(app.locator("body"));
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("button", { name: "サイドバーを開く", exact: true }).click();

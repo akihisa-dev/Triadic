@@ -9,7 +9,7 @@ for (const source of ['selection', 'master', 'retry']) test(`未登録施策を�
     Object.defineProperty(target, 'showOpenFilePicker', { value: async () => {
       const [handle] = await picker();
       const get = handle!.getFile.bind(handle), create = handle!.createWritable.bind(handle);
-      const path = '/Triadichrome-extension/src/core/storage/';
+      const path = '/Triadic-extension/src/core/storage/';
       const { changeDepartmentMaster } = await import(path + 'departmentMaster.ts');
       let external = new Uint8Array(await (await get()).arrayBuffer());
       external = await changeDepartmentMaster(external, { type: 'delete', id: 2 });
@@ -83,7 +83,7 @@ for (const replacement of ['account', 'industry']) test(`外部${replacement}変
     Object.defineProperty(target, 'showOpenFilePicker', { value: async () => {
       const [handle] = await picker();
       const get = handle!.getFile.bind(handle), create = handle!.createWritable.bind(handle);
-      const path = '/Triadichrome-extension/src/core/storage/';
+      const path = '/Triadic-extension/src/core/storage/';
       let external = new Uint8Array(await (await get()).arrayBuffer());
       const { readPlanContents } = await import(path + 'readPlan.ts');
       const contents = await readPlanContents(external);

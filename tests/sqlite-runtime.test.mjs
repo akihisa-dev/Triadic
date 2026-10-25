@@ -11,21 +11,21 @@ import { build } from "esbuild";
 
 test("計画処理workerは画面と実ファイル保存へ依存しない", async () => {
   const result = await build({
-    entryPoints: ["Triadichrome-extension/src/extension/planProcessing.worker.ts"],
+    entryPoints: ["Triadic-extension/src/extension/planProcessing.worker.ts"],
     bundle: true, write: false, metafile: true, format: "esm", platform: "browser",
     packages: "external", external: ["*.wasm?url"],
   });
   const inputs = Object.keys(result.metafile.inputs);
   const adapters = inputs.filter(file => file.includes("/extension/"));
   assert.deepEqual(adapters.sort(), [
-    "Triadichrome-extension/src/extension/planProcessing.worker.ts",
-    "Triadichrome-extension/src/extension/planProcessingTasks.ts",
+    "Triadic-extension/src/extension/planProcessing.worker.ts",
+    "Triadic-extension/src/extension/planProcessingTasks.ts",
   ]);
-  assert.ok(inputs.includes("Triadichrome-extension/src/core/storage/planCommands.ts"));
+  assert.ok(inputs.includes("Triadic-extension/src/core/storage/planCommands.ts"));
 });
 
 test("同梱本体の版・配布WASMと検索・複数文・保存メモリの境界を確認する", async () => {
-  await withNodeBundle("Triadichrome-extension/src/core/storage/sqliteRuntime.ts", async ({ initializeSqlite }) => {
+  await withNodeBundle("Triadic-extension/src/core/storage/sqliteRuntime.ts", async ({ initializeSqlite }) => {
     const SQL = await initializeSqlite();
     assert.equal(SQL.version, "3.53.4");
     const db = new SQL.Database();
@@ -58,18 +58,18 @@ test("同梱本体の版・配布WASMと検索・複数文・保存メモリの�
       } finally { copy.close(); }
     } finally { db.close(); db.close(); }
   });
-  const assets = await readdir("Triadichrome-extension/assets");
+  const assets = await readdir("Triadic-extension/assets");
   const wasm = assets.filter(name => /^sqlite3-.*\.wasm$/.test(name));
   assert.equal(wasm.length, 1);
-  const distribution = await sqlite3InitModule({ locateFile: () => path.resolve("Triadichrome-extension/assets/" + wasm[0]) });
+  const distribution = await sqlite3InitModule({ locateFile: () => path.resolve("Triadic-extension/assets/" + wasm[0]) });
   const distributionDb = new distribution.oo1.DB(":memory:", "c");
   try { assert.equal(distributionDb.selectValue("SELECT sqlite_version()"), "3.53.4"); }
   finally { distributionDb.close(); }
   assert.ok(!assets.some(name => /sql-wasm/.test(name)), "旧本体を配布しない");
   const sha = bytes => createHash("sha256").update(bytes).digest("hex");
-  assert.equal(sha(await readFile("Triadichrome-extension/assets/" + wasm[0])),
+  assert.equal(sha(await readFile("Triadic-extension/assets/" + wasm[0])),
     sha(await readFile("node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm")));
-  const notices = await readFile("Triadichrome-extension/assets/sqlite-wasm-LICENSE.txt", "utf8");
+  const notices = await readFile("Triadic-extension/assets/sqlite-wasm-LICENSE.txt", "utf8");
   assert.ok(notices.includes("LICENSE for the sqlite3"));
   assert.ok(notices.includes('SQLITE_VERSION "3.53.4"'));
   assert.ok(notices.includes("Apache License"));
@@ -97,7 +97,7 @@ async function withInitializationFault({ failures = 0, schema = false }, operati
   const temporary = await mkdtemp(path.resolve('dist/.initialization-retry-'));
   try {
     const bundle = path.join(temporary,'entry.mjs');
-    await build({stdin:{contents:`export * from './tests/core-api.ts'; export { initializationAttempts } from './Triadichrome-extension/src/core/storage/sqliteRuntime.ts';`,resolveDir:process.cwd(),loader:'ts'},outfile:bundle,bundle:true,format:'esm',platform:'node',packages:'external',loader:{'.css':'empty'},plugins:[{
+    await build({stdin:{contents:`export * from './tests/core-api.ts'; export { initializationAttempts } from './Triadic-extension/src/core/storage/sqliteRuntime.ts';`,resolveDir:process.cwd(),loader:'ts'},outfile:bundle,bundle:true,format:'esm',platform:'node',packages:'external',loader:{'.css':'empty'},plugins:[{
       name:'initialization-fault',setup(api) {
         api.onResolve({filter:/\.wasm\?url$/},()=>({path:'wasm',namespace:'fault-wasm'}));
         api.onLoad({filter:/.*/,namespace:'fault-wasm'},()=>({contents:`export default ${JSON.stringify(path.resolve('node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'))}`,loader:'js'}));

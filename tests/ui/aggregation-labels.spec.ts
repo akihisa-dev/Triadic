@@ -40,7 +40,7 @@ test('L字に収まらない縦書き名だけを隠し、横書きの行名と�
   await expect(vertical).toBeHidden();
   expect(await state()).toEqual(before);
   await expect(pool.locator('tr[data-pool-row]')).toHaveCount(0);
-  if (testInfo.project.name === 'desktop') await page.screenshot({ path: '/private/tmp/triadichrome-short-label.png' });
+  if (testInfo.project.name === 'desktop') await page.screenshot({ path: '/private/tmp/triadic-short-label.png' });
   await move('管理可能費小計', name);
   await group.scrollIntoViewIfNeeded();
   await expect(vertical).toBeVisible();

@@ -141,7 +141,7 @@ test("別名保存で全画面の保存先を切り替え、閉じるはその�
   await expect(page.getByRole("textbox", { name: "備考", exact: true })).toHaveValue("別名保存直前の編集");
   await page.getByRole("button", { name: "閉じる", exact: true }).click();
   await page.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Triadichrome", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Triadic", exact: true })).toBeVisible();
   await copy.getByRole("textbox", { name: "施策名", exact: true }).fill("残った画面で編集");
   await navigate(copy, "施策一覧");
   await expect(copy.getByRole("button", { name: "残った画面で編集", exact: true })).toBeVisible();

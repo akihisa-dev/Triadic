@@ -45,9 +45,9 @@ if (process.argv.includes("--check")) {
     const errors = [];
     page.on("pageerror", error => errors.push(error.message));
     page.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
-    await page.goto(process.env.TRIADICHROME_CAPTURE_URL ?? "http://127.0.0.1:4187/");
+    await page.goto(process.env.TRIADIC_CAPTURE_URL ?? "http://127.0.0.1:4187/");
     await page.getByRole("button", { name: "新規作成", exact: true }).waitFor();
-    assert.equal(await page.title(), "Triadichrome");
+    assert.equal(await page.title(), "Triadic");
     await page.getByLabel(`バージョン ${version}`, { exact: true }).waitFor();
 
     async function capture(name) {

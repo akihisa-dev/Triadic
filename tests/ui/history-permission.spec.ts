@@ -40,5 +40,5 @@ for (const mode of ["確認内", "取消後"]) test(`履歴削除の許可失効
   await expect(dialog).not.toBeVisible();
   await expect(entries).toHaveCount(2);
   await expect(page.getByRole("alert")).toHaveCount(0);
-  await page.screenshot({ path: `/tmp/triadichrome-history-permission-${mode}.png` });
+  await page.screenshot({ path: `/tmp/triadic-history-permission-${mode}.png` });
 });

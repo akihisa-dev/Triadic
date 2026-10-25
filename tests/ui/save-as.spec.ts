@@ -14,7 +14,7 @@ test("別名保存後も同じ画面と操作取消を保ち、新しいファ�
   await expect(app.getByRole("heading", { name: "総原価表", exact: true })).toBeVisible();
   await expect(app.getByRole("spinbutton", { name: "比較対象1", exact: true })).toContainText("確定予算");
   await expect(app.getByText("別名で保存しました。", { exact: true })).toBeVisible();
-  await page.screenshot({ path: `/tmp/triadichrome-save-as-${testInfo.project.name}.png` });
+  await page.screenshot({ path: `/tmp/triadic-save-as-${testInfo.project.name}.png` });
   const undo = app.getByRole("button", { name: "操作を取り消す", exact: true });
   await expect(undo).toBeEnabled();
   await undo.click();

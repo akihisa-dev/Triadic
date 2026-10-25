@@ -11,8 +11,8 @@ import { projectRoot } from "../scripts/paths.mjs";
 const versionFiles = [
   "package.json",
   "package-lock.json",
-  "Triadichrome-extension/manifest.template.json",
-  "Triadichrome-extension/manifest.json",
+  "Triadic-extension/manifest.template.json",
+  "Triadic-extension/manifest.json",
   "dist/extension/manifest.json",
 ];
 
@@ -32,7 +32,7 @@ test("三表照合の入口はWindows・POSIXで直接実行だけを検証し�
     });
     assert.equal(calls, argument === filename ? 1 : 0);
   }
-  const root = await realpath(await mkdtemp(path.join(tmpdir(), "triadichrome-parity-entry-")));
+  const root = await realpath(await mkdtemp(path.join(tmpdir(), "triadic-parity-entry-")));
   t.after(() => rm(root, { recursive: true, force: true }));
   const fixture = path.join(root, "report-parity.mjs");
   await writeFile(fixture, `import path from 'node:path';\nimport { fileURLToPath } from 'node:url';\nconst verifyReportParity = () => { throw new Error('照合不一致'); };\nconst withNodeBundle = async (_, operation) => operation();\n${entry}\n`);
@@ -44,7 +44,7 @@ test("三表照合の入口はWindows・POSIXで直接実行だけを検証し�
 });
 
 async function repository(t) {
-  const root = await mkdtemp(path.join(tmpdir(), "triadichrome-workflow-"));
+  const root = await mkdtemp(path.join(tmpdir(), "triadic-workflow-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const env = { ...process.env };
   for (const name of Object.keys(env)) if (name.startsWith("GIT_")) delete env[name];
@@ -177,10 +177,10 @@ test("pre-pushはブラウザ不要の検証を呼び出し、成功・失敗を
   const bin = path.join(repo.root, "test-bin");
   await mkdir(bin);
   const log = path.join(repo.root, "verify-arguments.txt");
-  await writeFile(path.join(bin, "npm"), '#!/bin/sh\nprintf "%s\\n" "$@" > "$TRIADICHROME_HOOK_TEST_LOG"\nexit "$TRIADICHROME_HOOK_TEST_EXIT"\n', { mode: 0o755 });
+  await writeFile(path.join(bin, "npm"), '#!/bin/sh\nprintf "%s\\n" "$@" > "$TRIADIC_HOOK_TEST_LOG"\nexit "$TRIADIC_HOOK_TEST_EXIT"\n', { mode: 0o755 });
   for (const exitCode of [0, 7]) {
     const result = repo.run("sh", [".githooks/pre-push"], {
-      env: { PATH: `${bin}${path.delimiter}${process.env.PATH}`, TRIADICHROME_HOOK_TEST_LOG: log, TRIADICHROME_HOOK_TEST_EXIT: String(exitCode) },
+      env: { PATH: `${bin}${path.delimiter}${process.env.PATH}`, TRIADIC_HOOK_TEST_LOG: log, TRIADIC_HOOK_TEST_EXIT: String(exitCode) },
     });
     assert.equal(result.status, exitCode);
     assert.equal(await readFile(log, "utf8"), "run\nverify\n");
@@ -202,8 +202,8 @@ test("distの拡張機能を通常追加でき、配布ZIPと一時ファイル�
   const repo = await repository(t);
   await cp(path.join(projectRoot, ".gitignore"), path.join(repo.root, ".gitignore"));
   const artifacts = ["dist/extension/manifest.json", "dist/extension/assets/app.js", "dist/extension/src/extension/background.js"];
-  const archives = ["dist/Triadichrome-1.1.0.zip", "dist/Triadichrome-1.2.0.zip", "dist/Triadichrome-2.0.0.zip"];
-  const temporaryFiles = ["dist/.triadichrome-build-test/index.html", "dist/.node-bundle-test/bundle.js", "dist/home-commit-base.txt"];
+  const archives = ["dist/Triadic-1.1.0.zip", "dist/Triadic-1.2.0.zip", "dist/Triadic-2.0.0.zip"];
+  const temporaryFiles = ["dist/.triadic-build-test/index.html", "dist/.node-bundle-test/bundle.js", "dist/home-commit-base.txt"];
   for (const file of [...artifacts, ...archives, ...temporaryFiles]) {
     await mkdir(path.dirname(path.join(repo.root, file)), { recursive: true });
     await writeFile(path.join(repo.root, file), "fixture");
@@ -263,7 +263,7 @@ test("計画ファイルは大小文字とGit設定に依存せず除外し強�
 test("配布ZIPは読み込み用フォルダと一致し、ソースや確認用データを含めない", async () => {
   const { default: JSZip } = await import("jszip");
   const { version } = JSON.parse(await readFile(path.join(projectRoot, "package.json"), "utf8"));
-  const zip = await JSZip.loadAsync(await readFile(path.join(projectRoot, "dist", `Triadichrome-${version}.zip`)), { checkCRC32: true });
+  const zip = await JSZip.loadAsync(await readFile(path.join(projectRoot, "dist", `Triadic-${version}.zip`)), { checkCRC32: true });
   const { readdir } = await import("node:fs/promises");
   async function files(root, prefix = "") {
     const result = [];
@@ -284,7 +284,7 @@ test("配布ZIPは読み込み用フォルダと一致し、ソースや確認�
     assert.ok(!/\.(?:ts|tsx|map|triadic)$/i.test(name), name);
     const bytes = await zip.files[name].async("nodebuffer");
     assert.deepEqual(bytes, await readFile(path.join(root, name)), name);
-    assert.deepEqual(bytes, await readFile(path.join(projectRoot, "Triadichrome-extension", name)), name);
+    assert.deepEqual(bytes, await readFile(path.join(projectRoot, "Triadic-extension", name)), name);
   }
   const manifest = JSON.parse(await zip.file("manifest.json").async("string"));
   assert.equal(manifest.version, version);
@@ -296,7 +296,7 @@ test("配布物のコピー・ZIP書込み・切替失敗では旧版へ復元�
   const fs = await import("node:fs/promises");
   const { replaceBuildOutputs } = await import("../scripts/replace-build-outputs.mjs");
   for (const mode of ["copy", "write", "switch", "validate", "success"]) {
-    const root = await mkdtemp(path.join(tmpdir(), "triadichrome-build-rollback-"));
+    const root = await mkdtemp(path.join(tmpdir(), "triadic-build-rollback-"));
     t.after(() => rm(root, { recursive: true, force: true }));
     const old = path.join(root, "extension"), next = path.join(root, "staging");
     for (const [directory, version] of [[old, "old"], [next, "new"]]) {
@@ -336,15 +336,15 @@ test("配布物のコピー・ZIP書込み・切替失敗では旧版へ復元�
     assert.equal(await readFile(archive, "utf8"), `${version} zip`);
     for (const [name, expected] of [["source.ts", "source unchanged"], ["test.triadic", "data unchanged"], ["older.zip", "older zip"]])
       assert.equal(await readFile(path.join(root, name), "utf8"), expected);
-    assert.ok(!(await fs.readdir(root)).some(name => name.startsWith(".triadichrome-replace-")));
-    assert.ok(!(await fs.readdir(old)).some(name => name.startsWith(".triadichrome-replace-")));
+    assert.ok(!(await fs.readdir(root)).some(name => name.startsWith(".triadic-replace-")));
+    assert.ok(!(await fs.readdir(old)).some(name => name.startsWith(".triadic-replace-")));
   }
 });
 
 test("配布物の復元も失敗した場合は旧版の退避先を残す", async t => {
   const fs = await import("node:fs/promises");
   const { replaceBuildOutputs } = await import("../scripts/replace-build-outputs.mjs");
-  const root = await mkdtemp(path.join(tmpdir(), "triadichrome-backup-retained-"));
+  const root = await mkdtemp(path.join(tmpdir(), "triadic-backup-retained-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const target = path.join(root, "current.zip"); await writeFile(target, "old zip");
   const io = { ...fs, rename: async (source, destination) => {
@@ -352,14 +352,14 @@ test("配布物の復元も失敗した場合は旧版の退避先を残す", as
     await fs.rename(source, destination);
   } };
   await assert.rejects(replaceBuildOutputs([{ target, bytes: Buffer.from("new zip") }], { io }), /退避先/);
-  const backup = (await fs.readdir(root)).find(name => name.startsWith(".triadichrome-replace-"));
+  const backup = (await fs.readdir(root)).find(name => name.startsWith(".triadic-replace-"));
   assert.equal(await readFile(path.join(root, backup, "previous"), "utf8"), "old zip");
 });
 
 
 test("再生成した両配布物と送信コミットの一致を確認し、漏れを表示する", async t => {
   const repo = await repository(t);
-  const outputs = ["Triadichrome-extension/assets/app.js", "dist/extension/assets/app.js"];
+  const outputs = ["Triadic-extension/assets/app.js", "dist/extension/assets/app.js"];
   for (const file of outputs) { await mkdir(path.dirname(path.join(repo.root, file)), { recursive: true }); await writeFile(path.join(repo.root, file), "old"); }
   await writeFile(path.join(repo.root, "source.ts"), "old");
   repo.git("add", "--", ...outputs, "source.ts"); repo.git("commit", "--quiet", "-m", "Build fixture");
@@ -390,15 +390,15 @@ test("再生成した両配布物と送信コミットの一致を確認し、�
 
 test("ストア原稿の名前・説明・ポリシーURLの不一致と欠落を拒否する", async t => {
   const { checkStoreListingText } = await import('../scripts/store-listing-text.mjs');
-  const root = await mkdtemp(path.join(tmpdir(), 'triadichrome-listing-text-'));
+  const root = await mkdtemp(path.join(tmpdir(), 'triadic-listing-text-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const directory = path.join(root, 'store-listing');
   await cp(path.join(projectRoot, 'store-listing'), directory, { recursive: true });
-  await mkdir(path.join(root, 'Triadichrome-extension'));
-  await cp(path.join(projectRoot, 'Triadichrome-extension/manifest.template.json'), path.join(root, 'Triadichrome-extension/manifest.template.json'));
+  await mkdir(path.join(root, 'Triadic-extension'));
+  await cp(path.join(projectRoot, 'Triadic-extension/manifest.template.json'), path.join(root, 'Triadic-extension/manifest.template.json'));
   await checkStoreListingText(root);
   for (const [name, change] of [
-    ['listing-ja.txt', text => text.replace('【名前】\nTriadichrome', '【名前】\n別の名前')],
+    ['listing-ja.txt', text => text.replace('【名前】\nTriadic', '【名前】\n別の名前')],
     ['listing-ja.txt', text => text.replace('【短い説明】\n', '【短い説明】\n不一致')],
     ['privacy-policy-url.txt', () => 'https://example.invalid/other'],
     ['privacy-practices.md', text => text.replaceAll('https://gist.github.com/', 'https://example.invalid/')],

@@ -10,7 +10,7 @@ import {
   projectRoot,
 } from "./paths.mjs";
 
-const buildOutputEnvironment = "TRIADICHROME_BUILD_OUTPUT";
+const buildOutputEnvironment = "TRIADIC_BUILD_OUTPUT";
 const packageJsonPath = path.join(projectRoot, "package.json");
 const iconSourceRoot = path.join(projectRoot, "branding", "icons");
 const iconSizes = [16, 32, 48, 128];
@@ -145,7 +145,7 @@ async function verifyBuild(buildRoot, manifest, checkSourceLeakage = true) {
 
 await fs.mkdir(buildStagingParent, { recursive: true });
 const stagingRoot = await fs.mkdtemp(
-  path.join(buildStagingParent, ".triadichrome-build-"),
+  path.join(buildStagingParent, ".triadic-build-"),
 );
 
 
@@ -198,7 +198,7 @@ try {
     zip.file(relativePath, await fs.readFile(file), { date: new Date("1980-01-01T00:00:00Z") });
   }
   const zipBytes = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
-  const archivePath = path.join(buildStagingParent, `Triadichrome-${packageJson.version}.zip`);
+  const archivePath = path.join(buildStagingParent, `Triadic-${packageJson.version}.zip`);
   await JSZip.loadAsync(zipBytes, { checkCRC32: true });
   const outputRoot = path.join(buildStagingParent, "extension");
   const generatedPaths = ["manifest.json", "index.html", "assets", "icons", "src/extension/background.js"];

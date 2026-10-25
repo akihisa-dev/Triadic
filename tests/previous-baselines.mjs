@@ -43,7 +43,7 @@ export async function verifyPreviousBaselines(api, { excel = false } = {}) {
       assert.equal(new Set(payloadSizes).size, 1, '施策数にかかわらず同じ最小データを転送');
     } finally { if (savedWorker === undefined) delete globalThis.Worker; else globalThis.Worker = savedWorker; }
     const wb = api.createPreviousWorkbook(contents, [pair], 2);
-    const ws = wb.worksheets.find(sheet => sheet.name !== '_triadichrome');
+    const ws = wb.worksheets.find(sheet => sheet.name !== '_triadic');
     assert.equal(ws.getCell('A1').value, '前年実績');
     ws.getCell(4 + contents.accounts.findIndex(item => item.id === accountId), 3).value = 111;
     const patches = api.readPreviousWorkbook(wb, contents);
@@ -58,7 +58,7 @@ export async function verifyPreviousBaselines(api, { excel = false } = {}) {
     assert.deepEqual(await api.parsePreviousWorkbook(await api.createPreviousWorkbookBytes(updated, [pair], 2), updated), [], '保存後の再出力には差分がない');
     assert.equal(api.createPreviousInput(updated, pair.industryId, pair.departmentId, 1).rows.find(item => item.accountId === accountId).amounts[4], '100');
     assert.equal(api.createPreviousInput(updated, pair.industryId, pair.departmentId, 2).rows.find(item => item.accountId === accountId).amounts[4], '111');
-    wb.getWorksheet('_triadichrome').getCell('A1').value = 'Triadichrome previous v2';
+    wb.getWorksheet('_triadic').getCell('A1').value = 'Triadic previous v2';
     assert.throws(() => api.readPreviousWorkbook(wb, contents), /出力し直/);
     const report = api.createReportWorkbook(contents, { tables: ['cost-table', 'expansion-table'],
       selections: { 'cost-table': [1, 2], 'expansion-table': [1, 2], 'initiative-list': [1] },

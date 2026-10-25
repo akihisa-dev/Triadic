@@ -95,7 +95,7 @@ export async function verifyInitiativeData(api, root) {
   assert.equal(draft.rows[0].amounts[4], "100");
   assert.equal((await readPlanContents(bytes)).initiatives.length, 0);
 
-  const sql = await withNodeBundle("Triadichrome-extension/src/core/storage/sqliteRuntime.ts", ({ initializeSqlite }) => initializeSqlite());
+  const sql = await withNodeBundle("Triadic-extension/src/core/storage/sqliteRuntime.ts", ({ initializeSqlite }) => initializeSqlite());
   const legacy = new sql.Database();
   legacy.exec(await readFile(join(root, "tests/fixtures/triadic-v1.sql"), "utf8"));
   legacy.exec(`INSERT INTO budgets (id, created_at, updated_at) VALUES (1, 'old', 'old');

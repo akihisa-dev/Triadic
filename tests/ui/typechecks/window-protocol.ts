@@ -1,5 +1,5 @@
-import { hubRequest, type HubCall, type HubRequest } from "../../../Triadichrome-extension/src/extension/windowProtocol";
-import type { PlanContents } from "../../../Triadichrome-extension/src/core/domain/plan";
+import { hubRequest, type HubCall, type HubRequest } from "../../../Triadic-extension/src/extension/windowProtocol";
+import type { PlanContents } from "../../../Triadic-extension/src/core/domain/plan";
 
 export async function windowProtocolTypeChecks(call: HubCall) {
   const request: HubRequest = hubRequest(1, "preview", 1);

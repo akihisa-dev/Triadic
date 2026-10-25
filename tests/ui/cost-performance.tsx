@@ -1,11 +1,11 @@
 import { useState, useRef } from "react";
 import { createRoot } from "react-dom/client";
-import { CostTablePage } from "../../Triadichrome-extension/src/extension/CostTablePage";
-import { buildCostTable } from "../../Triadichrome-extension/src/core/tables/costTable";
-import { initiativeMonths } from "../../Triadichrome-extension/src/core/domain/calendar";
-import { readPlanContents } from "../../Triadichrome-extension/src/core/storage/readPlan";
+import { CostTablePage } from "../../Triadic-extension/src/extension/CostTablePage";
+import { buildCostTable } from "../../Triadic-extension/src/core/tables/costTable";
+import { initiativeMonths } from "../../Triadic-extension/src/core/domain/calendar";
+import { readPlanContents } from "../../Triadic-extension/src/core/storage/readPlan";
 import { createSamplePlan } from "./sample-plan";
-import "../../Triadichrome-extension/src/extension/ExtensionPage.css";
+import "../../Triadic-extension/src/extension/ExtensionPage.css";
 const params = new URLSearchParams(location.search);
 const count = Number(params.get("count") ?? 10), rows = Number(params.get("rows") ?? 1);
 const base = await readPlanContents(await createSamplePlan(2026));

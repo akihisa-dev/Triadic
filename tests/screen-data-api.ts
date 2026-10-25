@@ -1,2 +1,2 @@
-export * from "../Triadichrome-extension/src/extension/screenDataModel";
-export * from "../Triadichrome-extension/src/core/storage/triadicDatabase";
+export * from "../Triadic-extension/src/extension/screenDataModel";
+export * from "../Triadic-extension/src/core/storage/triadicDatabase";

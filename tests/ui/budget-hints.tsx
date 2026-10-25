@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { InitiativeListPage } from "../../Triadichrome-extension/src/extension/InitiativeListPage";
-import type { Account } from "../../Triadichrome-extension/src/core/domain/accountMaster";
-import { InitiativeAmountGrid } from "../../Triadichrome-extension/src/extension/InitiativeAmountGrid";
-import type { InitiativeEntryDraft } from "../../Triadichrome-extension/src/core/domain/plan";
-import type { KindId } from "../../Triadichrome-extension/src/core/domain/kinds";
-import "../../Triadichrome-extension/src/extension/ExtensionPage.css";
+import { InitiativeListPage } from "../../Triadic-extension/src/extension/InitiativeListPage";
+import type { Account } from "../../Triadic-extension/src/core/domain/accountMaster";
+import { InitiativeAmountGrid } from "../../Triadic-extension/src/extension/InitiativeAmountGrid";
+import type { InitiativeEntryDraft } from "../../Triadic-extension/src/core/domain/plan";
+import type { KindId } from "../../Triadic-extension/src/core/domain/kinds";
+import "../../Triadic-extension/src/extension/ExtensionPage.css";
 if (!import.meta.env.DEV) throw new Error("確認専用画面です。");
 function Preview() {
   const [kind, setKind] = useState<KindId>(2);

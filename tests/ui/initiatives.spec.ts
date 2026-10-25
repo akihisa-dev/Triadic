@@ -65,7 +65,7 @@ test("一覧の施策名から詳細を開き、新規入力の破棄後は空�
   expect(await app.getByRole("main").locator("input").evaluateAll(inputs => inputs.every(input => input instanceof HTMLInputElement && !input.readOnly))).toBe(true);
   await expect(app.getByRole("button", { name: "登録", exact: true })).toHaveCount(0);
   await settleMotion(app.locator("body"));
-  await page.screenshot({ path: join(tmpdir(), `triadichrome-detail-${testInfo.project.name}.png`) });
+  await page.screenshot({ path: join(tmpdir(), `triadic-detail-${testInfo.project.name}.png`) });
   await app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true }).click();
   await expect(app.getByRole("combobox", { name: "年度", exact: true })).toHaveCount(0);
   await app.getByRole("button", { name: "施策B", exact: true }).press("Enter");
@@ -131,7 +131,7 @@ test("属性別に集計した施策を一覧で表示し、種別表示・属�
     expect(Math.abs(after.x - (await region.boundingBox())!.x)).toBeLessThanOrEqual(1);
   } else expect(Math.abs(after.x - before.x)).toBeLessThanOrEqual(1);
   expect(await app.locator(".home-content").evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
-  await page.screenshot({ path: join(tmpdir(), `triadichrome-list-${test.info().project.name}.png`) });
+  await page.screenshot({ path: join(tmpdir(), `triadic-list-${test.info().project.name}.png`) });
   await app.getByRole("button", { name: "サイドバーを開く" }).click();
   await openInitiativeEntry(app);
   await selectClassification(app.getByRole("combobox", { name: "展開名", exact: true }), "コスト");
