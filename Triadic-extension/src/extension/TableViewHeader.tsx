@@ -2,7 +2,7 @@ import { useId, useLayoutEffect, useMemo, useRef, useState, type ThHTMLAttribute
 import { createPortal } from "react-dom";
 import { emptyTableView, selectTableRows, tableChoices, type TableColumn, type TableFilter, type TableViewState } from "../core/tables/columnView";
 import "./TableViewHeader.css";
-import { amountToYen } from "../core/domain/amounts";
+import { amountToYen, yenToAmount } from "../core/domain/amounts";
 
 export function useTableView<T>(source: readonly T[], columns: readonly TableColumn<T>[], controlled?: { state: TableViewState; change: (state: TableViewState) => void }) {
   const [local, setLocal] = useState(emptyTableView);
@@ -53,8 +53,9 @@ function TableFilterPanel<T>({ column, source, filter, sorted, trigger, onClose,
   const [values, setValues] = useState<string[] | null>(filter?.type === "choice" ? filter.values : null);
   const [operator, setOperator] = useState(filter?.type === "number" ? filter.operator : "all");
   const scale = column.scale ?? 1;
-  const [min, setMin] = useState(filter?.type === "number" && filter.min !== undefined ? String(filter.min / scale) : "");
-  const [max, setMax] = useState(filter?.type === "number" && filter.max !== undefined ? String(filter.max / scale) : "");
+  const displayBound = (value: number | undefined) => value === undefined ? "" : scale === 1000 ? yenToAmount(value) : String(value / scale);
+  const [min, setMin] = useState(filter?.type === "number" ? displayBound(filter.min) : "");
+  const [max, setMax] = useState(filter?.type === "number" ? displayBound(filter.max) : "");
   const [error, setError] = useState("");
   const choices = useMemo(() => column.type !== "choice" ? [] : [...new Set([...source.flatMap(row => tableChoices(column.value(row))), ...(filter?.type === "choice" ? filter.values : [])])].sort((a, b) => a.localeCompare(b, "ja", { numeric: true })), [source, column]);
   const close = () => { onClose(); if (trigger.isConnected) trigger.focus({ preventScroll: true }); };
