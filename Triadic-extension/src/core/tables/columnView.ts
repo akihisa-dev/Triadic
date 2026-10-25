@@ -10,8 +10,11 @@ const normalized = (value: string) => value.normalize("NFKC").toLocaleLowerCase(
 export const tableValueText = (value: TableValue): string => Array.isArray(value) ? value.join("・") : value == null ? "" : String(value);
 export const tableChoices = (value: TableValue): string[] => Array.isArray(value) ? value.length ? [...value] : [""] : [tableValueText(value)];
 
-export function matchesTableFilter(value: TableValue, filter: TableFilter): boolean {
-  if (filter.type === "choice") return tableChoices(value).some(item => filter.values.includes(item));
+export function matchesTableFilter(value: TableValue, filter: TableFilter, choices?: ReadonlySet<string>): boolean {
+  if (filter.type === "choice") {
+    const selected = choices ?? new Set(filter.values);
+    return tableChoices(value).some(item => selected.has(item));
+  }
   if (filter.type === "text" && filter.exact) return tableValueText(value) === filter.text;
   if (filter.type === "text") return normalized(filter.text).trim().split(/\s+/).every(word => normalized(tableValueText(value)).includes(word));
   if (filter.operator === "blank") return value == null;
@@ -26,8 +29,11 @@ export function matchesTableFilter(value: TableValue, filter: TableFilter): bool
 }
 /** Presentation only: never mutate source rows or compare rounded display amounts. */
 export function selectTableRows<T>(rows: readonly T[], columns: readonly TableColumn<T>[], state: TableViewState): T[] {
-  const active = columns.filter(column => state.filters[column.id]);
-  const filtered = active.length ? rows.filter(row => active.every(column => matchesTableFilter(column.value(row), state.filters[column.id]!))) : [...rows];
+  const active = columns.filter(column => state.filters[column.id]).map(column => {
+    const filter = state.filters[column.id]!;
+    return { column, filter, choices: filter.type === "choice" ? new Set(filter.values) : undefined };
+  });
+  const filtered = active.length ? rows.filter(row => active.every(({ column, filter, choices }) => matchesTableFilter(column.value(row), filter, choices))) : [...rows];
   const column = columns.find(column => column.id === state.sort?.column && column.sortable !== false);
   if (!column || !state.sort) return filtered;
   const direction = state.sort.direction === "ascending" ? 1 : -1;

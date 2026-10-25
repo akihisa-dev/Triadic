@@ -35,6 +35,17 @@ export async function verifyColumnView(api) {
   assert.deepEqual(selected({ sort: { column: 'amount', direction: 'descending' }, filters: { group: { type: 'choice', values: ['部署B'] }, name: { type: 'text', text: '同額', exact: true } } }), [4]);
   assert.deepEqual(rows, original, '並べ替え・絞り込みで元の行と順序を変更しない');
 
+  const dates = Array.from({ length: 10000 }, (_, index) => `日時${index}`);
+  let reads = 0;
+  const values = new Proxy(dates.slice(1), { get(target, key, receiver) {
+    if (typeof key === 'string' && /^\d+$/.test(key)) reads++;
+    return Reflect.get(target, key, receiver);
+  } });
+  const dated = dates.map((date, id) => ({ id, date }));
+  const filteredDates = api.selectTableRows(dated, [{ id: 'date', label: '記録日時', type: 'choice', value: row => row.date }], { sort: null, filters: { date: { type: 'choice', values } } });
+  assert.deepEqual(filteredDates.map(row => row.id), dated.slice(1).map(row => row.id));
+  assert.equal(reads, 9999, '日時候補の集合を一度作り、各履歴で選択配列を再走査しない');
+  assert.deepEqual(dates[0], '日時0');
   const contents = await api.readPlanContents(await api.createSamplePlan(2026));
   const baseline = api.createExpansionTableView(contents)([2, 1]);
   const definitions = [{ id: 'name', label: '施策名', value: row => row.name },
