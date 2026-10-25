@@ -276,6 +276,7 @@ export async function verifyWindowSession(api) {
         assert.equal(creations, 2);
       }
     } finally { release(); await Promise.allSettled([first, second]); opener.disconnect(); survivor.disconnect(); }
+    await Promise.all([...cleanupHub.groups.values()].map(group => group.releasing));
     assert.equal(cleanupHub.groups.size, 0);
   }
   let releaseRecovery;
@@ -395,6 +396,43 @@ export async function verifyWindowSession(api) {
     await ticketOwner.request("reserve", "closing", ticketView);
   } finally { ticketOwner.disconnect(); ticketCopy.disconnect(); }
   assert.equal(ticketHub.tickets.size, 0, "最後のウィンドウ終了でも予約と期限処理を解放");
+
+  // A final disconnect must retain file identity until the accepted write settles.
+  for (const fail of [false, true]) {
+    const target = file("閉じて再開.triadic", bytes), independent = file("独立.triadic", bytes);
+    target.fail = fail;
+    let release, entered;
+    const waiting = new Promise(resolve => { release = resolve; });
+    const started = new Promise(resolve => { entered = resolve; });
+    target.gate = async () => { entered(); await waiting; };
+    const closing = peer(), reopening = peer(), second = peer(), other = peer();
+    let saving, joining, joiningSecond;
+    try {
+      await closing.request("open", { name: target.handle.name, handle: target.handle, bytes });
+      saving = closing.request("dispatch", { type: "department", change: { type: "update", id: 1, departmentName: "確定した部署" } });
+      const outcome = saving.then(() => null, error => error);
+      await started; closing.disconnect();
+      let joined = false;
+      joining = reopening.request("open", { name: target.handle.name, handle: target.handle, bytes }).then(() => { joined = true; });
+      joiningSecond = second.request("open", { name: target.handle.name, handle: target.handle, bytes });
+      await other.request("open", { name: independent.handle.name, handle: independent.handle, bytes });
+      assert.equal(joined, false, "同じファイルだけが旧保存を待ち、別ファイルは開ける");
+      release();
+      assert.equal((await outcome) instanceof Error, fail);
+      await Promise.all([joining, joiningSecond]);
+      const saved = await api.readPlanContents(target.bytes);
+      assert.deepEqual(reopening.latest().snapshot.contents, saved, "成功・失敗ともファイルの確定内容を再読込");
+      assert.equal(reopening.latest().info.group, second.latest().info.group);
+      target.fail = false; target.gate = undefined;
+      await reopening.request("dispatch", { type: "department", change: { type: "update", id: 1, departmentName: "再開後の部署" } });
+      assert.equal(second.latest().snapshot.contents.departments[0].departmentName, "再開後の部署", "再参加後のセッションは破棄されない");
+      assert.equal(second.latest().snapshot.canUndo, true);
+    } finally {
+      release(); await Promise.allSettled([saving, joining, joiningSecond]);
+      closing.disconnect(); reopening.disconnect(); second.disconnect(); other.disconnect();
+    }
+  }
+  console.log("PASS: 最終切断後の保存成功・失敗を待って再読込し、再参加・別ファイルの独立性を維持");
 
   await verifyWindowControlTimeout(api, bytes);
   await verifyHistoryCommit(api, bytes);

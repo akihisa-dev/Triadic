@@ -12,7 +12,7 @@ import type { PlanContents } from "../core/domain/plan";
 import { createNewPlanFile } from "./newPlanFile";
 
 type Peer = { port: Pick<MessagePort, "postMessage">; group: Group | null; number: number; label: string; initialView: WindowView | null; publishedContents?: PlanContents | null; opening?: boolean };
-type Group = { id: string; session: PlanSession; peers: Set<Peer>; openingPeers: number; nextNumber: number; cancelCheckpoint?: () => void; releaseRecovery?: () => void; actionTail: Promise<void>; historyPreparing: boolean; historyOwner: Peer | null; tail: Promise<unknown>; acting: Peer | null; openingHandle: FileSystemFileHandle | undefined; opened: Promise<void> };
+type Group = { id: string; session: PlanSession; peers: Set<Peer>; openingPeers: number; nextNumber: number; cancelCheckpoint?: () => void; releaseRecovery?: () => void; actionTail: Promise<void>; historyPreparing: boolean; historyOwner: Peer | null; tail: Promise<unknown>; acting: Peer | null; openingHandle: FileSystemFileHandle | undefined; opened: Promise<void>; releasing?: Promise<void> };
 const destinationMissing = async (): Promise<FileSystemFileHandle> => { throw new Error("保存先を選択してください。入力は保持しています。"); };
 const errorText = (failure: unknown, field: "message" | "name", fallback: string) => failure && typeof failure === "object" && field in failure && typeof Reflect.get(failure, field) === "string" ? String(Reflect.get(failure, field)) : fallback;
 class WindowControlTimeoutError extends Error {}
@@ -58,10 +58,14 @@ export class WindowSessionHub {
     this.tickets.delete(ticket);
   }
   private releaseGroup(group: Group) {
-    group.cancelCheckpoint?.(); this.groups.delete(group.id);
+    if (group.releasing) return;
+    group.cancelCheckpoint?.();
     for (const [ticket, reservation] of this.tickets) if (reservation.group === group) this.removeTicket(ticket);
-    // Finish already accepted writes before releasing the document's worker.
-    void Promise.allSettled([group.opened, group.tail, group.actionTail]).then(() => group.session.dispose());
+    // Retain file identity while accepted operations finish. Reopens wait outside openingTail.
+    group.releasing = Promise.allSettled([group.opened, group.tail, group.actionTail]).then(() => {
+      group.session.dispose();
+      this.groups.delete(group.id);
+    });
   }
   private send(peer: Peer, message: HubMessage) { peer.port.postMessage(message); }
   private enqueue<T>(peer: Peer, operation: () => Promise<T>) {
@@ -155,7 +159,10 @@ export class WindowSessionHub {
         for (const target of this.saveTargets.values()) if (plan.handle && await target.handle.isSameEntry(plan.handle)) return { wait: target.settled };
         for (const group of this.groups.values()) {
           const handle = group.openingHandle ?? group.session.getHandle();
-          if (handle && plan.handle && await handle.isSameEntry(plan.handle)) { group.openingPeers++; return { group }; }
+          if (handle && plan.handle && await handle.isSameEntry(plan.handle)) {
+            if (group.releasing) return { wait: group.releasing };
+            group.openingPeers++; return { group };
+          }
         }
         const group = this.newGroup(plan); group.openingPeers++; return { group };
       });
