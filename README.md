@@ -232,6 +232,8 @@ Click category/period/name/start-date headers to toggle ascending ▲/descending
 
 ## Excel import and export
 
+Industry and department choices for cost-summary export keep their full names and wrap onto additional rows. Names longer than the available width wrap within their buttons.
+
 In Import/export, the breakdown table and initiative list place the table name and budget selection on one row, wrapping on narrow screens. Text sizes and export settings behavior are unchanged.
 
 In sidebar “Import/export,” select the cost summary, breakdown table, and/or initiative list. Only selected tables and “Calculation inputs” (計算元) are exported to `yyyy年度予算.xlsx` using the plan's fiscal year (for example, `2026年度予算.xlsx`). Original headers, borders, backgrounds, column widths, and body merges of category names remain. The breakdown table exports the same period and subcategory columns, ordering, vertical merges, and four fixed left columns. The initiative list fixes category, period, initiative name, and start year/month at the left, as on screen.
@@ -258,7 +260,7 @@ The account-attribute master, also reached from Masters or Home, shows revenue, 
 
 ## Colors
 
-At table viewport widths of 650px or less, initiative and breakdown tables freeze only the initiative name, sizing it to leave room for amounts. Wider tables keep four fixed columns. Selected month headers use a dark-gray background and light text in dark mode. Both aggregation-creation inputs use the app border colors and blue focus outline.
+At table viewport widths of 650px or less, initiative and breakdown tables freeze only the initiative name, sizing it to leave room for amounts. Wider tables keep four fixed columns. Selected month headers use gray with dark text in light mode, and dark gray with light text in dark mode. Both aggregation-creation inputs use the app border colors and blue focus outline.
 
 The file name sits immediately to the left of the theme toggle; they remain together at the right edge when the header wraps. The sun/moon toggle at the right end of the header switches the whole app, including entry, tables, masters, and dialogs, between light and dark. The first launch uses light. The choice is retained in browser localStorage (`triadichrome.theme`) until changed or browser storage is cleared, and shared with other windows in the same browser. It does not follow the OS theme. If preference storage fails, switching still works in the current screen. Tab and Space support keyboard operation; reduced-motion settings shorten the transition. No plan-file, data-history, undo, Excel-output, permission, or external-transmission changes are made. Dark mode uses `#8099FF` for the existing blue accent.
 
@@ -803,6 +805,8 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 ## Excelの入出力
 
+総原価表の出力条件にある業種名・部署名の候補は、名称を省略せず、幅が足りなければ次の行へ折り返します。欄より長い名称はボタン内で折り返します。
+
 入出力の「展開表」「施策一覧」は、表名と予算選択を横に並べ、狭い画面では折り返します。文字の大きさと出力条件の操作は維持しています。
 
 サイドバーの「入出力」で総原価表・展開表・施策一覧を選び、選んだ表と「計算元」だけを、計画の基準年度を使った`yyyy年度予算.xlsx`（例：2026年度予算.xlsx）へ出力します。元の見出し・罫線・背景・列幅・展開名の本文結合を維持します。展開表も画面と同じ期間名列・展開区分列・期間ごとの順序と縦結合を出力し、左端の4列を固定します。施策一覧の左端は画面と同じ「展開名・期間名・施策名・開始年月」の4列を固定します。
@@ -827,7 +831,7 @@ ExcelJS 4.4.0（MIT）と、ExcelJSが既に使用するXML解析器saxes 5.0.1�
 
 ## 配色
 
-施策一覧・展開表は、表に割り当てられた表示幅が650px以下なら施策名だけを固定し、施策名と金額を並べて確認できる幅へ調整します。650pxを超える場合は従来の4列固定です。金額セルの選択月は、ダークでは濃いグレーの背景と明るい文字で表示します。集計追加の「集計名」「表示名」も通常枠と選択中の青い枠をアプリの配色に揃えます。
+施策一覧・展開表は、表に割り当てられた表示幅が650px以下なら施策名だけを固定し、施策名と金額を並べて確認できる幅へ調整します。650pxを超える場合は従来の4列固定です。金額セルの選択月は、ライトではグレーの背景と濃い文字、ダークでは濃いグレーの背景と明るい文字で表示します。集計追加の「集計名」「表示名」も通常枠と選択中の青い枠をアプリの配色に揃えます。
 
 ファイル名はテーマ切替のすぐ左に並び、狭い画面でヘッダーが折り返す場合も一緒に右端へ寄せます。ヘッダー右端の太陽・月のトグルで、ライト（白基調）とダーク（黒・濃いグレー基調）を切り替えられます。ファイルを開く前の入口でも使え、表・マスタ・ダイアログも連動します。初回はライトで、端末の明暗設定には追従しません。選択はブラウザ内のlocalStorage（`triadichrome.theme`）へ保存し、次回起動・同じブラウザの別ウィンドウへ反映します。選び直すかブラウザの保存領域を消すまで保持します。保存領域が使えない場合は現在の画面だけに適用します。計画ファイル・時点履歴・操作取消・Excel出力は変えず、追加権限・外部送信はありません。Tabでトグルへ移動し、Spaceで切り替えられます。
 

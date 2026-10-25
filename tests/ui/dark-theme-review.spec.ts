@@ -71,7 +71,7 @@ test("表示幅が足りない表は施策名と金額を同時に読め、広�
 });
 
 for (const surface of ["initiative", "previous"]) {
-  test(`${surface}の選択月はダークでも読め、ライトの配色とセル寸法を保つ`, async ({ page, app }) => {
+  test(`${surface}の選択月は明暗両方で読め、セル寸法と金額を保つ`, async ({ page, app }) => {
     await page.setViewportSize({ width: 1280, height: 1200 });
     await openSample(page, app);
     const nav = app.getByRole("navigation", { name: "メインナビゲーション" });
@@ -90,6 +90,7 @@ for (const surface of ["initiative", "previous"]) {
     const selected = app.locator("th.grid-month-selected");
     await expect(selected).toHaveText("4月");
     await expect(selected).toHaveCSS("background-color", "rgb(163, 163, 163)");
+    await expect(selected).toHaveCSS("color", "rgb(32, 32, 32)");
     await app.getByRole("switch", { name: "ダークテーマ" }).check();
     await cell.click();
     await expect(selected).toHaveCSS("background-color", "rgb(64, 64, 64)");

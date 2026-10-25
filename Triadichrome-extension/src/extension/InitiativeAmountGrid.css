@@ -9,4 +9,4 @@
 
 .budget-attribute-hint { display: block; font-size: 11px; font-weight: 400; color: var(--muted); }
 
-.initiative-amount-table thead th.grid-month-selected { background: var(--selected-month); }
+.initiative-amount-table thead th.grid-month-selected { background: var(--selected-month); color: var(--ink); }
