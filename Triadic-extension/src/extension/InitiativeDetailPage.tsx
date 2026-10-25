@@ -53,7 +53,7 @@ export function InitiativeDetailPage({ initiative, accounts, expansions, expansi
   if (!draft) return null;
   return <InitiativeEntryPage initialKind={initialKind ?? 1} draft={draft} onDraftChange={value => controller.change(value)} accounts={accounts} expansions={expansions} expansionCategories={expansionCategories} departments={departments} periodTypes={periodTypes} industries={industries}
     isSaving={false} onOpenMaster={onOpenMaster} onRegister={() => {}} editing={{
-      savedRows: (source.current?.initiative ?? initiative).rows, saving: autoSave.saving, pending: autoSave.pending, onCompositionStart: () => controller.pause(), onCompositionEnd: () => controller.resume(),
+      saving: autoSave.saving, pending: autoSave.pending, onCompositionStart: () => controller.pause(), onCompositionEnd: () => controller.resume(),
       before: <button className="text-button master-back" type="button" disabled={autoSave.pending} onClick={onBack}>← {backLabel}へ戻る</button>,
       actions: onDuplicate && <button className="secondary-button" type="button" disabled={readOnly || duplicationBlocked || autoSave.pending || autoSave.saving} onClick={onDuplicate}>複製して新規作成</button>,
       status: <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave}

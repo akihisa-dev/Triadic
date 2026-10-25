@@ -28,7 +28,7 @@ type InitiativeEntryPageProps = {
   isSaving: boolean;
   onRegister: () => void;
   onBack?: () => void;
-  editing?: { savedRows: InitiativeEntryDraft["rows"]; saving: boolean; pending: boolean; before: ReactNode; actions: ReactNode; status: ReactNode; onCompositionStart: () => void; onCompositionEnd: () => void };
+  editing?: { saving: boolean; pending: boolean; before: ReactNode; actions: ReactNode; status: ReactNode; onCompositionStart: () => void; onCompositionEnd: () => void };
 };
 
 export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions, expansionCategories, departments, periodTypes, industries, onOpenMaster, isSaving, onRegister, onBack, editing, initialKind = 1 }: InitiativeEntryPageProps) {
@@ -111,7 +111,7 @@ export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions
       <div className="kind-tabs" role="tablist" aria-label="入力する種別">{INITIAL_KINDS.map(item => <button key={item.id} id={`kind-tab-${item.id}`} type="button" role="tab" aria-selected={kind === item.id} aria-controls="kind-amount-panel" onClick={() => setKind(item.id)}>{item.kindName}</button>)}</div>
       <div className="initiative-amount-table-container" id="kind-amount-panel" role="tabpanel" aria-labelledby={`kind-tab-${kind}`} aria-label="月別計画金額の入力表" tabIndex={0}>
         <InitiativeAmountGrid key={kind} draft={draft} kind={kind}
-          accounts={accounts} savedRows={editing?.savedRows} rowOperationsDisabled={editing?.saving ?? false} isSaving={readOnly || isSaving} onDraftChange={onDraftChange} />
+          accounts={accounts} rowOperationsDisabled={editing?.saving ?? false} isSaving={readOnly || isSaving} onDraftChange={onDraftChange} />
       </div>
       <div className="initiative-row-actions">
         <button className="secondary-button" type="button" disabled={readOnly || isSaving || accounts.length === 0 || draft.rows.some(row => row.accountId === null)}

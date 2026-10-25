@@ -1,4 +1,3 @@
-import { amountToYen } from "./amounts";
 import type { Account } from "./accountMaster";
 export const kindIds = [1, 2] as const;
 export type KindId = typeof kindIds[number];
@@ -23,12 +22,6 @@ export function resolvedAmount(source: AmountSource, kind: KindId, month: number
   if (kind === 1) return source.amounts[month] || "0";
   const manual = source.overrides?.[2]?.[month];
   return manual === undefined ? source.amounts[month] || "0" : manual || "0";
-}
-export function canChangeAccountRow(source: AmountSource, saved?: AmountSource): boolean {
-  if (hasInvalidAmountInput(source)) return false;
-  if (saved && !canChangeAccountRow(saved)) return false;
-  try { return kindIds.every(kind => Array.from({ length: 12 }, (_, i) => i + 1).every(month => amountToYen(resolvedAmount(source, kind, month)) === 0)); }
-  catch { return false; }
 }
 export function hasInvalidAmountInput(source: AmountSource): boolean {
   return Object.values(source.invalidAmounts ?? {}).some(months => Object.keys(months ?? {}).length > 0);

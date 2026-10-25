@@ -149,7 +149,7 @@ test("既存の全月0行を空欄・未選択に戻すと再表示で旧科目�
 });
 
 
-test("0化が保存されるまで科目変更・削除を待ち、保存後に削除できる", async ({ page, app }) => {
+test("非0の金額を消さずに科目変更・削除できる", async ({ page, app }) => {
   await page.getByLabel("テストデータ", { exact: true }).selectOption("full");
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
@@ -161,11 +161,10 @@ test("0化が保存されるまで科目変更・削除を待ち、保存後に�
   const remove = app.getByRole("button", { name: "1行目を削除", exact: true });
   await amount.fill("100");
   await expect(app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true })).toBeEnabled();
-  await amount.fill("0");
-  await expect(account).toBeDisabled();
-  await expect(remove).toBeDisabled();
-  await expect(remove).toBeEnabled();
   await expect(account).toBeEnabled();
+  await selectAccount(account, { label: "旅費" });
+  await expect(app.getByRole("spinbutton", { name: "旅費 4月の金額", exact: true })).toHaveValue("100");
+  await expect(remove).toBeEnabled();
   await remove.click();
   await expect(app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true })).toBeEnabled();
   await expect(app.getByRole("alert")).toHaveCount(0);
@@ -220,7 +219,7 @@ for (const [kind, operation, failure] of [
   ["一次予算", "削除", false], ["一次予算", "科目変更", true],
   ["確定予算", "削除", true], ["確定予算", "科目変更", false],
 ] as const) {
-  test(`非0の保存確定前に0へ戻しても${kind}の${operation}を待機し、${failure ? "失敗後の再試行" : "連続入力"}を保持する`, async ({ page, app }) => {
+  test(`保存実行中は${kind}の${operation}を待機し、${failure ? "失敗後の再試行" : "連続入力"}を保持する`, async ({ page, app }) => {
     await page.getByLabel("テストデータ", { exact: true }).selectOption("full");
     await expect(page.getByRole("status")).toHaveText("操作できます");
     await app.locator("body").evaluate(() => {
@@ -263,7 +262,6 @@ for (const [kind, operation, failure] of [
     const back = app.getByRole("button", { name: "← 施策一覧へ戻る", exact: true });
     await amount.fill("100");
     await expect.poll(() => app.locator("body").evaluate(() => Boolean(Reflect.get(window, "saveStarted")))).toBe(true);
-    await amount.fill("0");
     await expect(account).toBeDisabled();
     await expect(remove).toBeDisabled();
     const extra = app.getByRole("spinbutton", { name: "売上高 5月の金額", exact: true });
@@ -273,7 +271,7 @@ for (const [kind, operation, failure] of [
     await app.locator("body").evaluate((_node, fail) => Reflect.get(window, "releaseSave")(fail), failure);
     if (failure) {
       await expect(app.getByRole("alert")).toContainText("制御した保存失敗");
-      await expect(amount).toHaveValue("0");
+      await expect(amount).toHaveValue("100");
       await expect(extra).toHaveValue("9");
       await app.getByRole("button", { name: "保存を再試行", exact: true }).click();
     }
@@ -290,6 +288,6 @@ for (const [kind, operation, failure] of [
     await expect(app.getByRole("textbox", { name: "備考", exact: true })).toHaveValue("確定待ちの最新入力");
     await expect(extra).toHaveValue("9");
     if (operation === "削除") await expect(app.getByRole("button", { name: "2行目を削除", exact: true })).toHaveCount(0);
-    else await expect(app.getByRole("spinbutton", { name: "旅費 4月の金額", exact: true })).toHaveValue("0");
+    else await expect(app.getByRole("spinbutton", { name: "旅費 4月の金額", exact: true })).toHaveValue("100");
   });
 }

@@ -18,7 +18,12 @@ export async function verifyDetails(api) {
   assert.equal(after.details.filter(row => row.amount !== contents.details.find(item => item.id === row.id).amount).length, 2);
   assert.equal(after.details[0].sales, "-0.001");
   assert.deepEqual(await readDerivedPlan(api, source), contents, "元のバイト列は変更しない");
-  await assert.rejects(api.applyPlanCommand(bytes,command({...current,rows:current.rows.map((row,index)=>index===0?{...row,accountId:expense.id}:row)}),2026),/全種別/);
+  const reassigned = await api.applyPlanCommand(bytes,command({...current,rows:current.rows.map((row,index)=>index===0?{...row,accountId:expense.id}:row)}),2026);
+  const reassignedPlan = await readDerivedPlan(api, reassigned);
+  assert.equal(reassignedPlan.initiatives[0].rows[0].accountId, expense.id);
+  assert.deepEqual(reassignedPlan.initiatives[0].rows[0].amounts, current.rows[0].amounts, "負数の金額を保持して科目変更する");
+  assert.equal(reassignedPlan.details[0].sales, "0", "変更後の科目属性で再計算する");
+  assert.deepEqual(reassignedPlan.initiatives[1], after.initiatives[1], "他施策は変わらない");
   bytes = await api.applyPlanCommand(bytes,command({...current,rows:current.rows.map((row,index)=>index===1?{...row,accountId:expense.id}:row)}),2026);
   after = await readDerivedPlan(api, bytes);current=after.initiatives[0];
   assert.equal(after.details.filter(row => row.accountId === expense.id).length, 24);

@@ -75,14 +75,15 @@ export async function verifyAutoSave(api) {
   extended.rows[2].amounts[4] = "10";
   const again = await updateInitiative(extendedBytes, original.id, 2026, extended);
   assert.equal((await readPlanContents(again)).initiatives[0].rows.length, 3, "保存直後の新しい行を重複作成しない");
-  // #44: indexed row matching retains ownership, zero-only mutation, order and revisions.
+  // #44: indexed row matching retains ownership, row deletion, order and revisions.
   const subjectPlan = await readPlanContents(again);
   const subject = subjectPlan.initiatives[0];
   const stableDraft = { ...subject, fiscalYear: "2026" };
   const duplicate = { ...stableDraft, rows: [subject.rows[0], subject.rows[0]] };
   await assert.rejects(updateInitiative(again, subject.id, 2026, duplicate), /識別子/);
   await assert.rejects(updateInitiative(again, subject.id, 2026, { ...stableDraft, rows: [...subject.rows, before.initiatives[1].rows[0]] }), /識別子/);
-  await assert.rejects(updateInitiative(again, subject.id, 2026, { ...stableDraft, rows: subject.rows.slice(1) }), /全種別/);
+  const deleted = await updateInitiative(again, subject.id, 2026, { ...stableDraft, rows: subject.rows.slice(1) });
+  assert.deepEqual((await readPlanContents(deleted)).initiatives[0].rows.map(row => row.id), subject.rows.slice(1).map(row => row.id), "非0の行だけ削除し他行を保持する");
   const zeroDraft = { ...stableDraft, rows: subject.rows.map(row => ({ ...row, amounts: {}, overrides: { 2: { 4: "0" } } })) };
   const zeroBytes = await updateInitiative(again, subject.id, 2026, zeroDraft);
   const zeroContents = await readPlanContents(zeroBytes);

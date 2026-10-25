@@ -1,6 +1,6 @@
 import type { Database } from "./sqliteRuntime";
 import { amountToYen, yenToAmount } from "../domain/amounts";
-import { canChangeAccountRow, kindIds, type AmountSource } from "../domain/kinds";
+import { kindIds, type AmountSource } from "../domain/kinds";
 import { initiativeMonths } from "../domain/calendar";
 import type { InitiativeEntryDraft } from "../domain/plan";
 import { validateInitiative } from "../domain/initiativeRules";
@@ -64,10 +64,6 @@ export function applyInitiativeUpdate(database: Database, id: number, previousYe
   if (new Set(ids).size !== ids.length || ids.some(rowId => { const owner = database.exec("SELECT initiative_id FROM initiative_rows WHERE id = ?", [rowId])[0]?.values[0]?.[0]; return owner !== undefined && owner !== id; })) throw new Error("勘定科目行の識別子が正しくありません。");
   const originalRowsById = new Map(original.rows.map(row => [row.id, row]));
   const draftRowsById = new Map(draft.rows.filter(row => row.id !== undefined).map(row => [row.id, row]));
-  for (const row of original.rows) {
-    const next = draftRowsById.get(row.id);
-    if ((!next || next.accountId !== row.accountId) && !canChangeAccountRow(row)) throw new Error("全種別・全月の金額が0の行だけ勘定科目を変更・削除できます。");
-  }
   database.run("UPDATE initiatives SET name = ?, note = ?, expansion_id = ?, expansion_category_id = ?, department_id = ?, period_type_id = ?, industry_id = ?, revision = revision + 1 WHERE id = ?", [draft.name.trim(), draft.note, draft.expansionId, draft.expansionCategoryId ?? null, draft.departmentId ?? null, draft.periodTypeId ?? null, draft.industryId ?? null, id]);
   for (const row of original.rows) if (!draftRowsById.has(row.id) || draftRowsById.get(row.id)!.accountId === null) {
     database.run("DELETE FROM initiative_amounts WHERE row_id = ?", [row.id!]);

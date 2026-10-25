@@ -162,7 +162,7 @@ Select monthly ranges by dragging or Shift+arrows. Copy uses tabs and line break
 
 The input screen places initiative name, notes, and registration button in that order on the top row. Beneath them, dropdowns start at the left in this order: breakdown category, subcategory, department, period, industry. Name and notes are equally wide single-line inputs, each at most 20rem. Narrow screens wrap the top row in order and use two columns for selections. Dropdowns are 36px tall and use their opened candidate lists. New-input fields and registration button are also 36px tall. Category, department, and industry are required; period is optional.
 
-Changing the account or deleting a row on a registered initiative is allowed only when all kinds/months are 0 in both current input and saved data. After clearing a nonzero row, wait for a successful save. These actions also wait during autosave; if input returns to 0 after a nonzero save begins, the latest 0 must be saved first. Continuous amount entry remains available.
+Account changes and row deletion are available even when current or saved amounts are nonzero. Changing an account preserves initial amounts and final-budget overrides, including explicit zero and inheritance. Deleting a row removes its amounts for both budget kinds. These actions wait only during autosave; continuous amount entry remains available.
 
 Notifications stack vertically in a shared bottom-right area, so simultaneous total errors and save failures do not cover recovery buttons. They do not shift fields or tables.
 
@@ -740,7 +740,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 施策入力は、上段に施策名・備考・新規施策の登録ボタンをこの順で並べ、その下の行の左端に展開名・展開区分・部署名・期間名・業種名のドロップダウンリストを配置します。施策名と備考は同じ横幅の一行入力で、それぞれ最大20remです。狭い画面では上段を順に折り返し、選択欄を2列にします。選択欄は高さ36pxで、開いた候補一覧から選びます。新規入力は入力欄と登録ボタンの高さを36pxに揃えます。展開・部署・業種は必須、期間は任意です。
 
-登録済み施策の科目変更と行削除は、入力中と保存済みの両方で全種別・全月0の行だけ有効です。非0の行を0にした直後は、その保存成功まで待ちます。自動保存の実行中も科目変更と行削除を待ち、非0の保存開始後に0へ戻した場合は最新の0が保存されてから操作できます。金額の連続入力は続けられます。
+施策入力・施策詳細では、入力中・保存済みの金額が非0でも科目変更・行削除ができます。科目変更では一次予算と確定予算の金額・明示0・手修正・引き継ぎを保持します。行削除では両種別の金額も削除します。自動保存の実行中は科目変更と行削除を待ち、金額の連続入力は続けられます。
 
 通知は共通の右下領域で縦に並び、合計エラーと保存失敗が同時に出ても復旧ボタンに重なりません。通知の表示で入力欄や表は移動しません。
 

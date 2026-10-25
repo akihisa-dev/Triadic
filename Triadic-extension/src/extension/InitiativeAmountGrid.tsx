@@ -5,7 +5,7 @@ import { gridCellEvents, nextGridCell } from "./gridCellEvents";
 import { useGridInteraction } from "./useGridInteraction";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { canChangeAccountRow, resolvedAmount, type KindId } from "../core/domain/kinds";
+import { resolvedAmount, type KindId } from "../core/domain/kinds";
 import { formatYen, isValidAmount } from "../core/domain/amounts";
 import { initiativeMonths as months } from "../core/domain/calendar";
 import { type InitiativeEntryDraft } from "../core/domain/plan";
@@ -17,9 +17,8 @@ import { initiativeSelectionTotal } from "../core/tables/selectionTotal";
 import { GridSelectionTotal } from "./GridSelectionTotal";
 import "./InitiativeAmountGrid.css";
 
-export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRows, rowOperationsDisabled = false, onDraftChange }: {
+export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, rowOperationsDisabled = false, onDraftChange }: {
   draft: InitiativeEntryDraft; kind: KindId; accounts: Account[];
-  savedRows?: InitiativeEntryDraft["rows"] | undefined;
   rowOperationsDisabled?: boolean;
   isSaving: boolean; onDraftChange: (draft: InitiativeEntryDraft) => void;
 }) {
@@ -30,7 +29,6 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
   const [activeAccount, setActiveAccount] = useState<string | null>(null);
   const originalInherited = useRef(false);
   const accountsById = useMemo(() => new Map(accounts.map(account => [account.id, account])), [accounts]);
-  const savedById = useMemo(() => new Map(savedRows?.map(row => [row.id, row])), [savedRows]);
   const { rows, invalidNumbers } = draft;
   const hints = useMemo(() => rows.map(row => ({
     unclassified: hasUnclassifiedAmount(row, kind, accountsById.get(row.accountId!)),
@@ -86,12 +84,12 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, savedRow
                 <th scope="row">
                   <div className="initiative-account-cell">
                   <AccountRowSelect label={`${index + 1}行目の勘定科目`} value={row.accountId} accounts={accounts} account={accountsById.get(row.accountId!)}
-                    disabled={readOnly || isSaving || rowOperationsDisabled || accounts.length === 0 || (!(row.accountId === null && savedRows === undefined) && !canChangeAccountRow(row, savedById.get(row.id)))}
+                    disabled={readOnly || isSaving || rowOperationsDisabled || accounts.length === 0}
                     active={activeAccount === rowKey} onActivate={() => setActiveAccount(rowKey)}
                     onDeactivate={() => setActiveAccount(current => current === rowKey ? null : current)}
                     onChange={accountId => onDraftChange({ ...draft, rows: draft.rows.map((current, currentIndex) => currentIndex === index
                       ? { ...current, accountId } : current) })} />
-                  <button type="button" className="text-button" aria-label={`${index + 1}行目を削除`} disabled={readOnly || isSaving || rowOperationsDisabled || !canChangeAccountRow(row, savedById.get(row.id))} onClick={() => onDraftChange({ ...draft, rows: draft.rows.filter((_, position) => position !== index) })}>削除</button>
+                  <button type="button" className="text-button" aria-label={`${index + 1}行目を削除`} disabled={readOnly || isSaving || rowOperationsDisabled} onClick={() => onDraftChange({ ...draft, rows: draft.rows.filter((_, position) => position !== index) })}>削除</button>
                   </div>
                   {unclassified && <span className="budget-attribute-hint" title="科目属性がなく、売上・費用・利益に含まれていません。勘定科目マスタで設定できます。">属性未設定</span>}
                 </th>

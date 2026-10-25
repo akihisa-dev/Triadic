@@ -244,3 +244,16 @@ test("上部全体と月見出しを新規・登録済みの両方で固定す�
   }
   await page.screenshot({ path: testInfo.outputPath("initiative-fixed-header.png") });
 });
+
+for (const kind of ["一次予算", "確定予算"]) {
+  test(`${kind}に金額を入力した新規行も金額を保持して科目変更・削除できる`, async ({ app }) => {
+    await app.getByRole("tab", { name: kind, exact: true }).click();
+    await app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).first().fill("100.125");
+    await selectAccount(app.getByRole("combobox", { name: "1行目の勘定科目", exact: true }), { label: "旅費" });
+    await expect(app.getByRole("spinbutton", { name: "旅費 4月の金額", exact: true })).toHaveValue("100.125");
+    await app.getByRole("button", { name: "1行目を削除", exact: true }).click();
+    await expect(app.getByRole("spinbutton", { name: "旅費 4月の金額", exact: true })).toHaveCount(0);
+    await expect(app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true })).toHaveValue("0");
+    await expect(app.getByRole("button", { name: "2行目を削除", exact: true })).toHaveCount(0);
+  });
+}
