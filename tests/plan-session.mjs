@@ -53,7 +53,7 @@ export async function verifyPlanSession(api) {
   assert.ok(session.getSnapshot().contents.departments.some(item => item.departmentName === "追加部署"));
   const beforeSelection = session.getSnapshot().contents;
   const fullRead = api.processingTasks.readPlanContents;
-  api.processingTasks.readPlanContents = async () => { throw new Error("表示設定だけの変更で全計画を読み直さない"); };
+  api.processingTasks.readPlanContents = async () => { throw new Error("表示設定だけの変更でデータ全体を読み直さない"); };
   const one = session.dispatch({ type: "settings", change: { type: "selection", screen: "cost-table", selected: [1, 2] } }, noPicker);
   const two = session.dispatch({ type: "settings", change: { type: "selection", screen: "initiative-list", selected: [1] } }, noPicker);
   try { await Promise.all([one, two]); }

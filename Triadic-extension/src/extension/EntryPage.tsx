@@ -22,7 +22,7 @@ export function EntryPage({ entry }: { entry: FileEntry }) {
       <section className="entry-drop-zone" aria-label="ファイルを開く・新規作成">
         <div className={`entry-resume${recentFile ? " has-recent" : ""}`}>
           <div className="entry-recent-heading">
-            <span className="entry-recent-label">前回の計画</span>
+            <span className="entry-recent-label">前回のファイル</span>
             <button className="entry-forget-button" type="button" disabled={isBusy || recentLoading || !recentFile}
               onClick={forget}>履歴を消す</button>
           </div>
@@ -44,7 +44,7 @@ export function EntryPage({ entry }: { entry: FileEntry }) {
           </div>
           <div className="entry-create-section">
             <svg className="entry-option-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M6 3h8l4 4v14H6zM14 3v5h4M9 14h6m-3-3v6" /></svg>
-            <h2 className="entry-section-title">新しい計画</h2>
+            <h2 className="entry-section-title">新しいファイル</h2>
             <FiscalYearSlot value={Number(newFiscalYear)} onChange={year => setNewFiscalYear(String(year))} disabled={isBusy} />
             <button className="entry-new-button" type="button" disabled={isBusy} onClick={create}>新規作成<span aria-hidden="true">＋</span></button>
           </div>

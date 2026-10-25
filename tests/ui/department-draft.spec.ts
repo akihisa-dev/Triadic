@@ -27,7 +27,7 @@ for (const failFirst of [false, true]) test(`所属変更${failFirst ? "の保�
   await app.getByRole("textbox", { name: "備考", exact: true }).fill("保持する備考");
   const account = app.getByRole("combobox", { name: "1行目の勘定科目", exact: true });
   await account.focus(); await selectAccount(account, "1");
-  const amount = app.getByRole("table", { name: "月別計画金額", exact: true }).getByRole("spinbutton").first();
+  const amount = app.getByRole("table", { name: "月別金額", exact: true }).getByRole("spinbutton").first();
   await amount.fill("123.456");
   const master = app.getByRole("complementary", { name: "メニュー" }).getByRole("button", { name: "マスタ", exact: true });
   await master.click();

@@ -62,6 +62,6 @@ try {
       } finally { source.close(); }
     }
     console.log(JSON.stringify({ environment: { node: process.version, os: os.platform(), arch: os.arch(), cpu: os.cpus()[0].model, sqlite: sql.version },
-      scope: "検証済み接続からsnapshotまで。warmup1+5回。元計画の読込・完全検査とファイル確定は含まない。RSS/heapは呼出前後差、processPeakRssはプロセス累積最大値であり関数単体のピークではない。", results }, null, 2));
+      scope: "検証済み接続からsnapshotまで。warmup1+5回。元データの読込・完全検査とファイル確定は含まない。RSS/heapは呼出前後差、processPeakRssはプロセス累積最大値であり関数単体のピークではない。", results }, null, 2));
   });
 } finally { await rm(directory, { recursive: true, force: true }); }

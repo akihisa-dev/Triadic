@@ -15,7 +15,7 @@ export async function verifyCostBreakdown(api) {
       }
     }
   }
-  assert.equal(JSON.stringify(contents), original, "内訳の閲覧は元の計画を変更しない");
+  assert.equal(JSON.stringify(contents), original, "内訳の閲覧は元のデータを変更しない");
   const sales = contents.accounts.find(item => item.accountName === "売上高");
   const period = api.tablePeriods.find(item => item.id === "4");
   const target = { kind: "account", id: sales.id, period, column: 2 };
@@ -75,6 +75,6 @@ export async function verifyCostBreakdown(api) {
   }
   assert.equal(api.sortCostBreakdownLines(sortLines, sortContents, null), sortLines);
   assert.deepEqual(api.sortCostBreakdownLines([], sortContents, { column: "amount", direction: "ascending" }), []);
-  assert.equal(JSON.stringify({ sortLines, sortContents }), beforeSort, "並べ替えで元明細・計画を変更しない");
+  assert.equal(JSON.stringify({ sortLines, sortContents }), beforeSort, "並べ替えで元明細・データを変更しない");
   console.log("総原価表の内訳: 全金額列・期間・分類・集計符号・1円精度・手修正0・相殺・範囲超過を確認しました。");
 }

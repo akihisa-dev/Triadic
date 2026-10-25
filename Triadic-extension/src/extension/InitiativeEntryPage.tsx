@@ -109,7 +109,7 @@ export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions
         <button className="secondary-button" type="button" disabled={isSaving || editing?.pending} onClick={onOpenMaster}>勘定科目マスタを開く</button>
       </div>}
       <div className="kind-tabs" role="tablist" aria-label="入力する種別">{INITIAL_KINDS.map(item => <button key={item.id} id={`kind-tab-${item.id}`} type="button" role="tab" aria-selected={kind === item.id} aria-controls="kind-amount-panel" onClick={() => setKind(item.id)}>{item.kindName}</button>)}</div>
-      <div className="initiative-amount-table-container" id="kind-amount-panel" role="tabpanel" aria-labelledby={`kind-tab-${kind}`} aria-label="月別計画金額の入力表" tabIndex={0}>
+      <div className="initiative-amount-table-container" id="kind-amount-panel" role="tabpanel" aria-labelledby={`kind-tab-${kind}`} aria-label="月別金額の入力表" tabIndex={0}>
         <InitiativeAmountGrid key={kind} draft={draft} kind={kind}
           accounts={accounts} rowOperationsDisabled={editing?.saving ?? false} isSaving={readOnly || isSaving} onDraftChange={onDraftChange} />
       </div>

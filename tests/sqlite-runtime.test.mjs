@@ -9,7 +9,7 @@ import { withNodeBundle } from "../scripts/node-bundle.mjs";
 import { oldPlan, oldSnapshot } from "./fixtures/sqlite-349-normal.mjs";
 import { build } from "esbuild";
 
-test("計画処理workerは画面と実ファイル保存へ依存しない", async () => {
+test("データ処理workerは画面と実ファイル保存へ依存しない", async () => {
   const result = await build({
     entryPoints: ["Triadic-extension/src/extension/planProcessing.worker.ts"],
     bundle: true, write: false, metafile: true, format: "esm", platform: "browser",
@@ -75,7 +75,7 @@ test("同梱本体の版・配布WASMと検索・複数文・保存メモリの�
   assert.ok(notices.includes("Apache License"));
 });
 
-test("旧保存形式の計画・履歴は読み込みと編集を拒否し元の内容を保持する", async () => {
+test("旧保存形式のデータ・履歴は読み込みと編集を拒否し元の内容を保持する", async () => {
   await withNodeBundle("tests/core-api.ts", async api => {
     const bytes = new Uint8Array(inflateSync(Buffer.from(oldPlan, "base64")));
     const before = bytes.slice();

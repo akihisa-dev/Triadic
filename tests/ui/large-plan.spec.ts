@@ -94,7 +94,7 @@ test('明細の導線を持たず施策の全月を直接編集して保存・�
   await expect(app.getByRole('combobox', { name: '業種名', exact: true }).locator('option:checked')).toHaveText('不動産B');
   await app.getByRole('tab', { name: '一次予算', exact: true }).click();
   await expect(app.getByRole('button', { name: '明細', exact: true })).toHaveCount(0);
-  const row = app.getByRole('table', { name: '月別計画金額', exact: true }).locator('tbody tr').first();
+  const row = app.getByRole('table', { name: '月別金額', exact: true }).locator('tbody tr').first();
   await expect(row.getByRole('spinbutton')).toHaveCount(12);
   for (const cell of await row.getByRole('spinbutton').all()) await expect(cell).toBeEditable();
   const march = app.getByRole('spinbutton', { name: '売上高 3月の金額', exact: true });

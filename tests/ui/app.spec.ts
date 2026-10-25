@@ -31,6 +31,8 @@ async function prepareAccountRows(target: FrameLocator | Page) {
 
 test("ファイルを開き、サイドバーを操作して入口へ戻る", async ({ page, app }, testInfo) => {
   const preview = page.locator("#app-preview");
+  await expect(app.getByRole("heading", { name: "新しいファイル", exact: true })).toBeVisible();
+  await expect(app.getByText("前回のファイル", { exact: true })).toBeVisible();
   await attachImage(testInfo, "入口", await preview.screenshot());
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   const trigger = app.locator(".home-header").getByRole("button", { name: /サイドバー/ });
@@ -59,6 +61,10 @@ test("ファイルを開き、サイドバーを操作して入口へ戻る", as
   await attachImage(testInfo, "サイドバー", await preview.screenshot());
   await page.keyboard.press("Tab");
   await expect(app.getByRole("button", { name: "施策を検索", exact: true })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(app.getByRole("button", { name: "ウィンドウを複製", exact: true })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(app.getByRole("switch", { name: "ダークテーマ", exact: true })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(close).toBeFocused();
   await page.keyboard.press("Tab");
@@ -92,7 +98,7 @@ test("ファイルを開き、サイドバーを操作して入口へ戻る", as
   expect(await main.boundingBox()).toEqual(fullMain);
 
   await trigger.click();
-  await sidebar.getByRole("button", { name: "閉じる" }).click();
+  await sidebar.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await expect(app.getByRole("heading", { name: "Triadic" })).toBeVisible();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
@@ -223,7 +229,7 @@ test("施策名・備考・月別金額を入力し、画面を往復しても�
   await openInitiativeEntry(app);
   await expect(name).toHaveValue("");
   await expect(note).toHaveValue("");
-  expect(await app.getByRole("table", { name: "月別計画金額", exact: true }).getByRole("spinbutton").evaluateAll(inputs => inputs.every(input => (input as HTMLInputElement).value === "0"))).toBe(true);
+  expect(await app.getByRole("table", { name: "月別金額", exact: true }).getByRole("spinbutton").evaluateAll(inputs => inputs.every(input => (input as HTMLInputElement).value === "0"))).toBe(true);
 });
 
 test("金額表の各セルを編集でき、狭い画面でも最後の月に入力できる", async ({ page, app }, testInfo) => {
@@ -237,7 +243,7 @@ test("金額表の各セルを編集でき、狭い画面でも最後の月に�
   await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
   await prepareAccountRows(app);
   await trigger.click();
-  const table = app.getByRole("table", { name: "月別計画金額", exact: true });
+  const table = app.getByRole("table", { name: "月別金額", exact: true });
   const region = app.locator(".initiative-grid-scroll");
   await expect(table.getByRole("columnheader")).toHaveText(["勘定科目", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月", "1月", "2月", "3月"]);
   expect(await table.getByRole("combobox").evaluateAll(inputs => inputs.map(input => (input as HTMLInputElement).value))).toEqual(["売上高", "消耗品費", "給与手当"]);
@@ -342,7 +348,7 @@ test("画面幅を変えてもサイドバーとメインが並び、閉じる�
   expect(mainBox.width).toBe(frame.width - 64);
 });
 
-test("新しい計画の年度を一度選び、閉じた後に同じ年度で読み直せる", async ({ app }) => {
+test("新しいファイルの年度を一度選び、閉じた後に同じ年度で読み直せる", async ({ app }) => {
   const year = app.getByRole("spinbutton", { name: "年度", exact: true });
   const initial = Number(await year.getAttribute("aria-valuenow"));
   for (let count = 0; count < Math.abs(2030 - initial); count++) await year.press(initial < 2030 ? "ArrowDown" : "ArrowUp");
@@ -384,7 +390,7 @@ test("壊れたファイルを拒否し、正常なファイルで再開でき�
   await expect(app.getByRole("main", { name: "ホーム", exact: true })).toBeVisible();
 });
 
-test("保存失敗時は入口に残り、既存の計画を開ける", async ({ page, app }) => {
+test("保存失敗時は入口に残り、既存のファイルを開ける", async ({ page, app }) => {
   await page.getByLabel("ファイル操作", { exact: true }).selectOption("save-failure");
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await app.getByRole("button", { name: "新規作成", exact: true }).click();

@@ -34,7 +34,7 @@ test("ダッシュボードの比較・月別順位・詳細往復と部署の�
   await expect(dashboard.locator(".dashboard-chart svg")).toHaveCount(2);
 });
 
-test("サンプル予算の明暗・全件表示と空の計画", async ({ page, app }) => {
+test("サンプル予算の明暗・全件表示と空のデータ", async ({ page, app }) => {
   await page.goto("/tests/ui/preview.html?data=large");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "ダッシュボード", exact: true }).click();

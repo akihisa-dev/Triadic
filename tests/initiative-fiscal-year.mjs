@@ -81,7 +81,7 @@ export async function verifyInitiativeFiscalYear(api) {
       const restored = await observe(() => api.readPlanContents(bytes));
       assert.equal(restored.counts.previousReads, 1, "全体読込では必要な前年金額を復元");
       assert.equal(restored.counts.previousRows, count);
-      assert.deepEqual(restored.result, contents, "拒否後も元の計画全体を保持");
+      assert.deepEqual(restored.result, contents, "拒否後も元のデータ全体を保持");
       console.log(`年度確認: 前年${count}件、単体編集と無変更は年度1回・前年取得0回、変更ありの保存候補は全体読込1回`);
     }
   } finally { sqlite.Database.prototype.exec = originalExec; }

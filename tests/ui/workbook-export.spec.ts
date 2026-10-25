@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs';
 import { test, expect } from './fixtures';
 
-test('出力中も応答し、中止・上限拒否・再出力を保持して計画を変更しない', async ({ page, app }) => {
+test('出力中も応答し、中止・上限拒否・再出力を保持してデータを変更しない', async ({ page, app }) => {
   test.setTimeout(90_000);
   await page.goto('/tests/ui/preview.html?data=previous-export-limit');
   await expect(page.getByRole('status')).toHaveText('操作できます');

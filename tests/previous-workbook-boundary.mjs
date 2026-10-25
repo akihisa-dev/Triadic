@@ -95,7 +95,7 @@ export async function verifyPreviousWorkbookBoundary(api, plan) {
     const many = new JSZip(); for (let i = 0; i < 2049; i++) many.file(`entry${i}`, '');
     await refuse(await many.generateAsync({ type: 'uint8array' }));
     await refuse(await mutate(xml => '<!DOCTYPE worksheet [<!ENTITY x "text">]>' + xml));
-    assert.deepEqual(plan, before, '拒否で計画を変更しない');
+    assert.deepEqual(plan, before, '拒否でデータを変更しない');
     const initial = loads;
     assert.deepEqual(await api.parsePreviousWorkbook(normal, plan), []);
     assert.equal(loads, initial + 1, '拒否後の正常な再取り込みはExcelJSへ進む');

@@ -86,7 +86,7 @@ export function DataHistoryPage({ entries, busy, error, onPreview, onCompare, on
       {!entries.length && <p className="page-description">履歴はまだありません。</p>}
     </div>
     {comparison && <HistoryDifferenceDialog returnFocus={comparisonTrigger.current} date={historyDate(comparison.entry.recordedAt)} differences={comparison.result.differences} impact={comparison.result.impact} onClose={() => setComparison(null)} />}
-    <ConfirmationDialog open={deletion !== null} title="履歴を削除" message={`${deletion && "before" in deletion ? `${historyDate(deletion.before)}より前の` : "選択した"}${count}件の履歴を削除しますか？ 削除した履歴には戻れません。現在の計画データは変わりません。${deletionFailure ? ` ${deletionFailure}` : ""}`} confirmLabel="削除する" busy={locked}
+    <ConfirmationDialog open={deletion !== null} title="履歴を削除" message={`${deletion && "before" in deletion ? `${historyDate(deletion.before)}より前の` : "選択した"}${count}件の履歴を削除しますか？ 削除した履歴には戻れません。現在のデータは変わりません。${deletionFailure ? ` ${deletionFailure}` : ""}`} confirmLabel="削除する" busy={locked}
       onCancel={() => { if (deletionFailure) setFailure(deletionFailure); setDeletion(null); }} onConfirm={() => {
         if (deletion) {
           const retry = Boolean(deletionFailure);

@@ -92,13 +92,13 @@ test("再読み込み後に記憶したファイルを開き、最新の内容�
 });
 
 test("最後の1件で置き換え、記憶の消去はファイルを削除しない", async ({ page }) => {
-  for (const name of ["最初.triadic", "次の計画.triadic"]) {
+  for (const name of ["最初.triadic", "次のデータ.triadic"]) {
     await filePicker(page, name);
     await page.getByRole("button", { name: "ファイルを開く", exact: true }).click();
     await closeFile(page);
   }
   await page.reload();
-  await expect(page.locator("#recent-file-name")).toHaveText("次の計画.triadic");
+  await expect(page.locator("#recent-file-name")).toHaveText("次のデータ.triadic");
   await page.getByRole("button", { name: "履歴を消す", exact: true }).click();
   await expect(page.locator("#recent-file-name")).toHaveText("まだ開いていません");
   await expect(page.getByRole("button", { name: "続きから", exact: true })).toBeDisabled();
@@ -106,7 +106,7 @@ test("最後の1件で置き換え、記憶の消去はファイルを削除し�
   await expect(page.locator("#recent-file-name")).toHaveText("まだ開いていません");
   expect(await page.evaluate(async () => {
     const root = await navigator.storage.getDirectory();
-    return (await (await root.getFileHandle("次の計画.triadic")).getFile()).size;
+    return (await (await root.getFileHandle("次のデータ.triadic")).getFile()).size;
   })).toBe(sample.length);
 });
 
@@ -150,9 +150,9 @@ test("削除・破損・許可拒否の案内を出し、通常の選択で復�
   await expect(page.getByRole("alert")).toContainText("読み書きが許可されませんでした");
   await expect(page.locator("#recent-file-name")).toHaveText("復帰.triadic");
   await page.evaluate(() => Object.defineProperty(FileSystemFileHandle.prototype, "queryPermission", { configurable: true, value: async () => "granted" }));
-  await filePicker(page, "別の計画.triadic");
+  await filePicker(page, "別のデータ.triadic");
   await page.getByRole("button", { name: "ファイルを開く", exact: true }).click();
-  await expect(page.locator(".home-file-name")).toHaveText("別の計画.triadic");
+  await expect(page.locator(".home-file-name")).toHaveText("別のデータ.triadic");
 });
 
 test("ドロップからも記憶し、参照のないドロップでは編集を始めず記憶を保護する", async ({ page }) => {

@@ -44,6 +44,6 @@ export async function verifySchemaBoundary(api) {
   live.close();
   const ordinary = await api.editDatabase(original, db => db.run("UPDATE departments SET name = '正常の変更' WHERE id = 1"));
   assert.equal((await api.readPlanContents(ordinary.bytes)).departments[0].departmentName, "正常の変更");
-  assert.deepEqual(await api.readPlanContents(original), initial, "拒否と編集は元の計画を書き換えない");
+  assert.deepEqual(await api.readPlanContents(original), initial, "拒否と編集は元のデータを書き換えない");
   console.log("PASS: exact plan/snapshot schema, altered trigger/view/index/table, history/undo refusal, immutable year and ordinary edit");
 }

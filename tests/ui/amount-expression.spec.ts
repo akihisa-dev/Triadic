@@ -34,7 +34,7 @@ for (const surface of ['entry', 'detail', 'previous']) for (const kind of [1, 2]
     }
     if (surface !== 'previous') await app.getByRole('tab', { name: kind === 1 ? '一次予算' : '確定予算', exact: true }).click();
     await settleMotion(app.locator('body'));
-    const table = app.getByRole('table', { name: surface === 'previous' ? '前年入力の月別金額' : '月別計画金額', exact: true });
+    const table = app.getByRole('table', { name: surface === 'previous' ? '前年入力の月別金額' : '月別金額', exact: true });
     const first = table.locator('input[data-row="0"][data-column="0"]');
     const next = table.locator('input[data-row="0"][data-column="1"]');
     await first.fill('=12*4');

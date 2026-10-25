@@ -22,9 +22,9 @@ This app is for people who want to prepare budgets currently handled in Excel in
 
 [Getting started](#getting-started) · [Main features](#main-features) · [Detailed operations](#screens-and-operations-in-detail) · [Excel import and export](#excel-import-and-export) · [Development](#development)
 
-## One plan, three perspectives
+## One budget, three perspectives
 
-The budget formula is **previous-year forecast/actuals + total initiative adjustments = budget**. Enter changes from the previous year for each initiative, rather than the total budget. We call these three views of the same plan “three-way equivalence” (三面等価).
+The budget formula is **previous-year forecast/actuals + total initiative adjustments = budget**. Enter changes from the previous year for each initiative, rather than the total budget. We call these three views of the same budget “three-way equivalence” (三面等価).
 
 | Table | What it shows | When to use it |
 |---|---|---|
@@ -52,9 +52,9 @@ For example, if an expense was 1,000 thousand yen in a month last year, entering
 | Select, copy, and paste table ranges | Enter multiple months, paste from Excel, and fill a range with one value |
 | Configure accounts, aggregations, and classifications per file | Adapt account order, aggregation signs, industries, departments, breakdown categories, and periods to your plan |
 | Compare months, quarters, half-years, and the full year | Check period amounts and budget differences in the cost summary and breakdown table |
-| Export the three tables to Excel and import a previous-year template | Work with plan tables in Excel and update previous-year forecast/actuals in bulk from a dedicated template |
+| Export the three tables to Excel and import a previous-year template | Work with budget tables in Excel and update previous-year forecast/actuals in bulk from a dedicated template |
 | Autosave and undo/redo the latest 100 operations | Save edits to registered data and undo successful changes one at a time |
-| Record, view, and restore past states | Keep snapshots in the same plan file and restore the entire plan to a selected point |
+| Record, view, and restore past states | Keep snapshots in the same file and restore all business data to a selected point |
 | Inspect data and calculation rules in the app | Check the basis of displayed values through “Screens and data,” “How calculations work,” and “Processing flow” on Home |
 
 Enter amounts in **thousands of yen with up to three decimal places**. `120` means 120,000 yen, and `0.001` means 1 yen. Calculations and storage use whole yen; only table displays round to whole thousands of yen. Rounded display values are never used as calculation inputs.
@@ -63,7 +63,7 @@ Enter amounts in **thousands of yen with up to three decimal places**. `120` mea
 
 See [Load in Chrome](#load-in-chrome) for installation steps. The repository's `dist/extension/` contains the loadable distribution. To build from source, follow [Development](#development).
 
-1. **Create or open a file.** Open the entry screen through the extension icon and choose a fiscal year and save location with “New” (新規作成). Open existing plans with “Open file” (ファイルを開く) or drag and drop, and reopen the last file with “Continue” (続きから). Each file has one fiscal year, which cannot be changed after creation.
+1. **Create or open a file.** Open the entry screen through the extension icon and choose a fiscal year and save location with “New” (新規作成). Open existing files with “Open file” (ファイルを開く) or drag and drop, and reopen the last file with “Continue” (続きから). Each file has one fiscal year, which cannot be changed after creation.
 2. **Prepare accounts and classifications.** New files include 57 accounts and 15 aggregations. Review accounts, aggregations, breakdown categories, departments, and industries under “Masters” (マスタ), adding or editing as needed. Set the industries assigned to each department.
 3. **Enter previous-year forecast/actuals.** In “Previous-year input” (前年入力), select one industry and one department and enter 12 months of amounts by account. You can also view totals for all departments and industries. To use Excel, export the previous-year template from “Import/export” (入出力), edit amounts, and import it.
 4. **Build up initiatives.** Choose “Add initiative” (施策を追加) in the initiative list, enter its name, breakdown category, department, industry, and monthly adjustments, then register it. Period is optional. Open registered initiatives by name to edit them; changes save automatically.
@@ -92,7 +92,7 @@ History consolidation waits for every window to prepare discarding and closing b
 
 Save As captures the destination contents immediately after selection, before waiting for other windows to finish saving, and rejects later external changes.
 
-Save As and conflict recovery both reject destinations used by another open/loading plan or pending save. A recovery destination stays reserved until the new file reference is shared; cancellation or failure releases the reservation.
+Save As and conflict recovery both reject destinations used by another open/loading file or pending save. A recovery destination stays reserved until the new file reference is shared; cancellation or failure releases the reservation.
 
 The existing header search finds saved initiatives by name, notes, and selected breakdown category, subcategory, department, industry, and period names. Space-separated terms must all match across those fields. Results show only classifications matching at least one term; an empty query shows no classification details. Historical viewing uses names from that checkpoint. No buttons or input fields are added.
 
@@ -100,10 +100,10 @@ Input grids support cut-and-paste moves within the same table: cutting keeps sou
 
 ### Current scope and limitations
 
-- The app runs as a Chrome extension and handles local files for which you grant read/write permission. It does not transmit plans externally or synchronize across browsers.
-- The storage format is 30. All files in format 29 or earlier are rejected, whether or not they contain details. Unknown formats are also rejected without migration or overwriting. When a file changes externally, independent changes to other rows are automatically merged with your edits. Overlapping row changes or inconsistent changes are not overwritten; you can save the entire entered plan to another file and continue. Cancellation or failure preserves input and the original file. Applying external changes clears earlier undo history, leaving only your current edit undoable. Save As copies the saved plan, masters, and history to another .triadic file and continues editing there. It preserves undo/redo and switches the filename and Continue reference only after a successful write. Category assignments and initiative category references also compare the category contents when merging. An ID reused after undo or history restoration cannot silently receive old references. Concurrent renaming and a new assignment/reference are rejected; ordinary renaming preserves existing references.
+- The app runs as a Chrome extension and handles local files for which you grant read/write permission. It does not transmit data externally or synchronize across browsers.
+- The storage format is 30. All files in format 29 or earlier are rejected, whether or not they contain details. Unknown formats are also rejected without migration or overwriting. When a file changes externally, independent changes to other rows are automatically merged with your edits. Overlapping row changes or inconsistent changes are not overwritten; you can save all entered data to another file and continue. Cancellation or failure preserves input and the original file. Applying external changes clears earlier undo history, leaving only your current edit undoable. Save As copies the saved business data and history to another .triadic file and continues editing there. It preserves undo/redo and switches the filename and Continue reference only after a successful write. Category assignments and initiative category references also compare the category contents when merging. An ID reused after undo or history restoration cannot silently receive old references. Concurrent renaming and a new assignment/reference are rejected; ordinary renaming preserves existing references.
 - After successfully saving a conflict to another file, the displayed filename and “Continue” reference point to that file for normal editing, undo, history, and recording on closure. Cancellation or write failure leaves references unchanged. Failure to remember the reference on the device is reported; the current screen can still resume from the successful destination.
-- Excel export covers the three tables and calculation inputs; import accepts the previous-year template exported by the app. Arbitrary Excel workbooks and edits to exported three-table workbooks cannot be imported into the plan. Recalculation in an actual Excel installation has not been verified.
+- Excel export covers the three tables and calculation inputs; import accepts the previous-year template exported by the app. Arbitrary Excel workbooks and edits to exported three-table workbooks cannot be imported into the file. Recalculation in an actual Excel installation has not been verified.
 - Input that fails to save remains on screen, but recovery after tab closure, reload, or forced termination is not guaranteed. Changes to the same file from multiple screens or external apps are detected to stop overwriting.
 
 See [Product policy and requirements](REQUIREMENTS.md) for goals and design decisions and [Data model](DATA_MODEL.md) for storage structure. This README describes implemented features, limitations, usage, and development. Source code is published under [AGPLv3](LICENSE).
@@ -124,13 +124,13 @@ The entry screen and shared header display the version beside the app name. It i
 
 ### File entry and sidebar
 
-Implemented screens include the `.triadic` entry screen, Home, previous-year input, initiative input/list/details, cost summary, breakdown table, masters, and account, aggregation, breakdown-category, industry, department, period, and budget-kind masters. Entry supports “Continue,” “Open file,” “New,” and file drops. The previous plan is above separate open/new areas. The open-file area says “Drop a .triadic file here”; dragging a file highlights the whole area with a pale accent background, matching dashed border, and “Drop here to open.” Choose the new file's year in a vertical slot, defaulting to the current April-based fiscal year with its date range shown. Numbers flow vertically, spin with wheel/drag momentum, then decelerate to a year position. Focus at drag start does not shift the page. Up/down keys and clicks on adjacent years move one year at a time; OS reduced-motion settings suppress inertia.
+Implemented screens include the `.triadic` entry screen, Home, previous-year input, initiative input/list/details, cost summary, breakdown table, masters, and account, aggregation, breakdown-category, industry, department, period, and budget-kind masters. Entry supports “Continue,” “Open file,” “New,” and file drops. The previous file is above separate open/new areas. The open-file area says “Drop a .triadic file here”; dragging a file highlights the whole area with a pale accent background, matching dashed border, and “Drop here to open.” Choose the new file's year in a vertical slot, defaulting to the current April-based fiscal year with its date range shown. Numbers flow vertically, spin with wheel/drag momentum, then decelerate to a year position. Focus at drag start does not shift the page. Up/down keys and clicks on adjacent years move one year at a time; OS reduced-motion settings suppress inertia.
 
 The sidebar normally forms a 64px icon rail. Hovering shows item names and the filename; leaving collapses it. Keyboard focus within the rail also expands it. Opening with the top-left hamburger keeps it open after the pointer leaves or the screen changes. The hamburger, close button, or Esc returns to the rail. Expansion smoothly pushes the main panel aside; even on narrow screens it is limited to 280px and half the viewport width. Rail icons also open Home, Initiative list, Cost summary, Breakdown table, Previous-year input, Import/export, Masters, History, and Close file. Touch uses buttons rather than hover. Opening a file starts on Home with the rail collapsed.
 
 Period and optional aggregation deletions compare the confirmed business fields again when saving. Reusing an ID or changing the target makes the old confirmation fail without writing; select the current target and confirm again. Unrelated master changes do not invalidate it.
 
-New file creation reserves the selected destination in the shared session before writing. A file already open, loading, or reserved for another save/create is rejected without changing its contents. Opens arriving during creation wait and read the newly saved plan. An unused existing file can still be replaced explicitly. Failed creation releases the reservation and permits retry.
+New file creation reserves the selected destination in the shared session before writing. A file already open, loading, or reserved for another save/create is rejected without changing its contents. Opens arriving during creation wait and read the newly saved data. An unused existing file can still be replaced explicitly. Failed creation releases the reservation and permits retry.
 
 ### Home and disclosure of calculations and data
 
@@ -138,11 +138,11 @@ New file creation reserves the selected destination in the shared session before
 
 The explanation uses one reading column. “Screens and data” starts with used fields, storage sources, and purposes, followed by full calculation/display explanations and expandable tables containing every stored field and reference. Calculation and processing views start with an outline of the steps, followed by inputs, full step descriptions, conditions, results, and retention. Supporting source files remain expandable at the end. No explanatory content is abridged; narrow screens scroll wide correspondence tables within the table area.
 
-The Home diagram places the initiative list at the center, with its related masters and tables around it. Relationships between surrounding items follow the outer area so they do not cross the central connections. The first click or Enter/Space selects an item; activating the same selected item again opens its screen. Selecting another item changes selection; clicking the background or pressing Escape clears it. Selection has a monochrome border. Every relationship description remains visible. A legend distinguishes selection/reference (dashes), composition/membership (dots), amounts/calculation (solid), and alternative views of shared content (double lines). Line styles persist during selection. Hover, focus, selection, and dragging highlight direct connections while keeping other relationships legible. Cards and descriptions can be dragged, with lines tracking immediately; releasing returns them smoothly to their original positions without rearranging other items or opening a screen. Reduced motion shortens this return. Background panning, wheel/pinch zoom, keyboard controls, and fit-all remain available; camera position and scale persist on returning to Home. These interactions do not write plan data. The canvas fills the area below the heading and shows no permanent operation instructions. Names, backgrounds, and descriptions remain monochrome, and only the active icon and its connections use the theme accent. The budget-kind master shows previous year, initial budget, and final budget; previous year remains the actuals baseline.
+The Home diagram places the initiative list at the center, with its related masters and tables around it. Relationships between surrounding items follow the outer area so they do not cross the central connections. The first click or Enter/Space selects an item; activating the same selected item again opens its screen. Selecting another item changes selection; clicking the background or pressing Escape clears it. Selection has a monochrome border. Every relationship description remains visible. A legend distinguishes selection/reference (dashes), composition/membership (dots), amounts/calculation (solid), and alternative views of shared content (double lines). Line styles persist during selection. Hover, focus, selection, and dragging highlight direct connections while keeping other relationships legible. Cards and descriptions can be dragged, with lines tracking immediately; releasing returns them smoothly to their original positions without rearranging other items or opening a screen. Reduced motion shortens this return. Background panning, wheel/pinch zoom, keyboard controls, and fit-all remain available; camera position and scale persist on returning to Home. These interactions do not write data. The canvas fills the area below the heading and shows no permanent operation instructions. Names, backgrounds, and descriptions remain monochrome, and only the active icon and its connections use the theme accent. The budget-kind master shows previous year, initial budget, and final budget; previous year remains the actuals baseline.
 
 In “Screens and data” (画面とデータ), select a screen to inspect how storage tables map to displayed items. Opening a table shows all stored fields and references and allows navigation to references used on the same screen. Previous-year input also shows storage sources for aggregation display names, membership, and signs, distinguishing subtotals, totals, and profit margins from stored actuals. Calculated tables and fixed budget-kind definitions are distinguished. This view only exposes structure, not actual data, editing, or SQL execution. “Relationship graph” (関連図) returns to the original navigation graph.
 
-“How calculations work” (計算の仕組み) and “Processing flow” (処理の流れ) show source information, processing order, conditions/exceptions, results, and storage locations for a selected topic. They cover amount precision, inheritance, three-table calculations, loading, autosave, conflicts, history, undo, and temporary state. They show neither actual plan values nor processing logs and do not change the plan. “Implementation corresponding to this explanation” (説明に対応する実装) lists supporting filenames.
+“How calculations work” (計算の仕組み) and “Processing flow” (処理の流れ) show source information, processing order, conditions/exceptions, results, and storage locations for a selected topic. They cover amount precision, inheritance, three-table calculations, loading, autosave, conflicts, history, undo, and temporary state. They show neither actual data values nor processing logs and do not change the data. “Implementation corresponding to this explanation” (説明に対応する実装) lists supporting filenames.
 
 ### Managing and selecting breakdown subcategories
 
@@ -156,7 +156,7 @@ The existing account field accepts text to filter account names by partial match
 
 Existing amount cells in initiative entry/details and previous-year input accept arithmetic beginning with `=` (numbers, +, -, *, /, parentheses). Enter, Tab, or leaving the cell replaces the expression with its numeric result; only that result is saved. Invalid expressions, division by zero, sub-yen results, and out-of-range amounts remain unsaved with the input preserved. Expressions support up to 512 characters and 32 parentheses levels, without cell references or functions. Range paste/fill validates and converts every cell before applying.
 
-Select monthly ranges by dragging or Shift+arrows. Copy uses tabs and line breaks; paste supports multiple rows/months, and one value fills the selected range. Ctrl/Command+Enter fills it with the value being edited; Delete/Backspace sets it to 0. Arrows, Enter, and Tab move between cells; F2 or double-click edits within a cell. Bulk input containing rows without accounts, cells outside the table, or invalid amounts is rejected entirely, preserving amounts. Input outside the initial budget creates overrides for each month in the range. Incomplete numeric input such as “-” or “1e” retains its invalid state and starting value by kind, account row, and month. Switching kinds, editing another cell, pasting, or clearing elsewhere does not release the save block. Only correcting that cell, explicitly clearing it, or canceling with Esc clears its invalid state. Cancellation restores its original amount, inheritance, and explicit override of 0. This temporary state is not saved to the plan. Ordinary blank cells mean 0.
+Select monthly ranges by dragging or Shift+arrows. Copy uses tabs and line breaks; paste supports multiple rows/months, and one value fills the selected range. Ctrl/Command+Enter fills it with the value being edited; Delete/Backspace sets it to 0. Arrows, Enter, and Tab move between cells; F2 or double-click edits within a cell. Bulk input containing rows without accounts, cells outside the table, or invalid amounts is rejected entirely, preserving amounts. Input outside the initial budget creates overrides for each month in the range. Incomplete numeric input such as “-” or “1e” retains its invalid state and starting value by kind, account row, and month. Switching kinds, editing another cell, pasting, or clearing elsewhere does not release the save block. Only correcting that cell, explicitly clearing it, or canceling with Esc clears its invalid state. Cancellation restores its original amount, inheritance, and explicit override of 0. This temporary state is not saved to the file. Ordinary blank cells mean 0.
 
 “Add initiative” in the list opens full-screen input and returns to the list after successful registration. Sidebar and Home lead to the list. Returning through the input back button, sidebar, or navigation history asks to discard entered input. Cancel or Esc preserves it; adding after discarding starts empty. Empty input returns without confirmation. Moving to master settings and canceling/failing a save preserve input.
 
@@ -184,7 +184,7 @@ Monthly initiative input uses shaded month headers and light row/column borders.
 
 ### Entering previous-year forecast/actuals
 
-Previous-year input places heading, department, and industry in that order, with the industry dropdown directly beside department. Narrow screens wrap controls and the table uses remaining height. Initially it shows totals for all departments/industries. Selecting a department restricts industries to its memberships and auto-selects a sole candidate. Valid selections remain; an invalid selection returns to all-industry totals. If either selection is “all,” totals are read-only; selecting both individually enables monthly entry. Selections are not saved to the plan. Read-only first-half (April–September), second-half (October–March), and full-year totals follow April–March. Unrounded monthly yen amounts are summed; period profit margin is ordinary profit divided by revenue aggregation. Period columns are excluded from editing, range paste, and saving; overflow leaves affected period cells blank with a notification and preserves monthly input. During vertical scrolling, account/aggregation and month headers through the revenue aggregation row (initial display name “社内控除後売上”) stay at the top; account/aggregation names stay left during horizontal scrolling. If the frozen section plus one data row cannot fit, only column headers stay fixed and all data rows scroll; resizing restores full freezing when space permits. Account cells are editable; subtotals, totals, and profit margins calculate automatically. Drag/Shift+arrows selects ranges; copy, multirow/column Excel paste, Delete/Backspace to 0, and Ctrl/Command+Enter filling are supported. Single-value paste also fills selected account cells. Arrows/Enter/Tab move among account cells; F2/double-click edits text; Esc restores the value at edit start. Paste containing invalid values, cells outside the table, or aggregation rows is rejected entirely with a notification. Classification-total overflow leaves amount/aggregation cells blank and reports it; narrow classifications to inspect and correct source amounts. Save failure preserves input with “Retry saving” (保存を再試行) and “Discard input” (入力を取り消す) in the notification.
+Previous-year input places heading, department, and industry in that order, with the industry dropdown directly beside department. Narrow screens wrap controls and the table uses remaining height. Initially it shows totals for all departments/industries. Selecting a department restricts industries to its memberships and auto-selects a sole candidate. Valid selections remain; an invalid selection returns to all-industry totals. If either selection is “all,” totals are read-only; selecting both individually enables monthly entry. Selections are not saved to the file. Read-only first-half (April–September), second-half (October–March), and full-year totals follow April–March. Unrounded monthly yen amounts are summed; period profit margin is ordinary profit divided by revenue aggregation. Period columns are excluded from editing, range paste, and saving; overflow leaves affected period cells blank with a notification and preserves monthly input. During vertical scrolling, account/aggregation and month headers through the revenue aggregation row (initial display name “社内控除後売上”) stay at the top; account/aggregation names stay left during horizontal scrolling. If the frozen section plus one data row cannot fit, only column headers stay fixed and all data rows scroll; resizing restores full freezing when space permits. Account cells are editable; subtotals, totals, and profit margins calculate automatically. Drag/Shift+arrows selects ranges; copy, multirow/column Excel paste, Delete/Backspace to 0, and Ctrl/Command+Enter filling are supported. Single-value paste also fills selected account cells. Arrows/Enter/Tab move among account cells; F2/double-click edits text; Esc restores the value at edit start. Paste containing invalid values, cells outside the table, or aggregation rows is rejected entirely with a notification. Classification-total overflow leaves amount/aggregation cells blank and reports it; narrow classifications to inspect and correct source amounts. Save failure preserves input with “Retry saving” (保存を再試行) and “Discard input” (入力を取り消す) in the notification.
 
 ### Cost summary and breakdown comparisons and period totals
 
@@ -206,13 +206,13 @@ The breakdown table fixes category, period, subcategory, and initiative-name col
 
 The master entry keeps the existing text and icon sizes, with compact vertical row padding.
 
-New files contain the 57 accounts and 15 aggregations in the [agreed defaults](REQUIREMENTS.md#新規ファイルのデフォルト科目集計). Existing masters are not supplemented or overwritten. Cost-summary subtotals/totals may share display names on multiple rows; profit margin follows ordinary profit. Amount input keeps up to three decimal places in thousands of yen (one yen). Saving, initiative/previous-year aggregation, differences, and period totals use whole-yen integers without converting to fractional thousands before display. Both signs are exact up to 9,007,199,254,740,991 yen; sums/differences exceeding this range are errors. These tables display reasons in the table area while sidebar, back, kind, and classification controls remain usable. Correcting amounts or conditions recalculates; display failure does not rewrite the plan. Tables, charts, and breakdowns round to whole thousands, including negative absolute values, with negative zero shown as 0; editing preserves original precision. Margins round to one decimal place; division by zero is blank.
+New files contain the 57 accounts and 15 aggregations in the [agreed defaults](REQUIREMENTS.md#新規ファイルのデフォルト科目集計). Existing masters are not supplemented or overwritten. Cost-summary subtotals/totals may share display names on multiple rows; profit margin follows ordinary profit. Amount input keeps up to three decimal places in thousands of yen (one yen). Saving, initiative/previous-year aggregation, differences, and period totals use whole-yen integers without converting to fractional thousands before display. Both signs are exact up to 9,007,199,254,740,991 yen; sums/differences exceeding this range are errors. These tables display reasons in the table area while sidebar, back, kind, and classification controls remain usable. Correcting amounts or conditions recalculates; display failure does not rewrite the data. Tables, charts, and breakdowns round to whole thousands, including negative absolute values, with negative zero shown as 0; editing preserves original precision. Margins round to one decimal place; division by zero is blank.
 
 All masters share headings, counts, compact registration fields, and bordered tables. Headers remain fixed while scrolling; light alternating backgrounds and borders separate rows. Monochrome is the base, with pale gray for editing rows. Narrow screens wrap registration fields and keep horizontal scrolling inside the table.
 
 The account master lists order, account code, name, display name, account attribute, and actions. Register accounts there with one of four attributes: revenue, cost of sales, expenses, or profit. Aggregations are registered in the separate “Aggregation master” (集計マスタ), without an account code. Its L-shaped layout edits membership and addition/subtraction signs, and order handles move accounts or aggregation blocks together with their descendants. Required revenue/expense aggregations, operating profit, and ordinary profit cannot be deleted or renamed.
 
-In the aggregation master, +/− buttons show the selected sign with a background that slides over 0.4 seconds. Selection appears immediately; further changes wait during saving. Failure/cancellation restores the saved sign. Sign-only changes preserve membership order and do not rewrite unchanged shared order. Aggregation changes share a working database to prepare undo before/after states, snapshots, and display data together, avoiding duplicate full reads/validation. Full validation of before/after plans and undo states and external-update checks immediately before writing remain. Reduced motion switches the background instantly.
+In the aggregation master, +/− buttons show the selected sign with a background that slides over 0.4 seconds. Selection appears immediately; further changes wait during saving. Failure/cancellation restores the saved sign. Sign-only changes preserve membership order and do not rewrite unchanged shared order. Aggregation changes share a working database to prepare undo before/after states, snapshots, and display data together, avoiding duplicate full reads/validation. Full validation of before/after data and undo states and external-update checks immediately before writing remain. Reduced motion switches the background instantly.
 
 Drag accounts or aggregations, or use up/down keys on order buttons, to reorder. Saved order applies to cost summary, previous-year input, and cost-summary Excel export. Reordering changes neither membership/signs nor amounts. Profit margin follows ordinary profit. Display name normally equals name; initial aggregations use subtotal/total names. Equality is checked after trimming leading/trailing whitespace, matching save normalization. While equal, they update together even during continuous editing; distinct display names and meaningful interior spaces remain. Duplicates are permitted, whitespace-only display names rejected.
 
@@ -220,13 +220,13 @@ Membership is limited to one parent; self-membership, membership beneath descend
 
 Shared order is stored as consecutive `master_order` positions referencing accounts/aggregations by foreign keys; custom account display names use `accounts.display_name`. Existing identifiers, amounts, and memberships remain and are included in snapshots and undo. Display names equal to official names are omitted as NULL; only custom names are stored on account rows. Information stays in the same `.triadic` without external transmission. Account deletion removes its display-name and shared-order rows.
 
-The cost summary also shows unassigned accounts. Department precedes industry dropdowns, offering individual classifications or all totals. Selecting a department limits industries to memberships and auto-selects a sole candidate. Valid selections remain; invalid ones return to all-industry totals. Classifications without amounts/initiatives are still offered. Initially all departments/industries are totaled; narrow screens wrap selectors. Selection is not saved in the plan.
+The cost summary also shows unassigned accounts. Department precedes industry dropdowns, offering individual classifications or all totals. Selecting a department limits industries to memberships and auto-selects a sole candidate. Valid selections remain; invalid ones return to all-industry totals. Classifications without amounts/initiatives are still offered. Initially all departments/industries are totaled; narrow screens wrap selectors. Selection is not saved in the file.
 
 ### Autosave and recovery
 
-Initiatives and masters belong to each plan file and save to `.triadic` when registration/change/deletion succeeds, persisting after reopening without external transmission. Registration/deletion asks for a destination if none exists. When autosave needs a destination or write permission, follow “Retry saving” to select/grant it. Cancellation/failure preserves saved data, the original file, and editing fields. Screen changes and in-app file closure wait for normal autosave to finish and then continue; invalid input, unfinished IME composition, and failed saves prevent them and preserve input. Unregistered initiative input requires a discard decision before closure, and pending confirmation must be resolved. Reload/tab closure requests browser confirmation regardless of unsaved input. External updates trigger validation and merging of independent row changes; overlapping changes protect original content and offer saving the entered plan to another file.
+Initiatives and masters belong to each file and save to `.triadic` when registration/change/deletion succeeds, persisting after reopening without external transmission. Registration/deletion asks for a destination if none exists. When autosave needs a destination or write permission, follow “Retry saving” to select/grant it. Cancellation/failure preserves saved data, the original file, and editing fields. Screen changes and in-app file closure wait for normal autosave to finish and then continue; invalid input, unfinished IME composition, and failed saves prevent them and preserve input. Unregistered initiative input requires a discard decision before closure, and pending confirmation must be resolved. Reload/tab closure requests browser confirmation regardless of unsaved input. External updates trigger validation and merging of independent row changes; overlapping changes protect original content and offer saving the entered data to another file.
 
-Except registration/deletion, edits to existing initiatives, accounts, aggregations, categories, industries, departments, and periods autosave. Text, numbers, and selections wait 600ms without input, then validate and save the entire editing target; Japanese IME composition delays saving. Account reordering, and reordering, membership, and addition/subtraction changes in the aggregation master save when operated. Input continues during saving, with later input saved in order. Normal saving shows no status/recovery controls; only failures show reasons, retry, and discard in notifications. Notifications persist until recovery without shifting fields/tables. Discard restores the last successfully saved state; it does not undo saved changes. Unsaved input exists only in memory and is lost on forced reload/closure. Independent external row changes merge automatically. Overlapping/inconsistent changes do not overwrite; save the entire entered plan to another file to continue. Cancellation/failure preserves input/original file. Applying external changes resets old undo history, leaving your current edit undoable. Save As copies the saved plan, masters, and history to another .triadic file and continues editing there. It preserves undo/redo and switches the filename and Continue reference only after a successful write.
+Except registration/deletion, edits to existing initiatives, accounts, aggregations, categories, industries, departments, and periods autosave. Text, numbers, and selections wait 600ms without input, then validate and save the entire editing target; Japanese IME composition delays saving. Account reordering, and reordering, membership, and addition/subtraction changes in the aggregation master save when operated. Input continues during saving, with later input saved in order. Normal saving shows no status/recovery controls; only failures show reasons, retry, and discard in notifications. Notifications persist until recovery without shifting fields/tables. Discard restores the last successfully saved state; it does not undo saved changes. Unsaved input exists only in memory and is lost on forced reload/closure. Independent external row changes merge automatically. Overlapping/inconsistent changes do not overwrite; save all entered data to another file to continue. Cancellation/failure preserves input/original file. Applying external changes resets old undo history, leaving your current edit undoable. Save As copies the saved business data and history to another .triadic file and continues editing there. It preserves undo/redo and switches the filename and Continue reference only after a successful write.
 
 Closing/reloading app tabs/windows, including entry, or leaving for another page requests standard browser confirmation, whose wording is browser-controlled. It may not appear without prior interaction or on browser/OS forced termination. The [browser unload specification](https://html.spec.whatwg.org/multipage/nav-history-apis.html#prompt-to-unload-a-document) means not all exits can be prevented.
 
@@ -240,9 +240,9 @@ The breakdown table shows monthly revenue/profit for one or two kinds chosen in 
 
 Kind slots appear above headers in all three tables. The initiative list selects one; the other tables select one or two, with only the second optionally empty and no duplicate kinds. Defaults are final budget for the initiative list and initial budget/empty for the others. Click adjacent candidates or use arrows. Selections save per screen and persist after reopening. Cost summary shows three columns for one budget (previous year/budget/year-on-year difference) and five for both (previous year/initial/final/year-on-year/initial-budget difference). Year-on-year subtracts previous year from the displayed budget, using final with both; initial-budget difference is final minus initial. Failed saves keep the saved display and report why. Past viewing allows temporary unsaved selection. Initiative list and breakdown table include all industries/departments; cost summary filters by department then industry dropdowns. The initiative list and expansion table support header sorting and filters; the cost summary keeps its row structure and offers these operations in its amount-detail dialog.
 
-Monthly revenue/expense/profit totals sit at the initiative table's bottom, at the visible bottom even for short lists and fixed there during long-list scrolling. Rows do not stretch; extra height becomes space above totals. All initiatives for the displayed kind are summed in yen before rounding to thousands. Sorting never moves totals. Empty months total 0; months with unset attributes have unconfigured revenue/profit totals. Totals are not saved. Table-wide overflow displays reasons in totals while names remain editable; overflow within one initiative displays a reason in that row, preserves valid initiative amounts and all edit links, and hides totals. List calculations run only when displaying the list and do not block Home, editing, kind changes, undo, reload, or history viewing. Reading plans/history and preparing saved contents do not calculate initiative totals. For both budget kinds, valid cell amounts remain readable, saveable, and correctable when only the initiative total overflows. The preview offers separate initial-budget and final-budget initiative-overflow cases.
+Monthly revenue/expense/profit totals sit at the initiative table's bottom, at the visible bottom even for short lists and fixed there during long-list scrolling. Rows do not stretch; extra height becomes space above totals. All initiatives for the displayed kind are summed in yen before rounding to thousands. Sorting never moves totals. Empty months total 0; months with unset attributes have unconfigured revenue/profit totals. Totals are not saved. Table-wide overflow displays reasons in totals while names remain editable; overflow within one initiative displays a reason in that row, preserves valid initiative amounts and all edit links, and hides totals. List calculations run only when displaying the list and do not block Home, editing, kind changes, undo, reload, or history viewing. Reading data/history and preparing saved contents do not calculate initiative totals. For both budget kinds, valid cell amounts remain readable, saveable, and correctable when only the initiative total overflows. The preview offers separate initial-budget and final-budget initiative-overflow cases.
 
-In the cost summary, “all departments” offers every industry in the master, including industries without assignments or amounts. Selecting one department restricts candidates to its industries and auto-selects a sole candidate. Returning to all departments restores all candidates and keeps a valid industry selection. These display changes do not save the plan.
+In the cost summary, “all departments” offers every industry in the master, including industries without assignments or amounts. Selecting one department restricts candidates to its industries and auto-selects a sole candidate. Returning to all departments restores all candidates and keeps a valid industry selection. These display changes do not save the file.
 
 Data-column headers in the initiative list, expansion table, amount details, editable naming/account masters, history and comparison tables, and Excel import preview toggle ascending/descending order through their labels and open filters through the right-hand mark. Filter marks appear on hover/focus or while applied (always on touch). Choices support multiple values; text matching normalizes width and case; numeric filters compare unrounded yen with sign, zero, unresolved, and range conditions. Multiple columns combine with AND. Empty results keep headers available. Filters preserve sorting and vice versa. Esc closes only the filter editor; its original-order action clears sorting. Display choices never save data. Account drag reorder is available after clearing display filters and sorting. Right-clicking a name/classification cell reveals only a filter icon; activating it matches that cell value exactly while retaining other column filters and sorting. Editable fields, numeric and operation cells are excluded. See the Japanese operation details below.
 
@@ -252,9 +252,9 @@ Industry and department choices for cost-summary export keep their full names an
 
 In Import/export, the breakdown table and initiative list place the table name and budget selection on one row, wrapping on narrow screens. Text sizes and export settings behavior are unchanged.
 
-In sidebar “Import/export,” select the cost summary, breakdown table, and/or initiative list. Only selected tables and “Calculation inputs” (計算元) are exported to `yyyy年度予算.xlsx` using the plan's fiscal year (for example, `2026年度予算.xlsx`). Original headers, borders, backgrounds, column widths, and body merges of category names remain. The breakdown table exports the same period and subcategory columns, ordering, vertical merges, and four fixed left columns. The initiative list fixes category, period, initiative name, and start year/month at the left, as on screen.
+In sidebar “Import/export,” select the cost summary, breakdown table, and/or initiative list. Only selected tables and “Calculation inputs” (計算元) are exported to `yyyy年度予算.xlsx` using the file's fiscal year (for example, `2026年度予算.xlsx`). Original headers, borders, backgrounds, column widths, and body merges of category names remain. The breakdown table exports the same period and subcategory columns, ordering, vertical merges, and four fixed left columns. The initiative list fixes category, period, initiative name, and start year/month at the left, as on screen.
 
-Calculation inputs arrange source classifications, initiatives, kinds, accounts, and monthly amounts. They include the whole plan's previous-year forecast/actuals and initial/final amounts; table display conditions retain export-time choices. Editing source amounts recalculates and keeps up to three decimal places. Initial/final amounts are independent inputs. There are no master or override-only sheets; displayed rows/names/start dates/memberships remain as exported.
+Calculation inputs arrange source classifications, initiatives, kinds, accounts, and monthly amounts. They include all stored previous-year forecast/actuals and initial/final amounts; table display conditions retain export-time choices. Editing source amounts recalculates and keeps up to three decimal places. Initial/final amounts are independent inputs. There are no master or override-only sheets; displayed rows/names/start dates/memberships remain as exported.
 
 Account/initiative sums use `SUMIFS`, period totals use `SUMIF` over contiguous ranges and `SUM` of existing subtotals, and differences/margins use arithmetic and `IF`. Account signs use addition/subtraction groups of `SUM`. Even with many nonadjacent subtotals, each `SUM` has at most 255 arguments and sums only the intended subtotals. There are no Microsoft 365-only functions, named functions, array formulas, macros, or external links. Hidden identification columns distinguish identically named initiatives/accounts. Amounts in existing calculation-input rows copied to the end are included in calculations. Display rows for new initiatives/accounts are not added automatically.
 
@@ -264,7 +264,7 @@ Industry/department identifiers are stored as each row's `identity`, removed wit
 
 The import review retains each target account’s code, name, and attribute. Saving checks all three again and rejects the entire import if any target changed, including a reused account number after undo. Unrelated master changes, display-name changes, and reordering do not invalidate it. Review data stays in memory only; the Excel and .triadic formats are unchanged.
 
-Import files are limited to 20MB. Before reading, ZIP checks enforce 2,048 entries, 8MiB per expanded entry, 32MiB total, 100,000 rows, 20 columns, 200,000 cells, and 1,000,000 XML tags; unnecessary merged cells in previous-year templates are rejected. Only canonical internal paths are accepted for ZIP entries parsed as sheets; extra prefix paths, extensions, or trailing paths are rejected before Excel parsing. Structure metadata uses exact XML attribute-name matching, avoiding confusion from similar names or quoted text when checking columns/cell positions. Parsing runs in a dedicated processing context and stops after 30 seconds. Rejection/timeout does not change the plan, and a normal file can be retried.
+Import files are limited to 20MB. Before reading, ZIP checks enforce 2,048 entries, 8MiB per expanded entry, 32MiB total, 100,000 rows, 20 columns, 200,000 cells, and 1,000,000 XML tags; unnecessary merged cells in previous-year templates are rejected. Only canonical internal paths are accepted for ZIP entries parsed as sheets; extra prefix paths, extensions, or trailing paths are rejected before Excel parsing. Structure metadata uses exact XML attribute-name matching, avoiding confusion from similar names or quoted text when checking columns/cell positions. Parsing runs in a dedicated processing context and stops after 30 seconds. Rejection/timeout does not change the data, and a normal file can be retried.
 
 ExcelJS 4.4.0 (MIT) and its existing XML parser saxes 5.0.1 (ISC) are bundled in the browser. saxes is pinned as a direct dependency for structural prechecks. Generation/reading remain on-device, adding no communication, Chrome permissions, or `.triadic` storage format. ExcelJS's indirect uuid dependency is pinned to patched 11.1.1. Export stores current calculated results and requests automatic recalculation when opened in Excel. Tests read generated files directly, independently evaluate formulas from source data without cached results, and compare app amounts. Actual Excel recalculation remains unverified. See [Import/export design](docs/spreadsheet-io-design.md) for design and validation scope.
 
@@ -272,13 +272,13 @@ ExcelJS 4.4.0 (MIT) and its existing XML parser saxes 5.0.1 (ISC) are bundled in
 
 Open the amount-item master from Masters or Home's graph to view three fixed items (revenue, expenses, profit), their order, and signed account-attribute composition. Revenue = revenue − cost of sales; expenses = expenses; profit = revenue − cost of sales − expenses + profit, where right-hand terms are totals by account attribute. Addition/editing/deletion is unavailable. Display and calculations share definitions without changing storage format, calculation rules, or existing data; nothing is transmitted externally.
 
-The account-attribute master, also reached from Masters or Home, shows revenue, cost of sales, expenses, and profit in fixed names/order. It cannot be added to, edited, or deleted. It shares definitions with account-master choices and excludes aggregations. There are no new tables, migrations, or external transmission; viewing does not rewrite plans/results.
+The account-attribute master, also reached from Masters or Home, shows revenue, cost of sales, expenses, and profit in fixed names/order. It cannot be added to, edited, or deleted. It shares definitions with account-master choices and excludes aggregations. There are no new tables, migrations, or external transmission; viewing does not rewrite data/results.
 
 ## Colors
 
 At table viewport widths of 650px or less, initiative and breakdown tables freeze only the initiative name, sizing it to leave room for amounts. Wider tables keep four fixed columns. Selected month headers use gray with dark text in light mode, and dark gray with light text in dark mode. Both aggregation-creation inputs use the app border colors and theme accent focus outline.
 
-The file name sits immediately to the left of the theme toggle; they remain together at the right edge when the header wraps. The sun/moon toggle at the right end of the header switches the whole app, including entry, tables, masters, and dialogs, between light and dark. The first launch uses light. The choice is retained in browser localStorage (`triadic.theme`) until changed or browser storage is cleared, and shared with other windows in the same browser. It does not follow the OS theme. If preference storage fails, switching still works in the current screen. Tab and Space support keyboard operation; reduced-motion settings shorten the transition. No plan-file, data-history, undo, Excel-output, permission, or external-transmission changes are made. Dark mode uses gold `#D6B86C`; light mode retains blue `#0033FF`.
+The file name sits immediately to the left of the theme toggle; they remain together at the right edge when the header wraps. The sun/moon toggle at the right end of the header switches the whole app, including entry, tables, masters, and dialogs, between light and dark. The first launch uses light. The choice is retained in browser localStorage (`triadic.theme`) until changed or browser storage is cleared, and shared with other windows in the same browser. It does not follow the OS theme. If preference storage fails, switching still works in the current screen. Tab and Space support keyboard operation; reduced-motion settings shorten the transition. No file, data-history, undo, Excel-output, permission, or external-transmission changes are made. Dark mode uses gold `#D6B86C`; light mode retains blue `#0033FF`.
 
 
 Ivory and ink are the base; the theme accent (light blue `#0033FF`, dark gold `#D6B86C`) marks the selected sidebar icon, active input/selection borders and text caret, and the active Home icon with directly connected lines. It applies to initiative input/details, classification choices, previous-year amounts, master registration/editing, and aggregation editing. There is no selection bar. Normal buttons, kind tabs, tables, graph names/backgrounds/descriptions, and notifications remain monochrome. Entry file-drop targets use the required pale accent background and matching dashed border with monochrome text. Import/export drop instructions use gray backgrounds/black dashed borders; history-selection checkboxes remain monochrome.
@@ -301,11 +301,11 @@ New screens/states also use common variables in `ExtensionPage.css` and `FadeSwa
 
 ## Resume the previous file
 
-When different tabs open different plans, every successful save remembers its destination for the next entry page. Unchanged operations, failed saves, and cancellation preserve the shared entry. Failure to remember a handle preserves the successful plan save and the local resume handle, and shows a notice.
+When different tabs open different files, every successful save remembers its destination for the next entry page. Unchanged operations, failed saves, and cancellation preserve the shared entry. Failure to remember a handle preserves the successful file save and the local resume handle, and shows a notice.
 
 “Continue” opens the last successfully opened or saved file, showing its filename and disabled if none is remembered. It works after closing/reopening the extension, requesting read/write permission on click, then validating/loading latest contents. Startup neither reads the file nor requests permission. Moved/deleted files or denied permission produce guidance to select again with “Open file.” Cancellation/invalid files do not update memory.
 
-Because the browser does not expose absolute paths, one reopening reference (`FileSystemFileHandle`) is retained in the extension's IndexedDB with no expiry, replaced by the next successfully opened/saved reference. “Clear history” (履歴を消す), uninstalling the extension, or clearing browser storage removes it. Clear history does not delete the plan. Neither plan contents nor absolute paths are copied into browser storage, sent externally, or synchronized across browsers. No extra extension permissions are needed. This follows [Chrome's file reference/permission documentation](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access).
+Because the browser does not expose absolute paths, one reopening reference (`FileSystemFileHandle`) is retained in the extension's IndexedDB with no expiry, replaced by the next successfully opened/saved reference. “Clear history” (履歴を消す), uninstalling the extension, or clearing browser storage removes it. Clear history does not delete the file. Neither file contents nor absolute paths are copied into browser storage, sent externally, or synchronized across browsers. No extra extension permissions are needed. This follows [Chrome's file reference/permission documentation](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access).
 
 Chrome file selection, creation, and drops yielding file references are supported. Read/write permission is checked and granted before editing opens. A drop without a reference does not start editing and directs you to “Open file.” Permission denial/canceled selection preserves the original file and last memory. Failure to remember a reference does not invalidate opening/saving; entry explains reselecting after restart. Storage compatibility follows [Storage-format policy](#storage-format-policy).
 
@@ -313,15 +313,15 @@ Chrome file selection, creation, and drops yielding file references are supporte
 
 The history heading and deletion controls share one row and wrap on narrow screens, preserving text sizes and the deletion confirmation flow.
 
-Use “View differences” beside a timestamp to compare that checkpoint with the currently saved plan. The read-only comparison includes initiatives, classifications, monthly amounts, previous-year forecast/actuals, masters, memberships, aggregation signs, ordering, and saved display settings. Search, category filters, and 50-item pages help inspect additions, deletions, and changes. Monetary differences retain one-yen precision, and final-budget inheritance is distinguished from explicit overrides, including zero and same-value overrides. The comparison does not save checkpoints or modify the file, undo history, selection, permissions, or storage format. Unsaved input and unseen external file updates are excluded. Failed comparisons can be retried.
+Use “View differences” beside a timestamp to compare that checkpoint with the currently saved data. The read-only comparison includes initiatives, classifications, monthly amounts, previous-year forecast/actuals, masters, memberships, aggregation signs, ordering, and saved display settings. Search, category filters, and 50-item pages help inspect additions, deletions, and changes. Monetary differences retain one-yen precision, and final-budget inheritance is distinguished from explicit overrides, including zero and same-value overrides. The comparison does not save checkpoints or modify the file, undo history, selection, permissions, or storage format. Unsaved input and unseen external file updates are excluded. Failed comparisons can be retried.
 
-“History” below Masters in the sidebar lets you select a recorded time and view past state. Screens become read-only; “Return to present” (現在に戻る) restores the current plan and its pre-preview screen navigation history, allowing retained unregistered input to be resumed with Back. Past viewing has separate navigation history; canceling or failing restoration preserves current drafts, while successful restoration clears drafts and resets navigation. Confirming “Restore this point” (この時点に戻す) restores initiatives, all-kind amounts, previous-year forecast/actuals, masters, aggregations, and saved settings together. The pre-restore state and a new snapshot remain, allowing another selection to reverse restoration.
+“History” below Masters in the sidebar lets you select a recorded time and view past state. Screens become read-only; “Return to present” (現在に戻る) restores the current data and its pre-preview screen navigation history, allowing retained unregistered input to be resumed with Back. Past viewing has separate navigation history; canceling or failing restoration preserves current drafts, while successful restoration clears drafts and resets navigation. Confirming “Restore this point” (この時点に戻す) restores initiatives, all-kind amounts, previous-year forecast/actuals, masters, aggregations, and saved settings together. The pre-restore state and a new snapshot remain, allowing another selection to reverse restoration.
 
 History stays in the same `.triadic`. It records five minutes after the first successful save of an unrecorded change; further saves do not extend the deadline. Normal closure and entering past viewing also record unrecorded changes. Unregistered or failed-save input is excluded. New format-25 files include history-management state and record the state before the first change on first saving. Viewing alone never rewrites files.
 
-There is no automatic deletion or expiry. Select multiple records with checkboxes to delete, or enter a device-local date/time to bulk-delete earlier records. Confirmed deletion cannot be undone and does not change the current plan. Full snapshots increase file size; deletion compacts unused space.
+There is no automatic deletion or expiry. Select multiple records with checkboxes to delete, or enter a device-local date/time to bulk-delete earlier records. Confirmed deletion cannot be undone and does not change the current data. Full snapshots increase file size; deletion compacts unused space.
 
-Recording/restoring/deleting uses the current plan's destination, permissions, and conflict checks. Failures protect the original file and show guidance/retry. If recording on normal closure fails, the file remains open. Asynchronous writes during browser closure are not guaranteed; tab closure/reload/forced termination keeps only the latest successfully recorded history. No extra permissions or external transmission are added. See [Design and implementation boundaries](docs/data-history-design.md) and [Test-data coverage](samples/README.md).
+Recording/restoring/deleting uses the current file's destination, permissions, and conflict checks. Failures protect the original file and show guidance/retry. If recording on normal closure fails, the file remains open. Asynchronous writes during browser closure are not guaranteed; tab closure/reload/forced termination keeps only the latest successfully recorded history. No extra permissions or external transmission are added. See [Design and implementation boundaries](docs/data-history-design.md) and [Test-data coverage](samples/README.md).
 
 ## Department and industry combinations
 
@@ -333,9 +333,9 @@ Department masters assign one or more industries with checkboxes; industries may
 
 There is no standalone detail screen. Monthly amounts are viewed/edited in initiative details and previous-year input, including final-budget overrides, results, and snapshots.
 
-Plans use dedicated `.triadic` files, initially named `Untitled.triadic`. Each file holds one plan in a standard SQLite database. Loading/saving checks canonical storage definitions, rejecting unknown/modified tables, triggers, views, and indexes while retaining the canonical fiscal-year lock. Plans in history pass the same checks before viewing/restoration. Rejected files are not rewritten. JSON, CSV, and Excel are not storage formats.
+Data is stored in dedicated `.triadic` files, initially named `Untitled.triadic`. Each file holds one fiscal year of business data and history in a standard SQLite database. Loading/saving checks canonical storage definitions, rejecting unknown/modified tables, triggers, views, and indexes while retaining the canonical fiscal-year lock. Data in history pass the same checks before viewing/restoration. Rejected files are not rewritten. JSON, CSV, and Excel are not storage formats.
 
-Initiatives, accounts, months, and plan amounts are shared data represented differently in the three tables. Aggregation results are not duplicated as a separate authority. Implemented features include creation, validated loading, viewing account/aggregation/category/industry/department/period/fixed-kind/fixed-attribute masters, and saving initiatives/previous-year input.
+Initiatives, accounts, months, and monthly amounts are shared data represented differently in the three tables. Aggregation results are not duplicated as a separate authority. Implemented features include creation, validated loading, viewing account/aggregation/category/industry/department/period/fixed-kind/fixed-attribute masters, and saving initiatives/previous-year input.
 
 The file identifier is `triadic`, with MIME type `application/vnd.triadic+sqlite`; storage format remains 30. Files with the former app identifier are rejected without conversion or rewriting, even if their format number is 30. Create new files. Previous-year Excel templates use the hidden `_triadic` sheet and `Triadic previous v3` identifier; templates bearing the former identifiers are rejected. Export a new template before importing. Device preferences use localStorage `triadic.theme` and IndexedDB `triadic-recent-file`. Previous namespaces are not read, migrated, or deleted; choose the theme and reopen a file to remember it in the new namespaces. Compatibility with 29 and earlier has been removed; start from new files. Unsupported old or unknown formats are rejected without migration/overwriting. New-format files cannot open in older apps.
 
@@ -386,7 +386,7 @@ Normal commits record changes without version numbers, increment classifications
 
 After cloning, run `npm run setup:hooks`. `pre-commit` checks staged whitespace/version; `pre-push` runs `npm run verify` for build, regular tests, versions, etc. After regeneration, pre-push also compares both distributions with each outgoing commit and stops on missing generated files. It never stages or commits files automatically. Staged version checks include dist/extension/manifest.json. Screen tests do not run on push. Normal verification also stops without configured hooks. If setup detects other existing hooks, inspect their settings.
 
-## Display and processing of large plans
+## Display and processing of large datasets
 
 Normal cost-summary rows use 24px; initiative-list/breakdown rows use 28px with compact vertical padding. Long names wrap with enough height in normal display.
 
@@ -422,7 +422,7 @@ Generate `samples/2027年度サンプル予算.triadic` with `npm run samples:ge
 
 ## Browser checks and automated screen tests
 
-For screen-impacting changes, run `npm run dev:ui` and open the [screen-test entry](http://127.0.0.1:4173/tests/ui/preview.html) in the Codex browser to check modified display/operations. Open file loads the all-feature test plan; New creates an in-memory plan with default accounts/aggregations and no initiatives. No real file selection/writing occurs. Top selectors switch to default new plans or old-format empty plans and reproduce cancellation, invalid files, save failures, and save conflicts from external updates. “Reset to entry” (入口に戻す) or reload resets test data.
+For screen-impacting changes, run `npm run dev:ui` and open the [screen-test entry](http://127.0.0.1:4173/tests/ui/preview.html) in the Codex browser to check modified display/operations. Open file loads the all-feature test data; New creates an in-memory dataset with default accounts/aggregations and no initiatives. No real file selection/writing occurs. Top selectors switch to default new files or old-format empty files and reproduce cancellation, invalid files, save failures, and save conflicts from external updates. “Reset to entry” (入口に戻す) or reload resets test data.
 
 Regular screen fixtures retain 14 initiatives and boundary cases for editing, zero values, account deletion, and empty aggregations. The delivered company budget preserves all default masters except departments, including 57 accounts, 15 aggregations and nine industries; departments represent seven regions and headquarters. Business descriptions map to existing industry codes without renaming them. Open `?data=large` for the actual generated company file; it is business data rather than a large-data benchmark. Dedicated synthetic fixtures cover large datasets and failure conditions. See [Test-data coverage](samples/README.md). `?data=overflow-monthly`, `overflow-period`, `overflow-previous`, and `overflow-difference` test aggregation overflow with savable artificial data; `overflow-previous-input` tests classification-total overflow and return to one combination; `overflow-initiative` tests final-only within-initiative overflow and edit access; `overflow-normal` is a normal-amount control.
 
@@ -475,10 +475,10 @@ After changes, rebuild and reload on the extensions page. Distribute `dist/Triad
 - `Triadic-extension/src/core/tables/`: Display calculations for cost summary, breakdown, aggregation graph, and bulk input-table operations.
 - `Triadic-extension/src/core/storage/`: Direct SQLite creation, validation, loading, updates, history. `transaction.ts` handles updates on copies and connection cleanup.
 - `Triadic-extension/src/core/autoSave.ts`: Input waiting, Japanese composition, additional input during saving, retries.
-- `Triadic-extension/src/extension/PlanSession.ts`: Prepares history display information before file commit, then updates save baseline/undo history. Owns saved-plan authority and serializes saving, permission preparation, history, and closing; publishes to the screen only after successful file commit.
+- `Triadic-extension/src/extension/PlanSession.ts`: Prepares history display information before file commit, then updates save baseline/undo history. Owns saved-data authority and serializes saving, permission preparation, history, and closing; publishes to the screen only after successful file commit.
 - `Triadic-extension/src/core/domain/planCommands.ts`: Typed update commands, autosave decisions, input validation before destination selection. `core/storage/planCommands.ts` connects them to SQLite updates and is directly used by the calculation worker.
 - `Triadic-extension/src/extension/preparePlanCommand.ts`: Prepares save data/undo states from commands. `PlanSession.ts` owns destination choice, save ordering, and publication. `planFile.ts` checks external changes; `triadicFile.ts` commits to real files.
-- `Triadic-extension/src/core/storage/prepareOrdinarySave.ts`: Applies ordinary updates once in a dedicated connection; `commandComparison.ts` compares stored fields for target initiatives, previous-year classifications, related masters/order. Revision-only changes are not content changes; override addition/removal and explicit 0 remain distinct. Avoids full-plan reconstruction solely for change detection and screen-side string comparisons.
+- `Triadic-extension/src/core/storage/prepareOrdinarySave.ts`: Applies ordinary updates once in a dedicated connection; `commandComparison.ts` compares stored fields for target initiatives, previous-year classifications, related masters/order. Revision-only changes are not content changes; override addition/removal and explicit 0 remain distinct. Avoids full-data reconstruction solely for change detection and screen-side string comparisons.
 - `Triadic-extension/src/extension/ExtensionPage.tsx`: File-operation entry. `filePicker.ts` chooses destinations; `usePlanSession.ts` subscribes to saved state and five-minute recording deadlines. If a backward clock shift ends recording before its deadline, it reschedules with the latest deadline.
 - `Triadic-extension/src/extension/HomePage.tsx`: Connects common screens. `useHomeWorkspace.tsx` composes the separate draft, navigation, history, save-command and undo controllers in `extension/workspace/`; `WorkspacePage.tsx` renders screens; `WorkspaceChrome.tsx` displays header/sidebar. `useScreenHistory.ts` holds navigation history.
 - `Triadic-extension/src/extension/useFileEntry.ts`: Controls selection/loading/last reference. `EntryPage.tsx` renders entry.
@@ -508,7 +508,7 @@ Breakdown tables reuse monthly amounts, subtotals, and period row structures wit
 
 The initiative list reuses monthly amounts, calculation errors, and all-initiative totals for initial/final budgets against current source data. Amount/account/year changes rebuild them, and attribute changes, undo, and snapshot restoration never reuse stale results. Sorting consults names/start dates; scrolling/save-status changes do not reorder every initiative.
 
-Breakdown computation indexes initiatives by initiative ID per kind and groups once by category ID. `node --expose-gc scripts/measure-expansion-table.mjs` observes time/memory for concentrated/distributed 100/500/1,000 initiatives. Optional screen measurement uses `PERF_MODE=expansion npx playwright test grid-performance.spec.ts --project desktop` to record React rendering, DOM count, and heap. These development-build measurements do not guarantee real-plan or whole-product performance.
+Breakdown computation indexes initiatives by initiative ID per kind and groups once by category ID. `node --expose-gc scripts/measure-expansion-table.mjs` observes time/memory for concentrated/distributed 100/500/1,000 initiatives. Optional screen measurement uses `PERF_MODE=expansion npx playwright test grid-performance.spec.ts --project desktop` to record React rendering, DOM count, and heap. These development-build measurements do not guarantee real-data or whole-product performance.
 
 Previous-year drafts index amounts by industry/department/account/month and cells locate draft rows by account ID. Unchanged classifications/content reuse display aggregation; edits recalculate. Optional measurements are `node --expose-gc scripts/measure-previous-grid.mjs` (aggregation/initialization) and `PERF_MODE=previous npx playwright test grid-performance.spec.ts --project desktop` (input reflection, renders, DOM, heap).
 
@@ -526,7 +526,7 @@ New files create/store shared order from agreed defaults. Missing/inconsistent c
 
 External merging identifies aggregation memberships by target type (account/aggregation) and ID. Parent/order/sign changes still compare as the same target, preserving unrelated memberships. Empty, inappropriate NULL, or duplicate keys that prevent safe identification reject merging and return to input preservation/separate-file saving.
 
-`aggregation_members.position` accepts only integers 0–9,007,199,254,740,991 for save/load; strings, fractions, negatives, and overflow are rejected. Valid gaps remain; addition/reassignment appends. At the numbering limit, addition is rejected before changing the plan. Sign changes within the same parent do not move order.
+`aggregation_members.position` accepts only integers 0–9,007,199,254,740,991 for save/load; strings, fractions, negatives, and overflow are rejected. Valid gaps remain; addition/reassignment appends. At the numbering limit, addition is rejected before changing the data. Sign changes within the same parent do not move order.
 
 If a save command produces unchanged saved business content, it leaves update timestamps, snapshots, and unrecorded deadlines unchanged and starts no file reads/writes or conflict resolution. Existing undo/redo remains. External changes are checked at the next actual change.
 
@@ -540,9 +540,9 @@ Excel screens and ExcelJS/JSZip/Saxes processing load on first opening import/ex
 
 See [Import/export loading measurements](docs/spreadsheet-loading.md) for initial/first-open methods and comparisons.
 
-Ordinary saving and external merging read plan/history together once from the same fully validated connection. Corruption/reference/input/history checks and pre-save comparison remain. [Ordinary-save performance](docs/save-performance.md) records comparisons by size/history volume, reproduction, and limits of measurements substituting for real-file saves.
+Ordinary saving and external merging read data/history together once from the same fully validated connection. Corruption/reference/input/history checks and pre-save comparison remain. [Ordinary-save performance](docs/save-performance.md) records comparisons by size/history volume, reproduction, and limits of measurements substituting for real-file saves.
 
-Undo/snapshot content copies only canonical business tables and numbering state into separate memory, without cloning/deleting all past history. Completed content passes the same full history validation. Source plans/history remain unchanged; failures release working memory. [Business-snapshot comparison](docs/business-snapshot-performance.md) records copying/time differences by history volume and conditions increasing cost.
+Undo/snapshot content copies only canonical business tables and numbering state into separate memory, without cloning/deleting all past history. Completed content passes the same full history validation. Source data/history remain unchanged; failures release working memory. [Business-snapshot comparison](docs/business-snapshot-performance.md) records copying/time differences by history volume and conditions increasing cost.
 
 External merging does not simultaneously accept account changes/deletion of an initiative row and the other side's monthly amounts/explicit overrides, instead returning to conflict recovery. Independent month edits merge if the account stays unchanged.
 
@@ -558,11 +558,11 @@ Plan/history load/export uses the same name validation as ordinary input, reject
 
 Initiative monthly totals are reused in the screen while rows, input errors, kind, and attributes remain unchanged. Moving/selecting cells, editing mode, expanding account candidates, or notes-only changes do not reaggregate every row. Amount/override/inheritance reset/row/account/attribute changes, undo, and save-baseline reflection recalculate, preserving invalid-input/overflow display rules. Totals are not saved.
 
-Initiative registration/update reads only fiscal year once from the validated storage connection for year comparison. Previous-year amounts/display kinds are not reconstructed solely for this check but remain available on full-plan loading. Year-mismatch rejection and full-file validation remain.
+Initiative registration/update reads only fiscal year once from the validated storage connection for year comparison. Previous-year amounts/display kinds are not reconstructed solely for this check but remain available on full-data loading. Year-mismatch rejection and full-file validation remain.
 
 Cost-summary initiative adjustments with known target months add directly to each month's yen integer. Multimonth aggregation retains its behavior; BigInt holds intermediate cancellation, and meaningful final totals are range-checked.
 
-Open, Continue, drop, and post-creation loading obtain plan/history together through one full validation in the same connection. Both must succeed before publication; failure preserves the original session/last reference. Opening alone does not update the file. Browser detail generation occurs when needed.
+Open, Continue, drop, and post-creation loading obtain data/history together through one full validation in the same connection. Both must succeed before publication; failure preserves the original session/last reference. Opening alone does not update the file. Browser detail generation occurs when needed.
 
 History types, empty state, and five-minute interval use shared SQLite-independent definitions. Entry before opening a file does not initialize SQLite; the dedicated Worker prepares it on first data processing. Node verification without a Worker runs the same processing directly.
 
@@ -584,13 +584,13 @@ History types, empty state, and five-minute interval use shared SQLite-independe
 
 「何をするか」「どの科目が、何月に、前年からいくら変わるか」を施策ごとに入力し、企業の年度予算を組み立てます。前年の実績と施策の増減から、施策一覧・総原価表・展開表を同じデータで作るため、表ごとに数字を転記する必要がありません。
 
-Excelで行っている予算作成を、施策を考える順序に沿って進めたい方に向けたアプリです。計画は手元の`.triadic`ファイルで管理し、計算と保存は端末内で完結します。計画データを外部サーバーへ送信しません。
+Excelで行っている予算作成を、施策を考える順序に沿って進めたい方に向けたアプリです。データは手元の`.triadic`ファイルで管理し、計算と保存は端末内で完結します。データを外部サーバーへ送信しません。
 
 [使い始める](#使い始める) · [主な機能](#主な機能) · [操作の詳細](#画面と操作の詳しい説明) · [Excelの入出力](#excelの入出力) · [開発](#開発)
 
-## 一つの計画を、三つの視点で
+## 一つのデータを、三つの視点で
 
-予算の基本は、**基準前年の金額 ＋ 施策の増減合計 ＝ 予算**です。施策に入力するのは予算総額ではなく、前年からの増減です。同じ計画を三つの切り口から確認する関係を「三面等価」と呼んでいます。
+予算の基本は、**基準前年の金額 ＋ 施策の増減合計 ＝ 予算**です。施策に入力するのは予算総額ではなく、前年からの増減です。同じデータを三つの切り口から確認する関係を「三面等価」と呼んでいます。
 
 | 表 | 確認できること | 使う場面 |
 |---|---|---|
@@ -616,11 +616,11 @@ flowchart TD
 | 4月〜翌年3月の12か月をまとめて入力 | 一つの施策の名称・備考・分類・月別金額を同じ画面で編集できます |
 | 一次予算と確定予算を管理 | 確定予算は一次予算を引き継ぎ、変更した月だけ手修正できます |
 | 表の範囲選択・コピー・貼り付け | 複数月の入力、Excelからの貼り付け、同じ値の一括入力を行えます |
-| 科目・集計・分類をファイルごとに設定 | 自社の科目順、集計の加減算、業種・部署・展開・期間を計画に合わせられます |
+| 科目・集計・分類をファイルごとに設定 | 自社の科目順、集計の加減算、業種・部署・展開・期間を業務に合わせられます |
 | 月別・四半期・半期・年間の比較 | 総原価表と展開表で期間全体の金額と予算の違いを確認できます |
-| 総原価表・展開表・施策一覧のExcel出力と前年フォーマットの取り込み | 計画の表をExcelで扱い、基準前年の金額を専用フォーマットから一括更新できます |
+| 総原価表・展開表・施策一覧のExcel出力と前年フォーマットの取り込み | 各表をExcelで扱い、基準前年の金額を専用フォーマットから一括更新できます |
 | 自動保存と直近100操作の取り消し・やり直し | 登録済みデータの編集を保存し、保存に成功した変更を一つずつ戻せます |
-| 過去の状態の記録・閲覧・復元 | 同じ計画ファイルに時点ごとの状態を残し、全体を選んだ時点へ戻せます |
+| 過去の状態の記録・閲覧・復元 | 同じファイルに時点ごとの状態を残し、全体を選んだ時点へ戻せます |
 | アプリ内でデータと計算の根拠を閲覧 | ホームの「画面とデータ」「計算の仕組み」「処理の流れ」で表示の根拠を確かめられます |
 
 金額は**千円単位で小数点以下3桁まで**入力できます。`120`は120,000円、`0.001`は1円です。計算と保存は1円単位で行い、表の表示だけを整数の千円へ四捨五入します。丸めた表示値を再計算の元には使いません。
@@ -629,7 +629,7 @@ flowchart TD
 
 Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を参照してください。リポジトリの`dist/extension/`には読み込み用の配布物があります。ソースから作る場合は[開発](#開発)の手順でビルドします。
 
-1. **ファイルを作る・開く。** 拡張機能のアイコンから入口を開き、「新規作成」で基準年度と保存先を選びます。既存の計画は「ファイルを開く」またはドロップで開き、前回のファイルは「続きから」で再開できます。一つのファイルが一つの基準年度を持ち、作成後に年度は変更できません。
+1. **ファイルを作る・開く。** 拡張機能のアイコンから入口を開き、「新規作成」で基準年度と保存先を選びます。既存のファイルは「ファイルを開く」またはドロップで開き、前回のファイルは「続きから」で再開できます。一つのファイルが一つの基準年度を持ち、作成後に年度は変更できません。
 2. **科目と分類を整える。** 新規ファイルには57科目・15集計が入っています。「マスタ」で科目・集計と展開・部署・業種などを確認し、必要に応じて追加・編集します。部署には、対象となる業種を設定します。
 3. **前年の金額を入れる。** 「前年入力」で業種と部署を一つずつ選び、科目別に12か月の金額を入力します。全部署・全業種の合計も閲覧できます。Excelを使う場合は「入出力」から前年フォーマットを出力し、金額を編集して取り込みます。
 4. **施策を積み上げる。** 「施策一覧」の「施策を追加」から、名称・展開・部署・業種と月別の増減を入力して登録します。期間は任意です。登録した施策は施策名から開いて編集でき、変更は自動保存されます。
@@ -654,13 +654,13 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 サイドバーの「別名で保存」で保存先を選べます。未記録の保存済み変更はコピー側の履歴に記録し、元のファイルは変更しません。登録前の入力・未保存の編集・処理中・過去閲覧中・確認待ちは使えません。保存先の選択と処理中は編集を止め、元と同じファイルや途中で更新された保存先への書き込みを拒否します。キャンセル・失敗では元の保存先と入力を保持します。コピーは指定先に残り、自動削除・外部送信・追加権限・保存形式の変更はありません。
 
-計画・マスタ・時点履歴は同じ`.triadic`ファイルに保存します。既存データの文字・数値の編集は、入力が600ミリ秒止まってから自動保存します。新規登録と削除は、それぞれの操作で確定します。保存先の許可や外部でのファイル更新により保存できない場合は、理由と復旧操作を表示します。
+データ・マスタ・時点履歴は同じ`.triadic`ファイルに保存します。既存データの文字・数値の編集は、入力が600ミリ秒止まってから自動保存します。新規登録と削除は、それぞれの操作で確定します。保存先の許可や外部でのファイル更新により保存できない場合は、理由と復旧操作を表示します。
 
 「操作を取り消す」は、このファイルを開いている間の直近100操作を戻す機能です。「履歴」はファイルに残した過去の状態を閲覧・復元する機能で、開き直した後も利用できます。時点履歴は最初の未記録の変更の保存成功から5分後と、正常なファイル終了時・過去閲覧への移動時に記録します。保持期限はなく、必要に応じて削除します。詳しくは[データの履歴](#データの履歴)を参照してください。
 
 内訳の全6列（前年・施策、科目、部署、業種、集計の加減、反映額）は見出しから昇順・降順を切り替えます。初回と別列は昇順、同じ列は昇降順を交互に切り替え、▲・▼で示します。文字列は表示名の日本語順（数字部分は数値順）、空欄は最後、加減は−1／＋1、反映額は丸める前の円整数で比較し、同値は元の順序を保ちます。全明細を対象にし、切り替え後は先頭行へ戻します。並べ替えと絞り込みは内訳を閉じると破棄し、表示中の明細から合計を求めます。保存内容は変更しません。
 
-総原価表の科目・設定済み集計の金額から内訳を開けます。月別・期間計・比較差額と部署・業種の条件に合わせ、前年額と施策の科目行別の増減、集計の加減符号を確認できます。施策名から編集へ進み、「総原価表へ戻る」で元の分類・スクロール位置へ戻ります。利益率・未設定集計は対象外です。過去閲覧では編集できません。内訳と合計は円単位で計算し、各表示だけ整数千円に丸めるため、表示値の足し算と合計が一致しない場合があります。同じ計画の表示中は科目・月別の候補を再利用し、対象外の施策行を期間切り替えや再表示ごとに走査しません。200行を超える内訳は行の高さを測って表示範囲の周辺だけを描画し、名称の折り返し、相殺後0の行、全体の合計と施策への移動を維持します。内訳は保存せず、保存形式・追加権限・外部送信に変更はありません。
+総原価表の科目・設定済み集計の金額から内訳を開けます。月別・期間計・比較差額と部署・業種の条件に合わせ、前年額と施策の科目行別の増減、集計の加減符号を確認できます。施策名から編集へ進み、「総原価表へ戻る」で元の分類・スクロール位置へ戻ります。利益率・未設定集計は対象外です。過去閲覧では編集できません。内訳と合計は円単位で計算し、各表示だけ整数千円に丸めるため、表示値の足し算と合計が一致しない場合があります。同じデータの表示中は科目・月別の候補を再利用し、対象外の施策行を期間切り替えや再表示ごとに走査しません。200行を超える内訳は行の高さを測って表示範囲の周辺だけを描画し、名称の折り返し、相殺後0の行、全体の合計と施策への移動を維持します。内訳は保存せず、保存形式・追加権限・外部送信に変更はありません。
 
 共通ヘッダーの「施策を検索」で、保存済みの施策名・備考と、施策に選択された展開名・展開区分名・部署名・業種名・期間名から詳細へ移動できます。既存の検索欄へ、例えば「運輸部 燃料」と入力すると分類と内容を組み合わせて探せます。結果には検索語のいずれかに一致した分類だけを「部署：運輸部」のように表示します。空の検索では分類を表示せず、ボタンや入力欄は増やしません。全半角・英字の大小を区別せず、空白で区切った複数語をすべて含む施策を登録順・50件ずつ表示します。検索語なしは全件です。結果を選ぶか、入力欄のEnterで表示ページの先頭を開きます。日本語変換の確定では移動しません。閉じる・Escで元の画面と検索ボタンへ戻り、検索語は同じファイルを開いている間そのウィンドウ内だけに保持し、ファイルを閉じると破棄します。再表示では最新の参照対象を検索し、ページ位置は先頭へ戻します。検索語をファイルや端末へ永続保存しません。検索で一覧の表示条件や予算を変更せず、未保存編集・保存中・確認待ちは検索できません。登録前の施策入力は保持し、検索から別の施策を開いても画面の戻る操作で再開できます。過去閲覧では選んだ時点の施策と分類名で検索し、施策を閲覧専用で開きます。検索は端末内だけで行い、保存形式・権限・外部送信は変更しません。
 
@@ -668,10 +668,10 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 ### 現在の対応範囲と制限
 
-- Chrome拡張機能として動作し、利用者が読み書きを許可したローカルファイルを扱います。計画の外部送信やブラウザ間の同期は行いません。
-- 保存形式は30です。29以前や未知の形式は読み込みを拒否し、移行・上書きは行いません。ファイル更新時は、今回の編集と別の行への変更を自動で合わせて保存します。同じ行の変更や整合しない変更は上書きせず、入力済みの計画全体を別ファイルへ保存して編集を続けられます。キャンセル・保存失敗では入力と元ファイルを保持します。外部変更の反映時には過去の操作取消を初期化し、今回の編集だけを取り消せます。「別名で保存」は保存済みの計画・マスタ・履歴を別の.triadicファイルへ保存し、新しい保存先で編集を続けます。操作取消・やり直しを維持し、ファイル名と「続きから」は書き込み成功後だけ切り替えます。 別ウィンドウが開いている保存先や別計画の保存先切り替え中のファイルは、書き込み前に拒否します。双方の内容と入力を保持し、保存先を開いている画面を閉じるか別の保存先を選び直せます。切り替え中の保存先を開く操作は完了を待ち、同じ担当へ接続します。
+- Chrome拡張機能として動作し、利用者が読み書きを許可したローカルファイルを扱います。データの外部送信やブラウザ間の同期は行いません。
+- 保存形式は30です。29以前や未知の形式は読み込みを拒否し、移行・上書きは行いません。ファイル更新時は、今回の編集と別の行への変更を自動で合わせて保存します。同じ行の変更や整合しない変更は上書きせず、入力済みのデータ全体を別ファイルへ保存して編集を続けられます。キャンセル・保存失敗では入力と元ファイルを保持します。外部変更の反映時には過去の操作取消を初期化し、今回の編集だけを取り消せます。「別名で保存」は保存済みのデータ・マスタ・履歴を別の.triadicファイルへ保存し、新しい保存先で編集を続けます。操作取消・やり直しを維持し、ファイル名と「続きから」は書き込み成功後だけ切り替えます。 別ウィンドウが開いている保存先や別ファイルの保存先切り替え中のファイルは、書き込み前に拒否します。双方の内容と入力を保持し、保存先を開いている画面を閉じるか別の保存先を選び直せます。切り替え中の保存先を開く操作は完了を待ち、同じ担当へ接続します。
 - 競合から別ファイルへ保存できた場合は、通常の編集・操作取消・履歴操作・終了時の記録を含め、画面のファイル名と「続きから」の参照を保存成功先へ揃えます。キャンセルや書き込み失敗では参照を変更しません。端末内への参照の記憶に失敗した場合は通知し、同じ画面内では成功先から再開できます。
-- Excel出力は総原価表・展開表・施策一覧と計算元を扱い、取り込みはアプリから出力した前年入力フォーマットが対象です。任意のExcelブックや、出力した総原価表・展開表・施策一覧の編集内容を計画へ取り込む機能はありません。Excel実機での再計算は未確認です。
+- Excel出力は総原価表・展開表・施策一覧と計算元を扱い、取り込みはアプリから出力した前年入力フォーマットが対象です。任意のExcelブックや、出力した総原価表・展開表・施策一覧の編集内容をデータへ取り込む機能はありません。Excel実機での再計算は未確認です。
 - 保存に失敗した入力は画面内で保持しますが、タブ終了・再読み込み・強制終了後の復元は保証しません。複数の画面や外部アプリで同じファイルを変更した場合は、外部更新を検出して上書きを止めます。
 
 製品の目的と設計判断は[製品方針と要件](REQUIREMENTS.md)、保存構造は[データモデル](DATA_MODEL.md)を参照してください。このREADMEは実装済みの機能・制限・利用手順・開発手順を説明します。ソースコードは[AGPLv3](LICENSE)で公開しています。
@@ -704,7 +704,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 ### ファイルの入口とサイドバー
 
-現在の実装は、`.triadic`ファイルを開く入口画面、ホーム画面、前年入力、施策入力・施策一覧・施策詳細画面、総原価表、展開表、マスタ画面、勘定科目マスタ・集計マスタ・展開マスタ・業種マスタ・部署マスタ・期間マスタ・種別マスタ画面です。入口では「続きから」「ファイルを開く」「新規作成」とファイルのドロップを扱います。前回の計画を上段に置き、ファイルを開く操作と新規作成を下段に分けます。「ファイルを開く」欄には「.triadicファイルをここにドロップ」を表示し、ファイルをドラッグ中は欄全体の淡いアクセント色の背景・同色の破線と「ここにドロップして開く」の見出しで受け入れ先を示します。新規作成の年度は、上下に回すスロットで選びます。初期値は4月始まりの当年度で、対象期間も併記します。数字は上下に流れ、ホイールやドラッグの勢いに応じて回転した後、減速して年度の位置で止まります。ドラッグ開始時のフォーカスでページの位置を変えません。上下キーと前後の年度のクリックは1年ずつ移動し、OSの「動きを減らす」設定では慣性を抑えます。
+現在の実装は、`.triadic`ファイルを開く入口画面、ホーム画面、前年入力、施策入力・施策一覧・施策詳細画面、総原価表、展開表、マスタ画面、勘定科目マスタ・集計マスタ・展開マスタ・業種マスタ・部署マスタ・期間マスタ・種別マスタ画面です。入口では「続きから」「ファイルを開く」「新規作成」とファイルのドロップを扱います。前回のファイルを上段に置き、ファイルを開く操作と新規作成を下段に分けます。「ファイルを開く」欄には「.triadicファイルをここにドロップ」を表示し、ファイルをドラッグ中は欄全体の淡いアクセント色の背景・同色の破線と「ここにドロップして開く」の見出しで受け入れ先を示します。新規作成の年度は、上下に回すスロットで選びます。初期値は4月始まりの当年度で、対象期間も併記します。数字は上下に流れ、ホイールやドラッグの勢いに応じて回転した後、減速して年度の位置で止まります。ドラッグ開始時のフォーカスでページの位置を変えません。上下キーと前後の年度のクリックは1年ずつ移動し、OSの「動きを減らす」設定では慣性を抑えます。
 
 サイドバーは普段、幅64pxのアイコンだけのレールです。カーソルを重ねると項目名とファイル名を表示し、外すと折り畳みます。キーボードでレール内へ移動した場合も展開します。画面左上のハンバーガーボタンで開くと、カーソルを外した後や画面を切り替えた後も開いた状態を維持します。ハンバーガーボタン・閉じるボタン・Escキーでレールへ戻せます。展開時はメインパネルを滑らかに押しのけて横に並び、狭い画面でも最大280px、画面幅の半分までに収めます。「Home」「施策一覧」「総原価表」「展開表」「前年入力」「入出力」「マスタ」「履歴」と「閉じる」はレールのアイコンからも操作できます。タッチ操作ではホバー展開を行わず、ボタンで開閉します。ファイルを開くとレール状態のホームから開始します。
 
@@ -718,11 +718,11 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 右側は縦一列で読み進めます。「画面とデータ」は使用項目・保存元・用途の対応表、表示と計算の説明、テーブルごとに開く全保存項目・参照先の順です。「計算の仕組み」「処理の流れ」は上段の手順一覧に続き、元になる情報・各手順の全文・条件・結果・保存範囲を縦に表示し、末尾で根拠の実装ファイルを開けます。説明は省略せず、狭い幅では対応表の内側で横スクロールします。
 
-ホームは施策一覧を中心に、関係するマスタと表を周囲へ配置した関連図です。周囲の項目同士の関係は外側で結び、中心へ向かう線と交差しないように配置します。1回目のクリックまたはEnter・Spaceで項目を選択し、選択済みの同じ項目をもう一度操作すると画面を開きます。別の項目では選択を切り替え、背景のクリックまたはEscapeで解除します。選択中の項目はモノクロの枠で示します。選択・参照は破線、構成・所属は点線、金額・計算は実線、同じ内容の別表示は二重線とし、凡例で意味を示します。選択中も線種を保ちます。すべての関係の説明を常時表示し、選択・ホバー・フォーカス・ドラッグ中は直接つながる線を強調します。それ以外の線と説明も読み取れる濃さを保ちます。カードと関係の説明はドラッグでき、線も同時に追従します。離すと元の定位置へ滑らかに戻り、ほかの項目の配置を崩しません。ドラッグ終了では画面を開きません。OSの「動きを減らす」設定では戻る動きを短くします。背景のドラッグ、ホイール・ピンチ・ボタン・キーでの拡大縮小、全体表示に対応し、ホームへ戻った際も図の移動位置と倍率を保持します。計画ファイルへの書き込みはありません。キャンバスは見出しの下から画面下端まで広がり、操作説明文は常設しません。名称・背景・関係の説明はモノクロを保ち、操作対象のアイコンと線だけをライトは青・ダークは金で示します。種別マスタは前年・一次予算・確定予算を表示し、前年は施策に含めない実額の基準です。
+ホームは施策一覧を中心に、関係するマスタと表を周囲へ配置した関連図です。周囲の項目同士の関係は外側で結び、中心へ向かう線と交差しないように配置します。1回目のクリックまたはEnter・Spaceで項目を選択し、選択済みの同じ項目をもう一度操作すると画面を開きます。別の項目では選択を切り替え、背景のクリックまたはEscapeで解除します。選択中の項目はモノクロの枠で示します。選択・参照は破線、構成・所属は点線、金額・計算は実線、同じ内容の別表示は二重線とし、凡例で意味を示します。選択中も線種を保ちます。すべての関係の説明を常時表示し、選択・ホバー・フォーカス・ドラッグ中は直接つながる線を強調します。それ以外の線と説明も読み取れる濃さを保ちます。カードと関係の説明はドラッグでき、線も同時に追従します。離すと元の定位置へ滑らかに戻り、ほかの項目の配置を崩しません。ドラッグ終了では画面を開きません。OSの「動きを減らす」設定では戻る動きを短くします。背景のドラッグ、ホイール・ピンチ・ボタン・キーでの拡大縮小、全体表示に対応し、ホームへ戻った際も図の移動位置と倍率を保持します。ファイルへの書き込みはありません。キャンバスは見出しの下から画面下端まで広がり、操作説明文は常設しません。名称・背景・関係の説明はモノクロを保ち、操作対象のアイコンと線だけをライトは青・ダークは金で示します。種別マスタは前年・一次予算・確定予算を表示し、前年は施策に含めない実額の基準です。
 
 ホームの「画面とデータ」では、画面を選ぶと保存テーブルと表示項目の対応を確認できます。テーブルを開くと全保存項目と参照先を表示し、同じ画面で使う参照先へ移動できます。前年入力では集計の表示名・所属・加減算の保存元も示し、小計・合計・利益率と保存する基準前年の金額を区別します。計算で作る総原価表・展開表・施策一覧や種別の固定定義も区別します。構造の閲覧だけを行い、実データの表示・編集やSQL実行は行いません。「関連図」で元の画面移動用の図へ戻れます。
 
-ホームの「計算の仕組み」「処理の流れ」では、対象を選び、元になる情報、処理順、条件・例外、結果、保存場所を確認できます。金額精度・引き継ぎ・総原価表・展開表・施策一覧の計算と、読込・自動保存・競合・履歴・取消・一時状態を扱います。実際の計画の値や処理ログは表示せず、閲覧で計画を変更しません。「説明に対応する実装」で根拠のファイル名も確認できます。
+ホームの「計算の仕組み」「処理の流れ」では、対象を選び、元になる情報、処理順、条件・例外、結果、保存場所を確認できます。金額精度・引き継ぎ・総原価表・展開表・施策一覧の計算と、読込・自動保存・競合・履歴・取消・一時状態を扱います。実際のデータの値や処理ログは表示せず、閲覧でデータを変更しません。「説明に対応する実装」で根拠のファイル名も確認できます。
 
 新規ファイルの展開マスタは、1「コスト」、2「料金改定」、3「荷主撤退」、4「物量増減」、5「売上拡販」、6「拠点集約」、7「生産性向上」、8「効率化」の8件です。既存ファイルの登録内容は自動で置き換えません。
 
@@ -736,7 +736,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 施策入力・詳細の勘定科目は既存の選択欄へ文字を入力して科目名の部分一致で候補を絞れます。開いた直後は全候補を表示し、上下キーとEnter、または候補のクリックで確定します。検索文字だけでは科目と金額を変更せず、Esc・Tab・欄外への移動では元の選択へ戻します。日本語変換の確定キーでは選択を確定しません。検索は画面内だけで、保存形式・権限・外部送信を変更しません。
 
-施策の月別金額はドラッグ・Shift＋矢印で範囲を選択できます。コピーはタブ・改行区切り、貼り付けは複数行・複数月に対応し、1つの値は選択範囲全体へ入ります。Ctrl／Command＋Enterで編集中の値を範囲へ入力し、Delete／Backspaceで選択範囲を0にします。矢印・Enter・Tabでセルを移動し、F2またはダブルクリックでセル内を編集できます。科目未選択行・表外・不正金額を含む一括入力は全体を拒否し、既存の金額を維持します。一次予算以外への入力は、範囲内の各月の手修正として保持します。数値として扱えない「-」「1e」などの未完の入力は、種別・科目行・月ごとに不正状態と入力開始時の値を保持します。種別切替や別セルの入力・貼付・消去では保存の制止を解除せず、元セルの訂正・明示的な消去・Escでの取消をしたときだけそのセルを解除します。取消では元の値、引き継ぎ、手修正0を戻します。この一時情報は計画ファイルへ保存しません。通常の空欄は0として扱います。
+施策の月別金額はドラッグ・Shift＋矢印で範囲を選択できます。コピーはタブ・改行区切り、貼り付けは複数行・複数月に対応し、1つの値は選択範囲全体へ入ります。Ctrl／Command＋Enterで編集中の値を範囲へ入力し、Delete／Backspaceで選択範囲を0にします。矢印・Enter・Tabでセルを移動し、F2またはダブルクリックでセル内を編集できます。科目未選択行・表外・不正金額を含む一括入力は全体を拒否し、既存の金額を維持します。一次予算以外への入力は、範囲内の各月の手修正として保持します。数値として扱えない「-」「1e」などの未完の入力は、種別・科目行・月ごとに不正状態と入力開始時の値を保持します。種別切替や別セルの入力・貼付・消去では保存の制止を解除せず、元セルの訂正・明示的な消去・Escでの取消をしたときだけそのセルを解除します。取消では元の値、引き継ぎ、手修正0を戻します。この一時情報はファイルへ保存しません。通常の空欄は0として扱います。
 
 新規登録は施策一覧の「施策を追加」から全画面入力へ進み、入力画面にいる間に登録が成功すると一覧へ戻ります。登録処理中に別画面へ移動した場合は、その画面を保ちます。サイドバーとホームからは施策一覧へ進みます。入力画面の戻るボタン・サイドバー・画面履歴で一覧へ戻るときは、入力済みなら破棄確認を挟みます。キャンセルやEscでは入力を保持し、破棄後の追加は空欄から始めます。空欄なら確認なしで戻れます。マスタ設定への移動と保存のキャンセル・失敗では入力を保持します。
 
@@ -772,7 +772,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 ### 基準前年の金額の入力
 
-前年入力は見出し・部署名・業種名をこの順に並べ、部署名のすぐ右に業種名のドロップダウンを置きます。狭い画面では折り返し、表は残りの高さを使います。初期状態は全部署・全業種の合計です。部署を選ぶと所属業種だけが候補になり、一つなら自動選択します。有効な業種選択は保持し、所属しない場合は全業種の合計へ戻します。どちらかが全件なら合計の閲覧、両方を個別に指定すると月別入力ができます。選択は計画ファイルへ保存しません。4月〜3月の右に参照専用の上期（4〜9月）・下期（10〜3月）・通期（12か月）を表示します。丸める前の月額を円単位で合算し、利益率は期間の経常利益÷売上集計で再計算します。期間列は編集・範囲貼り付け・保存の対象にせず、計算上限を超えた期間セルは空欄と通知にし、月別入力を保持します。縦スクロール中も科目・集計と月の列見出しから売上集計（初期表示名「社内控除後売上」）の行までを表の上端に固定し、科目・集計名は横スクロール中も左端に固定します。固定領域と後続1行が収まらない場合は列見出しだけを固定し、高さに余裕が戻ると売上集計までの固定へ戻します。科目セルは直接編集でき、小計・合計・利益率は自動計算します。1セルの入力では変更科目と関連する集計・利益率だけを再計算し、変更のない行と期間計の表示を再利用します。全科目の入力欄を保持するため、画面外への選択、コピー・貼り付け、Tab移動も同じ範囲で利用できます。ドラッグ／Shift＋矢印で範囲を選択し、コピー、Excelからの複数行・列の貼り付け、Delete／Backspaceでの0への消去、Ctrl／⌘＋Enterでの同値入力ができます。単一値の貼り付けも選択範囲の科目セルへ適用します。矢印・Enter・Tabで科目セル間を移動し、F2／ダブルクリックで文字編集、Escでそのセルの編集開始時の値に戻します。貼り付けに不正値・表外・集計行が含まれる場合は全体を反映せず通知します。分類合計が計算上限を超えた場合は金額・集計セルを空欄にして通知し、分類を絞って元の金額を確認・修正できます。保存失敗時は入力を保持し、通知内の「保存を再試行」「入力を取り消す」を利用できます。
+前年入力は見出し・部署名・業種名をこの順に並べ、部署名のすぐ右に業種名のドロップダウンを置きます。狭い画面では折り返し、表は残りの高さを使います。初期状態は全部署・全業種の合計です。部署を選ぶと所属業種だけが候補になり、一つなら自動選択します。有効な業種選択は保持し、所属しない場合は全業種の合計へ戻します。どちらかが全件なら合計の閲覧、両方を個別に指定すると月別入力ができます。選択はファイルへ保存しません。4月〜3月の右に参照専用の上期（4〜9月）・下期（10〜3月）・通期（12か月）を表示します。丸める前の月額を円単位で合算し、利益率は期間の経常利益÷売上集計で再計算します。期間列は編集・範囲貼り付け・保存の対象にせず、計算上限を超えた期間セルは空欄と通知にし、月別入力を保持します。縦スクロール中も科目・集計と月の列見出しから売上集計（初期表示名「社内控除後売上」）の行までを表の上端に固定し、科目・集計名は横スクロール中も左端に固定します。固定領域と後続1行が収まらない場合は列見出しだけを固定し、高さに余裕が戻ると売上集計までの固定へ戻します。科目セルは直接編集でき、小計・合計・利益率は自動計算します。1セルの入力では変更科目と関連する集計・利益率だけを再計算し、変更のない行と期間計の表示を再利用します。全科目の入力欄を保持するため、画面外への選択、コピー・貼り付け、Tab移動も同じ範囲で利用できます。ドラッグ／Shift＋矢印で範囲を選択し、コピー、Excelからの複数行・列の貼り付け、Delete／Backspaceでの0への消去、Ctrl／⌘＋Enterでの同値入力ができます。単一値の貼り付けも選択範囲の科目セルへ適用します。矢印・Enter・Tabで科目セル間を移動し、F2／ダブルクリックで文字編集、Escでそのセルの編集開始時の値に戻します。貼り付けに不正値・表外・集計行が含まれる場合は全体を反映せず通知します。分類合計が計算上限を超えた場合は金額・集計セルを空欄にして通知し、分類を絞って元の金額を確認・修正できます。保存失敗時は入力を保持し、通知内の「保存を再試行」「入力を取り消す」を利用できます。
 
 ### 総原価表・展開表の比較と期間計
 
@@ -794,7 +794,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 マスタ入口は文字とアイコンの大きさを維持し、各行の上下の余白を抑えています。
 
-新規ファイルには[合意済みのデフォルト科目・集計](REQUIREMENTS.md#新規ファイルのデフォルト科目集計)の57科目と15集計を登録済みで用意します。既存ファイルのマスタを追加・上書きしません。総原価表の小計・合計は同じ表示名で複数行に並び、経常利益の直後に利益率を表示します。金額の入力は千円単位で小数点以下3桁（1円）まで保持し、保存・施策集計・前年集計・差額・期間計は1円単位の整数で扱います。表示の直前まで千円の小数へ変換せず、正負とも9,007,199,254,740,991円まで正確に扱い、合計や差がその範囲を超えた場合はエラーにします。総原価表・展開表では表の部分に理由を表示し、サイドバー・戻る・種別や分類の選択は利用できます。金額を修正するか表示条件を変更すると再計算します。表示の失敗で計画ファイルを書き換えません。表・グラフ・内訳では整数の千円に四捨五入し（負数も絶対値で四捨五入、負のゼロは0）、編集時は元の精度を保持します。利益率は小数点以下1桁で四捨五入し、ゼロでの除算は空欄です。
+新規ファイルには[合意済みのデフォルト科目・集計](REQUIREMENTS.md#新規ファイルのデフォルト科目集計)の57科目と15集計を登録済みで用意します。既存ファイルのマスタを追加・上書きしません。総原価表の小計・合計は同じ表示名で複数行に並び、経常利益の直後に利益率を表示します。金額の入力は千円単位で小数点以下3桁（1円）まで保持し、保存・施策集計・前年集計・差額・期間計は1円単位の整数で扱います。表示の直前まで千円の小数へ変換せず、正負とも9,007,199,254,740,991円まで正確に扱い、合計や差がその範囲を超えた場合はエラーにします。総原価表・展開表では表の部分に理由を表示し、サイドバー・戻る・種別や分類の選択は利用できます。金額を修正するか表示条件を変更すると再計算します。表示の失敗でファイルを書き換えません。表・グラフ・内訳では整数の千円に四捨五入し（負数も絶対値で四捨五入、負のゼロは0）、編集時は元の精度を保持します。利益率は小数点以下1桁で四捨五入し、ゼロでの除算は空欄です。
 
 全マスタは見出し・件数・コンパクトな登録欄・枠付きの表を共通の見た目に揃えています。列見出しはスクロール中も固定し、薄い交互の背景と罫線で行を区切ります。他の画面と同じモノクロを基本とし、編集中の行は薄いグレーで示します。狭い画面では登録欄を折り返し、表内を横スクロールできます。
 
@@ -808,7 +808,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 共通順は外部キーで科目・集計を参照するmaster_orderの連続した位置、科目の独自表示名はaccounts.display_nameへ保存し、科目・集計の既存識別子と金額・所属は維持します。履歴・操作の取り消しにも含まれます。正式名と同じ表示名はNULLで省略し、独自の表示名だけを科目行へ保持します。情報は同じ.triadic内に保持し、外部送信しません。科目削除時は対応する表示名と共通順の行も除去します。
 
-総原価表は未所属の科目も表示します。部署名を先、そのすぐ右に業種名のドロップダウンを並べ、各分類の個別候補または全件の合計を選びます。部署を選ぶと業種候補を所属業種に絞り、一つなら自動選択します。有効な業種は保持し、所属しない場合は全業種の合計へ戻します。金額や施策が未登録の分類も候補に表示します。初期状態は全部署・全業種の合計で、狭い画面では選択欄を折り返します。選択は計画ファイルへ保存しません。
+総原価表は未所属の科目も表示します。部署名を先、そのすぐ右に業種名のドロップダウンを並べ、各分類の個別候補または全件の合計を選びます。部署を選ぶと業種候補を所属業種に絞り、一つなら自動選択します。有効な業種は保持し、所属しない場合は全業種の合計へ戻します。金額や施策が未登録の分類も候補に表示します。初期状態は全部署・全業種の合計で、狭い画面では選択欄を折り返します。選択はファイルへ保存しません。
 
 ### 自動保存と失敗時の操作
 
@@ -816,9 +816,9 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 画面移動やウィンドウ切り替えで同じ自動保存を同時に待つ場合も、一回の保存結果を共有します。失敗した入力は保持して待機元へ失敗を返し、同じ入力を連続で再送しません。入力の訂正または明示的な再試行で保存を再開できます。保存場所・保存形式・外部送信は変わりません。
 
-施策とマスタは計画ファイルごとに持ち、登録・変更・削除の操作が成功した時点で`.triadic`へ保存します。ファイルを開き直しても保持し、外部への送信は行いません。新規登録や削除では、書き込み先がなければ操作時に保存先を選びます。自動保存で保存先・書き込み許可が必要な場合は、案内に従い「保存を再試行」から選択・許可します。キャンセル・保存失敗時は保存済みデータと元のファイルを維持し、編集中の欄を残します。通常の自動保存待ち・処理中は画面切り替えとファイルの終了の中で完了を待ち、成功後に続行します。入力不備・日本語変換の未確定・保存失敗では実行せず入力を保持し、登録前の施策入力の破棄や確認待ちの判断は別途必要です。再読み込みやタブ終了には未保存の有無にかかわらずブラウザの確認を表示します。開いたファイルの更新を検出した場合は、独立した行の変更を検証して合わせます。変更が重なる場合は元の内容を保護し、入力済みの計画を別ファイルへ保存して続ける操作を表示します。
+施策とマスタはファイルごとに持ち、登録・変更・削除の操作が成功した時点で`.triadic`へ保存します。ファイルを開き直しても保持し、外部への送信は行いません。新規登録や削除では、書き込み先がなければ操作時に保存先を選びます。自動保存で保存先・書き込み許可が必要な場合は、案内に従い「保存を再試行」から選択・許可します。キャンセル・保存失敗時は保存済みデータと元のファイルを維持し、編集中の欄を残します。通常の自動保存待ち・処理中は画面切り替えとファイルの終了の中で完了を待ち、成功後に続行します。入力不備・日本語変換の未確定・保存失敗では実行せず入力を保持し、登録前の施策入力の破棄や確認待ちの判断は別途必要です。再読み込みやタブ終了には未保存の有無にかかわらずブラウザの確認を表示します。開いたファイルの更新を検出した場合は、独立した行の変更を検証して合わせます。変更が重なる場合は元の内容を保護し、入力済みのデータを別ファイルへ保存して続ける操作を表示します。
 
-新規登録と削除を除き、施策・勘定科目・集計・展開・業種・部署・期間の既存データの更新は自動保存します。文字・数値・選択欄は入力が600ms止まってから編集対象全体を検証して保存し、日本語の変換中は待ちます。科目の並べ替え、集計マスタでの並べ替え・所属・加減の変更は操作時に保存します。保存中も文字・数値・選択欄の入力は続けられ、後から入力した内容を順番に保存します。通常時は保存状態や復旧操作を表示しません。失敗時だけ理由と「保存を再試行」「入力を取り消す」を通知内に表示します。通知は復旧まで表示し、入力欄や表の位置を動かしません。「入力を取り消す」で直近の保存成功時へ戻せます。保存済みの変更を取り消す操作ではありません。未保存の入力はメモリ上にだけ保持し、再読み込みやタブ終了を強行すると失われます。ファイル更新時は、今回の編集と別の行への変更を自動で合わせて保存します。同じ行の変更や整合しない変更は上書きせず、入力済みの計画全体を別ファイルへ保存して編集を続けられます。キャンセル・保存失敗では入力と元ファイルを保持します。外部変更の反映時には過去の操作取消を初期化し、今回の編集だけを取り消せます。「別名で保存」は保存済みの計画・マスタ・履歴を別の.triadicファイルへ保存し、新しい保存先で編集を続けます。操作取消・やり直しを維持し、ファイル名と「続きから」は書き込み成功後だけ切り替えます。 別ウィンドウが開いている保存先や別計画の保存先切り替え中のファイルは、書き込み前に拒否します。双方の内容と入力を保持し、保存先を開いている画面を閉じるか別の保存先を選び直せます。切り替え中の保存先を開く操作は完了を待ち、同じ担当へ接続します。
+新規登録と削除を除き、施策・勘定科目・集計・展開・業種・部署・期間の既存データの更新は自動保存します。文字・数値・選択欄は入力が600ms止まってから編集対象全体を検証して保存し、日本語の変換中は待ちます。科目の並べ替え、集計マスタでの並べ替え・所属・加減の変更は操作時に保存します。保存中も文字・数値・選択欄の入力は続けられ、後から入力した内容を順番に保存します。通常時は保存状態や復旧操作を表示しません。失敗時だけ理由と「保存を再試行」「入力を取り消す」を通知内に表示します。通知は復旧まで表示し、入力欄や表の位置を動かしません。「入力を取り消す」で直近の保存成功時へ戻せます。保存済みの変更を取り消す操作ではありません。未保存の入力はメモリ上にだけ保持し、再読み込みやタブ終了を強行すると失われます。ファイル更新時は、今回の編集と別の行への変更を自動で合わせて保存します。同じ行の変更や整合しない変更は上書きせず、入力済みのデータ全体を別ファイルへ保存して編集を続けられます。キャンセル・保存失敗では入力と元ファイルを保持します。外部変更の反映時には過去の操作取消を初期化し、今回の編集だけを取り消せます。「別名で保存」は保存済みのデータ・マスタ・履歴を別の.triadicファイルへ保存し、新しい保存先で編集を続けます。操作取消・やり直しを維持し、ファイル名と「続きから」は書き込み成功後だけ切り替えます。 別ウィンドウが開いている保存先や別ファイルの保存先切り替え中のファイルは、書き込み前に拒否します。双方の内容と入力を保持し、保存先を開いている画面を閉じるか別の保存先を選び直せます。切り替え中の保存先を開く操作は完了を待ち、同じ担当へ接続します。
 
 入口を含むアプリ画面のタブ・ウィンドウ終了、再読み込み、別ページへの移動にはブラウザ標準の確認を求めます。確認の文言はブラウザが決めます。画面を一度も操作していない場合、ブラウザやOSの強制終了などでは確認が表示されない場合があります。[終了確認のブラウザ仕様](https://html.spec.whatwg.org/multipage/nav-history-apis.html#prompt-to-unload-a-document)に従うため、すべての終了を防ぐことはできません。
 
@@ -842,15 +842,15 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 入出力の「展開表」「施策一覧」は、表名と予算選択を横に並べ、狭い画面では折り返します。文字の大きさと出力条件の操作は維持しています。
 
-サイドバーの「入出力」で総原価表・展開表・施策一覧を選び、選んだ表と「計算元」だけを、計画の基準年度を使った`yyyy年度予算.xlsx`（例：2026年度予算.xlsx）へ出力します。元の見出し・罫線・背景・列幅・展開名の本文結合を維持します。展開表も画面と同じ期間名列・展開区分列・期間ごとの順序と縦結合を出力し、左端の4列を固定します。施策一覧の左端は画面と同じ「展開名・期間名・施策名・開始年月」の4列を固定します。
+サイドバーの「入出力」で総原価表・展開表・施策一覧を選び、選んだ表と「計算元」だけを、ファイルの基準年度を使った`yyyy年度予算.xlsx`（例：2026年度予算.xlsx）へ出力します。元の見出し・罫線・背景・列幅・展開名の本文結合を維持します。展開表も画面と同じ期間名列・展開区分列・期間ごとの順序と縦結合を出力し、左端の4列を固定します。施策一覧の左端は画面と同じ「展開名・期間名・施策名・開始年月」の4列を固定します。
 
-所属・業種・部署の変更や取消では有効な出力選択を保ち、失効した分類・前年フォーマットの組み合わせを除きます。やり直しで除いた選択を復活させず、改名では選択を保持します。選択は入出力画面内だけの情報で、計画ファイルへ保存しません。
+所属・業種・部署の変更や取消では有効な出力選択を保ち、失効した分類・前年フォーマットの組み合わせを除きます。やり直しで除いた選択を復活させず、改名では選択を保持します。選択は入出力画面内だけの情報で、ファイルへ保存しません。
 
-「計算元」は元の分類・施策・種別・科目・月別金額の配置です。出力ごとにマスタをIDで一度索引化し、計算元・表示名・集計定義で共有します。施策の業種・部署名は施策ごとに取得し、科目行ごとの全件検索を行いません。計画全体の基準前年の金額と一次・確定予算の金額を含み、総原価表・展開表・施策一覧の表示条件は出力時の指定を維持します。元金額の編集で再計算し、金額は小数点以下3桁まで保持します。一次・確定の金額はそれぞれ独立した入力値です。マスタや修正専用のシートは作らず、表示行・名称・開始年月・所属は出力時点の内容を維持します。
+「計算元」は元の分類・施策・種別・科目・月別金額の配置です。出力ごとにマスタをIDで一度索引化し、計算元・表示名・集計定義で共有します。施策の業種・部署名は施策ごとに取得し、科目行ごとの全件検索を行いません。データ全体の基準前年の金額と一次・確定予算の金額を含み、総原価表・展開表・施策一覧の表示条件は出力時の指定を維持します。元金額の編集で再計算し、金額は小数点以下3桁まで保持します。一次・確定の金額はそれぞれ独立した入力値です。マスタや修正専用のシートは作らず、表示行・名称・開始年月・所属は出力時点の内容を維持します。
 
 科目別・施策別の集計は`SUMIFS`、期間計は連続範囲の`SUMIF`と既存の小計の`SUM`、差額と利益率は四則演算と`IF`で求めます。科目の加減算は`SUM`の加算分・減算分で表現します。離れた小計が多数ある場合も、各`SUM`の引数を255個以内に分け、対象の小計だけを合計します。Microsoft 365専用の関数、名前付き関数、配列数式、マクロ、外部リンクは使いません。計算元には識別用の非表示列があり、同名の施策・科目も区別します。既存の計算元行をコピーして末尾へ追加した金額も集計対象になります。新しい施策・科目の表示行を自動追加する機能はありません。
 
-前年入力は必要な業種・部署の組み合わせを複数選択してフォーマットを出力します。組み合わせごとに別シートを作り、現在の前年金額を入れます。生成前にセル数・行数・項目数を確認し、生成後は取り込みと共通の検査で実際の圧縮・展開サイズと構成も確認します。上限を超える場合はダウンロードせず、組み合わせを減らして別ファイルに分ける案内を表示します。科目0件では、マスタへの科目登録を案内します。Excelの有効15桁または数値変換で1円精度を保てない金額は、文字列のセルとして出力します。そのセルは文字列のまま編集してください。通常の金額は数値セルです。シート名は31文字以内にし、使用できない記号や切り詰め後の末尾のアポストロフィを置き換えます。元のマスタ名称とシート内の表示は保持します。科目・月の配置を保ったまま金額だけを編集し、「フォーマットを取り込む」で選択するか、前年入力の領域へ`.xlsx`ファイルを一つドロップし、変更内容を確認して確定します。確認表の名称は業種・部署・科目をIDで一度索引化して取得し、変更内容とマスタが同じ間は再利用します。元の変更値と表示順を保持します。空欄は現在値を保持し、0は0へ更新します。業種・部署の識別子を各行のidentity属性に保持し、削除時に同じ行とともに除去します。改名では維持し、操作取消・時点履歴にも含まれます。旧保存形式のファイルは移行せず拒否します。Excelはこの識別子を読込時と保存時に照合し、同じ番号・名称でも削除後に作り直した分類への取り込みを拒否します。名称変更は許可します。識別子を持たない旧Excel形式は、最新のフォーマットを出力し直してください。数式セル、不正な金額、年度違い、行・列・シートの構成変更や出力後の競合はファイル全体を拒否します。取り込み成功は一回の操作として取り消しでき、失敗時は確認内容を保持して再試行できます。過去閲覧では出力だけ可能です。取り込みファイルは20MB以下に制限しています。読み取り前にZIP内の項目数2,048、展開後の各項目8MiB・全体32MiB、行100,000・列20・セル200,000・XMLタグ1,000,000を上限として検査し、前年フォーマットに不要な結合セルを拒否します。シートとして解析されるZIP項目は正規の内部パスだけを受け付け、余分な接頭パスや拡張子・末尾パスを付けた項目はExcel解析前に拒否します。シートの構成情報はXML属性名を完全一致で読み、似た属性名や引用符内の文字を列数・セル位置と取り違えません。解析は専用の処理領域で行い、30秒で終了しなければ停止します。拒否・停止では計画を変更せず、通常のファイルを取り込み直せます。
+前年入力は必要な業種・部署の組み合わせを複数選択してフォーマットを出力します。組み合わせごとに別シートを作り、現在の前年金額を入れます。生成前にセル数・行数・項目数を確認し、生成後は取り込みと共通の検査で実際の圧縮・展開サイズと構成も確認します。上限を超える場合はダウンロードせず、組み合わせを減らして別ファイルに分ける案内を表示します。科目0件では、マスタへの科目登録を案内します。Excelの有効15桁または数値変換で1円精度を保てない金額は、文字列のセルとして出力します。そのセルは文字列のまま編集してください。通常の金額は数値セルです。シート名は31文字以内にし、使用できない記号や切り詰め後の末尾のアポストロフィを置き換えます。元のマスタ名称とシート内の表示は保持します。科目・月の配置を保ったまま金額だけを編集し、「フォーマットを取り込む」で選択するか、前年入力の領域へ`.xlsx`ファイルを一つドロップし、変更内容を確認して確定します。確認表の名称は業種・部署・科目をIDで一度索引化して取得し、変更内容とマスタが同じ間は再利用します。元の変更値と表示順を保持します。空欄は現在値を保持し、0は0へ更新します。業種・部署の識別子を各行のidentity属性に保持し、削除時に同じ行とともに除去します。改名では維持し、操作取消・時点履歴にも含まれます。旧保存形式のファイルは移行せず拒否します。Excelはこの識別子を読込時と保存時に照合し、同じ番号・名称でも削除後に作り直した分類への取り込みを拒否します。名称変更は許可します。識別子を持たない旧Excel形式は、最新のフォーマットを出力し直してください。数式セル、不正な金額、年度違い、行・列・シートの構成変更や出力後の競合はファイル全体を拒否します。取り込み成功は一回の操作として取り消しでき、失敗時は確認内容を保持して再試行できます。過去閲覧では出力だけ可能です。取り込みファイルは20MB以下に制限しています。読み取り前にZIP内の項目数2,048、展開後の各項目8MiB・全体32MiB、行100,000・列20・セル200,000・XMLタグ1,000,000を上限として検査し、前年フォーマットに不要な結合セルを拒否します。シートとして解析されるZIP項目は正規の内部パスだけを受け付け、余分な接頭パスや拡張子・末尾パスを付けた項目はExcel解析前に拒否します。シートの構成情報はXML属性名を完全一致で読み、似た属性名や引用符内の文字を列数・セル位置と取り違えません。解析は専用の処理領域で行い、30秒で終了しなければ停止します。拒否・停止ではデータを変更せず、通常のファイルを取り込み直せます。
 
 前年Excelの変更確認には、対象科目のコード・正式名・属性を保持し、保存時に再照合します。確認後に対象が変わった場合は、操作取消後の番号再利用を含め、取り込み全体を拒否します。無関係なマスタ変更・表示名の変更・並べ替えでは拒否しません。確認用の基準は画面内だけに保持し、Excel・.triadicの保存形式は変更しません。
 
@@ -860,13 +860,13 @@ ExcelJS 4.4.0（MIT）と、ExcelJSが既に使用するXML解析器saxes 5.0.1�
 
 金額項目マスタは「マスタ」またはホームの相関図から開き、売上・費用・利益の固定3件、表示順、構成する科目属性の加減算を確認できます。売上＝売上−売上原価、費用＝費用、利益＝売上−売上原価−費用＋利益で、右辺は科目属性ごとの合計です。追加・編集・削除はできません。表示と計算は同じ定義を使い、保存形式・計算規則・既存データを変更せず、外部送信はありません。
 
-科目属性マスタは「マスタ」またはホームの相関図から開き、売上・売上原価・費用・利益の4件を固定の名称と順序で確認できます。追加・編集・削除はできません。勘定科目マスタの選択候補と同じ定義を使用し、集計は含みません。新しい保存テーブル・データ移行・外部送信はなく、閲覧で計画や計算結果を書き換えません。
+科目属性マスタは「マスタ」またはホームの相関図から開き、売上・売上原価・費用・利益の4件を固定の名称と順序で確認できます。追加・編集・削除はできません。勘定科目マスタの選択候補と同じ定義を使用し、集計は含みません。新しい保存テーブル・データ移行・外部送信はなく、閲覧でデータや計算結果を書き換えません。
 
 ## 配色
 
 施策一覧・展開表は、表に割り当てられた表示幅が650px以下なら施策名だけを固定し、施策名と金額を並べて確認できる幅へ調整します。650pxを超える場合は従来の4列固定です。金額セルの選択月は、ライトでは暖かみのあるグレーの背景と墨色の文字、ダークでは濃いグレーの背景と象牙色の文字で表示します。集計追加の「集計名」「表示名」も通常枠と選択中のアクセント色の枠をアプリの配色に揃えます。
 
-ファイル名はテーマ切替のすぐ左に並び、狭い画面でヘッダーが折り返す場合も一緒に右端へ寄せます。ヘッダー右端の太陽・月のトグルで、ライト（象牙色の背景・墨色の文字）とダーク（墨色の背景・象牙色の文字）を切り替えられます。ファイルを開く前の入口でも使え、表・マスタ・ダイアログも連動します。初回はライトで、端末の明暗設定には追従しません。選択はブラウザ内のlocalStorage（`triadic.theme`）へ保存し、次回起動・同じブラウザの別ウィンドウへ反映します。選び直すかブラウザの保存領域を消すまで保持します。保存領域が使えない場合は現在の画面だけに適用します。計画ファイル・時点履歴・操作取消・Excel出力は変えず、追加権限・外部送信はありません。Tabでトグルへ移動し、Spaceで切り替えられます。
+ファイル名はテーマ切替のすぐ左に並び、狭い画面でヘッダーが折り返す場合も一緒に右端へ寄せます。ヘッダー右端の太陽・月のトグルで、ライト（象牙色の背景・墨色の文字）とダーク（墨色の背景・象牙色の文字）を切り替えられます。ファイルを開く前の入口でも使え、表・マスタ・ダイアログも連動します。初回はライトで、端末の明暗設定には追従しません。選択はブラウザ内のlocalStorage（`triadic.theme`）へ保存し、次回起動・同じブラウザの別ウィンドウへ反映します。選び直すかブラウザの保存領域を消すまで保持します。保存領域が使えない場合は現在の画面だけに適用します。ファイル・時点履歴・操作取消・Excel出力は変えず、追加権限・外部送信はありません。Tabでトグルへ移動し、Spaceで切り替えられます。
 
 
 象牙色と墨色を基本に、選択中のサイドバーのアイコンと、操作中の入力・選択欄の枠・文字カーソル、ホームの操作対象アイコンと直接つながる線にライトでは青 `#0033FF`、ダークでは金 `#D6B86C` を使います。施策入力と登録済み施策、分類の選択欄、前年の金額、マスタの登録・編集、集計の編集が対象です。選択を示す棒は付けません。選択中の種別タブは文字と下線、総原価表・展開表・施策一覧の種別・比較対象は選択中の文字だけを同じアクセント色で示し、背景はグレーを保ちます。通常のボタン、未選択の種別タブ、表、相関図の名称・背景・関係の説明、通知はモノクロを保ちます。入口のファイルドロップ先は要件に従い淡いアクセント色の背景と同色の破線で強調し、文字はモノクロを保ちます。入出力のファイルドロップ案内はグレーの背景と黒い破線で示し、履歴選択のチェックボックスもモノクロに揃えます。
@@ -891,11 +891,11 @@ UIの位置は、利用者が意図した操作以外では動かしません。
 
 ## 前回のファイルから再開
 
-複数タブで別の計画を開いていても、最後に保存が成功したファイルの参照を端末内へ記憶します。変更なしの操作、保存失敗・取消では記憶を更新しません。記憶だけの失敗では計画の保存成功を維持し、通知と同じ画面内の再開先を保持します。
+複数タブで別のファイルを開いていても、最後に保存が成功したファイルの参照を端末内へ記憶します。変更なしの操作、保存失敗・取消では記憶を更新しません。記憶だけの失敗ではデータの保存成功を維持し、通知と同じ画面内の再開先を保持します。
 
 入口の「続きから」は、最後に正常に開いた、または保存したファイルを開きます。ファイル名を併記し、記憶がない間は無効です。拡張機能を閉じて開き直した後も利用でき、クリック時に必要な読み書きの許可を求めて、ファイルの最新内容を検証して読み込みます。起動時にファイルを読んだり許可を求めたりはしません。移動・削除や許可拒否の場合は案内を表示し、「ファイルを開く」から選び直せます。キャンセル・不正なファイルでは記憶を更新しません。
 
-ブラウザは絶対パスを公開しないため、再び開くための参照（`FileSystemFileHandle`）を、この拡張機能のIndexedDBに1件だけ保持します。保持期間に期限はなく、次に正常に開くか保存した参照で置き換えます。「履歴を消す」、拡張機能の削除、ブラウザ側での保存領域の消去でも消えます。「履歴を消す」は計画ファイルを削除しません。計画の内容や絶対パスを保存領域へ複製せず、外部送信やブラウザ間の同期もしません。追加の拡張機能権限は不要です。[Chromeのファイル参照と許可の説明](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access)に従います。
+ブラウザは絶対パスを公開しないため、再び開くための参照（`FileSystemFileHandle`）を、この拡張機能のIndexedDBに1件だけ保持します。保持期間に期限はなく、次に正常に開くか保存した参照で置き換えます。「履歴を消す」、拡張機能の削除、ブラウザ側での保存領域の消去でも消えます。「履歴を消す」はファイルを削除しません。ファイルの内容や絶対パスを保存領域へ複製せず、外部送信やブラウザ間の同期もしません。追加の拡張機能権限は不要です。[Chromeのファイル参照と許可の説明](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access)に従います。
 
 Chromeのファイル選択、新規作成、ファイル参照を取得できるドロップに対応します。ファイルを開く時点で読み書きの許可を確認し、許可を得てから編集画面を開きます。参照を取得できないドロップは編集を開始せず、「ファイルを開く」からの選択を案内します。許可拒否・選択キャンセルでは元のファイルと前回の記憶を維持します。記憶の保存に失敗してもファイルを開く・保存する操作は成功として扱い、入口で再起動後の選び直しを案内します。今回の保存形式との互換性は[保存形式の方針](#保存形式の方針)に従います。
 
@@ -909,13 +909,13 @@ Chromeのファイル選択、新規作成、ファイル参照を取得でき�
 
 各日時の「差分を見る」から、履歴と現在の保存済みデータの追加・削除・変更を確認できます。施策の名称・備考・分類・科目行・月額、前年、マスタ・所属・集計符号・並び順・表示設定が対象です。過去と現在の値を並べ、対象の絞り込み・検索と50件ごとの表示で確認します。金額差分は編集値と同じ千円単位・小数点以下3桁まで表示し、確定予算の引き継ぎ・手修正0・同額手修正も区別します。前年の未入力と0、更新日時・改訂番号だけの違いは差分にしません。施策・部署・業種の作成識別子が変わった場合は削除・追加として扱います。比較は専用Workerで行い、ファイルや履歴を保存せず、操作取消・画面・削除用の選択を保持します。外部更新や未保存の入力は含めません。失敗時は「比較を再試行」で再比較でき、保存形式・権限・外部送信に変更はありません。
 
-サイドバーの「マスタ」の下にある「履歴」から、記録日時を選んで過去の状態を閲覧できます。 200件を超える一覧は表示範囲の周辺だけを描画し、スクロールで全履歴を確認できます。全選択・日時指定の削除は画面外を含む全履歴が対象です。各画面は閲覧専用になり、ヘッダーの「現在に戻る」で現在の計画へ戻ります。「この時点に戻す」を確認すると、施策・全種別の金額・前年・マスタ・集計・保存済み設定をまとめて復元します。復元前の状態と新しい履歴も残るので、選び直して復元を取り消せます。
+サイドバーの「マスタ」の下にある「履歴」から、記録日時を選んで過去の状態を閲覧できます。 200件を超える一覧は表示範囲の周辺だけを描画し、スクロールで全履歴を確認できます。全選択・日時指定の削除は画面外を含む全履歴が対象です。各画面は閲覧専用になり、ヘッダーの「現在に戻る」で現在のデータへ戻ります。「この時点に戻す」を確認すると、施策・全種別の金額・前年・マスタ・集計・保存済み設定をまとめて復元します。復元前の状態と新しい履歴も残るので、選び直して復元を取り消せます。
 
 履歴は同じ`.triadic`内に保存します。最初の未記録の変更の保存成功から5分後に記録し、追加の保存で期限を延ばしません。正常にファイルを閉じるときと過去閲覧に入るときも未記録分を残します。登録前・保存失敗中の入力は履歴に含みません。現行形式の新規ファイルは履歴管理状態を備え、最初の変更前の状態を初回保存時に記録します。閲覧だけでは書き換えません。
 
-自動削除や保持期限はありません。履歴一覧のチェックで複数件を選んで削除するか、端末時刻の日時を指定して、それより前を一括削除できます。確認後の削除は取り消せず、現在の計画は変わりません。削除確認では対象件数と範囲、取り消せない旨を常に表示し、削除失敗の理由を併記します。取り消して別の削除確認を開いた際は、前回の操作エラーを引き継ぎません。全体の状態を記録するため容量は増えます。削除後はファイル内の不要領域を詰めます。選択の照合と各行のチェックは共有するID集合で判定し、一覧・選択が同じ間は判定結果を再利用します。消えた履歴は削除対象から除き、新しい履歴は自動選択しません。選択状態は画面内だけで保持します。
+自動削除や保持期限はありません。履歴一覧のチェックで複数件を選んで削除するか、端末時刻の日時を指定して、それより前を一括削除できます。確認後の削除は取り消せず、現在のデータは変わりません。削除確認では対象件数と範囲、取り消せない旨を常に表示し、削除失敗の理由を併記します。取り消して別の削除確認を開いた際は、前回の操作エラーを引き継ぎません。全体の状態を記録するため容量は増えます。削除後はファイル内の不要領域を詰めます。選択の照合と各行のチェックは共有するID集合で判定し、一覧・選択が同じ間は判定結果を再利用します。消えた履歴は削除対象から除き、新しい履歴は自動選択しません。選択状態は画面内だけで保持します。
 
-履歴の記録・復元・削除も、現在の計画と同じ保存先・許可・競合確認を使います。失敗では元のファイルを保護し、案内と「保存を再試行」を表示します。正常なファイル終了時の記録に失敗した場合は閉じません。ブラウザが閉じる時点での非同期書き込みは保証できないため、タブ終了・再読み込み・強制終了では最後の成功した履歴までが残ります。追加の拡張権限や外部送信はありません。[設計と実装境界](docs/data-history-design.md)、[確認用データの対応表](samples/README.md)を参照してください。
+履歴の記録・復元・削除も、現在のファイルと同じ保存先・許可・競合確認を使います。失敗では元のファイルを保護し、案内と「保存を再試行」を表示します。正常なファイル終了時の記録に失敗した場合は閉じません。ブラウザが閉じる時点での非同期書き込みは保証できないため、タブ終了・再読み込み・強制終了では最後の成功した履歴までが残ります。追加の拡張権限や外部送信はありません。[設計と実装境界](docs/data-history-design.md)、[確認用データの対応表](samples/README.md)を参照してください。
 
 ## 部署と業種の組み合わせ
 
@@ -925,9 +925,9 @@ Chromeのファイル選択、新規作成、ファイル参照を取得でき�
 
 施策の月別金額は施策詳細と前年入力で確認・編集します。確定予算の手修正、計算結果、時点履歴を扱います。
 
-計画は専用の `.triadic` ファイルで管理します。新規作成時の初期ファイル名は `Untitled.triadic` です。一つのファイルで一つの計画を扱い、中身は標準的なSQLiteデータベースとします。読み込みと保存時には保存形式の正規の定義と照合し、未知・改変されたテーブル、トリガー、ビュー、インデックスを拒否します。正規の年度固定処理は維持します。履歴内の計画も閲覧・復元前に同じ検証を行い、拒否したファイルは書き換えません。JSON・CSV・Excelを保存形式には使用しません。
+データは専用の `.triadic` ファイルで管理します。新規作成時の初期ファイル名は `Untitled.triadic` です。一つのファイルで一つの基準年度の業務データと履歴を扱い、中身は標準的なSQLiteデータベースとします。読み込みと保存時には保存形式の正規の定義と照合し、未知・改変されたテーブル、トリガー、ビュー、インデックスを拒否します。正規の年度固定処理は維持します。履歴内のデータも閲覧・復元前に同じ検証を行い、拒否したファイルは書き換えません。JSON・CSV・Excelを保存形式には使用しません。
 
-施策・勘定科目・年月と計画金額を同じデータとして持ち、施策一覧・総原価表・展開表はそのデータを異なる視点で表します。集計結果を別の正本として重複保存しません。現在はファイルの新規作成、形式検証を伴う読込、勘定科目マスタ・集計マスタ・展開マスタ・業種マスタ・部署マスタ・期間マスタ・固定種別マスタ・固定科目属性マスタの閲覧、施策・前年入力の保存を実装しています。
+施策・勘定科目・年月と月別金額を同じデータとして持ち、施策一覧・総原価表・展開表はそのデータを異なる視点で表します。集計結果を別の正本として重複保存しません。現在はファイルの新規作成、形式検証を伴う読込、勘定科目マスタ・集計マスタ・展開マスタ・業種マスタ・部署マスタ・期間マスタ・固定種別マスタ・固定科目属性マスタの閲覧、施策・前年入力の保存を実装しています。
 
 保存形式は30です。明細の有無にかかわらず、保存形式29以前のファイルは開けません。新規ファイルから使用します。対応しない旧形式や未知の形式は読み込み時に拒否し、移行や上書きは行いません。新しい形式のファイルは旧アプリで開けません。
 
@@ -984,7 +984,7 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 
 前年・施策の範囲貼り付けは、クリップボードの解析結果が1行1列なら選択範囲全体への同値入力になります。末尾のLF・CRLFがある場合も同じです。セル内編集時の部分貼り付けは従来どおりです。
 
-## 大規模計画の表示と処理
+## 大規模データの表示と処理
 
 総原価表の通常行は24px、施策一覧・展開表の通常行は28pxを基準に上下の余白を抑えています。通常表示の長い名称は折り返し、必要な高さを確保します。
 
@@ -1020,9 +1020,9 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 
 ## 複数ウィンドウ
 
-編集中の施策が外部更新で作り直されても、未保存入力を置換先へ保存しません。保存エラーの「新規施策として入力を引き継ぐ」で入力を回収でき、分類・科目の参照先を再確認して通常の登録へ進めます。保持中の別の登録前入力があれば置き換えを確認し、キャンセルでは両方を保持します。「入力を取り消す」は置換後の最新内容へ戻します。前年入力の部署・業種、部署・業種マスタも作成識別子が変わった対象への保存を止めます。入力は各画面のメモリ内だけに保持し、引き継ぎ時点ではファイルを書き換えず、登録後は通常の計画・履歴に保存します。保存形式・権限・外部送信の変更はありません。
+編集中の施策が外部更新で作り直されても、未保存入力を置換先へ保存しません。保存エラーの「新規施策として入力を引き継ぐ」で入力を回収でき、分類・科目の参照先を再確認して通常の登録へ進めます。保持中の別の登録前入力があれば置き換えを確認し、キャンセルでは両方を保持します。「入力を取り消す」は置換後の最新内容へ戻します。前年入力の部署・業種、部署・業種マスタも作成識別子が変わった対象への保存を止めます。入力は各画面のメモリ内だけに保持し、引き継ぎ時点ではファイルを書き換えず、登録後はファイルと履歴に保存します。保存形式・権限・外部送信の変更はありません。
 
-ファイルごとに処理の順序と計画処理Workerを分け、別ファイルのSQLite解析・保存準備・履歴比較は互いの完了を待たずに進めます。同じ実体のファイルは読み込み中でも同じ担当へまとめ、同じファイル内の保存順序・操作取消・保存先の回復要求を維持します。Workerの故障・再試行もファイルごとに分離します。ファイルを開く処理の失敗や最後のウィンドウの終了時には、受け付け済みの保存を終えてから担当のWorkerを解放します。開いているファイル数に応じてWorkerとSQLiteの使用メモリが増えます。
+ファイルごとに処理の順序とデータ処理Workerを分け、別ファイルのSQLite解析・保存準備・履歴比較は互いの完了を待たずに進めます。同じ実体のファイルは読み込み中でも同じ担当へまとめ、同じファイル内の保存順序・操作取消・保存先の回復要求を維持します。Workerの故障・再試行もファイルごとに分離します。ファイルを開く処理の失敗や最後のウィンドウの終了時には、受け付け済みの保存を終えてから担当のWorkerを解放します。開いているファイル数に応じてWorkerとSQLiteの使用メモリが増えます。
 
 ヘッダーの「施策を検索」の右にある「ウィンドウを複製」で、同じファイルを同じ画面・予算種別・分類条件・並び順・スクロール位置から別ウィンドウへ開けます。保存前の入力はコピーしません。位置復元はスクロール領域の識別子で照合し、対象要素を再利用します。遅れて表示された領域だけ再探索し、500msまたは利用者の操作開始で復元と監視を終了します。以後の画面移動と表示条件は独立し、アクティブにしたウィンドウでそのまま編集できます。ヘッダーとタイトルの番号・画面名で各ウィンドウを見分けます。
 
@@ -1032,7 +1032,7 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 
 通常の保存待ちは画面移動・取り消し・やり直し・別名保存の中で処理します。各画面の応答待ちは30秒で打ち切り、応答のない番号・画面名と再試行の案内を既存の通知に表示します。履歴集約や取消を強行せず入力を保持し、進行済みの自動保存自体は取り消しません。応答が戻ったら同じ操作から再試行できます。破棄確認や保存先選択への利用者の回答待ちには期限を設けません。期限切れの要求は入力を変更する前に拒否し、遅れた返信は再試行と混在させません。入力不備・保存失敗・未登録入力など、判断が必要な場合だけ理由と対象ウィンドウを示します。「履歴」は自動保存と時点履歴の記録に成功してから一つのウィンドウへ集約し、他を閉じます。未登録入力は破棄確認の「はい」で破棄し、キャンセルや保存失敗では各画面と入力を維持します。履歴画面・過去閲覧中は複製できません。
 
-同じファイルは共有Worker（`windowSession.worker.ts`）の一つの`PlanSession`で管理し、ファイル参照の同一性で通常のファイル選択からも共有へ参加します。各ウィンドウの終了は寿命に連動するブラウザのロックと`pagehide`で検出します。保存状態だけの更新では計画本体を再送せず、各画面の計算元の参照を維持します。保存済み内容の小さな変更は項目の差分を同じ通信順で反映し、変わらない計算元の参照を保持します。初回接続・別計画の読込と、差分が1,000項目を超える変更では全体を同期します。差分作成は同じ変更前の計画ごとに共有し、保存成功後の取消・履歴・外部統合も同じ通知を使います。共有データと取消履歴はメモリ内だけで、全ウィンドウ終了後は保持しません。保存形式・拡張権限・依存ライブラリ・外部送信に変更はありません。ファイルの許可要求と保存先選択は利用者が操作した画面で行います。[ファイル許可要求のブラウザ仕様](https://developer.mozilla.org/en-US/docs/Web/API/FileSystemHandle/requestPermission)に従い、共有Workerから新しい許可ダイアログを要求しません。
+同じファイルは共有Worker（`windowSession.worker.ts`）の一つの`PlanSession`で管理し、ファイル参照の同一性で通常のファイル選択からも共有へ参加します。各ウィンドウの終了は寿命に連動するブラウザのロックと`pagehide`で検出します。保存状態だけの更新では業務データを再送せず、各画面の計算元の参照を維持します。保存済み内容の小さな変更は項目の差分を同じ通信順で反映し、変わらない計算元の参照を保持します。初回接続・別ファイルの読込と、差分が1,000項目を超える変更では全体を同期します。差分作成は同じ変更前のデータごとに共有し、保存成功後の取消・履歴・外部統合も同じ通知を使います。共有データと取消履歴はメモリ内だけで、全ウィンドウ終了後は保持しません。保存形式・拡張権限・依存ライブラリ・外部送信に変更はありません。ファイルの許可要求と保存先選択は利用者が操作した画面で行います。[ファイル許可要求のブラウザ仕様](https://developer.mozilla.org/en-US/docs/Web/API/FileSystemHandle/requestPermission)に従い、共有Workerから新しい許可ダイアログを要求しません。
 
 共有Workerが停止した場合は処理中表示を解除して以後の操作を止めます。画面に残る未保存入力を控えてからページを再読み込みし、保存済みファイルを開き直して、停止直前の保存が確定したか確認してください。未保存入力の自動再送は行いません。
 
@@ -1046,11 +1046,11 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 
 別名保存先の内容は選択直後に保持します。他画面の入力確定を待つ間の外部更新も、書き込み前に検出して拒否します。
 
-別名保存と競合からの別ファイル復旧は、他の計画で使用中・読込中・保存予約中の保存先を、書き込み前に拒否します。復旧先の予約は、新しいファイル参照を全画面へ反映するまで保持し、キャンセル・失敗時は解放します。元のファイル、他の計画、未保存入力を維持します。
+別名保存と競合からの別ファイル復旧は、他のファイルで使用中・読込中・保存予約中の保存先を、書き込み前に拒否します。復旧先の予約は、新しいファイル参照を全画面へ反映するまで保持し、キャンセル・失敗時は解放します。元のファイル、他のファイル、未保存入力を維持します。
 
 ## ブラウザでの画面確認・自動テスト
 
-画面に影響する変更では`npm run dev:ui`で起動し、Codex内のブラウザで[画面テスト用の入口](http://127.0.0.1:4173/tests/ui/preview.html)を開いて、変更した表示・操作を確認します。「ファイルを開く」は全機能確認用のテスト計画を読み込み、「新規作成」はメモリ内にデフォルトの科目・集計を備えた施策未登録の計画を作ります。実ファイルの選択や書き込みは行いません。上部の選択欄でデフォルトの新規計画・旧形式の空の計画への切り替え、キャンセル・不正ファイル・保存失敗・ファイル更新による保存時の競合を再現でき、「入口に戻す」または再読み込みでテストデータを初期化します。
+画面に影響する変更では`npm run dev:ui`で起動し、Codex内のブラウザで[画面テスト用の入口](http://127.0.0.1:4173/tests/ui/preview.html)を開いて、変更した表示・操作を確認します。「ファイルを開く」は全機能確認用のテストデータを読み込み、「新規作成」はメモリ内にデフォルトの科目・集計を備えた施策未登録のデータを作ります。実ファイルの選択や書き込みは行いません。上部の選択欄でデフォルトの新規ファイル・旧形式の空のデータへの切り替え、キャンセル・不正ファイル・保存失敗・ファイル更新による保存時の競合を再現でき、「入口に戻す」または再読み込みでテストデータを初期化します。
 
 通常の小規模画面確認用データは14施策を保持し、0・空欄・科目削除・空の集計などの境界条件を検証します。渡す会社予算は部署以外の全マスタをデフォルトのまま保持し、57科目・15集計・9業種と、7圏域・本社の部署を用います。業務上の事業名は既存業種へ割り当て、業種名を書き換えません。`?data=large`で生成した実ファイルと同じ会社予算を表示できます。会社予算は大量行の測定用ではなく、必要な大量行や失敗条件は専用の合成データで確認します。操作と期待結果は[確認用データの対応表](samples/README.md)を参照してください。`?data=overflow-monthly`・`overflow-period`・`overflow-previous`・`overflow-difference`は保存可能な人工データによる集計上限超過、`overflow-previous-input`は前年入力の分類合計超過から単一組み合わせへの復帰、`overflow-initiative`は確定予算だけの施策内合計超過と編集導線、`overflow-normal`は通常額の対照を確認します。
 
@@ -1070,7 +1070,7 @@ npm run test:ui:report
 
 画面自動テストはインストール済みのChromeを、ウィンドウを表示しないモード（`channel: "chrome"`）で起動します。Playwright専用ブラウザのダウンロードは不要です。普段使うChromeのプロファイルやタブには接続せず、テスト用の一時的な環境を使います。Chromeがない場合は、この任意の画面自動テストを実行できません。
 
-入口からホームへの移動、計画作成と再読込、サイドバーの開閉・キーボード操作、開いたままの画面切り替え・選択中の項目表示、キャンセル・読込失敗・保存失敗を確認します。施策入力では備考の一行入力、同じ勘定科目を複数行で選択した際の金額の独立性、金額の編集、空欄の0補完、画面往復での保持とファイルを閉じた後の初期化を検証します。サイドバーとメインパネルが重ならず、閉じるとメインパネルの幅が戻ることを寸法で検証し、画面幅を320px・600px・1280pxへ変えた場合も確認します。金額表は狭い画面でも本文からはみ出さず、横スクロールで最後の月を編集できることを確認します。さらに、確認用画面とビルドされた配布用画面を同じ寸法・テストデータで操作し、入口・ホーム・サイドバー・施策入力の操作対象と画像が一致することを検証します。描画の微小な色差と輪郭処理の差を除外し、判定対象の差分画素数は0を要求します。過去画像との比較ではなく、同じ実装から生成した両画面の一致を確認するため、デザインの良し悪しは保存された画像を見て判断します。
+入口からホームへの移動、ファイル作成と再読込、サイドバーの開閉・キーボード操作、開いたままの画面切り替え・選択中の項目表示、キャンセル・読込失敗・保存失敗を確認します。施策入力では備考の一行入力、同じ勘定科目を複数行で選択した際の金額の独立性、金額の編集、空欄の0補完、画面往復での保持とファイルを閉じた後の初期化を検証します。サイドバーとメインパネルが重ならず、閉じるとメインパネルの幅が戻ることを寸法で検証し、画面幅を320px・600px・1280pxへ変えた場合も確認します。金額表は狭い画面でも本文からはみ出さず、横スクロールで最後の月を編集できることを確認します。さらに、確認用画面とビルドされた配布用画面を同じ寸法・テストデータで操作し、入口・ホーム・サイドバー・施策入力の操作対象と画像が一致することを検証します。描画の微小な色差と輪郭処理の差を除外し、判定対象の差分画素数は0を要求します。過去画像との比較ではなく、同じ実装から生成した両画面の一致を確認するため、デザインの良し悪しは保存された画像を見て判断します。
 
 前回ファイルの画面自動テストはブラウザ専用の一時保存領域で実際のファイル参照を作り、IndexedDBへの記憶、再読み込み後の再開、最新内容の読込、1件への置き換え、消去、新規作成・ドロップ、許可拒否・削除・不正ファイルを確認します。利用者の実ファイルは操作しません。
 
@@ -1107,10 +1107,10 @@ Chrome Web Store用の説明文・プライバシー申告・アイコン・販�
 - `Triadic-extension/src/extension/spreadsheetOperation.ts`：Excel画面の読込・出力・確認・保存の状態を管理し、確認内容・再試行・画面移動の保留を同じ状態から通知します。二重実行は同期的に拒否し、終了時は出力を中止します。
 - `Triadic-extension/src/core/storage/`：SQLiteの直接生成・検証・読込・更新・履歴。各`apply...`関数は呼び出し元が所有する検証済み接続だけを更新し、ファイル操作・接続の生成や解放は行いません。バイト列を受け取る公開関数は`transaction.ts`でコピー上の更新・書き出し・接続解放を行います。通常保存の準備は開いた接続へ変更を直接適用し、変更なしでは元のバイト列・更新日時・履歴を保持します。
 - `Triadic-extension/src/core/autoSave.ts`：入力待ち、日本語変換、保存中の追加入力、再試行。
-- `Triadic-extension/src/extension/PlanSession.ts`：履歴の表示情報をファイル確定前に準備し、確定後は保存基準と操作履歴を更新します。保存済み計画の正本と保存・許可準備・履歴・終了の直列実行。ファイル確定の成功後だけ画面へ公開します。
+- `Triadic-extension/src/extension/PlanSession.ts`：履歴の表示情報をファイル確定前に準備し、確定後は保存基準と操作履歴を更新します。保存済みデータの正本と保存・許可準備・履歴・終了の直列実行。ファイル確定の成功後だけ画面へ公開します。
 - `Triadic-extension/src/core/domain/planCommands.ts`：型で区別した更新命令、自動保存の判定、保存先選択前の入力検証。`core/storage/planCommands.ts`が命令をSQLiteの更新処理へ接続し、計算用workerも直接利用します。
 - `Triadic-extension/src/extension/preparePlanCommand.ts`：更新命令から保存データと取り消し用の状態を準備します。`PlanSession.ts`が保存先選択・保存順序・保存後の公開を所有します。`planFile.ts`が外部変更を確認し、`triadicFile.ts`が実ファイルへの確定を行います。
-- `Triadic-extension/src/core/storage/prepareOrdinarySave.ts`：通常更新を専用接続で一度適用し、`commandComparison.ts`で対象施策・前年分類・関連マスタと順序の保存項目を比較します。改訂番号だけの更新は変更と扱わず、手修正の追加・解除と明示0は区別します。変更判定専用の計画全体の復元と画面側の文字列比較を行いません。
+- `Triadic-extension/src/core/storage/prepareOrdinarySave.ts`：通常更新を専用接続で一度適用し、`commandComparison.ts`で対象施策・前年分類・関連マスタと順序の保存項目を比較します。改訂番号だけの更新は変更と扱わず、手修正の追加・解除と明示0は区別します。変更判定専用のデータ全体の復元と画面側の文字列比較を行いません。
 - `Triadic-extension/src/extension/ExtensionPage.tsx`：ファイル操作の入口。`filePicker.ts`が保存先選択、`usePlanSession.ts`が保存済み状態の購読と5分の記録期限を担当します。時計の後退で期限前に記録処理が終わった場合も、最新の期限で予約し直します。
 - `Triadic-extension/src/extension/HomePage.tsx`：共通画面の接続。`useHomeWorkspace.tsx`が`extension/workspace/`の登録前入力・画面移動・過去閲覧・保存命令・操作取消を接続し、`WorkspacePage.tsx`が各画面を描画、`WorkspaceChrome.tsx`がヘッダーとサイドバーを表示します。`useScreenHistory.ts`が画面移動の履歴を保持します。
 - `Triadic-extension/src/extension/useFileEntry.ts`：ファイル選択・読込・前回参照を制御します。`EntryPage.tsx`は入口画面の表示を担当します。
@@ -1132,7 +1132,7 @@ Excelへ出力する施策一覧は最下部に月別の売上・費用・利益
 
 総原価表・展開表・施策一覧をExcelへ出力した際の金額再計算は1円精度を維持する非表示の整数分割列を使います。金額はExcelでも円精度を保つため、大きい元金額を文字列として保持し、非表示列で上位の千円整数・下位6桁の千円整数・1円部分へ分けます。各部分をSUMIFS・SUMIF・SUMで合算し、期間計・比較差・利益率は丸める前の部分を参照します。表示セルだけ整数千円へ丸めます。計算元の文字列金額は千円単位・小数点以下3桁までの文字列として編集し、行を追加する場合は非表示列を含む行全体をコピーしてください。元金額ごとの補助式は3つとし、通常の共有数式で同じ列の式をまとめて保存します。文字列は整数部を切り出してから数値へ変換し、数値は1円部分を分離します。使用する追加関数はIF・ISNUMBER・ABS・LEFT・MID・FIND・VALUE・INT・MODです。各SUMは255引数以内とし、整数分割列への変換後に8,192文字を超える合計式は非表示の補助セルへ分割します。対象の小計・加減符号・円精度を保ち、表示行と印刷範囲は増やしません。元金額に科学表記や不正な文字列を入力せず、計算用の非表示列は編集しないでください。
 
-前年Excelの出力・取り込みは、業種・部署・科目・月のIDで前年金額を一度索引化して参照します。取り込み専用Workerへは基準年度・科目・業種・部署・前年金額だけを渡し、施策・予算・集計などの計画全体は複製しません。用途・分類の検証、競合判定と失敗時の入力保持は維持します。`node --expose-gc scripts/measure-previous-workbook.mjs`で100・300・600科目の同条件の構築・検証時間とメモリ割当を確認できます。圧縮・解析・画面描画は別の処理であり、この測定には含みません。 取り込みの変更確認が200件を超える場合は、表示範囲の周辺だけを描画します。スクロールで全変更を確認でき、取り込み・取消・保存再試行は表示範囲にかかわらず全変更を対象にします。
+前年Excelの出力・取り込みは、業種・部署・科目・月のIDで前年金額を一度索引化して参照します。取り込み専用Workerへは基準年度・科目・業種・部署・前年金額だけを渡し、施策・予算・集計などのデータ全体は複製しません。用途・分類の検証、競合判定と失敗時の入力保持は維持します。`node --expose-gc scripts/measure-previous-workbook.mjs`で100・300・600科目の同条件の構築・検証時間とメモリ割当を確認できます。圧縮・解析・画面描画は別の処理であり、この測定には含みません。 取り込みの変更確認が200件を超える場合は、表示範囲の周辺だけを描画します。スクロールで全変更を確認でき、取り込み・取消・保存再試行は表示範囲にかかわらず全変更を対象にします。
 
 種別・比較対象・基準前年の切り替えは、一つの作業用データベースで保存・取消用の前後データ・時点履歴を準備し、金額・施策・マスタの読み直しを省きます。変更前後の全体検証と外部更新の照合を維持し、保存成功後に選択を反映します。総原価表は計算元と分類が同じ間、比較結果を再利用します。金額・分類の変更時には再計算します。
 
@@ -1140,7 +1140,7 @@ Excelへ出力する施策一覧は最下部に月別の売上・費用・利益
 
 施策一覧は表示中の計算元に対して、一次予算・確定予算それぞれの月別金額・計算エラー・全件合計を画面内で再利用します。金額・科目・年度が変わると作り直し、科目属性の変更・操作取消・時点履歴の復元でも古い結果を使いません。並べ替えは名称と開始年月を参照し、スクロールや保存中の状態変更で全件を並べ直しません。
 
-展開表は種別ごとの施策を施策IDで索引化し、展開IDで一度グループ化して参照します。`node --expose-gc scripts/measure-expansion-table.mjs`で100・500・1,000施策の集中・分散時の計算時間とメモリ割当を観測できます。任意の画面測定は `PERF_MODE=expansion npx playwright test grid-performance.spec.ts --project desktop` で行い、Reactの描画処理・DOM要素数・heapを記録します。開発ビルドの測定であり、実際の計画や製品全体の性能保証には使いません。
+展開表は種別ごとの施策を施策IDで索引化し、展開IDで一度グループ化して参照します。`node --expose-gc scripts/measure-expansion-table.mjs`で100・500・1,000施策の集中・分散時の計算時間とメモリ割当を観測できます。任意の画面測定は `PERF_MODE=expansion npx playwright test grid-performance.spec.ts --project desktop` で行い、Reactの描画処理・DOM要素数・heapを記録します。開発ビルドの測定であり、実際のデータや製品全体の性能保証には使いません。
 
 前年入力の編集下書きは業種・部署・科目・月のIDで前年金額を索引化し、セルは科目IDの索引で下書き行を参照します。分類・内容が同じときは表示用集計を再利用し、入力変更で再計算します。任意の測定は `node --expose-gc scripts/measure-previous-grid.mjs`（集計・初期化）と `PERF_MODE=previous npx playwright test grid-performance.spec.ts --project desktop`（入力反映・描画回数・DOM・heap）です。
 
@@ -1158,7 +1158,7 @@ Excelへ出力する施策一覧は最下部に月別の売上・費用・利益
 
 外部更新との自動統合では、集計所属を所属対象の種別（科目／集計）とIDで識別します。親集計・所属順・符号が変わっても同じ対象として比較し、無関係な所属を保持します。行を安全に識別できない空・不適切なNULL・重複キーは統合を拒否し、入力保持と別ファイル保存の経路へ戻します。
 
-集計所属の順序（aggregation_members.position）は、0〜9,007,199,254,740,991の整数だけを保存・読み込みで受け付けます。文字列・小数・負数・上限超過は拒否します。位置が飛んだ正常な所属は保持し、追加・再所属は末尾へ置きます。採番上限では変更前に追加を拒否し、元の計画を保持します。同じ親での符号変更は順序を動かしません。
+集計所属の順序（aggregation_members.position）は、0〜9,007,199,254,740,991の整数だけを保存・読み込みで受け付けます。文字列・小数・負数・上限超過は拒否します。位置が飛んだ正常な所属は保持し、追加・再所属は末尾へ置きます。採番上限では変更前に追加を拒否し、元のデータを保持します。同じ親での符号変更は順序を動かしません。
 
 保存命令の結果が保存済みの業務内容と同じ場合、更新日時・時点履歴・未記録の期限を変更せず、ファイルの読み書きと競合解決を開始しません。既存の操作取消・やり直しも保持します。外部更新は次の実際の変更時に照合します。
 
@@ -1168,13 +1168,13 @@ Excelへ出力する施策一覧は最下部に月別の売上・費用・利益
 
 施策行と集計所属の独立した同時追加は、先に保存された順序を保ち、今回側の追加をその末尾へ入力順に続けます。既存行の並べ替えが一方だけなら追加と統合し、双方の相反する並べ替えは拒否します。集計所属の合法な欠番は保持し、採番上限や既存の同順位で順序を決められない場合は別ファイル保存へ戻します。既存ファイルの読込条件と保存構造は変更しません。
 
-Excel入出力画面は初めて選択したときに読み込みます。ExcelJS・JSZip・Saxesは出力・取り込みの専用Workerで処理を始めるときに読み込み、画面の処理へ含めません。総原価表・展開表・施策一覧と前年フォーマットの出力中は「中止」を表示し、中止・失敗では計画を変更せず、再出力できます。中止した処理からファイルをダウンロードせず、生成・検査に成功した場合だけ出力します。読み込み中や失敗時にも計画と他画面の操作を保持し、失敗時は他画面で作業を継続でき、画面の再読み込み後に開き直せます。既存のExcel出力・取込・失敗時の入力保持は維持します。
+Excel入出力画面は初めて選択したときに読み込みます。ExcelJS・JSZip・Saxesは出力・取り込みの専用Workerで処理を始めるときに読み込み、画面の処理へ含めません。総原価表・展開表・施策一覧と前年フォーマットの出力中は「中止」を表示し、中止・失敗ではデータを変更せず、再出力できます。中止した処理からファイルをダウンロードせず、生成・検査に成功した場合だけ出力します。読み込み中や失敗時にもデータと他画面の操作を保持し、失敗時は他画面で作業を継続でき、画面の再読み込み後に開き直せます。既存のExcel出力・取込・失敗時の入力保持は維持します。
 
 初期表示と初回入出力の測定方法・比較結果は[入出力画面の読み込み測定](docs/spreadsheet-loading.md)を参照してください。
 
-通常保存と外部更新の統合後は、計画と履歴情報を同じ完全検証済みの接続から一度に読み取ります。破損・参照・入力・履歴の検査と保存前照合を維持します。[通常保存の性能測定](docs/save-performance.md)に、件数・履歴量ごとの比較、再現手順、実ファイル保存を代替した測定の制限を記載しています。
+通常保存と外部更新の統合後は、データと履歴情報を同じ完全検証済みの接続から一度に読み取ります。破損・参照・入力・履歴の検査と保存前照合を維持します。[通常保存の性能測定](docs/save-performance.md)に、件数・履歴量ごとの比較、再現手順、実ファイル保存を代替した測定の制限を記載しています。
 
-取消・時点履歴の保存内容は、正規の業務テーブルと採番状態だけを別のメモリ領域へ転記して作ります。過去履歴の全体複製・削除を行わず、完成後に従来と同じ履歴用の完全検査を通します。元の計画・履歴は変更せず、失敗時は作業領域を解放します。[業務スナップショットの比較](docs/business-snapshot-performance.md)に、履歴量によるコピー量・時間の差と負担が増える条件を記載しています。
+取消・時点履歴の保存内容は、正規の業務テーブルと採番状態だけを別のメモリ領域へ転記して作ります。過去履歴の全体複製・削除を行わず、完成後に従来と同じ履歴用の完全検査を通します。元のデータ・履歴は変更せず、失敗時は作業領域を解放します。[業務スナップショットの比較](docs/business-snapshot-performance.md)に、履歴量によるコピー量・時間の差と負担が増える条件を記載しています。
 
 外部更新との統合では、同じ施策行の科目変更・削除と他方の月額・明示手修正を同時に採用せず、競合回復へ戻します。科目が同じままの異なる月の独立変更は統合します。
 
@@ -1186,15 +1186,15 @@ Excel入出力画面は初めて選択したときに読み込みます。ExcelJ
 
 異なる新規科目が同じコピー元から同じ番号で追加された場合は、今回側の科目に全コピーの採番範囲を超える番号を割り当て、施策行・集計所属・前年金額・表示順の参照を一緒に付け替えて統合します。表示順は科目／集計の種別と対象IDで照合し、先行保存の順序へ今回の追加を続けます。番号の対応表は保存しません。同じコード・名称の追加や既存科目の相反変更は拒否します。施策本体・展開区分・集計本体の新規番号衝突は自動統合せず、別ファイル保存へ戻します。独立して登録した新規施策は、名称・備考・分類・金額が一致しても一つにまとめず、先行保存と入力を保護して競合回復へ戻します。確認用画面では「同名施策の同時新規登録」と「ファイル更新」を選び、同名施策を登録して確認できます。
 
-計画ファイルと履歴の読込・出力では、通常の名称入力と同じ判定で、全角スペース・改行・タブなど空白だけの名称・表示名を拒否します。任意表示名のNULLと有効な日本語名称は受理し、保存名を自動修正しません。不正なファイルは元の内容を書き換えずに拒否し、保存形式も変更しません。
+ファイルと履歴の読込・出力では、通常の名称入力と同じ判定で、全角スペース・改行・タブなど空白だけの名称・表示名を拒否します。任意表示名のNULLと有効な日本語名称は受理し、保存名を自動修正しません。不正なファイルは元の内容を書き換えずに拒否し、保存形式も変更しません。
 
 施策入力の月別合計は、入力行・入力不備・種別・科目属性が同じ間は画面内で再利用します。選択移動・範囲選択・編集モード・科目候補の展開・備考だけの変更では全行を再集計しません。金額・手修正・継承復帰・行・科目・属性の変更、取消・保存基準への反映では再計算し、入力不備と上限超過の表示条件を維持します。合計はファイルへ保存しません。
 
-施策の登録・更新の年度照合は、検証済みの保存接続から基準年度だけを一度取得します。前年金額と表示種別は年度確認のためには復元せず、計画全体を表示する読込では従来どおり提供します。年度不一致の拒否とファイル全体の完全検査は維持します。
+施策の登録・更新の年度照合は、検証済みの保存接続から基準年度だけを一度取得します。前年金額と表示種別は年度確認のためには復元せず、データ全体を表示する読込では従来どおり提供します。年度不一致の拒否とファイル全体の完全検査は維持します。
 
 総原価表の施策増減は、対象月が確定した金額をその月の円整数へ直接加算します。複数月の集計は従来どおり扱い、途中の相殺をBigIntで保持し、意味のある最終合計で範囲を検査します。
 
-ファイルを開く・続きから・ドロップ・新規作成後の読込では、同じ接続の一度の完全検査から計画と履歴をまとめて取得します。両方の取得が成功してから画面へ公開し、失敗時は元のセッションと前回の参照を保持します。開くだけではファイルを更新しません。標準の計画読込は実行環境によらず施策行と基準前年の金額を返し、全明細を生成しません。サンプル検査・分析用の派生明細はテスト側で明示的に生成します。
+ファイルを開く・続きから・ドロップ・新規作成後の読込では、同じ接続の一度の完全検査からデータと履歴をまとめて取得します。両方の取得が成功してから画面へ公開し、失敗時は元のセッションと前回の参照を保持します。開くだけではファイルを更新しません。標準のデータ読込は実行環境によらず施策行と基準前年の金額を返し、全明細を生成しません。サンプル検査・分析用の派生明細はテスト側で明示的に生成します。
 
 復元時に維持する履歴は識別子順に一件ずつ読み出して転記し、全履歴の保存内容をJavaScript側にまとめて保持しません。既存履歴・復元前後の記録・識別子の非再利用を維持します。
 
@@ -1210,7 +1210,7 @@ Excel入出力画面は初めて選択したときに読み込みます。ExcelJ
 
 施策の番号が取消・履歴復元で再利用された場合も、科目行・月額の変更に対して所有先の施策内容と元の行の残存を照合します。内容変更や元の行の削除が重なる場合は自動統合を拒否し、入力を保持して別ファイル保存へ戻します。通常の改名・備考・分類変更と行編集、行削除と別行の追加の重なりも区別できないため拒否します。同じ施策への独立行追加は統合し、単独の改名は既存行の所属を保ちます。保存形式は変えません。
 
-計画・履歴の読込と保存結果の取得では、一覧用の施策合計を計算しません。一次予算・確定予算とも、各セルが有効で施策内の合計だけが上限を超える場合も、元の金額を開いて保存・訂正できます。一覧では該当行に理由を表示し、正常な施策の表示と編集への移動を維持します。合計の円精度と上限検出、保存形式は変更しません。確認用画面では「上限超過：一次予算の施策内合計」と「上限超過：確定予算の施策内合計」を選べます。
+データ・履歴の読込と保存結果の取得では、一覧用の施策合計を計算しません。一次予算・確定予算とも、各セルが有効で施策内の合計だけが上限を超える場合も、元の金額を開いて保存・訂正できます。一覧では該当行に理由を表示し、正常な施策の表示と編集への移動を維持します。合計の円精度と上限検出、保存形式は変更しません。確認用画面では「上限超過：一次予算の施策内合計」と「上限超過：確定予算の施策内合計」を選べます。
 
 総原価表の「全部署の合計」では、部署に未所属・金額未登録の業種も業種マスタ全件から選べます。個別部署を選んだ場合だけ所属業種へ絞り、一つなら自動選択します。全部署へ戻すと候補を全件へ戻し、有効な業種選択を保持します。表示条件の変更でファイルを書き換えません。確認用画面の「総原価表：部署未所属の業種」で確認できます。
 
@@ -1240,7 +1240,7 @@ Excel出力では、名称などに含まれる `_x0041_`・`_x005F_` のよう�
 
 前年Excelの出力用シート名では、業種名・部署名のタブ・改行・CRと、文字列 `&lt;`・`&amp;`・`&quot;`・`&apos;`・`&gt;` を禁則記号と同じく下線へ置き換え、31文字以内の確定名を管理情報と共有します。通常の `&` と数値実体参照の文字列は維持します。元のマスタ名とシート内の表示は保持します。
 
-履歴比較では、選択した履歴の全体検証後に現在の計画との基準年度を照合します。異年度は比較失敗として通知し、再試行でも現在の計画・履歴・操作取消を保持します。比較のためのファイル再読込・書込許可は要求しません。
+履歴比較では、選択した履歴の全体検証後に現在のデータとの基準年度を照合します。異年度は比較失敗として通知し、再試行でも現在のデータ・履歴・操作取消を保持します。比較のためのファイル再読込・書込許可は要求しません。
 
 操作取消・やり直しで維持する時点履歴も、識別子順に1件ずつ転記します。履歴のID・日時・保存内容と記録期限・次の識別子を保ち、削除済みの履歴を復活させません。途中の失敗では元ファイルと操作履歴を維持します。
 

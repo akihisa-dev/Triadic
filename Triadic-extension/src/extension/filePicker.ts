@@ -1,5 +1,5 @@
 import { TRIADIC_FILE_EXTENSION, TRIADIC_MIME_TYPE } from "../core/storage/triadicSchema";
-export const fileTypes = [{ description: "Triadic計画", accept: { [TRIADIC_MIME_TYPE]: [TRIADIC_FILE_EXTENSION] } }];
+export const fileTypes = [{ description: "Triadicファイル", accept: { [TRIADIC_MIME_TYPE]: [TRIADIC_FILE_EXTENSION] } }];
 export type PickerWindow = Window & {
   showOpenFilePicker?: (options: { multiple: boolean; mode: "readwrite"; types: typeof fileTypes }) => Promise<FileSystemFileHandle[]>;
   showSaveFilePicker?: (options: { suggestedName: string; types: typeof fileTypes }) => Promise<FileSystemFileHandle>;

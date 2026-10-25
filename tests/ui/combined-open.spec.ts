@@ -29,7 +29,7 @@ test.beforeEach(async ({page}) => {
  await expect(page.getByRole('button',{name:'ファイルを開く',exact:true})).toBeEnabled();
  await picker(page);
 });
-for (const method of ['通常選択','続きから','ドロップ']) test(`${method}は計画と履歴を一つの依頼で読み込む`,async({page})=>{
+for (const method of ['通常選択','続きから','ドロップ']) test(`${method}はデータと履歴を一つの依頼で読み込む`,async({page})=>{
  if(method==='続きから') {
   await page.getByRole('button',{name:'ファイルを開く',exact:true}).click();
   await expect(page.locator('.home-file-name')).toHaveText('一括読込.triadic');

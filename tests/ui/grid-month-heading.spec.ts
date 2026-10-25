@@ -12,7 +12,7 @@ for (const surface of ["initiative", "previous"]) {
       await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
       await selectClassification(app.getByRole("combobox", { name: "部署名", exact: true }), "部署A");
     }
-    const table = app.getByRole("table", { name: surface === "initiative" ? "月別計画金額" : "前年入力の月別金額", exact: true });
+    const table = app.getByRole("table", { name: surface === "initiative" ? "月別金額" : "前年入力の月別金額", exact: true });
     await settleMotion(app.locator("body"));
     const cell = table.locator('input[data-row="0"][data-column="0"]');
     const before = await cell.boundingBox();

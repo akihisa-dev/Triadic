@@ -240,7 +240,7 @@ test("全機能確認用サンプルも除外し強制追加したコミット�
   assert.equal(await readFile(path.join(repo.root, sample), "utf8"), "generated sample", "管理対象から外してもローカルのサンプルを保持する");
 });
 
-test("計画ファイルは大小文字とGit設定に依存せず除外し強制追加も拒否する", async t => {
+test("ファイルは大小文字とGit設定に依存せず除外し強制追加も拒否する", async t => {
   for (const ignoreCase of ["false", "true"]) for (const extension of ["triadic", "TRIADIC", "Triadic", "tRiAdIc"]) {
     const repo = await repository(t);
     repo.git("config", "core.ignorecase", ignoreCase);

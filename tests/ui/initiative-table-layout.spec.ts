@@ -7,7 +7,7 @@ test("施策の月別入力を罫線付きのコンパクトな表で表示す�
   await openInitiativeEntry(app);
   await app.getByRole("heading", { name: "施策入力", exact: true }).click();
   await settleMotion(app.locator("body"));
-  const table = app.getByRole("table", { name: "月別計画金額", exact: true });
+  const table = app.getByRole("table", { name: "月別金額", exact: true });
   await expect(table.getByRole("columnheader")).toHaveCount(13);
   const row = table.locator("tbody tr").first();
   const layout = await row.evaluate(element => {
@@ -38,7 +38,7 @@ test("狭い画面でも長い科目名をコードなしで全文表示し、�
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await openInitiativeEntry(app);
-  const table = app.getByRole("table", { name: "月別計画金額", exact: true });
+  const table = app.getByRole("table", { name: "月別金額", exact: true });
   const select = table.getByRole("combobox", { name: "1行目の勘定科目", exact: true });
   await select.focus();
   await select.fill("減価");

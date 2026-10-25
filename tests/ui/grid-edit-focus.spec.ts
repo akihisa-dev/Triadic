@@ -15,7 +15,7 @@ for(const surface of ['entry','detail','previous']) test(`${surface}は範囲末
     await app.getByRole('button',{name:'既存商品の販売拡大',exact:true}).click();
   }
   await settleMotion(app.locator('body'));
-  const table=app.getByRole('table',{name:surface==='previous'?'前年入力の月別金額':'月別計画金額',exact:true});
+  const table=app.getByRole('table',{name:surface==='previous'?'前年入力の月別金額':'月別金額',exact:true});
   const first=table.locator('input[data-row="0"][data-column="0"]'),last=table.locator('input[data-row="0"][data-column="1"]');
   await first.fill('1234.567');await first.press('Tab');const lastValue=await last.inputValue();await first.focus();
   const a=(await first.boundingBox())!,b=(await last.boundingBox())!;

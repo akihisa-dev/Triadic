@@ -23,5 +23,5 @@ export async function verifyUnicodeNames(api){
     const saved=api.exportTriadicDatabase(normal),read=await api.readPlanContents(saved);
     assert.equal(read.accounts[0].accountName,'\u3000有効 な科目\u00a0','有効な保存名を書き換えない');await api.validateTriadicDatabase(saved);
   }finally{normal.close();}
-  console.log('PASS: 全名称・任意表示名のUnicode空白拒否、通常計画・履歴スナップショットの読込/出力/取消、有効名とNULLの保持、元bytes不変');
+  console.log('PASS: 全名称・任意表示名のUnicode空白拒否、通常ファイル・履歴スナップショットの読込/出力/取消、有効名とNULLの保持、元bytes不変');
 }

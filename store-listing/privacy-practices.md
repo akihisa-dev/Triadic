@@ -26,7 +26,7 @@ Manifestに`permissions`、`optional_permissions`、`host_permissions`の指定�
 | --- | --- |
 | 財務情報・支払い情報（Financial and payment information） | 予算・売上・費用・利益などの財務情報を端末内で扱うため申告。決済・カード情報は取得しない |
 | 個人を特定できる情報 | 氏名・連絡先などの専用入力欄や自動取得なし。施策名・備考・分類の自由入力へ個人情報を入れる運用をする場合は、提出者がその運用を含めて申告内容を確認する |
-| 健康情報・認証情報・個人的な通信・位置情報・ウェブ履歴・ユーザーのアクティビティ・ウェブサイトのコンテンツ | それぞれを取得する機能なし。ローカルの業務計画の入力を、閲覧サイトの取得と混同しない |
+| 健康情報・認証情報・個人的な通信・位置情報・ウェブ履歴・ユーザーのアクティビティ・ウェブサイトのコンテンツ | それぞれを取得する機能なし。ローカルの業務データの入力を、閲覧サイトの取得と混同しない |
 
 画面の分類名が異なる場合は、その説明に照らして入力します。申告欄とは別に、以下の説明を掲載文・ポリシーへ記載済みです。
 
@@ -48,6 +48,6 @@ https://gist.github.com/akihisa-dev/a97db44fddd4ff38f8c0f21bde35be18
 - `Triadic-extension/src/extension/theme.ts`：配色の選択をlocalStorageへ保持
 - `Triadic-extension/src/extension/WorkspaceChrome.tsx`：作業中の検索語をメモリへ保持
 - `Triadic-extension/src/extension/recentFile.ts`：直近のファイル参照をIndexedDBへ保持
-- `Triadic-extension/src/core/storage/`：計画・マスタ・履歴の保存処理
+- `Triadic-extension/src/core/storage/`：データ・マスタ・履歴の保存処理
 - [Chrome公式：プライバシー欄](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy)
 - [Chrome公式：端末内だけの処理も開示対象（質問3）](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq)

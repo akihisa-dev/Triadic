@@ -33,7 +33,7 @@ export async function verifyReadSavedPlan(api) {
       assert.deepEqual(await read(bytes), {
         contents: await api.readPlanContents(bytes),
         savedHistory: await api.readDataHistory(bytes),
-      }, '計画と履歴を別々に読んだ結果と一致');
+      }, 'データと履歴を別々に読んだ結果と一致');
     }
     assert.deepEqual(bytes, before, '読み取りで元ファイルを変更しない');
   }
@@ -56,5 +56,5 @@ export async function verifyReadSavedPlan(api) {
     await assert.rejects(read(bytes), '破損・旧形式・不正値・不正参照・履歴内部用データを拒否');
     assert.deepEqual(bytes, before, '拒否したファイルを変更しない');
   }
-  console.log('PASS: 共通読取の計画・履歴一致、参照専用、完全検証と不正データ拒否');
+  console.log('PASS: 共通読取のデータ・履歴一致、参照専用、完全検証と不正データ拒否');
 }

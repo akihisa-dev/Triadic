@@ -93,6 +93,6 @@ export async function verifyPreviousWorkbookExport(api) {
   assert.throws(() => api.createPreviousWorkbook({ ...plan, accounts: plan.accounts.slice(0, 1) }, manyPairs), /取り込み上限/, "ZIP項目数も生成前に制限");
   const longName = { ...plan, accounts: [{ ...plan.accounts[0], accountName: "a".repeat(9 * 1024 * 1024) }] };
   await assert.rejects(api.createPreviousWorkbookBytes(longName, pairs.slice(0, 1)), /取り込み上限.*別ファイル/, "実際の展開後サイズもダウンロード前に制限");
-  assert.deepEqual(plan, before, "出力・拒否・再取り込みで計画を変更しない");
+  assert.deepEqual(plan, before, "出力・拒否・再取り込みでデータを変更しない");
   console.log("previous workbook export ok: 330 accounts, 18 pairs, boundary, split, empty/zero, identities and expanded size");
 }

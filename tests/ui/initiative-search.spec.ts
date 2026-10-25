@@ -83,7 +83,7 @@ test("新規入力を保持して検索でき、未保存編集では検索を�
   await expect(app.getByRole("textbox", { name: "施策名", exact: true })).toBeDisabled();
 });
 
-standalone("全件検索は50件ずつ表示し、入力・文字列の安全性・日本語変換・空の計画を扱う", async ({ page }) => {
+standalone("全件検索は50件ずつ表示し、入力・文字列の安全性・日本語変換・空のデータを扱う", async ({ page }) => {
   await page.goto("/tests/ui/initiative-search.html");
   await page.getByRole("button", { name: "施策を検索", exact: true }).click();
   const dialog = page.getByRole("dialog"), input = dialog.getByRole("searchbox");

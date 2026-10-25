@@ -35,16 +35,16 @@
 // 異年度の履歴比較は tests/history-difference.mjs と tests/ui/history-year.html・specで選択時の拒否・再試行・参照専用・選択保持を確認する。
 // 前年Excelの分類名に含むタブ・LF・CR・禁則・アポストロフィ・長名は tests/previous-workbook-export.mjs で実XLSX往復・単一セル更新・元データ保持を確認する。
 // 前年表の行構成変更は tests/ui/previous-selection.html と同名specで実SQLiteの保存統合・選択解除・フォーカス・Delete・貼付・属性変更時の選択維持を確認する。既存サンプルの内容は変えない。
-// Excel名称の_x0041_・_x005F_・日本語・実文字との併存は tests/previous-workbook-export.mjs の合成計画でXLSX往復・マスタ照合・総原価表・展開表・施策一覧とシート参照を確認する。
+// Excel名称の_x0041_・_x005F_・日本語・実文字との併存は tests/previous-workbook-export.mjs の合成データでXLSX往復・マスタ照合・総原価表・展開表・施策一覧とシート参照を確認する。
 // 属性未設定の表示と金額の入力保持は既存の手修正・0固定・全月0・相殺データを使う。tests/budget-hints.mjs と tests/ui/budget-tooltips.spec.ts で属性未設定・不正入力の保護と、手修正の点線・吹き出しがないことを確認する。
 // 履歴の収支比較は既存サンプルの過去4月100→現在120と確定130を使い、tests/history-income-impact.mjs と tests/ui/history-income-impact.spec.ts で前年・各属性・1円・年間/月別・手修正・セル別上限を確認する。
 // 月額の桁区切り・部分編集・1円精度・Escape取消は tests/ui/grid-amount-format.spec.ts で確認する。
 // 月見出しの強調は既存サンプルの施策・前年を使い tests/ui/grid-month-heading.spec.ts で単一・範囲・種別切替と寸法維持を確認する。
 // 一覧と詳細の往復は tests/ui/initiative-list-return.spec.ts で200/201件・並べ替え・番号再利用・Tab継続を確認する。
-// 施策検索は既存サンプルの施策名・備考・選択分類・過去履歴を使い、tests/initiative-search.mjs と tests/ui/initiative-search.spec.ts で分類をまたぐ一致規則・一致分類の表示・移動・入力保護・50件表示・空の計画を確認する。保存データの追加・変更はない。
+// 施策検索は既存サンプルの施策名・備考・選択分類・過去履歴を使い、tests/initiative-search.mjs と tests/ui/initiative-search.spec.ts で分類をまたぐ一致規則・一致分類の表示・移動・入力保護・50件表示・空のデータを確認する。保存データの追加・変更はない。
 // 施策複製は既存サンプルの同科目複数行・分類・確定手修正0を使い、tests/duplicate-initiative.mjs と tests/ui/duplicate-initiative.spec.ts で独立性・登録・取消・入力保護を確認する。
 // 履歴と現在の差分は既存の3時点の備考・4月月額を使い、tests/history-difference.mjs と tests/ui/history-difference.spec.ts で参照専用・1円・手修正・作成識別子・大量表示・失敗を確認する。
-// 通常の別名保存は既存サンプルの計画・履歴を使い、tests/save-as.mjs と tests/ui/save-as.spec.ts で保存先切替・取消・失敗時の保護を確認する。
+// 通常の別名保存は既存サンプルのデータ・履歴を使い、tests/save-as.mjs と tests/ui/save-as.spec.ts で保存先切替・取消・失敗時の保護を確認する。
 // 総原価表の内訳は既存の前年・同一科目複数行・手修正0・相殺・未設定集計を使い、tests/cost-breakdown.mjs と tests/ui/cost-breakdown.spec.ts で確認する。
 // 展開表の大量行のフォーカス・前後Tab・小計を跨ぐ移動・縦結合・高さは tests/ui/expansion-focus.spec.ts で確認する。
 // 履歴削除失敗後の許可要求・拒否・確認保持・取消後の再試行は tests/ui/history-permission.spec.ts で確認する。
@@ -56,7 +56,7 @@
 // 共通マスタの保存結果同期と保存中の所属変更は tests/named-master-rebase.mjs と tests/ui/named-master-rebase.html で確認する。
 // 展開区分の取消・履歴復元後の番号再利用、旧参照の競合拒否、通常改名・独立編集、別ファイル保存と失敗保護は tests/classification-rebase.mjs で確認する。
 // SQLite準備の失敗・同時要求・再試行・正規スキーマの一括公開は tests/sqlite-runtime.test.mjs、実Workerの再選択は tests/ui/sqlite-entry.spec.ts で確認する。
-// 期間の未選択と実ID -1・0・正数の表示と昇降順は tests/initiative-sort.mjs と tests/ui/initiative-sort.spec.ts の正常なSQLite計画で確認する。
+// 期間の未選択と実ID -1・0・正数の表示と昇降順は tests/initiative-sort.mjs と tests/ui/initiative-sort.spec.ts の正常なSQLiteデータで確認する。
 // 集計候補はID索引を共有し、自己・子孫を禁止する。1000/5000独立集計の参照量は tests/aggregation-data.mjs、所属・保存失敗は tests/ui/aggregations.spec.ts で確認する。
 // 集計所属の一度の分類、1000階層の実SQLite保存・読込、1000/5000集計の走査量は tests/aggregation-positions.mjs で確認する。
 // 展開表では期間内の区分別結合・区分内登録順・未選択の末尾空欄を確認する。その他は通信運搬費と消耗品費の削減に設定する。
@@ -65,7 +65,7 @@ import { createBusinessSample } from "./sample-business";
 // 集計所属順は現行DDLの非負・安全な整数で生成する。不正型・値域・採番境界の拒否は tests/aggregation-positions.mjs の合成DBで確認する。
 // Excel出力では選択した表と条件を保ち、従来の総原価表・展開表・施策一覧と計算元、および基本関数による金額の再計算を確認する。
 // Excel計算元の行順・分類名・種別・ID・元金額とマスタ索引の共有は tests/report-workbook.mjs で確認する。
-// 多数の展開・非連続集計の数式長と引数上限は tests/report-workbook.mjs の合成計画で確認する。
+// 多数の展開・非連続集計の数式長と引数上限は tests/report-workbook.mjs の合成データで確認する。
 // 前年Excelの確認表の名称取得・改名・大量変更の走査量は tests/spreadsheet-io.mjs、取消・保存失敗は tests/ui/spreadsheet-io.spec.ts で確認する。
 // 出力条件は現在の所属・分類へ整合させる。所属追加・マスタ追加の取消とやり直しは tests/ui/spreadsheet-io.spec.ts で確認する。
 import { editDatabase } from "../../Triadic-extension/src/core/storage/transaction";

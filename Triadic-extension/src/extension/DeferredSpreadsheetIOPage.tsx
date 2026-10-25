@@ -23,7 +23,7 @@ export function DeferredSpreadsheetIOPage(props: SpreadsheetIOProps) {
   return <main className="page-content" aria-label="入出力">
     <h1>入出力</h1>
     {error ? <>
-      <p role="alert">入出力画面を読み込めませんでした。保存済みの計画は保持しています。画面を再読み込みしてお試しください。</p>
+      <p role="alert">入出力画面を読み込めませんでした。保存済みのデータは保持しています。画面を再読み込みしてお試しください。</p>
       <button type="button" className="secondary-button" onClick={() => window.location.reload()}>画面を再読み込み</button>
     </> : <p role="status">読み込み中…</p>}
   </main>;

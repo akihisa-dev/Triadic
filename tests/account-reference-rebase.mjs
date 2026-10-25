@@ -49,7 +49,7 @@ export async function verifyReferenceRecovery(api, base, external, command) {
       assert.deepEqual(command,before);assert.equal(writes,0);assert.deepEqual(stored,external);
     } finally {unregister()}
     if(mode!=='save-as') {
-      assert.deepEqual(session.getSnapshot(),originalSnapshot,'失敗で計画・履歴・操作取消を保持');
+      assert.deepEqual(session.getSnapshot(),originalSnapshot,'失敗でデータ・履歴・操作取消を保持');
       fail=false;
       const stop=api.registerFileConflictRecovery(async()=>destination);
       try {

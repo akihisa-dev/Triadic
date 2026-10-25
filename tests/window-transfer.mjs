@@ -24,7 +24,7 @@ export async function verifyWindowTransfer(api) {
     const request = a.sent.findLast(message => message.type === "request" && message.method === "dispatch");
     const reply = a.received.findLast(message => message.type === "result" && message.id === request.id);
     assert.ok(reply.contentsPatch); assert.equal(reply.value, undefined);
-    assert.ok(size(request) < size(contents()) / 2, `${label}: 無関係な全計画を送らない`);
+    assert.ok(size(request) < size(contents()) / 2, `${label}: 無関係なデータ全体を送らない`);
     assert.ok(size(reply) < 200, `${label}: 先行通知を利用して全量返信しない`);
     const states = a.received.slice(stateStart).filter(message => message.type === "state");
     assert.ok(states.every(message => message.snapshot.contents === null), "保存後は差分または同じ内容の維持通知");

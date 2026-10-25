@@ -115,6 +115,6 @@ export async function verifyAutoSave(api) {
   shouldFail = false;
   stored = new Uint8Array();
   const destination = await saveInitiativeUpdate({ ...plan, destinationBytes: stored }, original.id, 2026, edited);
-  assert.equal(destination.initiatives[0].name, "更新施策", "新しい保存先でも元の計画から更新する");
+  assert.equal(destination.initiatives[0].name, "更新施策", "新しい保存先でも元のデータから更新する");
   console.log("PASS: automatic save sequencing, composition, retry, initiative updates, blank/zero, shared row identity and conflicts");
 }

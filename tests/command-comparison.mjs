@@ -7,7 +7,7 @@ export async function verifyCommandComparison(api) {
   const fresh = await api.createTriadicDatabase(2026);
   const first = await api.processingTasks.prepareOrdinarySave(fresh, { type: 'department', change: { type: 'add', departmentName: '初回履歴確認', industryIds: [1] } }, 2026);
   assert.equal(first.savedHistory.entries.length, 1, '初回変更前の状態を一度だけ記録する');
-  assert.equal((await api.readDataHistory(fresh)).entries.length, 0, '準備で元の計画を変更しない');
+  assert.equal((await api.readDataHistory(fresh)).entries.length, 0, '準備で元のデータを変更しない');
   const initiative = contents.initiatives[0];
   const draft = { ...initiative, fiscalYear: "2026" };
   const update = value => ({ type: "initiative.update", id: initiative.id, draft: value });

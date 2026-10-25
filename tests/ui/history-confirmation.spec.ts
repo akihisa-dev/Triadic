@@ -11,7 +11,7 @@ test("過去の閲覧・削除エラーが次の削除対象と注意書きを�
   const confirm = async (count: number) => {
     await expect(dialog).toContainText(`${count}件の履歴を削除しますか`);
     await expect(dialog).toContainText("削除した履歴には戻れません");
-    await expect(dialog).toContainText("現在の計画データは変わりません");
+    await expect(dialog).toContainText("現在のデータは変わりません");
     await expect(dialog).not.toContainText("閲覧失敗");
   };
   await confirm(1);

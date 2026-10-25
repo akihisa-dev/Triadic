@@ -133,7 +133,7 @@ export async function verifyWindowSession(api) {
     assert.equal(c.latest().snapshot.contents.departments[0].departmentName, "共有の編集");
 
     const copy = file("共有のコピー.triadic", new Uint8Array());
-    const other = file('別計画.triadic', bytes), owner = peer();
+    const other = file('別ファイル.triadic', bytes), owner = peer();
     await owner.request('open', { name: other.handle.name, handle: other.handle, bytes });
     const sourceBefore = original.bytes.slice(), destinationBefore = other.bytes.slice();
     a.hasDraft = true; owner.hasDraft = true;
@@ -180,7 +180,7 @@ export async function verifyWindowSession(api) {
     assert.equal(b.latest().snapshot.contents.departments[0].departmentName, "コピー先の編集", "他の入力やファイルを閉じない");
     assert.equal(b.closed, false);
     await d.request("open", { name: original.handle.name, handle: original.handle, bytes: original.bytes });
-    assert.ok(d.latest().snapshot.contents, "閉じた画面で別計画を開くと初回の全量を受け取る");
+    assert.ok(d.latest().snapshot.contents, "閉じた画面で別ファイルを開くと初回の全量を受け取る");
     console.log("PASS: 同一ファイルの共有・表示複製・共有取消・保存待ち・全保存先切替・履歴集約・失敗保護・個別終了");
   } finally { for (const item of peers) item.disconnect(); }
 
@@ -267,11 +267,11 @@ export async function verifyWindowSession(api) {
       }
       opener.disconnect(); release(); await first; await second;
       if (keepOther) {
-        assert.equal(cleanupHub.groups.size, 1, "別の読込待ちウィンドウがいる計画は保持");
+        assert.equal(cleanupHub.groups.size, 1, "別の読込待ちウィンドウがいるデータは保持");
         assert.ok(survivor.latest().snapshot.contents);
         assert.equal(creations, 1);
       } else {
-        assert.equal(cleanupHub.groups.size, 0, "読込後に利用者のない計画を解放");
+        assert.equal(cleanupHub.groups.size, 0, "読込後に利用者のないデータを解放");
         const latestBytes = await api.saveKindSelection(bytes, "cost-table", [2]);
         await survivor.request("open", { name: original.handle.name, handle: original.handle, bytes: latestBytes });
         assert.deepEqual(survivor.latest().snapshot.contents.kindSelections["cost-table"], [2], "再読込で新しいディスク内容を採用");
@@ -350,7 +350,7 @@ export async function verifyWindowSession(api) {
   }
 
   for (const pendingKind of ["open", "saveAs"]) {
-    const source = file("競合元.triadic", bytes), target = file("予約先.triadic", bytes), otherFile = file("別計画.triadic", bytes);
+    const source = file("競合元.triadic", bytes), target = file("予約先.triadic", bytes), otherFile = file("別ファイル.triadic", bytes);
     let release, started;
     const gate = new Promise(resolve => { release = resolve; }), began = new Promise(resolve => { started = resolve; });
     const pendingHub = new api.WindowSessionHub(recover => {

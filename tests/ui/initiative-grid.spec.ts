@@ -164,7 +164,7 @@ test("範囲の自動保存が失敗しても入力と未変更セルを保持�
 
 
 test("金額項目の3合計は入力と種別に追従する", async ({ app }) => {
-  const table = app.getByRole("table", { name: "月別計画金額", exact: true });
+  const table = app.getByRole("table", { name: "月別金額", exact: true });
   const footer = table.locator("tfoot");
   await expect(footer.getByRole("row")).toHaveCount(3);
   const sales = footer.getByRole("row", { name: /^売上合計/ });

@@ -93,7 +93,7 @@ export function InitiativeAmountGrid({ draft, kind, accounts, isSaving, rowOpera
     <StatusNotice message={error || totals.error || selectedTotal?.error || ""} error {...(error ? { onDismiss: () => setError("") } : {})} />
     <GridSelectionTotal total={selectedTotal} compact selectionDescription={selectionDescription} />
     <div className="initiative-grid-scroll">
-        <table ref={table} className="initiative-amount-table" aria-label="月別計画金額">
+        <table ref={table} className="initiative-amount-table" aria-label="月別金額">
           <thead>
             <tr>
               <th scope="col">勘定科目</th>

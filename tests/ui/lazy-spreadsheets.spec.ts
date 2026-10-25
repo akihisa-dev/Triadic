@@ -23,7 +23,7 @@ test('Excelは初回入出力だけで読み込み、読み込み途中でも他
   expect(requested).toBe(1);
   await navigate(page,'施策一覧');await expect(page.getByRole('heading',{name:'施策一覧',exact:true})).toBeVisible();
 });
-test('入出力コードの読込失敗で計画を保持し、再読込後に開き直せる',async({page})=>{
+test('入出力コードの読込失敗でデータを保持し、再読込後に開き直せる',async({page})=>{
   let blocked=0, recovered=0, failLoading=true;
   await page.route(/SpreadsheetIOPage-[^/]+\.js(?:\?.*)?$/,async route=>{
     if(failLoading){blocked++;await route.abort();}
@@ -34,7 +34,7 @@ test('入出力コードの読込失敗で計画を保持し、再読込後に�
   await expect(sales).toBeVisible();
   const savedAmounts = await sales.allTextContents();
   await navigate(page,'入出力');
-  await expect(page.getByRole('alert')).toContainText('保存済みの計画は保持');
+  await expect(page.getByRole('alert')).toContainText('保存済みのデータは保持');
   await navigate(page,'総原価表');await expect(page.getByRole('table',{name:'総原価表',exact:true})).toBeVisible();
   expect(await sales.allTextContents()).toEqual(savedAmounts);
   await navigate(page,'入出力');await expect(page.getByRole('alert')).toBeVisible();

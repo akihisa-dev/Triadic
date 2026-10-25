@@ -2,7 +2,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { selectAccount, openInitiativeEntry, test, expect, selectClassification, settleMotion } from "./fixtures";
 
-test("新規計画に承認済みマスタを用意し、千円入力・比較列・利益率を保存後も表示する", async ({ app, page }, testInfo) => {
+test("新規ファイルに承認済みマスタを用意し、千円入力・比較列・利益率を保存後も表示する", async ({ app, page }, testInfo) => {
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
   await app.getByRole("button", { name: "サイドバーを開く", exact: true }).click();
   await app.getByRole("complementary", { name: "メニュー" }).getByRole("button", { name: "総原価表", exact: true }).click();

@@ -56,7 +56,7 @@ test("一覧の施策名から詳細を開き、新規入力の破棄後は空�
   await expect(app.getByRole("textbox", { name: "施策名", exact: true })).toHaveValue("施策A");
   await expect(app.getByRole("textbox", { name: "備考", exact: true })).toHaveValue("施策Aの備考");
   await expect(app.getByRole("combobox", { name: "年度", exact: true })).toHaveCount(0);
-  const table = app.getByRole("table", { name: "月別計画金額", exact: true });
+  const table = app.getByRole("table", { name: "月別金額", exact: true });
   await expect(table.getByRole("combobox")).toHaveCount(2);
   await expect(app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).first()).toHaveValue("100");
   await expect(app.getByRole("spinbutton", { name: "売上高 5月の金額", exact: true }).first()).toHaveValue("0");
@@ -106,7 +106,7 @@ test("属性別に集計した施策を一覧で表示し、種別表示・属�
     if (index) await app.getByRole("button", { name: "＋ 勘定科目を追加", exact: true }).click();
     await app.getByRole("combobox", { name: `${index + 1}行目の勘定科目` }).focus();
     await selectAccount(app.getByRole("combobox", { name: `${index + 1}行目の勘定科目` }), { label: name! });
-    await app.getByRole("table", { name: "月別計画金額", exact: true }).getByRole("row").nth(index + 1).getByRole("spinbutton").nth(0).fill(amount!);
+    await app.getByRole("table", { name: "月別金額", exact: true }).getByRole("row").nth(index + 1).getByRole("spinbutton").nth(0).fill(amount!);
   }
   await app.getByRole("spinbutton", { name: "売上高 5月の金額", exact: true }).first().fill("0");
   await app.getByRole("spinbutton", { name: "売上高 3月の金額", exact: true }).first().fill("300");

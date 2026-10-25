@@ -40,7 +40,7 @@ export async function verifyHistoryMembership(api, bytes) {
       peer.disconnect = connection.disconnect; clients.push(peer); return peer;
     }
     const file = name => { const handle = { name, getFile: async () => new File([bytes], name), isSameEntry: async other => other === handle }; return { name, handle, bytes }; };
-    const source = file("参加対象.triadic"), other = file("別の計画.triadic");
+    const source = file("参加対象.triadic"), other = file("別のデータ.triadic");
     const a = client(), b = client(), opening = client(), joining = client(), independent = client();
     try {
       await a.request("open", source); await b.request("open", source);

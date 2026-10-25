@@ -30,7 +30,7 @@ async function check() {
     assert.equal(createHash("sha256").update(bytes).digest("hex"), receipt.images[name], `${name}: 撮影後の変更`);
   }
   const files = await fs.readdir(output, { recursive: true });
-  assert.ok(!files.some(name => /\.(zip|triadic)$/i.test(name)), "掲載フォルダに配布物・計画ファイルを含めません。");
+  assert.ok(!files.some(name => /\.(zip|triadic)$/i.test(name)), "掲載フォルダに配布物・ファイルを含めません。");
   console.log(`store listing ok: ${images.length} PNGs, text, version and SHA-256; no ZIP or plan files`);
 }
 

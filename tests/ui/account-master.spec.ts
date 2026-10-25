@@ -85,7 +85,7 @@ test("マスタから科目を管理し、施策で選択して再読込でき�
   await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
   const select = app.getByRole("combobox", { name: "1行目の勘定科目" });
   await expect(select).toHaveValue("");
-  await expect(app.getByRole("table", { name: "月別計画金額", exact: true }).getByRole("spinbutton").first()).toBeDisabled();
+  await expect(app.getByRole("table", { name: "月別金額", exact: true }).getByRole("spinbutton").first()).toBeDisabled();
   await select.focus();
   await selectAccount(select, { label: "売上高" });
   await app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).fill("123.5");
@@ -159,7 +159,7 @@ test("空のマスタへの案内と、保存に失敗した登録内容を保�
   await selectClassification(app.getByRole("combobox", { name: "部署名", exact: true }), "部署A");
   await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
   await expect(app.getByRole("combobox", { name: "1行目の勘定科目" })).toBeDisabled();
-  await expect(app.getByRole("table", { name: "月別計画金額", exact: true }).getByRole("spinbutton")).toHaveCount(12);
+  await expect(app.getByRole("table", { name: "月別金額", exact: true }).getByRole("spinbutton")).toHaveCount(12);
   await app.getByRole("button", { name: "勘定科目マスタを開く" }).click();
   const name = app.getByRole("textbox", { name: "名称", exact: true });
   await app.getByRole("textbox", { name: "科目コード", exact: true }).fill("100");

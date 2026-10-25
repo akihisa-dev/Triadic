@@ -68,7 +68,7 @@ export async function verifyDataHistory(api) {
   assert.equal(history.entries.length, 3, "終了・閲覧前には5分未満でも記録");
   for (const entry of history.entries) {
     const snapshot = await readHistorySnapshot(bytes, entry.id);
-    await assert.rejects(openTriadicDatabase(snapshot), /形式|読み込/, "履歴内の計画を通常ファイルとして開かない");
+    await assert.rejects(openTriadicDatabase(snapshot), /形式|読み込/, "履歴内のデータを通常ファイルとして開かない");
     const snapshotDb = await api.openBusinessSnapshot(snapshot);
     assert.equal(snapshotDb.exec("SELECT name FROM sqlite_master WHERE name LIKE 'data_history%'").length, 0, "履歴を入れ子にしない"); snapshotDb.close();
     assert.ok(snapshot.length < bytes.length, "過去の履歴全体を各記録に複製しない");

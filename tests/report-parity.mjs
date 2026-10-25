@@ -116,7 +116,7 @@ export async function verifyReportParity(api) {
         assert.deepEqual(workbookCells(wb.getWorksheet(name)), markupCells(html), `${scenario} ${name} 比較${selected} 施策種別${kind}`);
         assert.deepEqual(workbookCells(wb.getWorksheet(name), evaluate), markupCells(html), `${scenario} ${name} 元金額から再計算`);
       }
-      assert.deepEqual(plan, before, '照合と出力は計画を変更しない');
+      assert.deepEqual(plan, before, '照合と出力はデータを変更しない');
     }
   }
   const original = markupCells(api.renderReportTables(sample, [1], 1).施策一覧);

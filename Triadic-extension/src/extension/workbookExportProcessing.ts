@@ -22,7 +22,7 @@ export function processWorkbookExport(request: WorkbookExport, signal: AbortSign
       else if (event.data.bytes instanceof Uint8Array) finish(event.data.bytes);
       else finish(undefined, new Error("Excelの出力結果を確認できませんでした。もう一度出力してください。"));
     };
-    worker.onerror = () => finish(undefined, new Error("Excelの出力を続けられませんでした。計画は変更していません。もう一度出力してください。"));
+    worker.onerror = () => finish(undefined, new Error("Excelの出力を続けられませんでした。データは変更していません。もう一度出力してください。"));
     if (signal.aborted) { abort(); return; }
     try { worker.postMessage(request); }
     catch (error) { finish(undefined, error instanceof Error ? error : new Error("Excelを出力できませんでした。")); }

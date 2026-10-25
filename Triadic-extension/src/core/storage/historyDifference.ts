@@ -69,7 +69,7 @@ function* items(db: Database): Generator<[string, Item]> {
     }
     const owner = table === "initiative_rows" ? rowFor("initiatives", row.initiative_id!) : undefined;
     const subject = table === "initiative_rows" ? `${owner?.name} / ${name("accounts", row.account_id!)} / ${Number(row.sort_order) + 1}行目`
-      : table === "kind_selections" ? words[String(row.screen)]! : table === "document_info" ? "計画" : String(row.name);
+      : table === "kind_selections" ? words[String(row.screen)]! : table === "document_info" ? "基本情報" : String(row.name);
     yield put([table, owner?.identity ?? "", row.identity ?? row.id ?? row.screen], section, subject, fields);
   }
   for (const row of tables.get("department_industries")!) yield put(["department_industries", identity("departments", row.department_id!), identity("industries", row.industry_id!)],

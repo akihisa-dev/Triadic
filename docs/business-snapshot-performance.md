@@ -4,7 +4,7 @@
 
 ## 再現と結果
 
-`node --expose-gc scripts/measure-business-snapshot.mjs > /tmp/business-snapshot.json`。2026-10-11、macOS arm64 Apple M6、Node v26.4.0、SQLite 3.53.4。変更前の方式を専用診断内で再現します。1施策1行12か月、前年なし、業務内容を固定して履歴だけ0・10・50・100件へ変え、検証済み接続から完成snapshotまでを測定します。warmup1回後5回の中央値（最小〜最大）、msです。計画の初回読込検証と実ファイル確定は含みません。
+`node --expose-gc scripts/measure-business-snapshot.mjs > /tmp/business-snapshot.json`。2026-10-11、macOS arm64 Apple M6、Node v26.4.0、SQLite 3.53.4。変更前の方式を専用診断内で再現します。1施策1行12か月、前年なし、業務内容を固定して履歴だけ0・10・50・100件へ変え、検証済み接続から完成snapshotまでを測定します。warmup1回後5回の中央値（最小〜最大）、msです。データの初回読込検証と実ファイル確定は含みません。
 
 | 施策・行数 | 履歴件数 | 中間exportバイト 前→後 | 変更前 | 変更後 |
 |---:|---:|---:|---:|---:|

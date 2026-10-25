@@ -19,7 +19,7 @@ export function FileConflictDialog() {
     resolve.current?.(handle); resolve.current = null; setName(null);
   };
   return <ConfirmationDialog open={name !== null} title="入力を保持しています"
-    message={error || `「${name ?? ""}」の保存内容が更新され、今回の入力と安全にまとめられませんでした。入力した計画全体を別のファイルに保存して、そのまま編集を続けられます。元のファイルの更新は残ります。`}
+    message={error || `「${name ?? ""}」の保存内容が更新され、今回の入力と安全にまとめられませんでした。入力したデータ全体を別のファイルに保存して、そのまま編集を続けられます。元のファイルの更新は残ります。`}
     confirmLabel="別のファイルに保存して続ける" busy={busy} onCancel={() => finish(null)} onConfirm={() => {
       if (busy || !name) return;
       setBusy(true); setError("");

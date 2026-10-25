@@ -18,7 +18,7 @@ for (const surface of ["entry", "detail", "previous"]) {
       await app.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();
     }
     await settleMotion(app.locator("body"));
-    const table = app.getByRole("table", { name: surface === "previous" ? "前年入力の月別金額" : "月別計画金額", exact: true });
+    const table = app.getByRole("table", { name: surface === "previous" ? "前年入力の月別金額" : "月別金額", exact: true });
     const cell = table.locator('input[data-row="0"][data-column="0"]');
     const display = cell.locator("..").locator(".grid-amount-display");
     for (const value of ["1234.567", "-1234.567", "0", "0.001", "1234567.001"]) {

@@ -53,7 +53,7 @@ export async function verifyFileBoundaries(api) {
     const original = unsupported.slice();
     await assert.rejects(api.readPlanContents(unsupported), /保存形式には対応/);
     await assert.rejects(api.validateTriadicDatabase(unsupported), /保存形式には対応/);
-    assert.deepEqual(unsupported, original, "拒否時に旧明細や計画を変換・削除しない");
+    assert.deepEqual(unsupported, original, "拒否時に旧明細やデータを変換・削除しない");
   }
   for (const table of ["data_history", "data_history_state"]) {
     const missing = await api.openTriadicDatabase(bytes); missing.run(`DROP TABLE ${table}`);

@@ -88,7 +88,7 @@ export async function verifySpreadsheetIO(api) {
     const previousTemplate = await api.serializeWorkbook(branded);
     const originalPlan = structuredClone(plan);
     await assert.rejects(api.parsePreviousWorkbook(previousTemplate, plan), /最新の前年入力フォーマット/);
-    assert.deepEqual(plan, originalPlan, "旧識別子のExcelを拒否しても計画を変更しない");
+    assert.deepEqual(plan, originalPlan, "旧識別子のExcelを拒否してもデータを変更しない");
   }
   // #15: real XLSX round trips must preserve every yen, including Excel's 15-digit boundary.
   const boundaryAmounts = ["9007199254740.991", "-9007199254740.991", "9007199254740.99", "-9007199254740.99", "1000000000000.001", "-1000000000000.001", "999999999999.999", "123.456", "-123.456", "0", "9007199254740", "0.001"];
@@ -113,7 +113,7 @@ export async function verifySpreadsheetIO(api) {
   assert.deepEqual(edited.map(p => [p.month, p.after]), [[4, "9007199254740.99"], [5, "-9007199254740.99"], [11, "123.457"]]);
   amountsSheet.getCell("C4").value = "9007199254740.992";
   await assert.rejects(api.parsePreviousWorkbook(await api.serializeWorkbook(loaded), precise), /千円単位/);
-  assert.deepEqual(precise, preciseBefore, "出力・読込・失敗で元の計画を変更しない");
+  assert.deepEqual(precise, preciseBefore, "出力・読込・失敗で元のデータを変更しない");
   // #13: sanitize the output name after truncation without modifying masters.
   for (const departmentName of ["検証", "検証'", "部".repeat(26) + "'続き", "O'Brien", "検証/部署"]) {
     const input = { ...plan, industries: plan.industries.map((item, index) => index === 0 ? { ...item, industryName: "業" } : item),
