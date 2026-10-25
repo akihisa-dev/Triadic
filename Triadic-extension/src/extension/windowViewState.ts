@@ -2,6 +2,9 @@ import type { KindId, KindSelections, PreviousKind, PreviousSelections } from ".
 import type { TableSort, TableViewState } from "../core/tables/columnView";
 
 export type WindowViewState = {
+  "dashboard:selection": { kinds: KindId[]; previous: PreviousKind };
+  "dashboard:period": "annual" | import("../core/domain/calendar").InitiativeMonth;
+  "dashboard:ranking": KindId;
   "table:kinds": KindSelections;
   "table:previous": PreviousSelections;
   "initiative-list:sort": TableSort | null;
@@ -17,6 +20,7 @@ export type WindowViewValues = Partial<WindowViewState>;
 
 // Every state key must explicitly choose whether another window may inherit it.
 const clonePolicy = {
+  "dashboard:selection": true, "dashboard:period": true, "dashboard:ranking": true,
   "table:kinds": true, "table:previous": true, "initiative-list:sort": true, "initiative-list:filters": true, "expansion:table-view": true,
   "initiative:kind": true, "previous:kind": true, "previous:industries": true,
   "previous:departments": true, "home:mode": true,

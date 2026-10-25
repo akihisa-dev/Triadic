@@ -107,6 +107,10 @@ export function WorkspaceSidebar({ workspace }: { workspace: HomeWorkspace }) {
               <SidebarIcon name="home" />
               <span className="sidebar-label">Home</span>
             </button>
+            <button className="sidebar-item" type="button" aria-label="ダッシュボード" disabled={navigationBlocked} aria-current={page === "dashboard" || (page === "initiative-detail" && detailOrigin === "dashboard") ? "page" : undefined} onClick={() => { dismissNotice(); setPage("dashboard"); }}>
+              <SidebarIcon name="cost" />
+              <span className="sidebar-label">ダッシュボード</span>
+            </button>
             <button className="sidebar-item" type="button" aria-label="施策一覧" disabled={navigationBlocked} aria-current={page === "initiative-list" || page === "initiative-entry" || (page === "initiative-detail" && detailOrigin === "initiative-list") ? "page" : undefined} onClick={() => { dismissNotice(); setPage("initiative-list"); }}>
               <SidebarIcon name="list" />
               <span className="sidebar-label">施策一覧</span>

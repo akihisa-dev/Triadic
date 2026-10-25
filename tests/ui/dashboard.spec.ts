@@ -1,0 +1,52 @@
+import { test, expect, selectClassification } from "./fixtures";
+
+test("ダッシュボードの比較・月別順位・詳細往復と部署の総原価表", async ({ page, app }) => {
+  await page.goto("/tests/ui/preview.html?data=full");
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "ダッシュボード", exact: true }).click();
+  const dashboard = app.getByRole("main");
+  await expect(dashboard.getByRole("heading", { name: "ダッシュボード", exact: true })).toBeVisible();
+  await expect(dashboard.locator(".dashboard-chart svg")).toHaveCount(2);
+  await selectClassification(app.getByRole("spinbutton", { name: "比較対象1", exact: true }), "確定予算");
+  await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "一次予算");
+  await dashboard.getByRole("combobox", { name: "対象期間", exact: true }).selectOption("4");
+  await dashboard.getByRole("combobox", { name: "並び順の基準", exact: true }).selectOption("2");
+  const source = dashboard.getByRole("button", { name: "確定予算の手修正", exact: true }).first();
+  await source.click();
+  await expect(app.getByRole("tab", { name: "確定予算", exact: true })).toHaveAttribute("aria-selected", "true");
+  await app.getByRole("button", { name: /ダッシュボードへ戻る$/ }).click();
+  await expect(dashboard.getByRole("combobox", { name: "対象期間", exact: true })).toHaveValue("4");
+  await expect(dashboard.getByRole("combobox", { name: "並び順の基準", exact: true })).toHaveValue("2");
+  const department = dashboard.locator(".dashboard-department-name button").first();
+  const name = await department.innerText();
+  await department.click();
+  await expect(app.getByRole("heading", { name: "総原価表", exact: true })).toBeVisible();
+  await expect(app.getByLabel("部署名", { exact: true }).locator("option:checked")).toHaveText(name);
+  await expect(app.getByRole("spinbutton", { name: "比較対象1", exact: true })).toHaveAttribute("aria-valuetext", "確定予算");
+  await app.getByRole("button", { name: "前の画面に戻る", exact: true }).click();
+  await expect(app.getByRole("heading", { name: "ダッシュボード", exact: true })).toBeVisible();
+  await expect(dashboard.locator(".dashboard-chart svg")).toHaveCount(2);
+});
+
+test("サンプル予算の明暗・全件表示と空の計画", async ({ page, app }) => {
+  await page.goto("/tests/ui/preview.html?data=large");
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "ダッシュボード", exact: true }).click();
+  await expect(app.locator(".dashboard-department-name")).toHaveCount(8);
+  await expect(app.locator(".dashboard-ranking")).toHaveCount(4);
+  const more = app.getByRole("button", { name: /^全\d+件を表示$/ }).first();
+  await more.click();
+  await expect(app.getByRole("button", { name: "上位5件に戻す", exact: true }).first()).toBeVisible();
+  await app.getByRole("button", { name: "上位5件に戻す", exact: true }).first().click();
+  const dark = app.getByRole("switch", { name: "ダークテーマ", exact: true });
+  await dark.click();
+  await expect(app.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(app.locator(".dashboard-chart svg").first()).toBeVisible();
+  const overflow = await app.locator(".dashboard-page").evaluate(node => { const r = node.getBoundingClientRect(); return [...node.querySelectorAll("*")].filter(el => el.getBoundingClientRect().right > r.right + 1).map(el => `${el.tagName}.${el.getAttribute("class")}`); });
+  expect(overflow).toEqual([]);
+  await page.goto("/tests/ui/preview.html?data=empty");
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "ダッシュボード", exact: true }).click();
+  await expect(app.locator(".dashboard-stat strong")).toHaveText(["0", "0", "—"]);
+  await expect(app.getByText("該当する施策はありません。", { exact: true })).toHaveCount(4);
+});

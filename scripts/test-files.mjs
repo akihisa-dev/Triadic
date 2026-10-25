@@ -1,3 +1,4 @@
+import { verifyDashboard } from "../tests/dashboard.mjs";
 import { verifyColumnView } from "../tests/column-view.mjs";
 import { verifyAmountExpression } from "../tests/amount-expression.mjs";
 import { verifySpreadsheetOperation } from "../tests/spreadsheet-operation.mjs";
@@ -102,6 +103,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
     await verifySamplePlan(api, { excel });
     return;
   }
+  await verifyDashboard(api);
   verifySpreadsheetOperation(api);
   await verifyPreviousBaselines(api);
   await verifyInitiativeDraftReferences(api);

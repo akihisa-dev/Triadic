@@ -58,3 +58,5 @@ export { windowCommandBase, reconcileWindowCommand } from "../../Triadic-extensi
 
 export * from "../../Triadic-extension/src/core/domain/initiativeDraft";
 export * from "../../Triadic-extension/src/core/domain/windowCommand";
+
+export * from "../../Triadic-extension/src/core/tables/dashboard";

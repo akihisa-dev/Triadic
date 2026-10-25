@@ -6,7 +6,7 @@ import "./KindSelectionSlots.css";
 
 export function KindSelectionSlots({ screen, selected, disabled, onChange, previousKind, onPreviousChange }: {
   previousKind?: PreviousKind; onPreviousChange?: (kind: PreviousKind) => void;
-  screen: KindScreen; selected: KindId[]; disabled: boolean; onChange: (selected: KindId[]) => void;
+  screen: KindScreen | "dashboard"; selected: KindId[]; disabled: boolean; onChange: (selected: KindId[]) => void;
 }) {
   const options = INITIAL_KINDS.map(kind => ({ id: kind.id, name: kind.kindName }));
   return <div className="kind-selection-slots" role="group" aria-label={screen === "initiative-list" ? "表示種別" : "比較対象"}>

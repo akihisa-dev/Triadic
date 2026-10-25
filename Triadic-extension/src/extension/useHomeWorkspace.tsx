@@ -86,6 +86,14 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   const changePlan = (change: PlanChange) => mutation.run(async () => { await onChangePlan(change); });
   const [localKinds, setLocalKinds] = useWindowViewState("table:kinds", contents.kindSelections);
   const [localPrevious, setLocalPrevious] = useWindowViewState("table:previous", contents.previousSelections);
+  const [dashboardSelection, setDashboardSelection] = useWindowViewState("dashboard:selection", { kinds: [1], previous: 1 });
+  const openDashboardDepartment = (id: number) => {
+    costTableView.current = { industries: [], departments: [id], top: 0, left: 0 };
+    setLocalKinds(value => ({ ...value, "cost-table": dashboardSelection.kinds }));
+    setLocalPrevious(value => ({ ...value, "cost-table": dashboardSelection.previous }));
+    dismissNotice();
+    setPage("cost-table");
+  };
   const previousPreview = useRef<number | null>(null);
   useEffect(() => {
     const id = preview?.entry.id ?? null;
@@ -154,6 +162,7 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   }, [isSidebarOpen, closeSidebar]);
 
   return {
+    dashboardSelection, setDashboardSelection, openDashboardDepartment,
     restoreMutation, saveAsMutation, saveAs, setEditPending, ioController, setIOController, openInitiative, menuButton, relationView, costTableView, sidebar, showError, localKinds, localPrevious,
     isSidebarOpen, screen, initiativeDraft, setInitiativeDraft, preview, setPreview,
     restoreRequested, setRestoreRequested, restoreError, setRestoreError, contents, currentContents,
