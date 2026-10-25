@@ -7,6 +7,12 @@ test("ダッシュボードの比較・月別順位・詳細往復と部署の�
   const dashboard = app.getByRole("main");
   await expect(dashboard.getByRole("heading", { name: "ダッシュボード", exact: true })).toBeVisible();
   await expect(dashboard.locator(".dashboard-chart svg")).toHaveCount(2);
+  for (const metric of ["売上", "利益"]) {
+    const chart = dashboard.getByRole("img", { name: `${metric}の月別推移`, exact: true });
+    const months = chart.locator("text").filter({ hasText: /^\d+月$/ });
+    await expect(months).toHaveText(["4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月", "1月", "2月", "3月"]);
+    for (const month of await months.all()) await expect(month).toBeVisible();
+  }
   await selectClassification(app.getByRole("spinbutton", { name: "比較対象1", exact: true }), "確定予算");
   await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "一次予算");
   await dashboard.getByRole("combobox", { name: "対象期間", exact: true }).selectOption("4");

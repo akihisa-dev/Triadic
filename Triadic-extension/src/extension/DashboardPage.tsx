@@ -117,12 +117,11 @@ function MonthlyChart({ series, metric, priorName, kindName }: { series: Dashboa
   const right = 12, height = 212, top = 20, bottom = 30;
   const x = (index: number) => left + index * (width - left - right) / 11;
   const y = (value: number) => top + (max - value) / (max - min) * (height - top - bottom);
-  const monthIndices = width < 360 ? [0, 4, 8, 11] : [0, 2, 4, 6, 8, 11];
   return <div ref={container} className="dashboard-chart"><svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${metric === "sales" ? "売上" : "利益"}の月別推移`}>
     <title>{values.map(entry => `${entry.name}：${initiativeMonths.map(month => `${month}月 ${formatYen(entry.months[month]?.[metric] ?? 0)}`).join("、")}`).join("。")}</title>
     <text x={left} y={11}>千円</text>
     {Array.from({ length: 4 }, (_, index) => { const value = min + (max - min) * index / 3; return <g key={index}><line className="dashboard-chart-grid" x1={left} x2={width - right} y1={y(value)} y2={y(value)} /><text x={left - 7} y={y(value) + 4} textAnchor="end">{formatAmount(value / 1000)}</text></g>; })}
-    {monthIndices.map(index => <text key={index} x={x(index)} y={height - 6} textAnchor={index === 11 ? "end" : "middle"}>{initiativeMonths[index]}月</text>)}
+    {initiativeMonths.map((month, index) => <text key={month} x={x(index)} y={height - 6} textAnchor={index === 11 ? "end" : "middle"}>{month}月</text>)}
     {values.map(entry => <g key={entry.name} className={entry.className}><path className="dashboard-chart-line" d={initiativeMonths.map((month, index) => `${index ? "L" : "M"}${x(index)},${y(entry.months[month]?.[metric] ?? 0)}`).join(" ")} />
       {initiativeMonths.map((month, index) => <circle key={month} className="dashboard-chart-point" cx={x(index)} cy={y(entry.months[month]?.[metric] ?? 0)} r={3}><title>{month}月 {entry.name} {formatYen(entry.months[month]?.[metric] ?? 0)}</title></circle>)}
     </g>)}
