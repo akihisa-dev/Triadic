@@ -134,6 +134,8 @@ New file creation reserves the selected destination in the shared session before
 
 ### Home and disclosure of calculations and data
 
+“Screens and data,” “How calculations work,” and “Processing flow” list their topics vertically on the left and display the selected explanation on the right. The topic list and explanation scroll independently.
+
 The Home diagram places the initiative list at the center, with its related masters and tables around it. Relationships between surrounding items follow the outer area so they do not cross the central connections. The first click or Enter/Space selects an item; activating the same selected item again opens its screen. Selecting another item changes selection; clicking the background or pressing Escape clears it. Selection has a monochrome border. Every relationship description remains visible. A legend distinguishes selection/reference (dashes), composition/membership (dots), amounts/calculation (solid), and alternative views of shared content (double lines). Line styles persist during selection. Hover, focus, selection, and dragging highlight direct connections while keeping other relationships legible. Cards and descriptions can be dragged, with lines tracking immediately; releasing returns them smoothly to their original positions without rearranging other items or opening a screen. Reduced motion shortens this return. Background panning, wheel/pinch zoom, keyboard controls, and fit-all remain available; camera position and scale persist on returning to Home. These interactions do not write plan data. The canvas fills the area below the heading and shows no permanent operation instructions. Names, backgrounds, and descriptions remain monochrome, and only the active icon and its connections use the theme accent. The budget-kind master shows previous year, initial budget, and final budget; previous year remains the actuals baseline.
 
 In “Screens and data” (画面とデータ), select a screen to inspect how storage tables map to displayed items. Opening a table shows all stored fields and references and allows navigation to references used on the same screen. Previous-year input also shows storage sources for aggregation display names, membership, and signs, distinguishing subtotals, totals, and profit margins from stored actuals. Calculated tables and fixed budget-kind definitions are distinguished. This view only exposes structure, not actual data, editing, or SQL execution. “Relationship graph” (関連図) returns to the original navigation graph.
@@ -707,6 +709,8 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 新規作成は書き込み前に、共有セッションで保存先を予約します。別ウィンドウで使用中・読込中、または別の保存・作成の予約中のファイルは、内容を変更せず拒否します。作成中に同じファイルを開く操作は完了を待ち、新しく保存した内容を読み込みます。未使用の既存ファイルは明示して置き換えられます。失敗時は予約を解除し、再試行できます。
 
 ### ホームと計算・データの開示
+
+「画面とデータ」「計算の仕組み」「処理の流れ」では、左側に説明項目を縦一列で並べ、選んだ説明を右側に表示します。項目一覧と説明はそれぞれスクロールできます。
 
 ホームは施策一覧を中心に、関係するマスタと表を周囲へ配置した関連図です。周囲の項目同士の関係は外側で結び、中心へ向かう線と交差しないように配置します。1回目のクリックまたはEnter・Spaceで項目を選択し、選択済みの同じ項目をもう一度操作すると画面を開きます。別の項目では選択を切り替え、背景のクリックまたはEscapeで解除します。選択中の項目はモノクロの枠で示します。選択・参照は破線、構成・所属は点線、金額・計算は実線、同じ内容の別表示は二重線とし、凡例で意味を示します。選択中も線種を保ちます。すべての関係の説明を常時表示し、選択・ホバー・フォーカス・ドラッグ中は直接つながる線を強調します。それ以外の線と説明も読み取れる濃さを保ちます。カードと関係の説明はドラッグでき、線も同時に追従します。離すと元の定位置へ滑らかに戻り、ほかの項目の配置を崩しません。ドラッグ終了では画面を開きません。OSの「動きを減らす」設定では戻る動きを短くします。背景のドラッグ、ホイール・ピンチ・ボタン・キーでの拡大縮小、全体表示に対応し、ホームへ戻った際も図の移動位置と倍率を保持します。計画ファイルへの書き込みはありません。キャンバスは見出しの下から画面下端まで広がり、操作説明文は常設しません。名称・背景・関係の説明はモノクロを保ち、操作対象のアイコンと線だけをライトは青・ダークは金で示します。種別マスタは前年・一次予算・確定予算を表示し、前年は施策に含めない実額の基準です。
 

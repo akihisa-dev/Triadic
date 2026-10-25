@@ -1,5 +1,4 @@
-.mechanism-map { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; }
-.mechanism-content { max-width: 1100px; margin: 0 auto; padding: 0 4px 24px; font-size: 14px; line-height: 1.7; }
+.mechanism-content { width: 100%; max-width: 1100px; min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; margin: 0 auto; padding: 0 4px 24px; font-size: 14px; line-height: 1.7; }
 .mechanism-content h2 { font-size: 20px; margin: 0; }
 .mechanism-content h3 { font-size: 14px; margin: 0 0 6px; }
 .mechanism-content p { margin: 0; }
