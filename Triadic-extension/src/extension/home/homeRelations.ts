@@ -1,5 +1,5 @@
 import { pageMetadata } from "../pageMetadata";
-import { isTablePage, layoutHomeRelations } from "./homeRelationLayout";
+import { isTablePage, layoutHomeRelations, relationLabelWidth } from "./homeRelationLayout";
 
 export const nodes = ([
   { page: "aggregation-master", x: 900, y: -210 },
@@ -48,7 +48,7 @@ edges.push({ from: "cost-table", to: "expansion-table", label: "同じ内容を�
 const initial = layoutHomeRelations(nodes, edges, null);
 export const subNodes = edges.map((edge, index) => ({ page: `relation-${index}`, name: edge.label,
   x: initial[`relation-${index}`]!.x - 100, y: initial[`relation-${index}`]!.y - 12,
-  width: Math.max(112, edge.label.length * 13 + 12), height: 28, sub: true }));
+  width: relationLabelWidth(edge), height: 28, sub: true }));
 export const graphNodes = [
   ...nodes.map(node => ({ ...node, x: initial[node.page]!.x - 100, y: initial[node.page]!.y - 12, width: isTablePage(node.page) ? 128 : 180, height: isTablePage(node.page) ? 128 : 110 })),
   ...subNodes, { page: "brand", x: initial.brand!.x - 100, y: initial.brand!.y - 12, width: 170, height: 80, sub: true },

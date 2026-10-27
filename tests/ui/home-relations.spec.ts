@@ -14,7 +14,7 @@ test("関連図の初期配置は三つの対等な表と全14入口を示す", 
   await expect(home.getByRole("list", { name: "関係の線の意味" }).getByRole("listitem")).toHaveText(["選択・参照", "構成・所属", "金額・計算", "同じ内容の別表示"]);
 });
 
-test("表の選択で全体が再配置され、直接の説明だけを表示する", async ({ app }) => {
+test("表の選択で全体が再配置され、全階層の説明を表示する", async ({ app }) => {
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
   const home = app.getByRole("main", { name: "ホーム", exact: true });
   const unrelated = home.locator('.home-relation-item:has([data-page="account-type-master"])');
@@ -24,7 +24,8 @@ test("表の選択で全体が再配置され、直接の説明だけを表示�
     await button.click();
     await expect(button).toHaveAttribute("aria-pressed", "true");
     await expect(home.locator(".home-relation.is-active")).toHaveCount(name === "施策一覧" ? 10 : name === "総原価表" ? 4 : 3);
-    await expect(home.locator(".home-relation-subnode:visible")).toHaveCount(name === "施策一覧" ? 10 : name === "総原価表" ? 4 : 3);
+    await expect(home.locator(".home-relation.is-indirect")).toHaveCount(name === "施策一覧" ? 8 : name === "総原価表" ? 14 : 15);
+    await expect(home.locator(".home-relation-subnode:visible")).toHaveCount(18);
     await expect.poll(async () => {
       const boxes = await Promise.all(tables.map(table => home.getByRole("button", { name: table, exact: true }).boundingBox()));
       const target = boxes[tables.indexOf(name)]!;
@@ -78,6 +79,17 @@ test("ドラッグは画面を開かず選択中の定位置へ戻り、ズー�
   await home.getByRole("button", { name: "拡大", exact: true }).click();
   await expect(map).not.toHaveAttribute("style", style!);
   await home.getByRole("button", { name: "全体表示", exact: true }).click();
+  await home.getByRole("button", { name: "拡大", exact: true }).click();
+  await expect.poll(async () => {
+    const before = await map.getAttribute("style");
+    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    return (await map.getAttribute("style")) === before;
+  }).toBe(true);
+  const zoomed = await map.getAttribute("style");
+  const navigation = app.getByRole("navigation", { name: "メインナビゲーション" });
+  await navigation.getByRole("button", { name: "施策一覧", exact: true }).click();
+  await navigation.getByRole("button", { name: "Home", exact: true }).click();
+  await expect(home.locator(".home-relations-map")).toHaveAttribute("style", zoomed!);
 });
 
 test("関係線の4種類を、選択と移動の後も維持する", async ({ app }) => {
@@ -119,6 +131,13 @@ test("各入口を選んでも名称・関係説明・中央の名前が重な�
       const before = groups.map(group => group.getAttribute("transform"));
       await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
       return groups.every((group, i) => group.getAttribute("transform") === before[i]);
+    })).toBe(true);
+    await expect.poll(async () => home.locator(".home-relations-map").evaluate(svg => {
+      const viewport = svg.parentElement!.getBoundingClientRect();
+      return [...svg.querySelectorAll(".home-relation-node, .home-relation-subnode")].filter(node => getComputedStyle(node).visibility !== "hidden").every(node => {
+        const box = node.getBoundingClientRect();
+        return box.left >= viewport.left && box.right <= viewport.right && box.top >= viewport.top && box.bottom <= viewport.bottom;
+      });
     })).toBe(true);
     const overlaps = await home.locator(".home-relations-map").evaluate(svg => {
       const labels = [...svg.querySelectorAll(".home-relation-name, .home-relation-subnode, .home-relations-brand strong")].filter(node => getComputedStyle(node).visibility !== "hidden");
