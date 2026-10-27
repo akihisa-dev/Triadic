@@ -32,7 +32,7 @@
 .analysis-values { font-size: 12px; margin-top: 6px; }
 .analysis-values summary { cursor: pointer; color: var(--accent); width: fit-content; }
 .analysis-values table, .analysis-heatmap table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.analysis-values :is(td, th), .analysis-heatmap :is(td, th) { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.analysis-values :is(td, th), .analysis-heatmap :is(td, th) { padding: 12px 14px; border: 1px solid var(--table-line); text-align: right; white-space: nowrap; }
 .analysis-values th:first-child, .analysis-heatmap th:first-child { text-align: left; min-width: 150px; max-width: 250px; white-space: normal; overflow-wrap: anywhere; }
 .analysis-values th, .analysis-heatmap th { font-weight: 500; background: var(--surface); }
 .analysis-values thead th, .analysis-heatmap thead th { position: sticky; top: 0; z-index: 1; }

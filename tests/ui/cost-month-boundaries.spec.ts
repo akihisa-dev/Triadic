@@ -24,7 +24,7 @@ test("総原価表の月境界が見出しから金額行まで途切れず、�
             const css = getComputedStyle(cell);
             const periodBoundary = cell.nextElementSibling?.classList.contains("period-start");
             if ((index + 1) % columns === 0 && !periodBoundary) return css.borderRight === expected;
-            return css.borderRightWidth === (!periodBoundary && cell.tagName === "TH" ? "1px" : "0px");
+            return css.borderRightWidth === (periodBoundary ? "0px" : "1px");
           });
         }),
       };

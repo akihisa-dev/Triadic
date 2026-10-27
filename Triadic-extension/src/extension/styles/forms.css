@@ -308,7 +308,7 @@
 .initiative-list-container { max-width: 100%; margin-top: 24px; overflow: auto; outline: 2px solid transparent; outline-offset: 2px; }
 .initiative-list-container:focus-visible { outline-color: var(--focus); }
 .initiative-list-table { width: 100%; min-width: 2908px; table-layout: fixed; border-collapse: separate; border-top: 1px solid var(--table-line); border-left: 1px solid var(--table-line); border-spacing: 0; font-variant-numeric: tabular-nums; }
-.initiative-list-table th, .initiative-list-table td { padding: 12px; border-bottom: 1px solid var(--table-line); }
+.initiative-list-table th, .initiative-list-table td { padding: 12px; border-right: 1px solid var(--table-line); border-bottom: 1px solid var(--table-line); }
 .initiative-list-table thead th { font-size: 14px; font-weight: 500; background: var(--soft); }
 .initiative-list-table thead th[colspan] { border-right: 1px solid var(--table-divider); text-align: center; }
 .initiative-list-table tbody th { font-weight: 400; }

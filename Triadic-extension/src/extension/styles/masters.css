@@ -124,6 +124,7 @@
 .master-data-page .department-master-table, .master-data-page .period-master-table { min-width: 380px; }
 .master-data-page .kind-master-table { min-width: 260px; }
 .master-data-page .account-master-table th, .master-data-page .account-master-table td { padding: 6px 14px; border-bottom: 1px solid var(--table-line); text-align: left; vertical-align: middle; overflow-wrap: anywhere; }
+.master-data-page .account-master-table :is(th, td):not(:last-child) { border-right: 1px solid var(--table-line); }
 .master-data-page .account-master-table thead th { position: sticky; top: 0; z-index: 2; height: 40px; color: var(--muted); background: var(--soft); border-bottom: 1px solid var(--table-divider); font-weight: 600; font-size: 11px; white-space: nowrap; letter-spacing: .02em; }
 .master-data-page .account-master-table tbody:nth-of-type(even) tr > *, .master-data-page.named-master-page tbody tr:nth-child(even) > *, .master-data-page.kind-master-page tbody tr:nth-child(even) > * { background: var(--canvas); }
 .master-data-page .account-master-table tbody tr:hover > * { background: var(--soft); }

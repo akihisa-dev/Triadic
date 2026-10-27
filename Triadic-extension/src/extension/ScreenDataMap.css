@@ -14,7 +14,7 @@
 .screen-data-overview { margin-bottom: 32px; }
 .screen-data-summary-scroll { overflow-x: auto; }
 .screen-data-summary { width: 100%; border-collapse: collapse; font-size: 13px; }
-.screen-data-summary th, .screen-data-summary td { padding: 10px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+.screen-data-summary th, .screen-data-summary td { padding: 10px 12px; text-align: left; vertical-align: top; border: 1px solid var(--table-line); }
 .screen-data-summary th { background: var(--soft); font-weight: 600; }
 .screen-data-summary th:nth-child(1) { width: 35%; }
 .screen-data-summary th:nth-child(2) { width: 25%; }
@@ -33,7 +33,7 @@
 .screen-data-used-fields li:not(:last-child)::after { content: "・"; }
 .screen-data-columns { padding-bottom: 16px; overflow-x: auto; }
 .screen-data-columns table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.screen-data-columns th, .screen-data-columns td { padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+.screen-data-columns th, .screen-data-columns td { padding: 7px 8px; text-align: left; border: 1px solid var(--table-line); vertical-align: top; }
 .screen-data-reference { border: 0; padding: 0; background: transparent; color: var(--ink); font: inherit; font-family: monospace; text-decoration: underline; cursor: pointer; overflow-wrap: anywhere; }
 .screen-data-empty { font-size: 14px; }
 .home-relations-canvas[hidden] { display: none; }
