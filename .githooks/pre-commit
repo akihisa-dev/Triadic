@@ -3,3 +3,4 @@ set -eu
 git diff --cached --check
 node scripts/check-samples.mjs
 node scripts/check-version.mjs --staged
+node scripts/run-staged-check.mjs scripts/test-table-contracts.mjs

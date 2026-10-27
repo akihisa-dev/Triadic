@@ -64,9 +64,11 @@ async function repository(t) {
     await writeFile(path.join(root, file), JSON.stringify(file === "package-lock.json" ? { version, packages: { "": { version } } } : { version }) + "\n");
   };
   await mkdir(path.join(root, "scripts"));
-  for (const name of ["paths.mjs", "check-samples.mjs", "check-build-outputs.mjs", "check-version.mjs", "check-hooks.mjs", "setup-hooks.mjs", "version-next.mjs", "check-release.mjs"]) {
+  for (const name of ["run-staged-check.mjs", "paths.mjs", "check-samples.mjs", "check-build-outputs.mjs", "check-version.mjs", "check-hooks.mjs", "setup-hooks.mjs", "version-next.mjs", "check-release.mjs"]) {
     await cp(path.join(projectRoot, "scripts", name), path.join(root, "scripts", name));
   }
+  // Other workflow tests isolate hook dispatch from the actual table renderer suite.
+  await writeFile(path.join(root, "scripts/test-table-contracts.mjs"), "console.log('fixture table contracts ok');\n");
   await cp(path.join(projectRoot, ".githooks"), path.join(root, ".githooks"), { recursive: true });
   for (const file of versionFiles) await setVersion(file, "1.2.0");
   git("init", "--quiet", "--initial-branch=main");
@@ -129,6 +131,25 @@ test("コミットはversion据え置きを許可し、部分更新・不一致�
   repo.git("add", "--", versionFiles.at(-1));
   repo.git("commit", "--quiet", "-m", "Consistent version");
   assert.notEqual(repo.git("rev-parse", "HEAD"), head);
+});
+
+test("コミット前の表検証はstage済みの破壊を拒否し、作業ツリーの修正で隠れない", async t => {
+  const repo = await repository(t);
+  succeeds(repo.script("setup-hooks.mjs"));
+  const target = path.join(repo.root, "scripts/test-table-contracts.mjs");
+  await writeFile(target, "throw new Error('表の仕様違反');\n");
+  repo.git("add", "--", "scripts/test-table-contracts.mjs");
+  await writeFile(target, "console.log('作業ツリーだけ修正済み');\n");
+  const head = repo.git("rev-parse", "HEAD");
+  fails(repo.run("git", ["commit", "-m", "Broken staged table"]), /表の仕様違反/);
+  assert.equal(repo.git("rev-parse", "HEAD"), head);
+  assert.equal(await readFile(target, "utf8"), "console.log('作業ツリーだけ修正済み');\n");
+  assert.match(repo.git("show", ":scripts/test-table-contracts.mjs"), /表の仕様違反/);
+  repo.git("add", "--", "scripts/test-table-contracts.mjs");
+  // The staged script remains executable even if its working-tree file disappears.
+  await rm(target);
+  succeeds(repo.run("git", ["commit", "-m", "Valid staged table"]));
+  assert.match(repo.run("git", ["status", "--short"]).stdout, /^ D scripts\/test-table-contracts.mjs/m);
 });
 
 test("lockfileの内側のversion不一致は通常確認とstage確認で拒否する", async t => {

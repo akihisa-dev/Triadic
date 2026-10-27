@@ -384,7 +384,7 @@ SQLite is bundled and works in memory without external communication or extra pe
 
 Normal commits record changes without version numbers, increment classifications, or future update plans. Numbers belong only in dedicated version-update commits. Follow [AGENTS.md version rules](AGENTS.md#versioncommitrelease) to classify each historical change. For a combined update, inspect `git log --reverse <last-applied-commit>..HEAD` excluding already-applied commits, and pass classifications in order, for example `npm run version:next -- patch patch minor patch`. This computes a candidate without changing files; set it in package, lockfile, and Manifest template, build, and commit separately with the covered range recorded.
 
-After cloning, run `npm run setup:hooks`. `pre-commit` checks staged whitespace/version; `pre-push` runs `npm run verify` for build, regular tests, versions, etc. After regeneration, pre-push also compares both distributions with each outgoing commit and stops on missing generated files. It never stages or commits files automatically. Staged version checks include dist/extension/manifest.json. Screen tests do not run on push. Normal verification also stops without configured hooks. If setup detects other existing hooks, inspect their settings.
+After cloning, run `npm run setup:hooks`. `pre-commit` checks staged whitespace/version and runs the table contract checks against a disposable copy of staged sources/tests; `pre-push` runs `npm run verify` for build, regular tests, versions, etc. After regeneration, pre-push also compares both distributions with each outgoing commit and stops on missing generated files. It never stages or commits files automatically. Staged version checks include dist/extension/manifest.json. Screen tests do not run on push. Normal verification also stops without configured hooks. If setup detects other existing hooks, inspect their settings.
 
 ## Display and processing of large datasets
 
@@ -982,7 +982,7 @@ SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外�
 
 通常のcommitでは変更内容を記録し、バージョン番号・採番区分・将来の更新予定を付け加えません。番号はversion更新専用commitにだけ記載し、その際に[AGENTS.mdのversion運用](AGENTS.md#versioncommitrelease)に従って履歴から各変更の区分を判断します。まとめて更新するときは、前回反映済みのcommitを除外した履歴を`git log --reverse <前回反映済みcommit>..HEAD`で確認し、各commitの区分を順に`npm run version:next -- patch patch minor patch`のように渡して候補を計算します。番号の変更は行わないため、確認した候補をpackage・lockfile・Manifest templateに設定してbuildし、反映範囲を記録した専用commitにまとめます。
 
-新しくcloneした環境では`npm run setup:hooks`を実行します。`pre-commit`はstage済み差分の空白エラーとversionを、`pre-push`は`npm run verify`でbuild・通常テスト・versionなどを確認します。再生成後の両配布物を送信するコミットと照合し、生成物のコミット漏れがあれば対象パスを表示して停止します。自動でstage・commitは行いません。stage済みのversion確認には`dist/extension/manifest.json`も含めます。画面自動テストはpush時に起動しません。通常の検証もフック未設定なら停止します。設定時に既存の別フックが検出された場合は、その設定内容を確認してください。
+新しくcloneした環境では`npm run setup:hooks`を実行します。`pre-commit`はstage済み差分の空白エラー・versionと、ステージ済みソース・テストの一時コピーによる表の仕様検証を、`pre-push`は`npm run verify`でbuild・通常テスト・versionなどを確認します。再生成後の両配布物を送信するコミットと照合し、生成物のコミット漏れがあれば対象パスを表示して停止します。自動でstage・commitは行いません。stage済みのversion確認には`dist/extension/manifest.json`も含めます。画面自動テストはpush時に起動しません。通常の検証もフック未設定なら停止します。設定時に既存の別フックが検出された場合は、その設定内容を確認してください。
 
 総原価表は種別別の科目行を直接集計します。施策単位の売上・費用・利益の合計だけが上限を超えても、総原価表で使う最終科目額・集計額・期間計が範囲内なら表示・単独Excel出力できます。
 
@@ -1295,3 +1295,6 @@ Excel出力では、名称などに含まれる `_x0041_`・`_x005F_` のよう�
 総原価表・展開表・施策一覧では、金額セルをドラッグまたはShift＋クリックで矩形選択し、Ctrl／Command＋Cで表示中の値を行・列の順にコピーできます。選択後は矢印キーで移動し、Shift＋矢印で範囲を広げ、Escで解除します。表示と同じ千円単位・丸め・空欄・利益率の文字列を使い、タブ・改行で区切ります。見出し・名称・分類は含めません。並べ替え・絞り込み後の表示順と合計・小計を使い、大量行で画面外になった中間行も含めます。表示条件や元データが変わると選択を解除します。総原価表の金額の通常クリックで内訳を開く操作は維持し、ドラッグまたはShift＋クリックでは開きません。コピーした範囲はExcelや、施策入力・施策詳細・前年入力の編集可能な月別金額へ貼り付けられます。総原価表・展開表・施策一覧への貼り付けと切り取りは行いません。
 
 ボタン・入力欄・保存形式・権限・外部通信は追加しません。クリップボードへの書き出しはコピー・切り取り操作時だけ行います。選択と切り取り待ちは画面内だけに保持し、ファイルへ保存しません。
+
+
+`npm run test:table-contracts`は総原価表・展開表の実画面部品をブラウザなしで検査します。前年・両予算の見込／実績32条件と実際の選択欄の操作について、独立性、総原価表の最新表示種別からの比較、展開表の前年行・列数、見出しと金額を確認します。通常の`npm test`にも含まれます。コミット前は同じ検証をステージ済み内容へ実行するため、作業ツリーだけの修正でステージ済み不具合を隠せません。一時コピーと検証用ファイルは終了時に削除し、元のファイルとステージ状態は変更しません。画面の配置・罫線は引き続き実ブラウザで確認します。

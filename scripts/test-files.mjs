@@ -53,6 +53,7 @@ import { verifyInitiativeListRendering } from '../tests/initiative-list-renderin
 import { verifyPerformanceData } from '../tests/performance-data.mjs';
 import { verifySchemaBoundary } from "../tests/schema-boundary.mjs";
 import { verifyYenPrecision } from "../tests/yen-precision.mjs";
+import { verifyTableContracts } from "../tests/table-contracts.mjs";
 import { verifyPeriodTables } from "../tests/period-tables.mjs";
 import { verifySpreadsheetIO } from "../tests/spreadsheet-io.mjs";
 import { verifyCostComparison } from "../tests/cost-comparison.mjs";
@@ -197,6 +198,7 @@ await withNodeBundle("tests/performance-api.ts", async production => {
     await verifyExpansionTableView(api, { excel });
     return;
   }
+  await verifyTableContracts(api);
   await verifyCostClassification(api);
   await verifyInitiativeListRendering(api);
   await verifyExpansionTableView(api);

@@ -15,6 +15,7 @@
     "perf:sample": "node scripts/measure-sample-performance.mjs",
     "typecheck": "npm run data-map:generate && tsc --noEmit --pretty false",
     "test": "npm run data-map:check && node scripts/test-files.mjs && node --test tests/test-scope.test.mjs tests/lazy-spreadsheets.test.mjs tests/repository-workflow.test.mjs tests/screen-data-model.test.mjs tests/data-map-generation.test.mjs tests/mechanism-map.test.mjs tests/sqlite-runtime.test.mjs && npm run samples:check",
+    "test:table-contracts": "node scripts/test-table-contracts.mjs",
     "test:excel": "node scripts/test-files.mjs --excel && node tests/report-parity.mjs",
     "samples:generate": "node scripts/generate-sample-plan.mjs",
     "samples:check": "node scripts/generate-sample-plan.mjs --check",
