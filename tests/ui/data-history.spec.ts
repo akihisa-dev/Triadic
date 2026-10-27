@@ -1,3 +1,4 @@
+import { selectBudgets } from "./fixtures";
 import { test, expect, settleMotion, selectClassification } from "./fixtures";
 import type { Page, FrameLocator } from "@playwright/test";
 
@@ -12,21 +13,21 @@ async function openFull(page: Page, app: FrameLocator) {
 test("過去の比較対象を使い、閲覧中の変更を現在へ持ち越さない", async ({ page, app }) => {
   const menu = await openFull(page, app);
   await menu.getByRole("button", { name: "総原価表", exact: true }).click();
-  const second = app.getByRole("spinbutton", { name: "比較対象2", exact: true });
-  await second.getByRole("button", { name: "確定予算", exact: true }).click();
-  await expect(second.getByRole("button", { name: "確定予算", exact: true })).toHaveAttribute("aria-pressed", "true");
+  const second = app.getByRole("checkbox", { name: "前年見込を基準にした確定予算", exact: true });
+  await second.click();
+  await expect(second).toBeChecked();
   await menu.getByRole("button", { name: "履歴", exact: true }).click();
   await expect(app.locator(".history-date").last()).toBeVisible();
   await app.locator(".history-date").last().click();
   await expect(app.getByLabel("過去のデータを閲覧中")).toBeVisible();
   await menu.getByRole("button", { name: "総原価表", exact: true }).click();
-  await expect(second.getByRole("button", { name: "未選択", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await app.getByRole("spinbutton", { name: "比較対象1", exact: true }).getByRole("button", { name: "確定予算", exact: true }).click();
+  await expect(second).not.toBeChecked();
+  await selectBudgets(app, [2]);
   await app.getByRole("button", { name: "現在に戻る", exact: true }).click();
   await expect(app.getByLabel("過去のデータを閲覧中")).toHaveCount(0);
   await menu.getByRole("button", { name: "総原価表", exact: true }).click();
-  await expect(app.getByRole("spinbutton", { name: "比較対象1", exact: true }).getByRole("button", { name: "一次予算", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await expect(second.getByRole("button", { name: "確定予算", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(app.getByRole("checkbox", { name: "前年見込を基準にした一次予算", exact: true })).toBeChecked();
+  await expect(second).toBeChecked();
 });
 
 test("マスタの直下の日時履歴から全画面を閲覧でき、編集・削除・並べ替えは禁止", async ({ page, app }) => {
@@ -101,6 +102,7 @@ test("復元確認の取消、復元成功、復元前へ戻す操作と再読�
   await dialog.getByRole("button", { name: "この時点に戻す", exact: true }).click();
   await expect(app.locator(".history-date")).toHaveCount(5);
   await app.locator(".history-date").nth(1).click();
+  await expect(app.getByLabel("過去のデータを閲覧中")).toBeVisible();
   await menu.getByRole("button", { name: "施策一覧", exact: true }).click();
   await app.getByRole("button", { name: "既存商品の販売拡大", exact: true }).click();
   await app.getByRole("tab", { name: "一次予算", exact: true }).click();
@@ -193,19 +195,19 @@ test("5分期限は追加保存で延びず、閉じる際も未記録分を残�
   const menu = await openFull(page, app);
   await page.clock.install();
   await menu.getByRole("button", { name: "総原価表", exact: true }).click();
-  await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "確定予算");
-  await expect(app.getByRole("spinbutton", { name: "比較対象2", exact: true })).toBeEnabled();
+  await selectBudgets(app, [1, 2]);
+  await expect(app.getByRole("checkbox", { name: "前年見込を基準にした確定予算", exact: true })).toBeEnabled();
   await page.clock.runFor(120_000);
   await menu.getByRole("button", { name: "総原価表", exact: true }).click();
-  await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "未選択");
-  await expect(app.getByRole("spinbutton", { name: "比較対象2", exact: true })).toBeEnabled();
+  await selectBudgets(app, [1]);
+  await expect(app.getByRole("checkbox", { name: "前年見込を基準にした確定予算", exact: true })).toBeEnabled();
   await page.clock.runFor(179_000);
   await menu.getByRole("button", { name: "履歴", exact: true }).click();
   await page.clock.runFor(1_000);
   await expect(app.locator(".history-date")).toHaveCount(4);
   await menu.getByRole("button", { name: "総原価表", exact: true }).click();
-  await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "確定予算");
-  await expect(app.getByRole("spinbutton", { name: "比較対象2", exact: true })).toBeEnabled();
+  await selectBudgets(app, [1, 2]);
+  await expect(app.getByRole("checkbox", { name: "前年見込を基準にした確定予算", exact: true })).toBeEnabled();
   await app.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
@@ -234,15 +236,15 @@ test("閲覧前に未記録分を保存し、終了時の記録失敗では閉�
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   const menu = app.getByRole("navigation", { name: "メインナビゲーション" });
   await menu.getByRole("button", { name: "総原価表", exact: true }).click();
-  await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "確定予算");
-  await expect(app.getByRole("spinbutton", { name: "比較対象2", exact: true })).toBeEnabled();
+  await selectBudgets(app, [1, 2]);
+  await expect(app.getByRole("checkbox", { name: "前年見込を基準にした確定予算", exact: true })).toBeEnabled();
   await menu.getByRole("button", { name: "履歴", exact: true }).click();
   await app.locator(".history-date").last().click();
   await app.getByRole("button", { name: "現在に戻る", exact: true }).click();
   await expect(app.locator(".history-date")).toHaveCount(4);
   await menu.getByRole("button", { name: "総原価表", exact: true }).click();
-  await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "未選択");
-  await expect(app.getByRole("spinbutton", { name: "比較対象2", exact: true })).toBeEnabled();
+  await selectBudgets(app, [1]);
+  await expect(app.getByRole("checkbox", { name: "前年見込を基準にした確定予算", exact: true })).toBeEnabled();
   // Close from the editing screen: entering history would checkpoint this
   // dirty state first, so a fourth-write failure would be navigation failure.
   await app.getByRole("button", { name: "閉じる", exact: true }).click();
@@ -280,14 +282,14 @@ test("自動記録エラーは閉じる操作を出さず、通常通知を閉�
   await page.clock.install();
   const menu = app.getByRole("navigation", { name: "メインナビゲーション" });
   await menu.getByRole("button", { name: "総原価表", exact: true }).click();
-  const comparison = app.getByRole("spinbutton", { name: "比較対象2", exact: true });
-  await selectClassification(comparison, "確定予算");
+  const comparison = app.getByRole("checkbox", { name: "前年見込を基準にした確定予算", exact: true });
+  await selectBudgets(app, [1, 2]);
   await expect(comparison).toBeEnabled();
   await page.clock.runFor(301_000);
   const notice = app.locator(".status-notice");
   await expect(notice).toContainText("自動記録失敗");
   await expect(notice.getByRole("button", { name: "通知を閉じる", exact: true })).toHaveCount(0);
-  await comparison.press("Home");
+  await comparison.click();
   await expect(notice).toContainText("通常保存失敗");
   await notice.getByRole("button", { name: "通知を閉じる", exact: true }).click();
   await expect(notice).toContainText("自動記録失敗");

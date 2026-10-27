@@ -1,4 +1,5 @@
-import { test, expect, selectClassification } from "./fixtures";
+import { selectBudgets } from "./fixtures";
+import { test, expect } from "./fixtures";
 
 test("総原価表と展開表の期間計を比較対象の切替後も確認できる", async ({ page, app }) => {
   await page.goto("/tests/ui/preview.html?data=full");
@@ -36,10 +37,10 @@ test("総原価表と展開表の期間計を比較対象の切替後も確認�
       const row = table.getByRole("row").filter({ has: app.getByRole("button", { name: "確定予算の下期調整", exact: true }) });
       const annualHeaders = table.locator("thead tr:nth-child(2) th.period-annual");
       const annualAmounts = row.locator("td.period-annual");
-      await expect(annualHeaders).toHaveText(["一次予算"]);
+      await expect(annualHeaders).toHaveText(["一次予算 前年見込基準"]);
       await expect(annualAmounts).toHaveText(["1,200", "1,200"]);
-      await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "確定予算");
-      await expect(annualHeaders).toHaveText(["一次予算", "確定予算", "比較"]);
+      await selectBudgets(app, [1, 2]);
+      await expect(annualHeaders).toHaveText(["一次予算 前年見込基準", "確定予算 前年見込基準", "差額 確定予算 − 一次予算"]);
       await expect(annualAmounts).toHaveText(["1,200", "1,200", "1,250", "1,250", "50", "50"]);
       // A category cell appears only on the first row of a merged category group.
       // Move the same initiative to an unused category to cover that extra cell too.

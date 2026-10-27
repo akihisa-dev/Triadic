@@ -1,4 +1,5 @@
-import { test, expect, selectClassification, settleMotion } from "./fixtures";
+import { selectBudgets } from "./fixtures";
+import { test, expect, settleMotion } from "./fixtures";
 
 test("ダッシュボードの比較・月別順位・詳細往復と部署の総原価表", async ({ page, app }) => {
   await page.goto("/tests/ui/preview.html?data=full");
@@ -13,8 +14,8 @@ test("ダッシュボードの比較・月別順位・詳細往復と部署の�
     await expect(months).toHaveText(["4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月", "1月", "2月", "3月"]);
     for (const month of await months.all()) await expect(month).toBeVisible();
   }
-  await selectClassification(app.getByRole("spinbutton", { name: "比較対象1", exact: true }), "確定予算");
-  await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "一次予算");
+  await selectBudgets(app, [2]);
+  await selectBudgets(app, [1, 2]);
   await dashboard.getByRole("combobox", { name: "対象期間", exact: true }).selectOption("4");
   await dashboard.getByRole("combobox", { name: "並び順の基準", exact: true }).selectOption("2");
   const source = dashboard.getByRole("button", { name: "確定予算の手修正", exact: true }).first();
@@ -28,7 +29,7 @@ test("ダッシュボードの比較・月別順位・詳細往復と部署の�
   await department.click();
   await expect(app.getByRole("heading", { name: "総原価表", exact: true })).toBeVisible();
   await expect(app.getByLabel("部署名", { exact: true }).locator("option:checked")).toHaveText(name);
-  await expect(app.getByRole("spinbutton", { name: "比較対象1", exact: true })).toHaveAttribute("aria-valuetext", "確定予算");
+  await expect(app.getByRole("checkbox", { name: "前年見込を基準にした確定予算", exact: true })).toBeChecked();
   await app.getByRole("button", { name: "前の画面に戻る", exact: true }).click();
   await expect(app.getByRole("heading", { name: "ダッシュボード", exact: true })).toBeVisible();
   await expect(dashboard.locator(".dashboard-chart svg")).toHaveCount(2);
@@ -73,7 +74,7 @@ test("追加9図の比較切替・数値・キーボードと表示条件の保�
   const mark = waterfall.locator("g[data-value]").first();
   await mark.focus();
   await expect(waterfall.locator("output")).toContainText("618,470");
-  await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "確定予算");
+  await selectBudgets(app, [1, 2]);
   await app.getByRole("combobox", { name: "構成・増減グラフの予算", exact: true }).selectOption("2");
   await app.getByRole("combobox", { name: "展開", exact: true }).selectOption({ label: "料金改定" });
   await app.getByRole("combobox", { name: "部署の対象期間", exact: true }).selectOption("4");

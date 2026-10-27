@@ -50,12 +50,11 @@ export function CostTablePage({ contents, selected, selection, view, onOpenIniti
       departments: departments.length ? departments : null,
     });
   }, [contents.accounts, contents.aggregations, contents.initiatives, contents.previousAmounts, contents.fiscalYear,
-    contents.kinds, contents.previousKind, contents.industries, contents.departments, industryIds, departmentIds]);
+    contents.kinds, contents.previousKind, contents.budgetPrevious, contents.industries, contents.departments, industryIds, departmentIds]);
   return <main className="initiative-list-page cost-table-page" aria-labelledby="cost-table-title">
     <div className="initiative-list-heading">
       <h1 id="cost-table-title">総原価表</h1>
       {selection}
-    </div>
     <div className="cost-classification-row">
       <div className="classification-field">
         <label htmlFor="cost-department">部署名</label>
@@ -76,6 +75,7 @@ export function CostTablePage({ contents, selected, selection, view, onOpenIniti
           {available.industries.filter(item => allowedIndustries.includes(item.id)).map(item => <option key={item.id} value={item.id}>{item.industryName}</option>)}
         </select>
       </div>
+    </div>
     </div>
     <TableCalculationBoundary resetKeys={[contents, selected, industryIds, departmentIds]}>
       <CostTableContents contents={filtered} selected={selected} view={view} onOpenInitiative={onOpenInitiative} navigationBlocked={navigationBlocked} />
@@ -109,7 +109,7 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
   const rangeCopy = useTableRangeCopy(container, { rowCount: rows.length, columnCount: tablePeriods.length * labels.length, resetKey: rows,
     textAt: (rowIndex, column) => {
       const row = rows[rowIndex]!, period = tablePeriods[Math.floor(column / labels.length)]!, index = column % labels.length;
-      return row.kind === "ratio" ? formatTableRate(row.values[index]![period.id], labels[index] === "前年差" || labels[index] === "一次予算差")
+      return row.kind === "ratio" ? formatTableRate(row.values[index]![period.id], labels[index] === "前年差" || labels[index]!.startsWith("差額"))
         : formatTableYen(row.values[index]![period.id]);
     } });
   const salesGroupId = contents.aggregations.find(group => group.required === "sales")?.id;
@@ -130,15 +130,15 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
     return () => observer.disconnect();
   }, []);
   useLayoutEffect(() => {
-    if (restoreFocus.current && focused.current && document.activeElement === document.body) {
+    if (restoreFocus.current && focused.current && (document.activeElement === document.body || document.activeElement === container.current)) {
       [...(tableElement.current?.querySelectorAll<HTMLButtonElement>("button[aria-label]") ?? [])]
         .find(button => button.getAttribute("aria-label") === focused.current!.label)?.focus();
     }
     restoreFocus.current = false;
-  }, [availableHeight, virtualPrefix]);
+  }, [availableHeight, virtualPrefix, detail]);
   const renderRow = (row: (typeof rows)[number]) => <tr key={`${row.kind}:${row.id}`} data-cost-row={`${row.kind}:${row.id}`} className={`cost-data-row${row.kind !== "account" ? ` cost-subtotal${row.required ? " cost-required" : ""}` : ""}${row.kind === "group" && row.id === salesGroupId ? " cost-sales-anchor" : ""}`}>
     <th scope="row" className="initiative-list-name">{row.name}{!row.configured && <span className="cost-unconfigured">未設定</span>}</th>
-    {tablePeriods.map(period => <Fragment key={period.id}>{row.values.map((values, index) => <td key={index} {...tableCopyCell(copyRowIndices.get(row)!, tablePeriods.indexOf(period) * labels.length + index)} className={periodCellClass(period, index === 0, index === labels.length - 1)}>{row.kind === "ratio" ? formatTableRate(values[period.id], labels[index] === "前年差" || labels[index] === "一次予算差")
+    {tablePeriods.map(period => <Fragment key={period.id}>{row.values.map((values, index) => <td key={index} {...tableCopyCell(copyRowIndices.get(row)!, tablePeriods.indexOf(period) * labels.length + index)} className={periodCellClass(period, index === 0, index === labels.length - 1)}>{row.kind === "ratio" ? formatTableRate(values[period.id], labels[index] === "前年差" || labels[index]!.startsWith("差額"))
       : row.configured && values[period.id] !== undefined ? <button type="button" className="cost-amount-button"
         aria-label={`${row.name} ${period.label} ${labels[index]}の内訳`} aria-description={formatTableYen(values[period.id]) || "0"} disabled={navigationBlocked}
         onFocus={event => {
@@ -150,7 +150,10 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
           if (rect.left < left) region.scrollLeft -= left - rect.left + 6;
           else if (rect.right > right) region.scrollLeft += rect.right - right + 6;
         }}
-        onClick={() => setDetail({ target: { kind: row.kind as "account" | "group", id: row.id, period, column: index }, title: `${row.name} ${period.label} ${labels[index]}` })}>{formatTableYen(values[period.id])}</button>
+        onClick={event => {
+          focused.current = { key: `${row.kind}:${row.id}`, label: event.currentTarget.getAttribute("aria-label")! };
+          setDetail({ target: { kind: row.kind as "account" | "group", id: row.id, period, column: index }, title: `${row.name} ${period.label} ${labels[index]}` });
+        }}>{formatTableYen(values[period.id])}</button>
       : formatTableYen(values[period.id])}</td>)}</Fragment>)}
   </tr>;
   return <><PeriodScrollFrame container={container} label="総原価表" layoutKey={key}><div ref={container} {...rangeCopy} onScroll={event => { view.current.top = event.currentTarget.scrollTop; view.current.left = event.currentTarget.scrollLeft; }} className="initiative-list-container cost-table-container" role="region" aria-label="総原価表の月別前年・種別別金額" tabIndex={0}>
@@ -174,6 +177,6 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
       </table>
     </div></PeriodScrollFrame>
     {detail && <CostBreakdownDialog contents={contents} selected={selected} target={detail.target} title={detail.title}
-      candidates={breakdownCandidates} navigationBlocked={navigationBlocked} onClose={() => setDetail(null)} onOpenInitiative={onOpenInitiative} />}
+      candidates={breakdownCandidates} navigationBlocked={navigationBlocked} onClose={() => { restoreFocus.current = true; setDetail(null); }} onOpenInitiative={onOpenInitiative} />}
     </>;
 });

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { DashboardPage } from "../../Triadic-extension/src/extension/DashboardPage";
 import { createSamplePlan } from "./sample-plan";
 import { readPlanContents } from "../../Triadic-extension/src/core/storage/readPlan";
-import type { KindId, PreviousKind } from "../../Triadic-extension/src/core/domain/kinds";
+import type { KindId, BudgetPrevious } from "../../Triadic-extension/src/core/domain/kinds";
 import { WindowViewContext } from "../../Triadic-extension/src/extension/windowView";
 import type { WindowViewValues } from "../../Triadic-extension/src/extension/windowViewState";
 import "../../Triadic-extension/src/extension/ExtensionPage.css";
@@ -27,7 +27,7 @@ if (mode === "long") {
 const view: WindowViewValues = {};
 function Fixture() {
   const [kinds, setKinds] = useState<KindId[]>([1, 2]);
-  const [previous, setPrevious] = useState<PreviousKind>(1);
-  return <WindowViewContext value={view}><DashboardPage contents={plan} selected={kinds} previousKind={previous} disabled={false} onKinds={setKinds} onPrevious={setPrevious} onDepartment={() => {}} onInitiative={() => {}} /></WindowViewContext>;
+  const [previous, setPrevious] = useState<BudgetPrevious>({1:1,2:1});
+  return <WindowViewContext value={view}><DashboardPage contents={plan} selected={kinds} previous={previous} disabled={false} onSelection={(kinds, previous) => { setKinds(kinds); setPrevious(previous); }} onDepartment={() => {}} onInitiative={() => {}} /></WindowViewContext>;
 }
 createRoot(document.getElementById("root")!).render(<Fixture />);

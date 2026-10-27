@@ -1,30 +1,30 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { formatAmount, formatRate, formatYen } from "../core/domain/amounts";
 import { initiativeMonths } from "../core/domain/calendar";
-import { previousKindName, type KindId, type PreviousKind } from "../core/domain/kinds";
+import { baselineFor, comparisonName, previousKindName, type KindId, type BudgetPrevious } from "../core/domain/kinds";
 import type { Initiative, PlanContents } from "../core/domain/plan";
 import { buildDashboard, dashboardAmounts, dashboardChange, rankDashboardInitiatives, type Dashboard, type DashboardMetric, type DashboardPeriod, type DashboardSeries } from "../core/tables/dashboard";
 import { DashboardAnalysis } from "./DashboardAnalysis";
-import { KindSelectionSlots } from "./KindSelectionSlots";
+import { ComparisonSelection } from "./ComparisonSelection";
 import { TableCalculationBoundary } from "./TableCalculationBoundary";
 import { useWindowViewState } from "./windowView";
 import "./DashboardPage.css";
 
-type Props = { contents: PlanContents; selected: KindId[]; previousKind: PreviousKind; disabled: boolean;
-  onKinds: (kinds: KindId[]) => void; onPrevious: (kind: PreviousKind) => void;
+type Props = { contents: PlanContents; selected: KindId[]; previous: BudgetPrevious; disabled: boolean;
+  onSelection: (kinds: KindId[], previous: BudgetPrevious) => void;
   onDepartment: (id: number) => void; onInitiative: (initiative: Initiative, kind: KindId) => void };
 const metrics = [{ id: "sales", name: "売上" }, { id: "profit", name: "利益" }] as const;
 const signedAmount = (value: number) => `${value > 0 ? "+" : ""}${formatYen(value)}`;
 const rate = (value: number | undefined, difference = false) => value === undefined ? "—" : `${difference && value > 0 ? "+" : ""}${formatRate(value, difference)}`;
 const growth = (value: number, previous: number) => { const change = dashboardChange(value, previous); return `${signedAmount(change.amount)} / ${change.rate === undefined ? "—" : `${change.rate > 0 ? "+" : ""}${formatRate(change.rate)}`}`; };
 
-export function DashboardPage({ contents, selected, previousKind, disabled, onKinds, onPrevious, ...navigation }: Props) {
-  const context = useMemo(() => ({ ...contents, previousKind }), [contents, previousKind]);
+export function DashboardPage({ contents, selected, previous, disabled, onSelection, ...navigation }: Props) {
+  const context = useMemo(() => ({ ...contents, budgetPrevious: previous }), [contents, previous]);
   return <main className={`dashboard-page ${selected.length === 1 ? "dashboard-single-kind" : ""}`} aria-labelledby="dashboard-title">
     <div className="initiative-list-heading"><h1 id="dashboard-title">ダッシュボード</h1>
-      <KindSelectionSlots screen="dashboard" selected={selected} previousKind={previousKind} disabled={disabled} onChange={onKinds} onPreviousChange={onPrevious} />
+      <ComparisonSelection selected={selected} previous={previous} disabled={disabled} onChange={onSelection} />
     </div>
-    <TableCalculationBoundary resetKeys={[contents, selected, previousKind]}>
+    <TableCalculationBoundary resetKeys={[contents, selected, previous]}>
       <DashboardContents contents={context} selected={selected} disabled={disabled} {...navigation} />
     </TableCalculationBoundary>
   </main>;
@@ -36,10 +36,10 @@ function DashboardContents({ contents, selected, disabled, onDepartment, onIniti
   const [period, setPeriod] = useWindowViewState("dashboard:period", "annual", true);
   const [ranking, setRanking] = useWindowViewState("dashboard:ranking", selected[0]!, true);
   const rankKind = selected.includes(ranking) ? ranking : selected[0]!;
-  const priorName = previousKindName(contents.previousKind ?? 1);
-  const kindName = (id: KindId) => contents.kinds.find(item => item.id === id)!.kindName;
-  const previous = dashboardAmounts(dashboard.previous);
-  const annual = dashboard.budgets.map(entry => ({ kind: entry.kind, ...dashboardAmounts(entry.months) }));
+  const priorName = (kind: KindId) => previousKindName(baselineFor(contents, kind));
+  const priors = [...new Set(selected.map(kind => baselineFor(contents, kind)))];
+  const kindName = (id: KindId) => comparisonName(contents, id).replace("\n", " · ");
+  const annual = dashboard.budgets.map(entry => ({ kind: entry.kind, previous: dashboardAmounts(entry.previous), ...dashboardAmounts(entry.months) }));
   return <>
     <div className="dashboard-stats">
       {([...metrics, { id: "margin", name: "利益率" }] as const).map(metric => <section className="dashboard-stat" key={metric.id} aria-label={`年間${metric.name}`}>
@@ -47,23 +47,23 @@ function DashboardContents({ contents, selected, disabled, onDepartment, onIniti
         {annual.map((value, index) => <div key={value.kind} className={`dashboard-stat-kind dashboard-series-${index}`}>
           <span className="dashboard-series-label">{kindName(value.kind)}</span>
           <strong>{metric.id === "margin" ? rate(value.margin) : formatYen(value[metric.id])}</strong>
-          <span className="dashboard-delta">前年差 {metric.id === "margin" ? rate(value.margin === undefined || previous.margin === undefined ? undefined : value.margin - previous.margin, true) : growth(value[metric.id], previous[metric.id])}</span>
+          <span className="dashboard-delta">前年差 {metric.id === "margin" ? rate(value.margin === undefined || value.previous.margin === undefined ? undefined : value.margin - value.previous.margin, true) : growth(value[metric.id], value.previous[metric.id])}</span>
+        <div className="dashboard-baseline">{priorName(value.kind)} <span>{metric.id === "margin" ? rate(value.previous.margin) : formatYen(value.previous[metric.id])}</span></div>
         </div>)}
-        <div className="dashboard-baseline">{priorName} <span>{metric.id === "margin" ? rate(previous.margin) : formatYen(previous[metric.id])}</span></div>
       </section>)}
     </div>
-    <div className="dashboard-legend" aria-label="グラフの凡例"><span className="dashboard-prior">{priorName}</span>{selected.map((kind, index) => <span className={`dashboard-series-${index}`} key={kind}>{kindName(kind)}</span>)}</div>
+    <div className="dashboard-legend" aria-label="グラフの凡例">{priors.map(kind => <span key={kind} className={`dashboard-prior dashboard-prior-${kind}`}>{previousKindName(kind)}</span>)}{selected.map((kind, index) => <span className={`dashboard-series-${index}`} key={kind}>{kindName(kind)}</span>)}</div>
     <div className="dashboard-pair">{metrics.map(metric => <section key={metric.id} className="dashboard-panel"><h2>{metric.name}の月別推移</h2><MonthlyChart series={dashboard} metric={metric.id} priorName={priorName} kindName={kindName} /></section>)}</div>
     <section className="dashboard-panel dashboard-comparison"><div className="dashboard-panel-heading"><h2>部署別比較</h2><div className="dashboard-controls"><label>部署の対象期間<select value={departmentPeriod} onChange={event => setDepartmentPeriod(event.target.value === "annual" ? "annual" : Number(event.target.value) as DashboardPeriod)}><option value="annual">年間</option>{initiativeMonths.map(month => <option key={month} value={month}>{month}月</option>)}</select></label></div></div>
-      <div className="dashboard-legend"><span className="dashboard-prior">{priorName}</span>{selected.map((kind, index) => <span className={`dashboard-series-${index}`} key={kind}>{kindName(kind)}</span>)}<span>金額：千円</span></div>
+      <div className="dashboard-legend">{priors.map(kind => <span key={kind} className={`dashboard-prior dashboard-prior-${kind}`}>{previousKindName(kind)}</span>)}{selected.map((kind, index) => <span className={`dashboard-series-${index}`} key={kind}>{kindName(kind)}</span>)}<span>金額：千円</span></div>
       <div className="dashboard-department dashboard-department-header" aria-hidden="true"><span>部署</span><span>売上 / 前年増減</span><span>利益 / 前年増減</span><span>利益率 / 前年差</span></div>
       {dashboard.departments.map(department => {
-        const prior = dashboardAmounts(department.previous, departmentPeriod);
         return <div className="dashboard-department" key={department.id ?? "unassigned"}>
           <div className="dashboard-department-name">{department.id === null ? department.name : <button className="initiative-name-button" disabled={disabled} onClick={() => onDepartment(department.id!)}>{department.name}</button>}</div>
           {metrics.map(metric => {
             const maximum = Math.max(1, ...dashboard.departments.flatMap(item => item.budgets.map(value => Math.abs(dashboardAmounts(value.months, departmentPeriod)[metric.id]))));
             return <div key={metric.id} className="dashboard-department-metric"><span className="dashboard-mobile-label">{metric.name}</span>{department.budgets.map((entry, index) => {
+              const prior = dashboardAmounts(entry.previous, departmentPeriod);
               const amount = dashboardAmounts(entry.months, departmentPeriod)[metric.id];
               return <div key={entry.kind} className={`dashboard-department-kind dashboard-series-${index}`}>
                 <span className="dashboard-series-label">{kindName(entry.kind)}</span>
@@ -74,6 +74,7 @@ function DashboardContents({ contents, selected, disabled, onDepartment, onIniti
             })}</div>;
           })}
           <div className="dashboard-department-metric"><span className="dashboard-mobile-label">利益率 / 前年差</span>{department.budgets.map((entry, index) => {
+            const prior = dashboardAmounts(entry.previous, departmentPeriod);
             const value = dashboardAmounts(entry.months, departmentPeriod).margin;
             const maximum = Math.max(1, ...dashboard.departments.flatMap(item => item.budgets.map(value => Math.abs(dashboardAmounts(value.months, departmentPeriod).margin ?? 0))));
             return <div key={entry.kind} className={`dashboard-department-kind dashboard-series-${index}`}><span className="dashboard-series-label">{kindName(entry.kind)}</span><span>{rate(value)}</span>
@@ -109,11 +110,11 @@ function Ranking({ dashboard, metric, kind, period, direction, kindName, disable
   </section>;
 }
 
-function MonthlyChart({ series, metric, priorName, kindName }: { series: DashboardSeries; metric: DashboardMetric; priorName: string; kindName: (id: KindId) => string }) {
+function MonthlyChart({ series, metric, priorName, kindName }: { series: DashboardSeries; metric: DashboardMetric; priorName: (kind: KindId) => string; kindName: (id: KindId) => string }) {
   const container = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(400);
   useLayoutEffect(() => { const observer = new ResizeObserver(([entry]) => { if (entry && entry.contentRect.width > 0) setWidth(entry.contentRect.width); }); if (container.current) observer.observe(container.current); return () => observer.disconnect(); }, []);
-  const values = [{ name: priorName, months: series.previous, className: "dashboard-prior" }, ...series.budgets.map((entry, index) => ({ name: kindName(entry.kind), months: entry.months, className: `dashboard-series-${index}` }))];
+  const values = [...series.budgets.filter((entry, index, all) => all.findIndex(other => other.previousKind === entry.previousKind) === index).map(entry => ({ name: priorName(entry.kind), months: entry.previous, className: `dashboard-prior dashboard-prior-${entry.previousKind}` })), ...series.budgets.map((entry, index) => ({ name: kindName(entry.kind), months: entry.months, className: `dashboard-series-${index}` }))];
   const all = values.flatMap(entry => initiativeMonths.map(month => entry.months[month]?.[metric] ?? 0));
   const low = Math.min(0, ...all), high = Math.max(0, ...all), padding = (high - low || 1000) * .1;
   const min = low - padding, max = high + padding;

@@ -1,4 +1,4 @@
-import { isKindId, type KindScreen, type KindId, type PreviousKind, type PreviousSelections } from "../domain/kinds";
+import { isKindId, type KindScreen, type KindId, type PreviousSelections } from "../domain/kinds";
 import { applyKindSelection, validateKindSelection } from "./settings";
 import { prepareSave } from "./prepareSave";
 
@@ -18,14 +18,16 @@ export async function prepareKindSelectionSave(bytes: Uint8Array, screen: KindSc
   return prepared;
 }
 
-/** A baseline choice changes the same settings row without reprojecting business data. */
-export async function preparePreviousSelectionSave(bytes: Uint8Array, screen: keyof PreviousSelections, previousKind: PreviousKind, now = new Date().toISOString()) {
+/** Save the checked kinds and both baselines atomically. */
+export async function prepareComparisonSelectionSave(bytes: Uint8Array, screen: keyof PreviousSelections, selected: KindId[], previous: import("../domain/kinds").BudgetPrevious, now = new Date().toISOString()) {
   const { contents: _contents, ...prepared } = await prepareSave(bytes, now, database => {
-    if (!["cost-table", "expansion-table"].includes(screen) || !isKindId(previousKind)) throw new Error("基準前年が正しくありません。");
-    const original = database.exec("SELECT previous_kind FROM kind_selections WHERE screen = ?", [screen])[0]?.values[0]?.[0];
-    if (original === previousKind) return null;
+    if (!["cost-table", "expansion-table"].includes(screen) || !isKindId(previous[1]) || !isKindId(previous[2])) throw new Error("基準前年が正しくありません。");
+    validateKindSelection(screen, selected);
+    const original = database.exec("SELECT first_kind, second_kind, previous_kind, final_previous_kind FROM kind_selections WHERE screen = ?", [screen])[0]?.values[0];
+    if (original?.[0] === selected[0] && original?.[1] === (selected[1] ?? null) && original?.[2] === previous[1] && original?.[3] === previous[2]) return null;
     return () => {
-      database.run("UPDATE kind_selections SET previous_kind = ? WHERE screen = ?", [previousKind, screen]);
+      applyKindSelection(database, screen, selected);
+      database.run("UPDATE kind_selections SET previous_kind = ?, final_previous_kind = ? WHERE screen = ?", [previous[1], previous[2], screen]);
       return true;
     };
   }, () => undefined);

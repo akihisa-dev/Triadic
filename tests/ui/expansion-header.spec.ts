@@ -7,11 +7,11 @@ for (const data of ["full", "large"] as const) {
       await expect(page.getByRole("status")).toHaveText("操作できます");
       await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
       await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "展開表", exact: true }).click();
-      if (comparison) await app.getByRole("spinbutton", { name: "比較対象2", exact: true }).getByRole("button", { name: "確定予算", exact: true }).click();
+      if (comparison) await app.getByRole("checkbox", { name: "前年見込を基準にした確定予算", exact: true }).click();
       const region = app.getByRole("region", { name: "展開表の月別種別・比較", exact: true });
       const header = region.locator("thead");
       await expect(header.locator("tr")).toHaveCount(6);
-      await expect(header.locator(".expansion-summary")).toHaveText(["前年見込", "合計", "展開計"]);
+      await expect(header.locator(".expansion-summary")).toHaveText([comparison ? "前年" : "前年見込", "合計", "展開計"]);
       await app.getByRole("heading", { name: "展開表", exact: true }).click();
       await settleMotion(app.locator("body"));
       const top = (await region.boundingBox())!.y;
@@ -66,33 +66,38 @@ test("展開表の見出しと比較対象を表示し、狭い画面でもは�
   const region = app.getByRole("region", { name: "展開表の月別種別・比較", exact: true });
   await region.evaluate(node => { node.scrollLeft = 600; });
   const fixedGroupBounds = (await group.boundingBox())!;
+  if (testInfo.project.name === "desktop") {
   expect(Math.abs(fixedGroupBounds.x - groupBounds.x)).toBeLessThanOrEqual(1);
   expect((await period.boundingBox())!.x).toBeCloseTo(fixedGroupBounds.x + groupBounds.width, 0);
   expect((await category.boundingBox())!.x).toBeCloseTo(fixedGroupBounds.x + groupBounds.width + periodBounds.width, 0);
   expect((await name.boundingBox())!.x).toBeCloseTo(fixedGroupBounds.x + groupBounds.width + periodBounds.width + categoryBounds.width, 0);
+  } else {
+    expect(fixedGroupBounds.x).toBeCloseTo(groupBounds.x - 600, 0);
+    expect((await name.boundingBox())!.x).toBeCloseTo((await region.boundingBox())!.x, 0);
+  }
   const inspect = async () => heading.evaluate(node => {
     const title = node.querySelector("h1")!.getBoundingClientRect();
-    const selection = node.querySelector(".kind-selection-slots")!.getBoundingClientRect();
+    const selection = node.querySelector(".comparison-selection")!.getBoundingClientRect();
     return { gap: selection.left - title.right,
-      center: Math.abs(selection.top + selection.height / 2 - title.top - title.height / 2),
+      topOffset: title.top - selection.top,
       wrapped: selection.top >= title.bottom,
       overflow: document.documentElement.scrollWidth > window.innerWidth,
       order: Array.from(node.children).map(child => child.className || child.tagName) };
   });
   let bounds = await inspect();
-  expect(bounds.order).toEqual(["H1", "kind-selection-slots"]);
+  expect(bounds.order).toEqual(["H1", "comparison-selection"]);
   expect(bounds.overflow).toBe(false);
   await expect(heading.locator(".field-hint")).toHaveCount(0);
   if (testInfo.project.name === "desktop") {
     expect(bounds.gap).toBe(16);
-    expect(bounds.center).toBeLessThan(1);
+    expect(bounds.topOffset).toBe(9);
   } else expect(bounds.wrapped).toBe(true);
-  const second = app.getByRole("spinbutton", { name: "比較対象2", exact: true });
-  await second.getByRole("button", { name: "確定予算", exact: true }).click();
-  await expect(second).toHaveAttribute("aria-valuetext", "確定予算");
+  const second = app.getByRole("checkbox", { name: "前年見込を基準にした確定予算", exact: true });
+  await second.click();
+  await expect(second).toBeChecked();
   await settleMotion(heading);
   bounds = await inspect();
-  expect(bounds.order).toEqual(["H1", "kind-selection-slots"]);
+  expect(bounds.order).toEqual(["H1", "comparison-selection"]);
   expect(bounds.overflow).toBe(false);
   if (testInfo.project.name === "desktop") expect(bounds.gap).toBe(16);
 });

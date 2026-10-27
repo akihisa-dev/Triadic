@@ -1,4 +1,5 @@
-import { test, expect, settleMotion, selectClassification } from "./fixtures";
+import { selectBudgets } from "./fixtures";
+import { test, expect, settleMotion } from "./fixtures";
 
 test("総原価表の見出しと比較対象を一行にまとめ、狭い画面でも選択できる", async ({ page, app }, testInfo) => {
   await page.goto("/tests/ui/preview.html");
@@ -8,19 +9,19 @@ test("総原価表の見出しと比較対象を一行にまとめ、狭い画�
   await settleMotion(app.locator("body"));
   const heading = app.locator(".cost-table-page .initiative-list-heading");
   const metrics = await heading.evaluate(node => {
-    const rects = Array.from(node.querySelectorAll("h1, .field-hint, [role=spinbutton]")).map(item => item.getBoundingClientRect());
-    return { centers: rects.map(rect => rect.y + rect.height / 2), height: node.getBoundingClientRect().height,
+    const rects = Array.from(node.querySelectorAll("h1, .comparison-selection, .cost-classification")).map(item => item.getBoundingClientRect());
+    return { tops: rects.map(rect => rect.y), height: node.getBoundingClientRect().height,
       inside: rects.every(rect => rect.left >= 0 && rect.right <= window.innerWidth),
       bodyOverflow: document.documentElement.scrollWidth > window.innerWidth };
   });
   expect(metrics.inside).toBe(true);
   expect(metrics.bodyOverflow).toBe(false);
   if (testInfo.project.name === "desktop") {
-    expect(Math.max(...metrics.centers) - Math.min(...metrics.centers)).toBeLessThan(2);
-    expect(metrics.height).toBeLessThanOrEqual(72);
+    expect(Math.max(...metrics.tops) - Math.min(...metrics.tops)).toBeLessThanOrEqual(10);
+    expect(metrics.height).toBeLessThanOrEqual(110);
   }
-  await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "確定予算");
-  await expect(app.getByRole("table", { name: "総原価表", exact: true }).getByRole("columnheader", { name: "確定予算", exact: true })).toHaveCount(19);
+  await selectBudgets(app, [1, 2]);
+  await expect(app.getByRole("table", { name: "総原価表", exact: true }).getByRole("columnheader", { name: "確定予算 前年見込基準", exact: true })).toHaveCount(19);
 });
 
 test("総原価表は画面内で縦横に移動でき、見出しから社内控除後売上までと科目名を固定する", async ({ page, app }, testInfo) => {

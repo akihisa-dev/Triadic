@@ -1,0 +1,8 @@
+.comparison-selection { display: grid; grid-template-columns: 64px 64px 64px; padding: 0 8px; width: 220px; height: 102px; gap: 4px; align-items: center; text-align: center; flex: 0 0 auto; color: var(--muted); font-size: 12px; }
+.comparison-baseline { text-align: right; padding-right: 8px; }
+.comparison-cell { display: flex; justify-content: center; align-items: center; min-height: 29px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); cursor: pointer; }
+.comparison-cell:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); }
+.comparison-cell input { width: 17px; height: 17px; margin: 0; accent-color: var(--accent); cursor: inherit; }
+.comparison-cell:has(input:disabled) { opacity: .5; cursor: default; }
+.comparison-cell input:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+@media (pointer: coarse) { .comparison-selection { height: 130px; } .comparison-cell { min-height: 44px; } }

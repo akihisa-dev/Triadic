@@ -21,9 +21,9 @@ export async function verifyYenPrecision(api) {
     assert.equal(previous.previousAmounts.find(row => row.month === 4).amount, text);
     assert.equal(api.previousByAccount(previous).get(accountId)[4], yen);
     assert.equal(api.previousTotals(previous)[4].sales, yen);
-    assert.deepEqual(costAccount(previous).values.map(values => values[4]), [yen, yen, yen, 0, 0]);
+    assert.deepEqual(costAccount(previous).values.map(values => values[4]), [yen, yen, 0]);
     const period = api.buildPeriodCostComparison(previous, [1, 2]).rows.find(row => row.kind === "account" && row.id === accountId);
-    assert.deepEqual(period.values.map(values => values.annual), [yen, yen, yen, 0, 0]);
+    assert.deepEqual(period.values.map(values => values.annual), [yen, yen, 0]);
     assert.equal(api.expansionPeriodAmount(api.buildKindExpansionTable(previous, [1], "registered").total[0], annual, "sales"), yen);
 
     const initiativeBytes = await api.registerInitiative(original, draft(text));
@@ -31,13 +31,13 @@ export async function verifyYenPrecision(api) {
     assert.equal(contents.initiatives[0].rows[0].amounts[4], text);
     assert.equal(api.initiativesForKind(contents.initiatives, contents.accounts, 1)[0].months[4].sales, yen);
     assert.equal(api.amountToYen(contents.details.find(row => row.kindId === 1 && row.month === 4).sales), yen);
-    assert.deepEqual(costAccount(contents).values.map(values => values[4]), [0, yen, yen, yen, 0]);
+    assert.deepEqual(costAccount(contents).values.map(values => values[4]), [yen, yen, 0]);
     const expansion = api.buildKindExpansionTable(contents, [1, 2], "registered");
     assert.deepEqual(expansion.changes.map(months => months[4].sales), [yen, yen, 0]);
     assert.equal(api.expansionPeriodAmount(expansion.total[0], annual, "sales"), yen);
     const corrected = { ...contents, initiatives: [{ ...contents.initiatives[0], rows: [{ ...contents.initiatives[0].rows[0], overrides: { 2: { 4: api.yenToAmount(yen - sign) } } }] }] };
     assert.equal(api.initiativesForKind(corrected.initiatives, corrected.accounts, 2)[0].months[4].sales, yen - sign);
-    assert.deepEqual(costAccount(corrected).values.map(values => values[4]), [0, yen, yen - sign, yen - sign, -sign]);
+    assert.deepEqual(costAccount(corrected).values.map(values => values[4]), [yen, yen - sign, -sign]);
     const compared = api.buildKindExpansionTable(corrected, [1, 2], "registered");
     assert.deepEqual(compared.changes.map(months => months[4].sales), [yen, yen - sign, -sign]);
     assert.equal(api.expansionPeriodAmount(compared.changes[2], annual, "sales"), -sign);

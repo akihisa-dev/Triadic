@@ -1,13 +1,13 @@
 import { amountToYen, checkedYen, sumYen } from "../domain/amounts";
 import { accountEffectsYen } from "../domain/accountEffects";
 import { initiativeMonths } from "../domain/calendar";
-import { resolvedAmount, type KindId } from "../domain/kinds";
+import { baselineFor, resolvedAmount, type KindId } from "../domain/kinds";
 import type { PlanContents } from "../domain/plan";
 
 type Metric = "sales" | "profit" | "expense";
 export type AnalysisAmounts = Record<Metric, number>;
 export type AnalysisMonths = Record<number, AnalysisAmounts>;
-export type AnalysisSeries = { previous: AnalysisMonths; budgets: { kind: KindId; months: AnalysisMonths }[] };
+export type AnalysisSeries = { previous: AnalysisMonths; budgets: { kind: KindId; previous: AnalysisMonths; months: AnalysisMonths }[] };
 export type AnalysisGroup = AnalysisSeries & { id: number | null; name: string };
 type ExactMonths = Map<number, Record<Metric, bigint>>;
 const empty = (): ExactMonths => new Map(initiativeMonths.map(month => [month, { sales: 0n, profit: 0n, expense: 0n }]));
@@ -25,16 +25,16 @@ export function analysisAnnual(months: AnalysisMonths): AnalysisAmounts {
 export function buildDashboardBreakdowns(contents: PlanContents, selected: KindId[]) {
   const attributes = new Map(contents.accounts.map(account => [account.id, account.accountType]));
   const create = (definitions: { id: number; name: string }[]) => {
-    const data = new Map<number | null, { id: number | null; name: string; previous: ExactMonths; budgets: ExactMonths[] }>(definitions.map(item => [item.id,
-      { ...item, previous: empty(), budgets: selected.map(empty) }]));
+    const data = new Map<number | null, { id: number | null; name: string; previous: ExactMonths[]; budgets: ExactMonths[] }>(definitions.map(item => [item.id,
+      { ...item, previous: selected.map(empty), budgets: selected.map(empty) }]));
     const get = (id: number | null | undefined) => {
       const key = id != null && data.has(id) ? id : null;
-      if (!data.has(key)) data.set(key, { id: key, name: "未所属", previous: empty(), budgets: selected.map(empty) });
+      if (!data.has(key)) data.set(key, { id: key, name: "未所属", previous: selected.map(empty), budgets: selected.map(empty) });
       return data.get(key)!;
     };
     return { get, finish: (): AnalysisGroup[] => [...data.values()].map(item => ({ id: item.id, name: item.name,
-      previous: output(item.previous), budgets: item.budgets.map((delta, index) => ({ kind: selected[index]!, months: output(new Map(initiativeMonths.map(month => {
-        const base = item.previous.get(month)!, change = delta.get(month)!;
+      previous: output(item.previous[0]!), budgets: item.budgets.map((delta, index) => ({ kind: selected[index]!, previous: output(item.previous[index]!), months: output(new Map(initiativeMonths.map(month => {
+        const base = item.previous[index]!.get(month)!, change = delta.get(month)!;
         return [month, { sales: base.sales + change.sales, profit: base.profit + change.profit, expense: base.expense + change.expense }];
       }))) })) })) };
   };
@@ -50,18 +50,18 @@ export function buildDashboardBreakdowns(contents: PlanContents, selected: KindI
     return categoriesByExpansion.get(id)!;
   };
   const accounts = create(contents.accounts.filter(item => item.accountType === "expense").map(item => ({ id: item.id, name: item.accountName })));
-  const cells = new Map<string, { department: number | null; industry: number | null; previous: ExactMonths; budgets: ExactMonths[] }>();
+  const cells = new Map<string, { department: number | null; industry: number | null; previous: ExactMonths[]; budgets: ExactMonths[] }>();
   const cell = (department: number | null, industry: number | null) => {
     const key = JSON.stringify([department, industry]);
-    if (!cells.has(key)) cells.set(key, { department, industry, previous: empty(), budgets: selected.map(empty) });
+    if (!cells.has(key)) cells.set(key, { department, industry, previous: selected.map(empty), budgets: selected.map(empty) });
     return cells.get(key)!;
   };
   for (const record of contents.previousAmounts) {
-    if (record.previousKind !== (contents.previousKind ?? 1)) continue;
+
     const values = accountEffectsYen(amountToYen(record.amount), attributes.get(record.accountId));
     const targets = [industries.get(record.industryId), departments.get(record.departmentId), cell(record.departmentId, record.industryId)];
     if (attributes.get(record.accountId) === "expense") targets.push(accounts.get(record.accountId));
-    for (const target of targets) add(target.previous, record.month, values);
+    selected.forEach((kind, index) => { if (record.previousKind === baselineFor(contents, kind)) for (const target of targets) add(target.previous[index]!, record.month, values); });
   }
   for (const initiative of contents.initiatives) {
     if (initiative.fiscalYear !== contents.fiscalYear) continue;
@@ -75,8 +75,8 @@ export function buildDashboardBreakdowns(contents: PlanContents, selected: KindI
     }
   }
   const finishedCells = new Map([...cells].map(([key, entry]) => [key, {
-    previous: output(entry.previous), budgets: entry.budgets.map((values, index) => ({ kind: selected[index]!, months: output(new Map(initiativeMonths.map(month => {
-      const base = entry.previous.get(month)!, delta = values.get(month)!;
+    previous: output(entry.previous[0]!), budgets: entry.budgets.map((values, index) => ({ kind: selected[index]!, previous: output(entry.previous[index]!), months: output(new Map(initiativeMonths.map(month => {
+      const base = entry.previous[index]!.get(month)!, delta = values.get(month)!;
       return [month, { sales: base.sales + delta.sales, profit: base.profit + delta.profit, expense: base.expense + delta.expense }];
     }))) })),
   }]));

@@ -1,4 +1,5 @@
-import { test, expect, selectClassification } from "./fixtures";
+import { selectBudgets } from "./fixtures";
+import { test, expect } from "./fixtures";
 
 test("別名保存後も同じ画面と操作取消を保ち、新しいファイルから再開する", async ({ page, app }, testInfo) => {
   await page.goto("/tests/ui/preview.html");
@@ -6,19 +7,19 @@ test("別名保存後も同じ画面と操作取消を保ち、新しいファ�
   await app.getByRole("button", { name: "サイドバーを開く", exact: true }).click();
   const menu = app.getByRole("complementary", { name: "メニュー", exact: true });
   await menu.getByRole("button", { name: "総原価表", exact: true }).click();
-  await selectClassification(app.getByRole("spinbutton", { name: "比較対象1", exact: true }), "確定予算");
+  await selectBudgets(app, [2]);
   const save = menu.getByRole("button", { name: "別名で保存", exact: true });
   await expect(save).toBeEnabled();
   await save.click();
   await expect(app.locator(".home-file-name")).toHaveText("画面テスト のコピー.triadic");
   await expect(app.getByRole("heading", { name: "総原価表", exact: true })).toBeVisible();
-  await expect(app.getByRole("spinbutton", { name: "比較対象1", exact: true })).toContainText("確定予算");
+  await expect(app.getByRole("checkbox", { name: "前年見込を基準にした確定予算", exact: true })).toBeChecked();
   await expect(app.getByText("別名で保存しました。", { exact: true })).toBeVisible();
   await page.screenshot({ path: `/tmp/triadic-save-as-${testInfo.project.name}.png` });
   const undo = app.getByRole("button", { name: "操作を取り消す", exact: true });
   await expect(undo).toBeEnabled();
   await undo.click();
-  await expect(app.getByRole("spinbutton", { name: "比較対象1", exact: true })).toContainText("一次予算");
+  await expect(app.getByRole("checkbox", { name: "前年見込を基準にした一次予算", exact: true })).toBeChecked();
   await menu.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog").getByRole("button", { name: "閉じる", exact: true }).click();
   await expect(app.getByRole("button", { name: "続きから", exact: true })).toBeEnabled();

@@ -19,13 +19,12 @@ export async function verifyPeriodTables(api) {
       } else if (row.kind !== "ratio") {
         row.values.forEach((value, column) => assert.equal(value[period.id], period.months.reduce((sum, month) => api.addYen(sum, monthly.rows[index].values[column][month] ?? 0), 0)));
       } else {
-        for (let column = 0; column <= selected.length; column++) {
+        for (let column = 0; column < 2; column++) {
           const denominator = sales.values[column][period.id];
           assert.equal(row.values[column][period.id], denominator === 0 ? undefined : profit.values[column][period.id] / denominator * 100);
         }
-        const final = row.values[selected.length][period.id];
-        assert.equal(row.values[selected.length + 1][period.id], final - row.values[0][period.id]);
-        if (selected.length === 2) assert.equal(row.values[4][period.id], final - row.values[1][period.id]);
+        const final = row.values[1][period.id];
+        assert.equal(row.values[2][period.id], final - row.values[0][period.id]);
       }
     }
     const expansion = api.buildKindExpansionTable(contents, selected, "registered");
@@ -56,7 +55,7 @@ export async function verifyPeriodTables(api) {
   const zero = api.buildPeriodCostComparison(await api.readPlanContents(await api.createTriadicDatabase(2026)), [1, 2]);
   assert.ok(zero.rows.find(row => row.kind === "ratio").values.every(value => value.annual === undefined));
   const filtered = api.filterPlan(contents, { industries: [1], departments: [1] });
-  const table = api.buildPeriodCostComparison(filtered, [1, 2]);
+  const table = api.buildPeriodCostComparison(filtered, [1]);
   assert.equal(table.rows.find(row => row.name === "売上高").values[0][upper.id], 6000000);
   // Different month weights: the period rate is neither a sum nor an average of monthly rates.
   const synthetic = { ...filtered, initiatives: [], previousAmounts: [], accounts: contents.accounts.filter(account => ["売上高", "給料手当"].includes(account.accountName)) };

@@ -13,10 +13,10 @@
 .cost-table-container::-webkit-scrollbar-thumb { background: var(--control-line); border: 3px solid var(--soft); border-radius: 6px; }
 .cost-table { width: max-content; min-width: 100%; font-size: 12px; line-height: 18px; }
 .cost-table .cost-name-column { width: 176px; }
-.cost-table .cost-amount-column { width: 64px; }
+.cost-table .cost-amount-column { width: 120px; }
 .cost-table th, .cost-table td { height: 28px; padding: 4px 6px; white-space: nowrap; }
 .cost-table-page .cost-table th, .cost-table-page .cost-table td { height: 24px; padding-block: 2px; }
-.cost-table thead th { font-size: 12px; }
+.cost-table thead th { font-size: 12px; white-space: pre; }
 .cost-table thead th[scope="col"], .initiative-overview-page thead th { border-right: 1px solid var(--table-line); }
 .cost-table .initiative-list-name { position: sticky; left: 0; z-index: 1; width: 176px; white-space: normal; background: var(--soft); border-right: 1px solid var(--table-divider); }
 .cost-table thead { position: sticky; top: 0; z-index: 2; }
@@ -95,3 +95,7 @@
 
 .expansion-table .expansion-name { border-right-color: var(--table-divider); }
 .expansion-table .expansion-total > *, .expansion-table .expansion-subtotal > * { border-top: 1px solid var(--table-divider); }
+.expansion-table thead th { white-space: pre-line; }
+
+.expansion-table-page > .initiative-list-heading { align-items: flex-start; }
+.expansion-table-page > .initiative-list-heading h1 { margin-top: 9px; }

@@ -62,14 +62,14 @@ export async function verifyPreviousBaselines(api, { excel = false } = {}) {
     assert.throws(() => api.readPreviousWorkbook(wb, contents), /出力し直/);
     const report = api.createReportWorkbook(contents, { tables: ['cost-table', 'expansion-table'],
       selections: { 'cost-table': [1, 2], 'expansion-table': [1, 2], 'initiative-list': [1] },
-      previousSelections: { 'cost-table': 2, 'expansion-table': 1 }, costFilter: { industries: null, departments: null } });
-    assert.equal(report.getWorksheet('総原価表').getCell('B4').value, '前年実績');
-    assert.equal(report.getWorksheet('展開表').getCell('A6').value, '前年見込');
+      previousSelections: { 'cost-table': {1:2,2:1}, 'expansion-table': {1:1,2:2} }, costFilter: { industries: null, departments: null } });
+    assert.equal(report.getWorksheet('総原価表').getCell('B4').value, '一次予算\n前年実績基準');
+    assert.equal(report.getWorksheet('展開表').getCell('A6').value, '前年');
     const source = report.getWorksheet('計算元');
     const priorIds = new Set(); source.eachRow((row, index) => { if (index > 1 && row.getCell(1).value === '前年') priorIds.add(row.getCell(23).value); });
     assert.deepEqual(priorIds, new Set([-1, -2]));
     const rowNumber = 5 + api.buildPeriodCostComparison({ ...contents, previousKind: 2 }, [1, 2]).rows.findIndex(row => row.kind === 'account' && row.id === accountId);
-    assert.equal(report.getWorksheet('総原価表').getCell(rowNumber, 3).value.result, 130);
+    assert.equal(report.getWorksheet('総原価表').getCell(rowNumber, 2).value.result, 130);
     let targetsActual = false;
     report.getWorksheet('総原価表').eachRow(row => row.eachCell(cell => { if (cell.formula?.includes('SUMIFS') && cell.formula.includes(',-2,')) targetsActual = true; }));
     assert.ok(targetsActual, '正確な再計算用の数式も前年実績を参照');
@@ -79,21 +79,47 @@ export async function verifyPreviousBaselines(api, { excel = false } = {}) {
     return;
   }
   const original = structuredClone(contents);
-  for (const [previousKind, expected] of [[1, [100000, 120000, 115000, 15000, -5000]], [2, [110000, 130000, 125000, 15000, -5000]]]) {
+  for (const [previousKind, expected] of [[1, [120000, 115000, -5000]], [2, [130000, 125000, -5000]]]) {
     const context = { ...contents, previousKind };
     const table = api.buildCostComparison(context, [1, 2]);
-    assert.equal(table.labels[0], previousKind === 1 ? '前年見込' : '前年実績');
+    assert.equal(table.labels[0], `一次予算\n${previousKind === 1 ? '前年見込' : '前年実績'}基準`);
     const row = table.rows.find(item => item.kind === 'account' && item.id === accountId);
     assert.deepEqual(row.values.map(value => value[4]), expected);
     const expansion = api.buildKindExpansionTable(context, [1, 2], 'registered');
-    assert.equal(expansion.total[0][4].sales, expected[1]);
-    assert.equal(expansion.total[1][4].sales, expected[2]);
-    for (let column = 0; column < 5; column++) assert.equal(api.buildCostBreakdown(context,
+    assert.equal(expansion.total[0][4].sales, expected[0]);
+    assert.equal(expansion.total[1][4].sales, expected[1]);
+    for (let column = 0; column < 3; column++) assert.equal(api.buildCostBreakdown(context,
       { kind: 'account', id: accountId, column, period: { id: '4', label: '4月', months: [4] } }, [1, 2]).total, expected[column]);
   }
+  for (const primary of [1,2]) for (const final of [1,2]) {
+    const previous = {1:primary,2:final}, context = {...contents,budgetPrevious:previous};
+    const expected = [(primary === 1 ? 100000 : 110000)+20000, (final === 1 ? 100000 : 110000)+15000];
+    const table = api.buildPeriodCostComparison(context,[1,2]);
+    const row = table.rows.find(row=>row.kind==='account'&&row.id===accountId);
+    assert.deepEqual(row.values.map(value=>value.annual), [...expected,expected[1]-expected[0]]);
+    for(let column=0;column<3;column++) assert.equal(api.buildCostBreakdown(context,{kind:'account',id:accountId,column,period:api.tablePeriods.at(-1)},[1,2]).total,row.values[column].annual);
+    const dashboard=api.buildDashboard(context,[1,2]);
+    assert.deepEqual(dashboard.budgets.map(entry=>api.dashboardAmounts(entry.months).sales),expected);
+    assert.deepEqual(dashboard.budgets.map(entry=>api.dashboardAmounts(entry.previous).sales),[primary===1?100000:110000, final===1?100000:110000]);
+    const groups=api.buildDashboardBreakdowns(context,[1,2]);
+    assert.deepEqual(groups.industries.find(item=>item.id===pair.industryId).budgets.map(entry=>api.analysisAnnual(entry.months).sales),expected);
+    const expanded=api.buildKindExpansionTable(context,[1,2],'registered');
+    assert.deepEqual(expanded.total.map(value=>value[4].sales),[...expected,expected[1]-expected[0]]);
+    const saved=await api.readPlanContents(await api.changePlanSettings(bytes,{type:'comparison',screen:'cost-table',selected:[1,2],previous}));
+    assert.deepEqual(saved.previousSelections['cost-table'],previous);
+    for(const selected of [[1],[2],[1,2]]) for(const kind of [1,2]) for(const baseline of [1,2]) {
+      const next=api.toggleComparison(selected,previous,kind,baseline);
+      assert.ok(next.selected.length>=1&&next.selected.length<=2);
+      assert.equal(new Set(next.selected).size,next.selected.length);
+      assert.equal(next.previous[kind===1?2:1],previous[kind===1?2:1]);
+      if(previous[kind]!==baseline||!selected.includes(kind)) {assert.ok(next.selected.includes(kind));assert.equal(next.previous[kind],baseline);}
+      else if(selected.length===1) assert.deepEqual(next.selected,selected);
+      else assert.ok(!next.selected.includes(kind));
+    }
+  }
   assert.deepEqual(contents, original, '基準切替は入力値を書き換えない');
-  const selected = await api.changePlanSettings(bytes, { type: 'previous-selection', screen: 'cost-table', previousKind: 2 });
-  assert.deepEqual((await api.readPlanContents(selected)).previousSelections, { 'cost-table': 2, 'expansion-table': 1 });
+  const selected = await api.changePlanSettings(bytes, { type: 'comparison', screen: 'cost-table', selected: [1,2], previous: {1:2,2:1} });
+  assert.deepEqual((await api.readPlanContents(selected)).previousSelections, { 'cost-table': {1:2,2:1}, 'expansion-table': {1:1,2:1} });
   const left = await api.savePreviousAmounts(bytes, input(1, '101'));
   const right = await api.savePreviousAmounts(bytes, input(2, '112'));
   for (const [local, external] of [[left, right], [right, left]]) {
@@ -119,5 +145,5 @@ export async function verifyPreviousBaselines(api, { excel = false } = {}) {
   const db = await api.openTriadicDatabase(bytes); let old;
   try { db.run(`PRAGMA user_version = ${api.TRIADIC_FORMAT_VERSION - 1}`); old = db.export(); } finally { db.close(); }
   const untouched = old.slice(); await assert.rejects(api.openTriadicDatabase(old), /保存形式/); assert.deepEqual(old, untouched);
-  console.log('PASS: 基準前年の独立保存・共通基準の総原価表・展開表・施策一覧/内訳一致・選択再読込・コピー独立性・同時編集/競合/取消・履歴収支・旧形式非破壊拒否');
+  console.log('PASS: 基準前年の独立保存・予算別基準の総原価表・展開表・施策一覧/内訳一致・選択再読込・コピー独立性・同時編集/競合/取消・履歴収支・旧形式非破壊拒否');
 }

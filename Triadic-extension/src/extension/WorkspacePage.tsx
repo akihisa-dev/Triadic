@@ -34,8 +34,8 @@ export function WorkspacePage({ displayed, workspace }: { displayed: Screen; wor
     changeMaster
   } = workspace;
   const { accounts, initiatives } = contents;
-  const costContents = useMemo(() => ({ ...contents, previousKind: workspace.localPrevious["cost-table"] }), [contents, workspace.localPrevious["cost-table"]]);
-  const expansionContents = useMemo(() => ({ ...contents, previousKind: workspace.localPrevious["expansion-table"] }), [contents, workspace.localPrevious["expansion-table"]]);
+  const costContents = useMemo(() => ({ ...contents, budgetPrevious: workspace.localPrevious["cost-table"] }), [contents, workspace.localPrevious["cost-table"]]);
+  const expansionContents = useMemo(() => ({ ...contents, budgetPrevious: workspace.localPrevious["expansion-table"] }), [contents, workspace.localPrevious["expansion-table"]]);
 
   const { selectedInitiative, detailOrigin } = displayed;
   const currentInitiative = initiatives.find(item => item.id === selectedInitiative?.id && item.fiscalYear === selectedInitiative?.fiscalYear);
@@ -44,9 +44,8 @@ export function WorkspacePage({ displayed, workspace }: { displayed: Screen; wor
   if (currentInitiative) lastDetail.current = currentInitiative;
   const retainedInitiative = currentInitiative ?? (lastDetail.current?.id === selectedInitiative?.id && lastDetail.current?.fiscalYear === selectedInitiative?.fiscalYear ? lastDetail.current : null);
   switch (displayed.page) {
-    case "dashboard": return <DashboardPage contents={contents} selected={workspace.dashboardSelection.kinds} previousKind={workspace.dashboardSelection.previous}
-      disabled={navigationBlocked || isSaving} onKinds={kinds => workspace.setDashboardSelection(value => ({ ...value, kinds }))}
-      onPrevious={previous => workspace.setDashboardSelection(value => ({ ...value, previous }))}
+    case "dashboard": return <DashboardPage contents={contents} selected={workspace.dashboardSelection.kinds} previous={workspace.dashboardSelection.previous}
+      disabled={navigationBlocked || isSaving} onSelection={(kinds, previous) => workspace.setDashboardSelection({ kinds, previous })}
       onDepartment={workspace.openDashboardDepartment} onInitiative={openInitiative} />;
     case "data-history": return <DataHistoryPage onCompare={workspace.onCompareHistory} entries={dataHistory.entries} busy={navigationBlocked} error={historyError} onPreview={previewEntry} onDelete={onDeleteHistory} onRetry={onRetryHistory} onPrepareSave={onPrepareSave} />;
     case "spreadsheet-io": return <DeferredSpreadsheetIOPage contents={contents} busy={isSaving || historyBusy || operationMutation.busy} onChangePlan={changePlan} onPendingChange={setEditPending} onController={workspace.setIOController} onPrepareSave={onPrepareSave} />;

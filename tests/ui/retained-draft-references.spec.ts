@@ -1,3 +1,4 @@
+import { selectBudgets } from "./fixtures";
 import { selectAccount, test, expect, openInitiativeEntry, selectClassification } from './fixtures';
 
 for (const source of ['selection', 'master', 'retry']) test(`未登録施策を保持した${source}保存で部署が再作成されても入力先を付け替えない`, async ({ page, app }) => {
@@ -48,16 +49,15 @@ for (const source of ['selection', 'master', 'retry']) test(`未登録施策を�
     await back.click(); await back.click();
   } else {
     await menu.getByRole('button', { name: '総原価表', exact: true }).click();
-    const slot = app.getByRole('spinbutton', { name: '比較対象1', exact: true });
-    if (source === 'retry') await slot.getByRole('button', { name: '確定予算', exact: true }).click();
-    else await selectClassification(slot, '確定予算');
+    if (source === 'retry') await app.getByRole("checkbox", {name:"前年見込を基準にした確定予算",exact:true}).click();
+    else await selectBudgets(app, [2]);
     if (source === 'retry') {
       await expect(app.getByRole('alert')).toContainText('参照保護の保存失敗');
       await back.click();
       await expect(app.getByRole('combobox', { name: '部署名', exact: true })).toHaveValue('2');
       await expect(amount).toHaveValue('123.456');
       await menu.getByRole('button', { name: '総原価表', exact: true }).click();
-      await selectClassification(slot, '確定予算');
+      await selectBudgets(app, [2]);
     }
     await expect(app.getByRole('alert')).toContainText('未選択の項目を選び直してください');
     await back.click();
@@ -121,7 +121,7 @@ for (const replacement of ['account', 'industry']) test(`外部${replacement}変
   await app.getByRole('spinbutton', { name: '売上高 4月の金額', exact: true }).fill('123.456');
   const menu = app.getByRole('navigation', { name: 'メインナビゲーション' });
   await menu.getByRole('button', { name: '総原価表', exact: true }).click();
-  await selectClassification(app.getByRole('spinbutton', { name: '比較対象1', exact: true }), '確定予算');
+  await selectBudgets(app, [2]);
   await expect(app.getByRole('alert')).toContainText('未選択の項目を選び直してください');
   await app.getByRole('button', { name: '前の画面に戻る', exact: true }).click();
   if (replacement === 'account') {

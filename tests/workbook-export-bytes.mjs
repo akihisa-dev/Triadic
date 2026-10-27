@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import ExcelJS from 'exceljs';
 export async function verifyWorkbookExportBytes(api, contents) {
-  const options = { tables: ['cost-table','initiative-list','expansion-table'], selections: { 'cost-table':[1,2], 'initiative-list':[2], 'expansion-table':[1,2] }, previousSelections: { 'cost-table':2, 'expansion-table':1 }, costFilter: { industries:null, departments:null } };
+  const options = { tables: ['cost-table','initiative-list','expansion-table'], selections: { 'cost-table':[1,2], 'initiative-list':[2], 'expansion-table':[1,2] }, previousSelections: { 'cost-table':{1:2,2:1}, 'expansion-table':{1:1,2:2} }, costFilter: { industries:null, departments:null } };
   const pair = { industryId: contents.industries[0].id, departmentId: contents.departments[0].id };
   for (const request of [{ type:'report', contents, options }, ...[1,2].map(previousKind => ({ type:'previous', contents, previousKind, pairs:[pair] }))]) {
     const expected = request.type === 'report' ? await api.serializeWorkbook(api.createReportWorkbook(contents, options)) : await api.createPreviousWorkbookBytes(contents, [pair], request.previousKind);

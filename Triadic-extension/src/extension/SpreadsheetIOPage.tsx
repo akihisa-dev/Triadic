@@ -13,6 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import type { PlanContents } from "../core/domain/plan";
 import type { KindSelections, PlanChange, PreviousPatch } from "../core/domain/kinds";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
+import { ComparisonSelection } from "./ComparisonSelection";
 import { KindSelectionSlots } from "./KindSelectionSlots";
 import { ChoiceChips } from "./ChoiceChips";
 import { StatusNotice } from "./StatusNotice";
@@ -35,7 +36,7 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
   const readOnly = useHistoryReadOnly();
   const [tables, setTables] = useState<ExportTable[]>(["cost-table", "expansion-table", "initiative-list"]);
   const [selections, setSelections] = useState<KindSelections>(() => ({ "cost-table": [1], "expansion-table": [1], "initiative-list": [2] }));
-  const [previousSelections, setPreviousSelections] = useState<PreviousSelections>({ "cost-table": 1, "expansion-table": 1 });
+  const [previousSelections, setPreviousSelections] = useState<PreviousSelections>({ "cost-table": {1:1,2:1}, "expansion-table": {1:1,2:1} });
   const [previousKind, setPreviousKind] = useState<PreviousKind>(1);
   const [classificationSelection, setClassificationSelection] = useState<ExportClassificationSelection>({ industries: [], departments: [], pairs: [] });
   const [classificationSources, setClassificationSources] = useState(() => ({ industries: contents.industries, departments: contents.departments }));
@@ -119,7 +120,7 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
       {(Object.keys(tableNames) as ExportTable[]).map(table => <div className="io-table-option" key={table}>
         <label className="io-check"><input type="checkbox" checked={tables.includes(table)} disabled={disabled} onChange={event => setTables(current => event.target.checked ? [...current, table] : current.filter(t => t !== table))} />{tableNames[table]}</label>
         {tables.includes(table) && <div className="io-table-conditions">
-          <KindSelectionSlots {...(table === "initiative-list" ? {} : { previousKind: previousSelections[table], onPreviousChange: (value: PreviousKind) => setPreviousSelections(current => ({ ...current, [table]: value })) })} screen={table} selected={selections[table]} disabled={disabled} onChange={selected => setSelections(current => ({ ...current, [table]: selected }))} />
+          {table === "initiative-list" ? <KindSelectionSlots screen={table} selected={selections[table]} disabled={disabled} onChange={selected => setSelections(current => ({ ...current, [table]: selected }))} /> : <ComparisonSelection selected={selections[table]} previous={previousSelections[table]} disabled={disabled} onChange={(selected, previous) => { setSelections(current => ({ ...current, [table]: selected })); setPreviousSelections(current => ({ ...current, [table]: previous })); }} />}
           {table === "cost-table" && <div className="io-classifications">
             <ChoiceChips id="export-industry" label="業種名" value={industries} emptyLabel="全業種の合計" options={contents.industries.map(i => ({ id: i.id, name: i.industryName }))} disabled={disabled} onChange={industries => setClassificationSelection(current => ({ ...current, industries }))} />
             <ChoiceChips id="export-department" label="部署名" value={departments} emptyLabel="全部署の合計" options={contents.departments.map(d => ({ id: d.id, name: d.departmentName }))} disabled={disabled} onChange={departments => setClassificationSelection(current => ({ ...current, departments }))} />

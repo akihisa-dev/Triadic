@@ -1,3 +1,4 @@
+import { selectBudgets } from "./fixtures";
 import { test, expect, settleMotion, selectClassification } from "./fixtures";
 import type { FrameLocator, Locator } from "@playwright/test";
 async function revealAmount(button: Locator) {
@@ -18,7 +19,7 @@ test("金額と期間計・差額の内訳を開き、閉じると元の金額�
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("complementary", { name: "メニュー", exact: true }).getByRole("button", { name: "総原価表", exact: true }).click();
   await closeMenu(app);
-  const button = app.getByRole("button", { name: "売上高 4月 一次予算の内訳", exact: true });
+  const button = app.getByRole("button", { name: "売上高 4月 一次予算 前年見込基準の内訳", exact: true });
   await button.focus();
   await button.press("Enter");
   const dialog = app.getByRole("dialog");
@@ -37,8 +38,8 @@ test("金額と期間計・差額の内訳を開き、閉じると元の金額�
   await expect(dialog.getByRole("rowheader", { name: "前年見込", exact: true })).toHaveCount(0);
   await expect(dialog.getByRole("heading")).toHaveText("売上高 年間計 前年差の内訳");
   await dialog.getByRole("button", { name: "閉じる", exact: true }).click();
-  await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "確定予算");
-  const difference = app.getByRole("button", { name: "売上高 4月 一次予算差の内訳", exact: true });
+  await selectBudgets(app, [1, 2]);
+  const difference = app.getByRole("button", { name: "売上高 4月 差額 確定予算 − 一次予算の内訳", exact: true });
   await revealAmount(difference);
   await difference.click();
   await expect(dialog.getByRole("row").last()).toContainText("30");
@@ -54,8 +55,8 @@ test("分類を絞った内訳から確定予算を編集し、元の分類と�
   await closeMenu(app);
   await selectClassification(app.getByRole("combobox", { name: "部署名", exact: true }), "部署A");
   await selectClassification(app.getByRole("combobox", { name: "業種名", exact: true }), "直営自動車");
-  await selectClassification(app.getByRole("spinbutton", { name: "比較対象1", exact: true }), "確定予算");
-  const cell = app.getByRole("button", { name: "宣伝広告費 3月 確定予算の内訳", exact: true });
+  await selectBudgets(app, [2]);
+  const cell = app.getByRole("button", { name: "宣伝広告費 3月 確定予算 前年見込基準の内訳", exact: true });
   await cell.scrollIntoViewIfNeeded();
   await revealAmount(cell);
   const prepared = await app.locator(".cost-table-container").evaluate(node => ({ top: node.scrollTop, left: node.scrollLeft }));
@@ -82,7 +83,7 @@ test("分類を絞った内訳から確定予算を編集し、元の分類と�
   await back.click();
   await expect(app.getByRole("combobox", { name: "部署名", exact: true })).toHaveValue("1");
   await expect(app.getByRole("combobox", { name: "業種名", exact: true })).toHaveValue("1");
-  await expect(app.getByRole("spinbutton", { name: "比較対象1", exact: true })).toHaveAttribute("aria-valuetext", "確定予算");
+  await expect(app.getByRole("checkbox", { name: "前年見込を基準にした確定予算", exact: true })).toBeChecked();
   const expected = (original + 1).toLocaleString("ja-JP");
   await expect(cell).toHaveText(expected);
   await settleMotion(app.locator("body"));
@@ -106,7 +107,7 @@ test("過去の内訳から開いた施策は同じ時点の参照専用にな�
   await settleMotion(app.locator("body"));
   await menu.getByRole("button", { name: "総原価表", exact: true }).click();
   await closeMenu(app);
-  await app.getByRole("button", { name: "売上高 4月 一次予算の内訳", exact: true }).click();
+  await app.getByRole("button", { name: "売上高 4月 一次予算 前年見込基準の内訳", exact: true }).click();
   await app.getByRole("dialog").getByRole("button", { name: "既存商品の販売拡大（1行目）", exact: true }).click();
   await expect(app.getByRole("spinbutton", { name: "売上高 4月の金額", exact: true }).first()).toHaveValue("100");
   await expect(app.getByRole("textbox", { name: "施策名", exact: true })).toBeDisabled();
@@ -119,7 +120,7 @@ test("内訳の全6列を昇降順に並べ替え、合計と施策への移動�
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("complementary", { name: "メニュー", exact: true }).getByRole("button", { name: "総原価表", exact: true }).click();
   await closeMenu(app);
-  const amount = app.getByRole("button", { name: "営業利益 4月 一次予算の内訳", exact: true });
+  const amount = app.getByRole("button", { name: "営業利益 4月 一次予算 前年見込基準の内訳", exact: true });
   await amount.focus(); await amount.press("Enter");
   const dialog = app.getByRole("dialog"), rows = dialog.locator("tbody tr[data-window-row]");
   const readRows = () => rows.evaluateAll(nodes => nodes.map(node => Array.from(node.children, cell => cell.textContent ?? "")));

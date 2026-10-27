@@ -59,7 +59,7 @@ export function CostBreakdownDialog({ contents, selected, target, title, navigat
         <thead><tr>{columns.map(([column]) => <TableViewHeader key={column} view={tableView} column={column} />)}</tr></thead>
         <MeasuredTableBody key={JSON.stringify(tableView.state)} rows={displayed} container={container} columns={6} rowKey={line => line.key} render={line => <tr>
           <th {...cellFilter.props("name", line.name)} scope="row">{line.initiativeId === null ? line.name : <button type="button" className="initiative-name-button" disabled={navigationBlocked}
-            onClick={() => { const initiative = initiatives.get(line.initiativeId!); if (initiative) { onClose(); onOpenInitiative(initiative, [...selected].sort((a, b) => a - b)[target.column > 0 && target.column <= selected.length ? target.column - 1 : selected.length - 1]); } }}>{line.name}</button>}</th>
+            onClick={() => { const initiative = initiatives.get(line.initiativeId!); if (initiative) { onClose(); onOpenInitiative(initiative, [...selected].sort((a, b) => a - b)[selected.length === 2 ? Math.min(target.column, 1) : 0]); } }}>{line.name}</button>}</th>
           <td {...cellFilter.props("account", accounts.get(line.accountId))}>{accounts.get(line.accountId)}</td><td {...cellFilter.props("department", departments.get(line.departmentId!))}>{departments.get(line.departmentId!) ?? ""}</td><td {...cellFilter.props("industry", industries.get(line.industryId!))}>{industries.get(line.industryId!) ?? ""}</td>
           <td {...cellFilter.props("sign", line.sign === -1 ? "−" : "＋")}>{line.sign === -1 ? "−" : "＋"}</td><td>{formatYen(line.amount)}</td>
         </tr>} />

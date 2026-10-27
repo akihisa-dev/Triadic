@@ -5,7 +5,7 @@ import { buildCostTable } from "./costTable";
 import { initiativesForKind, initiativeRowsForKind } from "./initiatives";
 import { initiativeMonths } from "../domain/calendar";
 import { type PlanContents } from "../domain/plan";
-import type { KindId } from "../domain/kinds";
+import { baselineFor, type KindId } from "../domain/kinds";
 import { buildExpansionTable, totalInitiatives, type ExpansionSort, type ExpansionTotals, type ExpansionMonths } from "./expansionTable";
 
 export type ClassificationFilter = { industries: number[] | null; departments: number[] | null };
@@ -32,8 +32,8 @@ export function previousByAccount(contents: PlanContents) {
   return result;
 }
 export function buildKindCostTable(contents: PlanContents, selected: KindId[]) {
-  const previous = previousByAccount(contents);
-  const kinds = selected.map(kind => buildCostTable(contents.accounts, contents.aggregations, contents.initiatives.map(initiative => ({ ...initiative, rows: initiativeRowsForKind(initiative, kind) })), contents.fiscalYear, previous));
+  const previous = previousByAccount({ ...contents, previousKind: baselineFor(contents, selected[0] ?? 1) });
+  const kinds = selected.map(kind => buildCostTable(contents.accounts, contents.aggregations, contents.initiatives.map(initiative => ({ ...initiative, rows: initiativeRowsForKind(initiative, kind) })), contents.fiscalYear, previousByAccount({ ...contents, previousKind: baselineFor(contents, kind) })));
   const skeleton = kinds[0] ?? buildCostTable(contents.accounts, contents.aggregations, [], contents.fiscalYear, previous);
   return skeleton.map((row, index) => ({ ...row, values: [row.previous, ...kinds.map(rows => rows[index]!.budget)] }));
 }
@@ -70,13 +70,13 @@ export function buildKindExpansionTable(contents: PlanContents, selected: KindId
     return { byId, byExpansion };
   });
   const table = buildExpansionTable({ ...contents, initiatives: projections[0]! }, contents.fiscalYear, sort);
-  const prior = previousTotals(contents);
+  const priors = selected.map(kind => previousTotals({ ...contents, previousKind: baselineFor(contents, kind) }));
   const compare = (values: ExpansionMonths[]) => selected.length === 2
     ? [...values, combineTotals(values[selected.indexOf(2)]!, values[selected.indexOf(1)]!, -1)] : values;
   const totals = projections.map(totalInitiatives);
   return {
-    previous: compare(selected.map(() => prior)),
-    total: compare(totals.map(total => combineTotals(prior, total))),
+    previous: compare(priors),
+    total: compare(totals.map((total, index) => combineTotals(priors[index]!, total))),
     changes: compare(totals),
     groups: table.groups.map(group => {
       const members = indexes.map(index => index.byExpansion.get(group.expansion.id) ?? []);

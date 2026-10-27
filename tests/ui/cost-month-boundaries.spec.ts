@@ -1,4 +1,5 @@
-import { test, expect, selectClassification } from "./fixtures";
+import { selectBudgets } from "./fixtures";
+import { test, expect } from "./fixtures";
 
 test("総原価表の月境界が見出しから金額行まで途切れず、比較対象を増やしても揃う", async ({ page, app }) => {
   await page.goto("/tests/ui/preview.html?data=full");
@@ -6,8 +7,9 @@ test("総原価表の月境界が見出しから金額行まで途切れず、�
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "総原価表", exact: true }).click();
   const table = app.getByRole("table", { name: "総原価表", exact: true });
-  for (const columns of [3, 5]) {
-    if (columns === 5) await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "確定予算");
+  for (const both of [false, true]) {
+    const columns = 3;
+    if (both) await selectBudgets(app, [1, 2]);
     const borders = await table.evaluate((node, columns) => {
       const monthHeaders = [...node.querySelectorAll("thead tr:first-child th.period-month")];
       const rows = [...node.querySelectorAll("tr")].slice(1);
@@ -20,7 +22,9 @@ test("総原価表の月境界が見出しから金額行まで途切れず、�
           const cells = [...row.querySelectorAll(".period-month")];
           return cells.length === 12 * columns && cells.every((cell, index) => {
             const css = getComputedStyle(cell);
-            return (index + 1) % columns === 0 && !cell.nextElementSibling?.classList.contains("period-start") ? css.borderRight === expected : css.borderRightWidth === "0px";
+            const periodBoundary = cell.nextElementSibling?.classList.contains("period-start");
+            if ((index + 1) % columns === 0 && !periodBoundary) return css.borderRight === expected;
+            return css.borderRightWidth === (!periodBoundary && cell.tagName === "TH" ? "1px" : "0px");
           });
         }),
       };

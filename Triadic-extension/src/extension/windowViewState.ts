@@ -1,8 +1,8 @@
-import type { KindId, KindSelections, PreviousKind, PreviousSelections } from "../core/domain/kinds";
+import type { KindId, KindSelections, BudgetPrevious, PreviousKind, PreviousSelections } from "../core/domain/kinds";
 import type { TableSort, TableViewState } from "../core/tables/columnView";
 
 export type WindowViewState = {
-  "dashboard:selection": { kinds: KindId[]; previous: PreviousKind };
+  "dashboard:selection": { kinds: KindId[]; previous: BudgetPrevious };
   "dashboard:period": "annual" | import("../core/domain/calendar").InitiativeMonth;
   "dashboard:ranking": KindId;
   "dashboard:analysis-kind": KindId;

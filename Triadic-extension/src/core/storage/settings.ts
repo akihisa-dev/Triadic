@@ -14,8 +14,8 @@ export function readPlanSettings(db: Database): PlanSettings {
   for (const [screen, first, second] of db.exec("SELECT screen, first_kind, second_kind FROM kind_selections")[0]?.values ?? []) {
     kindSelections[String(screen) as KindScreen] = [Number(first) as KindId, ...(second === null ? [] : [Number(second) as KindId])];
   }
-  const previousSelections: PreviousSelections = { "cost-table": 1, "expansion-table": 1 };
-  for (const [screen, kind] of db.exec("SELECT screen, previous_kind FROM kind_selections WHERE screen != 'initiative-list'")[0]?.values ?? []) previousSelections[String(screen) as keyof PreviousSelections] = Number(kind) as PreviousKind;
+  const previousSelections: PreviousSelections = { "cost-table": { 1: 1, 2: 1 }, "expansion-table": { 1: 1, 2: 1 } };
+  for (const [screen, kind, final] of db.exec("SELECT screen, previous_kind, final_previous_kind FROM kind_selections WHERE screen != 'initiative-list'")[0]?.values ?? []) previousSelections[String(screen) as keyof PreviousSelections] = { 1: Number(kind) as PreviousKind, 2: Number(final) as PreviousKind };
   const previousAmounts = (db.exec("SELECT account_id, industry_id, department_id, month, amount_yen, revision, id, previous_kind FROM previous_amounts ORDER BY previous_kind, industry_id, department_id, account_id, month")[0]?.values ?? [])
     .map(([account, industry, department, month, amount, revision, id, kind]) => ({ previousKind: Number(kind) as PreviousKind, accountId: Number(account), industryId: Number(industry), departmentId: Number(department), month: Number(month), amount: yenToAmount(Number(amount)), revision: Number(revision), id: Number(id) }));
   return { fiscalYear, kindSelections, previousAmounts, previousSelections };
@@ -46,9 +46,10 @@ export async function changePlanSettings(bytes: Uint8Array, change: PlanChange):
 }
 
 export function applyPlanSettings(db: Database, change: PlanChange): void {
-  if (change.type === "previous-selection") {
-    if (!["cost-table", "expansion-table"].includes(change.screen) || !isKindId(change.previousKind)) throw new Error("基準前年が正しくありません。");
-    db.run("UPDATE kind_selections SET previous_kind = ? WHERE screen = ?", [change.previousKind, change.screen]); return;
+  if (change.type === "comparison") {
+    if (!["cost-table", "expansion-table"].includes(change.screen) || !isKindId(change.previous[1]) || !isKindId(change.previous[2])) throw new Error("基準前年が正しくありません。");
+    applyKindSelection(db, change.screen, change.selected);
+    db.run("UPDATE kind_selections SET previous_kind = ?, final_previous_kind = ? WHERE screen = ?", [change.previous[1], change.previous[2], change.screen]); return;
   }
   if (change.type === "previous") return applyPreviousAmounts(db, change.input);
   if (change.type === "previous-import") {

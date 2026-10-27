@@ -1,5 +1,5 @@
 import type { PlanCommand } from "../core/domain/planCommands";
-import { prepareOrdinarySave, prepareAggregationSave, prepareKindSelectionSave, preparePreviousSelectionSave } from "./planProcessing";
+import { prepareOrdinarySave, prepareAggregationSave, prepareKindSelectionSave, prepareComparisonSelectionSave } from "./planProcessing";
 import { planContents, type OpenPlan, type PreparedPlanChange } from "./planFile";
 export type SavedOperation = { before: Uint8Array; after: Uint8Array };
 type CommandPreparation = { operation: null } | { prepared: PreparedPlanChange; operation: SavedOperation };
@@ -14,11 +14,11 @@ export async function preparePlanCommand(target: OpenPlan, command: PlanCommand)
     const contents = { ...planContents(target), kindSelections: { ...target.kindSelections, [screen]: [...selected] } };
     return { prepared: { ...prepared, contents }, operation };
   }
-  if (command.type === "settings" && command.change.type === "previous-selection") {
-    const { screen, previousKind } = command.change;
-    const prepared = await preparePreviousSelectionSave(target.bytes, screen, previousKind);
+  if (command.type === "settings" && command.change.type === "comparison") {
+    const { screen, selected, previous } = command.change;
+    const prepared = await prepareComparisonSelectionSave(target.bytes, screen, selected, previous);
     if (!prepared.operation) return { operation: null };
-    const contents = { ...planContents(target), previousSelections: { ...target.previousSelections, [screen]: previousKind } };
+    const contents = { ...planContents(target), kindSelections: { ...target.kindSelections, [screen]: [...selected] }, previousSelections: { ...target.previousSelections, [screen]: { ...previous } } };
     return { prepared: { ...prepared, contents }, operation: prepared.operation };
   }
   if (command.type === "aggregation") {

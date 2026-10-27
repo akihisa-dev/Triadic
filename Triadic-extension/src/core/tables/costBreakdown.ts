@@ -1,4 +1,4 @@
-import { previousKindName } from "../domain/kinds";
+import { baselineFor, previousKindName } from "../domain/kinds";
 import { amountToYen, checkedYen } from "../domain/amounts";
 import { resolvedAmount, type KindId } from "../domain/kinds";
 import type { PlanContents } from "../domain/plan";
@@ -66,7 +66,7 @@ export function indexCostBreakdown(contents: Pick<PlanContents, "previousAmounts
 /** Use the same membership signs as the cost table, never account-attribute signs. */
 export function buildCostBreakdown(contents: PlanContents, target: CostBreakdownTarget, selected: KindId[], candidates = indexCostBreakdown(contents)) {
   const kinds = [...selected].sort((a, b) => a - b);
-  if (!kinds.length || target.column < 0 || target.column > kinds.length + (kinds.length === 2 ? 2 : 1)) throw new Error("比較対象が正しくありません。");
+  if (!kinds.length || target.column < 0 || target.column > 2) throw new Error("比較対象が正しくありません。");
   const groups = new Map(contents.aggregations.map(group => [group.id, group]));
   const signs = new Map<number, number>();
   const pending = [{ kind: target.kind, id: target.id, sign: 1 }];
@@ -80,25 +80,30 @@ export function buildCostBreakdown(contents: PlanContents, target: CostBreakdown
     if (!group.members.length) throw new Error("集計が未設定です。");
     for (const member of group.members) pending.push({ ...member, sign: item.sign * member.sign });
   }
-  const prior = target.column === 0;
-  const budget = target.column > 0 && target.column <= kinds.length;
-  const primaryDifference = target.column === kinds.length + 2;
-  const kind = kinds[budget ? target.column - 1 : kinds.length - 1]!;
+  const prior = kinds.length === 1 && target.column === 0;
+  const budget = kinds.length === 2 ? target.column < 2 : target.column === 1;
+  const primaryDifference = kinds.length === 2 && target.column === 2;
+  const kind = kinds[kinds.length === 2 && budget ? target.column : kinds.length - 1]!;
   const lines: CostBreakdownLine[] = [];
-  if (prior || budget) {
+  if (prior || budget || primaryDifference) {
+    const baselines = primaryDifference && baselineFor(contents, 1) === baselineFor(contents, 2) ? [] : primaryDifference ? [{ kind: baselineFor(contents, 2), factor: 1 }, { kind: baselineFor(contents, 1), factor: -1 }]
+      : [{ kind: baselineFor(contents, kind), factor: 1 }];
+    for (const baseline of baselines) {
     const previous = new Map<string, { line: Omit<CostBreakdownLine, "amount">; amount: bigint }>();
-    for (const record of candidates.previous(signs.keys(), contents.previousKind ?? 1, target.period.months)) {
-      const sign = signs.get(record.accountId);
+    for (const record of candidates.previous(signs.keys(), baseline.kind, target.period.months)) {
+      const membership = signs.get(record.accountId);
+      const sign = membership === undefined ? undefined : membership * baseline.factor;
       if (sign === undefined) continue;
       const amount = BigInt(amountToYen(record.amount)) * BigInt(sign);
       if (amount === 0n) continue;
-      const key = `previous:${record.accountId}:${record.departmentId}:${record.industryId}`;
-      const entry = previous.get(key) ?? { line: { key, initiativeId: null, name: previousKindName(contents.previousKind ?? 1), accountId: record.accountId,
+      const key = `previous:${baseline.kind}:${baseline.factor}:${record.accountId}:${record.departmentId}:${record.industryId}`;
+      const entry = previous.get(key) ?? { line: { key, initiativeId: null, name: previousKindName(baseline.kind), accountId: record.accountId,
         departmentId: record.departmentId, industryId: record.industryId, sign }, amount: 0n };
       entry.amount += amount;
       previous.set(key, entry);
     }
     for (const { line, amount } of previous.values()) lines.push({ ...line, amount: checkedYen(amount) });
+    }
   }
   if (!prior) for (const { initiative, row, index } of candidates.initiatives(signs.keys())) {
     if (initiative.fiscalYear !== contents.fiscalYear) continue;

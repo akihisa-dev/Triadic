@@ -104,7 +104,7 @@ function assertDatabase(db: Database, documentType: DocumentType): void {
   for (const table of ["initiative_amounts", "previous_amounts"]) {
     if (db.exec(`SELECT month FROM ${table} WHERE typeof(month) != 'integer' OR month NOT BETWEEN 1 AND 12 OR typeof(amount_yen) != 'integer' OR amount_yen NOT BETWEEN -9007199254740991 AND 9007199254740991`).length) invalid();
   }
-  if (db.exec("SELECT previous_kind FROM previous_amounts WHERE typeof(previous_kind) != 'integer' OR previous_kind NOT IN (1,2)").length || db.exec("SELECT previous_kind FROM kind_selections WHERE typeof(previous_kind) != 'integer' OR previous_kind NOT IN (1,2)").length) invalid();
+  if (db.exec("SELECT previous_kind FROM previous_amounts WHERE typeof(previous_kind) != 'integer' OR previous_kind NOT IN (1,2)").length || db.exec("SELECT previous_kind FROM kind_selections WHERE typeof(final_previous_kind) != 'integer' OR final_previous_kind NOT IN (1,2) OR typeof(previous_kind) != 'integer' OR previous_kind NOT IN (1,2)").length) invalid();
   const selections = db.exec("SELECT screen, first_kind, second_kind FROM kind_selections")[0]?.values ?? [];
   if (selections.length !== 3 || new Set(selections.map(row => row[0])).size !== 3 || selections.some(([screen, first, second]) =>
     !["initiative-list", "cost-table", "expansion-table"].includes(String(screen)) || ![1,2].includes(Number(first))

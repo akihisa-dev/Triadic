@@ -169,15 +169,15 @@ export async function verifyReportWorkbooks(api, sample) {
   const row = source.getRows(2, source.rowCount - 1).find(r => r.getCell(21).value === account.id && r.getCell(23).value === 1);
   const report = wb.getWorksheet('総原価表');
   const accountRow = report.getRows(5, report.rowCount - 4).find(r => r.getCell(1).value === account.accountName);
-  const beforeYen = api.buildPeriodCostComparison(sample, [1, 2]).rows.find(row => row.kind === 'account' && row.id === account.id).values[1]['4'];
+  const beforeYen = api.buildPeriodCostComparison(sample, [1, 2]).rows.find(row => row.kind === 'account' && row.id === account.id).values[0]['4'];
   row.getCell(9).value += 1.234;
-  assert.equal(evaluator(wb)(report, accountRow.getCell(3).address), rounded(BigInt(beforeYen) + 1234n));
+  assert.equal(evaluator(wb)(report, accountRow.getCell(2).address), rounded(BigInt(beforeYen) + 1234n));
   const copied = copySourceRow(source, row);
   copied.getCell(9).value = 7.654;
-  assert.equal(evaluator(wb)(report, accountRow.getCell(3).address), rounded(BigInt(beforeYen) + 1234n + 7654n));
+  assert.equal(evaluator(wb)(report, accountRow.getCell(2).address), rounded(BigInt(beforeYen) + 1234n + 7654n));
   const visibleWidth = report.columnCount / 4;
-  assert.match(report.getCell(accountRow.number, visibleWidth + 3).formula, /SUMIFS/);
-  assert.match(report.getCell(accountRow.number, visibleWidth + 2 + 3 * 5 + 1).formula, /SUMIF\([A-Z]+\d+:[A-Z]+\d+/, '四半期は連続範囲の条件集計');
+  assert.match(report.getCell(accountRow.number, visibleWidth + 2).formula, /SUMIFS/);
+  assert.match(report.getCell(accountRow.number, visibleWidth + 2 + 3 * 3).formula, /SUMIF\([A-Z]+\d+:[A-Z]+\d+/, '四半期は連続範囲の条件集計');
   // #20: footer caches and formulas include every initiative of the selected kind.
   for (const kind of [1, 2]) for (const empty of [false, true]) {
     const plan = { ...sample, initiatives: empty ? [] : sample.initiatives };
@@ -224,15 +224,15 @@ export async function verifyReportWorkbooks(api, sample) {
       }
     }));
     const values = evaluator(output);
-    selected.forEach((kind, i) => {
+    [...selected].sort().forEach((kind, i) => {
       assert.equal(values(report, report.getCell(8, 5 + i * 2).address), count * kind);
       assert.equal(values(report, report.getCell(8, 5 + i * 2 + 1).address), count * kind);
     });
     if (selected.length === 2) assert.equal(values(report, 'I8'), count);
     const source = output.getWorksheet('計算元');
-    const changedRow = source.getRows(2, source.rowCount - 1).find(row => row.getCell(23).value === selected[0]);
+    const changedRow = source.getRows(2, source.rowCount - 1).find(row => row.getCell(23).value === [...selected].sort()[0]);
     changedRow.getCell(9).value += 0.625;
-    assert.equal(evaluator(output)(report, 'E8'), count * selected[0] + 1, '元金額の編集を二重計上せず円精度で反映');
+    assert.equal(evaluator(output)(report, 'E8'), count * [...selected].sort()[0] + 1, '元金額の編集を二重計上せず円精度で反映');
     assert.equal(report.rowCount, 8 + count * 2 + 3, '空展開を保ち、補助セルで表示行を増やさない');
   }
   // #81: positive and negative non-contiguous cost members share the same limit.

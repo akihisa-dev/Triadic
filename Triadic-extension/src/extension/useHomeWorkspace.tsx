@@ -3,8 +3,9 @@ import { useWorkspaceNavigation } from "./workspace/useWorkspaceNavigation";
 import { useWorkspaceHistory } from "./workspace/useWorkspaceHistory";
 import { useMutation } from "./useMutation";
 import { useScreenHistory } from "./useScreenHistory";
+import { ComparisonSelection } from "./ComparisonSelection";
 import { KindSelectionSlots } from "./KindSelectionSlots";
-import { type PreviousKind, type KindId, type KindScreen, type PlanChange } from "../core/domain/kinds";
+import { type BudgetPrevious, type KindId, type KindScreen, type PlanChange } from "../core/domain/kinds";
 import { type RelationView } from "./HomeRelationsPage";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createInitiativeDraft, hasInitiativeDraftInput } from "../core/domain/initiativeRules";
@@ -86,7 +87,7 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   const changePlan = (change: PlanChange) => mutation.run(async () => { await onChangePlan(change); });
   const [localKinds, setLocalKinds] = useWindowViewState("table:kinds", contents.kindSelections);
   const [localPrevious, setLocalPrevious] = useWindowViewState("table:previous", contents.previousSelections);
-  const [dashboardSelection, setDashboardSelection] = useWindowViewState("dashboard:selection", { kinds: [1], previous: 1 });
+  const [dashboardSelection, setDashboardSelection] = useWindowViewState("dashboard:selection", { kinds: [1], previous: { 1: 1, 2: 1 } });
   const openDashboardDepartment = (id: number) => {
     costTableView.current = { industries: [], departments: [id], top: 0, left: 0 };
     setLocalKinds(value => ({ ...value, "cost-table": dashboardSelection.kinds }));
@@ -108,23 +109,21 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
     if (previousRevision.current !== operationRevision && (!windows || windows.getWindowSnapshot().peers === 1)) { setLocalKinds(contents.kindSelections); setLocalPrevious(contents.previousSelections); }
     previousRevision.current = operationRevision;
   }, [operationRevision, contents.kindSelections, contents.previousSelections, windows]);
-  const kindSelection = (screen: KindScreen) => <KindSelectionSlots screen={screen} selected={localKinds[screen]} disabled={navigationBlocked || isSaving}
-    {...(screen === "initiative-list" ? {} : { previousKind: localPrevious[screen], onPreviousChange: (previousKind: PreviousKind) => {
-      if (preview) {
-        setLocalPrevious(previous => ({ ...previous, [screen]: previousKind }));
-        setPreview({ ...preview, contents: { ...contents, previousSelections: { ...contents.previousSelections, [screen]: previousKind } } });
-        return;
-      }
-      void changePlan({ type: "previous-selection", screen, previousKind }).then(() => setLocalPrevious(previous => ({ ...previous, [screen]: previousKind }))).catch(error => setNotice({ message: error instanceof Error ? error.message : "基準前年を保存できませんでした。", error: true }));
-    } })}
-    onChange={(selected: KindId[]) => {
-      if (preview) {
-        setLocalKinds(previous => ({ ...previous, [screen]: selected }));
-        setPreview({ ...preview, contents: { ...contents, kindSelections: { ...contents.kindSelections, [screen]: selected } } });
-        return;
-      }
-      void changePlan({ type: "selection", screen, selected }).then(() => setLocalKinds(previous => ({ ...previous, [screen]: selected }))).catch(error => setNotice({ message: error instanceof Error ? error.message : "種別の選択を保存できませんでした。", error: true }));
-    }} />;
+  const kindSelection = (screen: KindScreen) => {
+    const changeSelection = (selected: KindId[], previous?: BudgetPrevious) => {
+      const applyLocal = () => {
+        setLocalKinds(value => ({ ...value, [screen]: selected }));
+        if (previous) setLocalPrevious(value => ({ ...value, [screen]: previous }));
+      };
+      if (preview) { applyLocal(); return; }
+      const change: PlanChange = screen === "initiative-list" ? { type: "selection", screen, selected }
+        : { type: "comparison", screen, selected, previous: previous! };
+      void changePlan(change).then(applyLocal).catch(error => setNotice({ message: error instanceof Error ? error.message : "比較条件を保存できませんでした。", error: true }));
+    };
+    return screen === "initiative-list"
+      ? <KindSelectionSlots screen={screen} selected={localKinds[screen]} disabled={navigationBlocked || isSaving} onChange={selected => changeSelection(selected)} />
+      : <ComparisonSelection selected={localKinds[screen]} previous={localPrevious[screen]} disabled={navigationBlocked || isSaving} onChange={changeSelection} />;
+  };
   const { changeMaster, changePeriodTypes, changeDepartments, changeIndustries, changeExpansions, changeExpansionCategories, changeAggregations, update } = useWorkspaceCommands(
     { onChangeMaster, onChangePeriodTypes, onChangeDepartments, onChangeIndustries, onChangeExpansions, onChangeExpansionCategories, onChangeAggregations, onUpdateInitiative }, mutation, currentContents,
     { initiativeDraft, setInitiativeDraft, saveReferencedMaster, usedAccountIds }, selectedInitiative);

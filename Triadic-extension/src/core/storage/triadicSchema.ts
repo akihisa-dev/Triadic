@@ -6,7 +6,7 @@ import { AGGREGATION_SQL } from "./aggregationSchema";
 export const TRIADIC_FILE_EXTENSION = ".triadic";
 export const TRIADIC_MIME_TYPE = "application/vnd.triadic+sqlite";
 export const TRIADIC_FORMAT_ID = "triadic";
-export const TRIADIC_FORMAT_VERSION = 30;
+export const TRIADIC_FORMAT_VERSION = 31;
 const revision = "INTEGER NOT NULL DEFAULT 0 CHECK (typeof(revision) = 'integer' AND revision >= 0)";
 const amount = "INTEGER NOT NULL DEFAULT 0 CHECK (typeof(amount_yen) = 'integer' AND amount_yen BETWEEN -9007199254740991 AND 9007199254740991)";
 const month = "INTEGER NOT NULL CHECK (typeof(month) = 'integer' AND month BETWEEN 1 AND 12)";
@@ -91,6 +91,7 @@ CREATE TABLE previous_amounts (
  FOREIGN KEY (department_id, industry_id) REFERENCES department_industries(department_id, industry_id)
 );
 CREATE TABLE kind_selections (
+ final_previous_kind INTEGER NOT NULL DEFAULT 1 CHECK (typeof(final_previous_kind) = 'integer' AND final_previous_kind IN (1,2)),
  screen TEXT PRIMARY KEY CHECK (screen IN ('initiative-list', 'cost-table', 'expansion-table')),
  previous_kind INTEGER NOT NULL DEFAULT 1 CHECK (typeof(previous_kind) = 'integer' AND previous_kind IN (1,2)),
  first_kind INTEGER NOT NULL CHECK (first_kind IN (1,2)), second_kind INTEGER CHECK (second_kind IN (1,2)),

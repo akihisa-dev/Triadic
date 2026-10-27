@@ -1,6 +1,6 @@
 import { addYen, sumYen } from "../domain/amounts";
 import { initiativeMonths, type InitiativeMonth } from "../domain/calendar";
-import type { KindId } from "../domain/kinds";
+import { baselineFor, type KindId, type PreviousKind } from "../domain/kinds";
 import type { Initiative, PlanContents } from "../domain/plan";
 import { totalInitiatives, type ExpansionMonths } from "./expansionTable";
 import { initiativesForKind } from "./initiatives";
@@ -9,7 +9,7 @@ import { combineTotals, previousTotals } from "./planTables";
 export type DashboardMetric = "sales" | "profit";
 export type DashboardPeriod = "annual" | InitiativeMonth;
 export type DashboardAmounts = { sales: number; profit: number; margin: number | undefined };
-export type DashboardSeries = { previous: ExpansionMonths; budgets: { kind: KindId; months: ExpansionMonths }[] };
+export type DashboardSeries = { previous: ExpansionMonths; budgets: { kind: KindId; previousKind: PreviousKind; previous: ExpansionMonths; months: ExpansionMonths }[] };
 export function dashboardAmounts(months: ExpansionMonths, period: DashboardPeriod = "annual"): DashboardAmounts {
   const selected = period === "annual" ? initiativeMonths : [period];
   const amount = (metric: DashboardMetric) => {
@@ -26,16 +26,18 @@ export function dashboardChange(value: number, previous: number) {
 export function buildDashboard(contents: PlanContents, selected: KindId[]) {
   const initiatives = contents.initiatives.filter(item => item.fiscalYear === contents.fiscalYear);
   const projections = selected.map(kind => ({ kind, items: initiativesForKind(initiatives, contents.accounts, kind, ["sales", "profit"]) }));
-  const previous = previousTotals(contents);
-  const series: DashboardSeries = { previous, budgets: projections.map(({ kind, items }) => ({ kind, months: combineTotals(previous, totalInitiatives(items)) })) };
+  const previousFor = (kind: KindId, context = contents) => previousTotals({ ...context, previousKind: baselineFor(contents, kind) });
+  const previous = previousFor(selected[0]!);
+  const series: DashboardSeries = { previous, budgets: projections.map(({ kind, items }) => ({ kind, previousKind: baselineFor(contents, kind), previous: previousFor(kind), months: combineTotals(previousFor(kind), totalInitiatives(items)) })) };
   const departments = contents.departments.map(item => ({ id: item.id as number | null, name: item.departmentName }));
   if (initiatives.some(item => item.departmentId == null)) departments.push({ id: null, name: "未所属" });
   return {
     ...series,
     departments: departments.map(department => {
-      const previous = department.id === null ? {} : previousTotals({ ...contents, previousAmounts: contents.previousAmounts.filter(item => item.departmentId === department.id) });
-      return { ...department, previous, budgets: projections.map(({ kind, items }) => ({ kind,
-        months: combineTotals(previous, totalInitiatives(items.filter(item => (item.departmentId ?? null) === department.id))),
+      const prior = (kind: KindId) => department.id === null ? {} : previousFor(kind, { ...contents, previousAmounts: contents.previousAmounts.filter(item => item.departmentId === department.id) });
+      const previous = prior(selected[0]!);
+      return { ...department, previous, budgets: projections.map(({ kind, items }) => ({ kind, previousKind: baselineFor(contents, kind), previous: prior(kind),
+        months: combineTotals(prior(kind), totalInitiatives(items.filter(item => (item.departmentId ?? null) === department.id))),
       })) };
     }),
     initiatives: projections.map(({ kind, items }) => ({ kind, items })),

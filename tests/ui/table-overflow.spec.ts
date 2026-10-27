@@ -18,6 +18,10 @@ for (const scenario of ["monthly", "period", "previous", "difference", "normal"]
       await nav.getByRole("button", { name, exact: true }).click();
       await expect(app.getByRole("heading", { name, exact: true })).toBeVisible();
       if (scenario === "normal") await expect(app.getByRole("table", { name, exact: true })).toBeVisible();
+      else if (scenario === "period" && name === "展開表") {
+        await expect(app.getByRole("table", { name, exact: true })).toBeVisible();
+        await expect(app.getByRole("cell", { name: "範囲超過", exact: true }).first()).toBeVisible();
+      }
       else {
         await expect(app.getByRole("alert")).toContainText("金額の合計が正確に計算できる範囲を超えています。");
         await expect(app.getByRole("table", { name, exact: true })).toHaveCount(0);
@@ -36,7 +40,7 @@ for (const scenario of ["monthly", "period", "previous", "difference", "normal"]
     if (scenario === "difference") {
       for (const name of ["総原価表", "展開表"]) {
         await nav.getByRole("button", { name, exact: true }).click();
-        await app.getByRole("spinbutton", { name: "比較対象2", exact: true }).press("Home");
+        await app.getByRole("checkbox", { name: "前年見込を基準にした確定予算", exact: true }).click();
         await expect(app.getByRole("table", { name, exact: true })).toBeVisible();
         await expect(app.getByRole("alert")).toHaveCount(0);
       }

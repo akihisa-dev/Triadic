@@ -29,7 +29,7 @@ export async function verifyNoChangeSave(api) {
     snapshots = 0;
     for (const prepared of [
       await tasks.prepareKindSelectionSave(bytes, 'cost-table', contents.kindSelections['cost-table'], now),
-      await tasks.preparePreviousSelectionSave(bytes, 'cost-table', contents.previousSelections['cost-table'], now),
+      await tasks.prepareComparisonSelectionSave(bytes, 'cost-table', contents.kindSelections['cost-table'], contents.previousSelections['cost-table'], now),
       await tasks.prepareAggregationSave(bytes, {type:'move',member,parentId:member.parentId,sign:member.sign}, now),
       await tasks.prepareAggregationSave(bytes, {type:'update',...contents.aggregations[0]}, now),
     ]) {
@@ -41,8 +41,8 @@ export async function verifyNoChangeSave(api) {
     assert.equal(snapshots, 0, '無変更の種別・所属・集計更新は取消用コピーを作らない');
     await assert.rejects(tasks.prepareKindSelectionSave(bytes, 'cost-table', [1, 1], now), /種別/);
     await assert.rejects(tasks.prepareKindSelectionSave(bytes, 'unknown', [1], now), /表示対象/);
-    await assert.rejects(tasks.preparePreviousSelectionSave(bytes, 'cost-table', 3, now), /基準前年/);
-    await assert.rejects(tasks.preparePreviousSelectionSave(bytes, 'initiative-list', 1, now), /基準前年/);
+    await assert.rejects(tasks.prepareComparisonSelectionSave(bytes, 'cost-table', [1], {1:3,2:1}, now), /基準前年/);
+    await assert.rejects(tasks.prepareComparisonSelectionSave(bytes, 'initiative-list', [1], {1:1,2:1}, now), /基準前年/);
     await assert.rejects(tasks.prepareAggregationSave(bytes, {type:'move',member:{kind:'account',id:999999},parentId:member.parentId,sign:1},now), /見つかりません/);
     assert.equal(snapshots, 0, '不正入力はコピー作成より先に拒否');
     let writes = 0, reads = 0, notifications = 0;
@@ -53,7 +53,7 @@ export async function verifyNoChangeSave(api) {
     const beforeSnapshot = session.getSnapshot();
     const picker = async () => {throw new Error('同値で保存先を選ばない');};
     await session.dispatch({type:'settings',change:{type:'selection',screen:'cost-table',selected:contents.kindSelections['cost-table']}},picker);
-    await session.dispatch({type:'settings',change:{type:'previous-selection',screen:'cost-table',previousKind:contents.previousSelections['cost-table']}},picker);
+    await session.dispatch({type:'settings',change:{type:'comparison',screen:'cost-table',selected:contents.kindSelections['cost-table'],previous:contents.previousSelections['cost-table']}},picker);
     await session.dispatch({type:'aggregation',change:{type:'move',member,parentId:member.parentId,sign:member.sign}},picker);
     await session.dispatch({type:'account',change:{type:'reorder',ids:contents.accounts.map(account => account.id)}},picker);
     assert.equal(writes,0); assert.equal(reads,0); assert.equal(notifications,0);

@@ -24,7 +24,7 @@ export async function verifyCostCancellation(api, { excel = false } = {}) {
       assert.equal(table.rows.find(row => row.kind === "group" && row.id === plan.aggregations.find(group => group.required === "sales").id).values[1][4], target);
     }
     const both = api.buildCostComparison(plan, [1, 2]).rows.find(row => row.id === sales.id && row.kind === "account");
-    assert.deepEqual(both.values.map(values => values[4]), [0, expected, expected - Math.sign(expected), expected - Math.sign(expected), -Math.sign(expected)]);
+    assert.deepEqual(both.values.map(values => values[4]), [expected, expected - Math.sign(expected), -Math.sign(expected)]);
     const separate = { ...plan, initiatives: plan.initiatives[0].rows.map((row, index) => ({ ...plan.initiatives[0], id: index + 1, rows: [row] })) };
     for (const attribute of ["sales", "cost"]) for (const kind of [1, 2]) {
       const attributed = { ...separate, accounts: separate.accounts.map(account => account.id === sales.id ? { ...account, accountType: attribute } : account) };

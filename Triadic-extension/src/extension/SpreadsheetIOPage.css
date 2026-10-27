@@ -33,3 +33,8 @@
 .io-previous-panel.is-drag-active { outline: 2px dashed var(--ink); outline-offset: -3px; background: var(--soft); }
 
 .io-preview-table thead th { border-bottom-color: var(--table-divider); }
+
+.io-table-option:has(.comparison-selection) { grid-template-columns: 110px minmax(0, 1fr); align-items: start; column-gap: 16px; }
+.io-table-option:has(.comparison-selection) > .io-check { margin-top: 9px; }
+.io-table-option:has(.comparison-selection) .io-table-conditions { padding-left: 0; }
+@media (max-width: 600px) { .io-table-option:has(.comparison-selection) { grid-template-columns: minmax(0, 1fr); } }

@@ -1,4 +1,8 @@
 .cost-table-page .cost-classification-row { flex-wrap: wrap; gap: 8px 16px; }
 .cost-classification-row .classification-field { display: flex; align-items: center; gap: 8px; }
 .cost-classification-row .classification-field label { white-space: nowrap; }
-.cost-classification-row .classification-field select { width: 180px; max-width: 100%; }
+.cost-classification-row .classification-field select { width: 127px; max-width: 100%; }
+.cost-table-page > .initiative-list-heading { align-items: flex-start; gap: 16px; }
+.cost-table-page > .initiative-list-heading h1 { margin-top: 9px; }
+.cost-table-page .cost-classification-row { align-self: flex-start; margin-top: 14px; margin-bottom: 0; }
+.cost-table-page .cost-classification-row select { max-width: 127px; }

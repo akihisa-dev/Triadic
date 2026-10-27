@@ -1,7 +1,7 @@
 import { useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { addYen, formatRate, formatYen, sumYen } from "../core/domain/amounts";
 import { initiativeMonths } from "../core/domain/calendar";
-import { previousKindName, type KindId } from "../core/domain/kinds";
+import { baselineFor, comparisonName, previousKindName, type KindId } from "../core/domain/kinds";
 import type { PlanContents } from "../core/domain/plan";
 import { analysisAnnual, buildDashboardBreakdowns, compositionMode, waterfallSteps, treemapTiles, type AnalysisGroup } from "../core/tables/dashboardBreakdowns";
 import { useWindowViewState } from "./windowView";
@@ -158,20 +158,20 @@ function Composition({ values, name, treemap = false }: { values: Datum[]; name:
     </>}
   </Plot>{treemap && <div className="analysis-legend">{visible.map((item, i) => <span key={i}><i style={{ background: color(i) }} />{i + 1} {item.name} {formatYen(item.value)}</span>)}</div>}</div>;
 }
-function Scatter({ groups, selected, prior, kindName }: { groups: AnalysisGroup[]; selected: KindId[]; prior: string; kindName: (kind: KindId) => string }) {
-  const dots = groups.flatMap((group, groupIndex) => [{ name: prior, kind: null, ...analysisAnnual(group.previous) }, ...selected.map(kind => ({ name: kindName(kind), kind, ...annual(group, kind) }))].map(item => ({ ...item, margin: margin(item.sales, item.profit), group: group.name, groupIndex })));
+function Scatter({ groups, selected, prior, kindName }: { groups: AnalysisGroup[]; selected: KindId[]; prior: (kind: KindId) => string; kindName: (kind: KindId) => string }) {
+  const dots = groups.flatMap((group, groupIndex) => selected.flatMap(kind => [{ name: `${prior(kind)}（${kindName(kind)}）`, kind: null, budgetKind: kind, ...analysisAnnual(group.budgets.find(entry => entry.kind === kind)!.previous) }, { name: kindName(kind), kind, budgetKind: kind, ...annual(group, kind) }]).map(item => ({ ...item, margin: margin(item.sales, item.profit), group: group.name, groupIndex })));
   const valid = dots.filter(item => item.margin !== undefined);
   const x = scale(valid.map(item => item.sales), 100, 600), y = scale(valid.map(item => item.margin!), 290, 35);
   const marker = useId();
   const positions: { x: number; y: number }[] = [];
-  return <><div className="analysis-legend"><span>○ {prior}</span>{selected.map((kind, i) => <span key={kind}>{i === 0 ? "●" : "◆"} {kindName(kind)}</span>)}</div>
+  return <><div className="analysis-legend"><span>○ {[...new Set(selected.map(prior))].join(" / ")}</span>{selected.map((kind, i) => <span key={kind}>{i === 0 ? "●" : "◆"} {kindName(kind)}</span>)}</div>
     <Plot name="業種別の売上と利益率" height={355} headers={["業種", "種別", "売上（千円）", "利益率"]} rows={dots.map(item => [item.group, item.name, formatYen(item.sales), rate(item.margin)])}>
       <defs><marker id={marker} markerWidth={6} markerHeight={6} refX={5} refY={3} orient="auto"><path d="M0,0L6,3L0,6" fill="var(--muted)" /></marker></defs>
       <Axis extent={x} x1={100} x2={600} y={290} />
       {[0, 1, 2, 3, 4].map(tick => { const value = y.low + (y.high - y.low) * tick / 4; return <g key={tick} className="analysis-axis"><line x1={100} x2={600} y1={y.at(value)} y2={y.at(value)} /><text x={90} y={y.at(value) + 4} textAnchor="end">{formatRate(value)}</text></g>; })}
       <line className="analysis-zero" x1={100} x2={600} y1={y.at(0)} y2={y.at(0)} /><text x={100} y={18}>利益率（%）</text><text x={600} y={345} textAnchor="end">売上（千円）</text>
-      {groups.map((group, groupIndex) => { const items = valid.filter(item => item.groupIndex === groupIndex), base = items.find(item => item.kind === null); return <g key={groupIndex}>
-        {base && items.filter(item => item.kind !== null).map(item => <line key={item.name} className="analysis-connector" x1={x.at(base.sales)} y1={y.at(base.margin!)} x2={x.at(item.sales)} y2={y.at(item.margin!)} markerEnd={`url(#${marker})`} />)}
+      {groups.map((group, groupIndex) => { const items = valid.filter(item => item.groupIndex === groupIndex); return <g key={groupIndex}>
+        {items.filter(item => item.kind !== null).map(item => { const base = items.find(other => other.kind === null && other.budgetKind === item.kind); return base && <line key={item.name} className="analysis-connector" x1={x.at(base.sales)} y1={y.at(base.margin!)} x2={x.at(item.sales)} y2={y.at(item.margin!)} markerEnd={`url(#${marker})`} />; })}
         {items.map(item => <Mark key={item.name} label={`${group.name} ${item.name} 売上${formatYen(item.sales)}千円 利益率${rate(item.margin)}`}>
           {item.kind !== null && item.kind === selected[1] ? <path d={`M${x.at(item.sales)},${y.at(item.margin!) - 6}l6,6l-6,6l-6,-6Z`} fill="var(--ink)" /> : <circle cx={x.at(item.sales)} cy={y.at(item.margin!)} r={5} fill={item.kind === null ? "var(--surface)" : "var(--accent)"} stroke={item.kind === null ? "var(--muted)" : "var(--accent)"} strokeWidth={2} />}
         </Mark>)}
@@ -184,20 +184,20 @@ function Scatter({ groups, selected, prior, kindName }: { groups: AnalysisGroup[
     </Plot><div className="analysis-legend">{groups.map((group, index) => <span key={group.id ?? "none"}>{index + 1} {group.name}</span>)}</div>
     {valid.length < dots.length && <p className="dashboard-empty">売上0の項目は利益率を算出せず、点を表示しません。金額は「数値を表示」で確認できます。</p>}</>;
 }
-function Dumbbells({ groups, selected, prior, kindName }: { groups: AnalysisGroup[]; selected: KindId[]; prior: string; kindName: (kind: KindId) => string }) {
-  const items = groups.map(group => ({ name: group.name, prior: analysisAnnual(group.previous).expense, values: selected.map(kind => ({ kind, value: annual(group, kind).expense })) })).filter(item => item.prior !== 0 || item.values.some(value => value.value !== 0));
+function Dumbbells({ groups, selected, prior, kindName }: { groups: AnalysisGroup[]; selected: KindId[]; prior: (kind: KindId) => string; kindName: (kind: KindId) => string }) {
+  const items = groups.map(group => ({ name: group.name, values: selected.map(kind => ({ kind, prior: analysisAnnual(group.budgets.find(entry => entry.kind === kind)!.previous).expense, value: annual(group, kind).expense })) })).filter(item => item.values.some(value => value.prior !== 0 || value.value !== 0));
   const step = selected.length * 22 + 22, height = Math.max(230, items.length * step + 65);
-  const extent = scale(items.flatMap(item => [item.prior, ...item.values.map(value => value.value)]), 245, 530);
-  return <><div className="analysis-legend"><span>○ {prior}</span>{selected.map((kind, i) => <span key={kind}>{i === 0 ? "●" : "◆"} {kindName(kind)}</span>)}</div>
-    <Plot name="科目別の費用増減" height={height} headers={["勘定科目", "種別", `${prior}（千円）`, "予算（千円）", "費用増減（千円）"]} rows={items.flatMap(item => item.values.map(value => [item.name, kindName(value.kind), formatYen(item.prior), formatYen(value.value), signed(addYen(value.value, -item.prior))]))}>
+  const extent = scale(items.flatMap(item => item.values.flatMap(value => [value.prior, value.value])), 245, 530);
+  return <><div className="analysis-legend"><span>○ {[...new Set(selected.map(prior))].join(" / ")}</span>{selected.map((kind, i) => <span key={kind}>{i === 0 ? "●" : "◆"} {kindName(kind)}</span>)}</div>
+    <Plot name="科目別の費用増減" height={height} headers={["勘定科目", "種別", "前年（千円）", "予算（千円）", "費用増減（千円）"]} rows={items.flatMap(item => item.values.map(value => [item.name, kindName(value.kind), formatYen(value.prior), formatYen(value.value), signed(addYen(value.value, -value.prior))]))}>
       <Axis extent={extent} x1={245} x2={530} y={height - 42} />
       {items.map((item, index) => <g key={item.name}>
         <foreignObject x={0} y={25 + index * step} width={205} height={step - 6}><div className="analysis-row-name">{item.name}</div></foreignObject>
-        {item.values.map((value, series) => { const y = 38 + index * step + series * 22; return <Mark key={value.kind} label={`${item.name} ${kindName(value.kind)} ${formatYen(value.value)}千円 ${prior} ${formatYen(item.prior)}千円 費用増減${signed(addYen(value.value, -item.prior))}千円`}>
-          <line className="analysis-connector" x1={extent.at(item.prior)} x2={extent.at(value.value)} y1={y} y2={y} />
-          <circle cx={extent.at(item.prior)} cy={y} r={4} fill="var(--surface)" stroke="var(--muted)" strokeWidth={2} />
+        {item.values.map((value, series) => { const y = 38 + index * step + series * 22; return <Mark key={value.kind} label={`${item.name} ${kindName(value.kind)} ${formatYen(value.value)}千円 ${prior(value.kind)} ${formatYen(value.prior)}千円 費用増減${signed(addYen(value.value, -value.prior))}千円`}>
+          <line className="analysis-connector" x1={extent.at(value.prior)} x2={extent.at(value.value)} y1={y} y2={y} />
+          <circle cx={extent.at(value.prior)} cy={y} r={4} fill="var(--surface)" stroke="var(--muted)" strokeWidth={2} />
           {series === 0 ? <circle cx={extent.at(value.value)} cy={y} r={5} fill="var(--accent)" /> : <path d={`M${extent.at(value.value)},${y - 5}l5,5l-5,5l-5,-5Z`} fill="var(--ink)" />}
-          <text x={630} y={y + 4} textAnchor="end">{signed(addYen(value.value, -item.prior))}</text>
+          <text x={630} y={y + 4} textAnchor="end">{signed(addYen(value.value, -value.prior))}</text>
         </Mark>; })}
       </g>)}
     </Plot></>;
@@ -217,9 +217,10 @@ export function DashboardAnalysis({ contents, selected }: { contents: PlanConten
   const [expansion, setExpansion] = useWindowViewState("dashboard:analysis-expansion", contents.expansions.find(item => item.expansionName === "コスト")?.id ?? contents.expansions[0]?.id ?? null, true);
   const kind = selected.includes(storedKind) ? storedKind : selected[0]!;
   const expansionId = data.expansions.some(item => item.id === expansion) ? expansion : data.expansions[0]?.id ?? null;
-  const kindName = (id: KindId) => contents.kinds.find(item => item.id === id)!.kindName;
-  const prior = previousKindName(contents.previousKind ?? 1), note = `年間・${kindName(kind)}・千円`;
-  const total = (metric: "sales" | "profit", previous: boolean) => sumYen(data.industries.map(group => previous ? analysisAnnual(group.previous)[metric] : annual(group, kind)[metric]));
+  const kindName = (id: KindId) => comparisonName(contents, id).replace("\n", " · ");
+  const priorName = (id: KindId) => previousKindName(baselineFor(contents, id));
+  const prior = priorName(kind), note = `年間・${kindName(kind)}・千円`;
+  const total = (metric: "sales" | "profit", previous: boolean) => sumYen(data.industries.map(group => previous ? analysisAnnual(group.budgets.find(entry => entry.kind === kind)!.previous)[metric] : annual(group, kind)[metric]));
   const sales = data.industries.map(group => ({ name: group.name, value: annual(group, kind).sales }));
   const expenses = data.accounts.map(group => ({ name: group.name, value: annual(group, kind).expense }));
   const categoryGroups = data.categoriesByExpansion.get(expansionId) ?? [];
@@ -234,7 +235,7 @@ export function DashboardAnalysis({ contents, selected }: { contents: PlanConten
     </div>
     <div className="dashboard-pair">
       <Section title="業種別の売上構成" note={note}><Composition values={sales} name="業種別の売上構成" /></Section>
-      <Section title="業種別の売上と利益率" note={`年間・${prior}／${selected.map(kindName).join("／")}`}><Scatter groups={industryGroups} selected={selected} prior={prior} kindName={kindName} /></Section>
+      <Section title="業種別の売上と利益率" note={`年間・${prior}／${selected.map(kindName).join("／")}`}><Scatter groups={industryGroups} selected={selected} prior={priorName} kindName={kindName} /></Section>
     </div>
     <Section title="部署 × 業種の利益" note={note}><Heatmap name="部署 × 業種の利益" columns={matrixIndustries.map(group => group.name)} rows={data.departments.map(department => ({ name: department.name, values: matrixIndustries.map(industry => {
       const entry = data.cells.get(JSON.stringify([department.id, industry.id]));
@@ -243,7 +244,7 @@ export function DashboardAnalysis({ contents, selected }: { contents: PlanConten
     }) }))} /></Section>
     <div className="dashboard-expense-charts">
       <Section title="勘定科目別の費用構成" note={note}><Composition values={expenses} name="勘定科目別の費用構成" treemap /></Section>
-      <Section title="科目別の費用増減" note={`年間・${prior}／${selected.map(kindName).join("／")}・千円`}><Dumbbells groups={data.accounts} selected={selected} prior={prior} kindName={kindName} /></Section>
+      <Section title="科目別の費用増減" note={`年間・${prior}／${selected.map(kindName).join("／")}・千円`}><Dumbbells groups={data.accounts} selected={selected} prior={priorName} kindName={kindName} /></Section>
     </div>
     <Section title="展開 × 月別の利益増減" note={`${kindName(kind)}・施策増減・千円`}><Heatmap name="展開 × 月別の利益増減" columns={initiativeMonths.map(month => `${month}月`)} rows={data.expansions.map(group => ({ name: group.name, values: initiativeMonths.map(month => group.budgets.find(item => item.kind === kind)!.months[month]!.profit) }))} /></Section>
   </div>;

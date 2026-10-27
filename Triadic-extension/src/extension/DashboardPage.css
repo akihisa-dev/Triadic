@@ -69,3 +69,8 @@
   .dashboard-department-header { display: none; }
   .dashboard-mobile-label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 8px; }
 }
+
+.dashboard-prior-2 .dashboard-chart-line { stroke-dasharray: 8 4; }
+.dashboard-legend .dashboard-prior-2::before { border-top-style: dashed; }
+.dashboard-page > .initiative-list-heading { align-items: flex-start; }
+.dashboard-page > .initiative-list-heading h1 { margin-top: 9px; }

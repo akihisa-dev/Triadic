@@ -86,3 +86,19 @@ export async function selectAccount(slot: Locator, choice: string | { label: str
   await option.click();
   await expect(slot).toHaveAttribute("aria-expanded", "false");
 }
+
+export async function selectBudgets(target: FrameLocator | Page, kinds: number[]) {
+  const group = target.getByRole('group', { name: '予算の比較条件', exact: true });
+  for (const kind of kinds) {
+    const box = group.getByRole('checkbox', { name: `前年見込を基準にした${kind === 1 ? '一次予算' : '確定予算'}`, exact: true });
+    if (!await box.isChecked()) await box.click();
+    await expect(box).toBeChecked();
+  }
+  for (const kind of [1, 2].filter(kind => !kinds.includes(kind))) {
+    for (const baseline of ['前年見込', '前年実績']) {
+      const box = group.getByRole('checkbox', { name: `${baseline}を基準にした${kind === 1 ? '一次予算' : '確定予算'}`, exact: true });
+      if (await box.isChecked()) await box.click();
+      await expect(box).not.toBeChecked();
+    }
+  }
+}

@@ -1,4 +1,5 @@
-import { test, expect, settleMotion, selectClassification } from "./fixtures";
+import { selectBudgets } from "./fixtures";
+import { test, expect, settleMotion } from "./fixtures";
 import type { FrameLocator, Locator } from "@playwright/test";
 
 // Scrollbars are the interaction under test; Chromium headless hides them by default.
@@ -107,7 +108,7 @@ for (const screen of ["総原価表", "展開表"]) {
       await app.getByRole("button", { name: "前の画面に戻る", exact: true }).click();
       await expect.poll(async () => Math.abs(await region.evaluate(node => node.scrollLeft) - target)).toBeLessThan(2);
     }
-    await selectClassification(app.getByRole("spinbutton", { name: "比較対象2", exact: true }), "確定予算");
+    await selectBudgets(app, [1, 2]);
     await settleMotion(app.locator("body"));
     await rail.hover({ position: { x: (await rail.boundingBox())!.width - 2, y: 4 } });
     const annual = await targetPosition(table, "annual");

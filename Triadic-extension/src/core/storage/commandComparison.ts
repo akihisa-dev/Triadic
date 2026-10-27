@@ -17,7 +17,7 @@ function targets(command: PlanCommand): Target[] {
     case "industry": return [{ table: "industries" }];
     case "department": return [{ table: "departments" }, { table: "department_industries" }];
     case "period": return [{ table: "period_types" }];
-    case "settings": return (command.change.type === "selection" || command.change.type === "previous-selection") ? [{ table: "kind_selections" }]
+    case "settings": return (command.change.type === "selection" || command.change.type === "comparison") ? [{ table: "kind_selections" }]
       : command.change.type === "previous" ? [{ table: "previous_amounts", where: "industry_id = ? AND department_id = ? AND previous_kind = ?", params: [command.change.input.industryId!, command.change.input.departmentId!, command.change.input.previousKind] }]
         : [{ table: "previous_amounts" }];
     case "aggregation": throw new Error("集計の保存準備を使用してください。");

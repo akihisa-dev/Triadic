@@ -34,7 +34,7 @@ export function buildPeriodCostComparison(contents: PlanContents, selected: Kind
         continue;
       }
       if (!row.configured) continue;
-      for (let index = 0; index <= selected.length; index++) {
+      for (let index = 0; index < 2; index++) {
         if (row.kind !== "ratio") values[index]![period.id] = sumPeriod(row.values[index]!, period);
         else {
           const denominator = sumPeriod(sales.values[index]!, period);
@@ -42,11 +42,10 @@ export function buildPeriodCostComparison(contents: PlanContents, selected: Kind
           if (denominator !== 0) values[index]![period.id] = numerator / denominator * 100;
         }
       }
-      const latest = values[selected.length]![period.id];
+      const latest = values[1]![period.id];
       const difference = (right: number | undefined) => latest === undefined || right === undefined ? undefined
         : row.kind === "ratio" ? latest - right : addYen(latest, -right);
-      values[selected.length + 1]![period.id] = difference(values[0]![period.id]);
-      if (selected.length === 2) values[4]![period.id] = difference(values[1]![period.id]);
+      values[2]![period.id] = difference(values[0]![period.id]);
     }
     return { ...row, values };
   }) };

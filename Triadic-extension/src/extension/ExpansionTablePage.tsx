@@ -14,7 +14,7 @@ import { Fragment, memo, useMemo, useRef, useState } from "react";
 import { expansionPeriodAmount, tablePeriods } from "../core/tables/periodTables";
 import { type Initiative, type PlanContents } from "../core/domain/plan";
 import { createExpansionTableView, selectExpansionView, type ExpansionViewItem } from "../core/tables/expansionTableView";
-import { previousKindName } from "../core/domain/kinds";
+import { baselineFor, comparisonName, previousKindName } from "../core/domain/kinds";
 import type { KindId } from "../core/domain/kinds";
 import { formatTableYen } from "./tableNumberFormat";
 
@@ -57,7 +57,8 @@ function ExpansionInitiativeCells({ item, source, kind, onOpen, period, category
     <AmountCells values={item.values} copyRow={copyRow} />
   </>;
 }
-export function ExpansionTablePage({ contents, selected, selection, onOpenInitiative }: Props) {
+export function ExpansionTablePage({ contents, selected: requested, selection, onOpenInitiative }: Props) {
+  const selected = useMemo(() => [...requested].sort(), [requested]);
   return <main className="initiative-list-page expansion-table-page" aria-labelledby="expansion-table-title">
     <div className="initiative-list-heading">
       <h1 id="expansion-table-title">展開表</h1>
@@ -71,7 +72,7 @@ export function ExpansionTablePage({ contents, selected, selection, onOpenInitia
 
 function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<Props, "selection">) {
   const viewForSelection = useMemo(() => createExpansionTableView(contents),
-    [contents.initiatives, contents.accounts, contents.previousAmounts, contents.previousKind, contents.expansions, contents.periodTypes, contents.expansionCategories, contents.fiscalYear]);
+    [contents.initiatives, contents.accounts, contents.previousAmounts, contents.previousKind, contents.budgetPrevious, contents.expansions, contents.periodTypes, contents.expansionCategories, contents.fiscalYear]);
   const baseView = viewForSelection(selected);
   const categoryNames = useMemo(() => new Map(contents.expansionCategories.map(category => [category.id, category.categoryName])), [contents.expansionCategories]);
   const sourceInitiatives = useMemo(() => new Map(contents.initiatives.map(item => [item.id, item])), [contents.initiatives]);
@@ -81,7 +82,7 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
   const columns = useMemo<TableColumn<ExpansionViewItem>[]>(() => {
     const expansionNames = new Map(contents.expansions.map(item => [item.id, item.expansionName]));
     const periodNames = new Map(contents.periodTypes.map(item => [item.id, item.periodName]));
-    const labels = [...selected.map(id => contents.kinds.find(kind => kind.id === id)!.kindName), ...(selected.length === 2 ? ["比較"] : [])];
+    const labels = [...selected.map(id => comparisonName(contents, id)), ...(selected.length === 2 ? ["差額\n確定予算 − 一次予算"] : [])];
     return [
       { id: "expansion", label: "展開名", type: "choice", value: row => expansionNames.get(row.expansionId!) },
       { id: "period", label: "期間名", type: "choice", value: row => periodNames.get(row.periodTypeId!) },
@@ -93,7 +94,7 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
         value: (row: ExpansionViewItem) => { try { return expansionPeriodAmount(row.values[index]!, period, metric); } catch { return null; } },
       })))),
     ];
-  }, [contents.expansions, contents.periodTypes, contents.kinds, categoryNames, selected]);
+  }, [contents.expansions, contents.periodTypes, contents.kinds, contents.budgetPrevious, contents.previousKind, categoryNames, selected]);
   const members = useMemo(() => baseView.table.groups.flatMap(group => group.initiatives), [baseView]);
   const tableView = useTableView(members, columns, { state: viewState, change: state => { setViewState(state); if (container.current) container.current.scrollTop = 0; } });
   const cellFilter = useTableCellFilter(tableView);
@@ -143,7 +144,7 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
       if (!(event.relatedTarget instanceof Node && event.currentTarget.closest("tbody")?.contains(event.relatedTarget))) setFocusedId(null);
     },
   });
-  const labels = [...selected.map(id => contents.kinds.find(kind => kind.id === id)!.kindName), ...(selected.length === 2 ? ["比較"] : [])];
+  const labels = [...selected.map(id => comparisonName(contents, id)), ...(selected.length === 2 ? ["差額\n確定予算 − 一次予算"] : [])];
   return <PeriodScrollFrame container={container} label="展開表" layoutKey={selected.join(",")}><div id={expansionScrollRegionId} ref={container} {...rangeCopy} className="initiative-list-container" role="region" aria-label="展開表の月別種別・比較" tabIndex={0}>
       <table className={`initiative-list-table expansion-table${virtual ? " virtual-table" : ""}`} style={{ "--virtual-row-height": "28px" } as React.CSSProperties} aria-label="展開表" aria-rowcount={flat.length + 6}>
         {calculationError && <caption role="alert">絞り込み後の集計を計算できません。{calculationError}</caption>}
@@ -157,7 +158,7 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
         </tr>
         <tr>{tablePeriods.map(period => <Fragment key={period.id}>{labels.map((label, index) => <th key={index} scope="colgroup" colSpan={2} className={periodCellClass(period, index === 0)}>{label}</th>)}</Fragment>)}</tr>
         <tr>{tablePeriods.map(period => <Fragment key={period.id}>{labels.flatMap((_, index) => (["sales", "profit"] as const).map(key => <TableViewHeader key={`${index}-${key}`} view={tableView} column={`${period.id}:${selected[index] ?? "difference"}:${key}`} className={periodCellClass(period, key === "sales" && index === 0)} />))}</Fragment>)}</tr>
-        <tr className="expansion-previous"><th colSpan={4} scope="row" className="expansion-summary">{previousKindName(contents.previousKind ?? 1)}</th><AmountCells values={table.previous} copyRow={0} /></tr>
+        <tr className="expansion-previous"><th colSpan={4} scope="row" className="expansion-summary">{selected.length === 2 ? "前年" : previousKindName(baselineFor(contents, selected[0]!))}</th><AmountCells values={table.previous} copyRow={0} /></tr>
         <tr className="expansion-total"><th colSpan={4} scope="row" className="expansion-summary">{tableView.filtered ? "合計（絞り込み後）" : "合計"}</th><AmountCells values={table.total} error={calculationError} copyRow={1} /></tr>
         <tr className="expansion-total"><th colSpan={4} scope="row" className="expansion-summary">{tableView.filtered ? "展開計（表示中）" : "展開計"}</th><AmountCells values={table.changes} error={calculationError} copyRow={2} /></tr>
       </thead>

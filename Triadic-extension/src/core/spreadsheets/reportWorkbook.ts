@@ -4,7 +4,7 @@ import ExcelJS from "exceljs";
 import { excelAmount } from "./excelAmounts";
 import { installPreciseCalculations, type MonetaryCell } from "./reportPrecision";
 import { initiativeMonths } from "../domain/calendar";
-import { resolvedAmount, previousKindName, type PreviousSelections, type KindSelections } from "../domain/kinds";
+import { comparisonName, resolvedAmount, previousKindName, type PreviousSelections, type KindSelections } from "../domain/kinds";
 import type { PlanContents } from "../domain/plan";
 import { buildPeriodCostComparison, tablePeriods, expansionPeriodAmount } from "../tables/periodTables";
 import { buildKindExpansionTable, filterPlan, type ClassificationFilter } from "../tables/planTables";
@@ -123,8 +123,9 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
   for (const [name, selected] of Object.entries(options.selections)) {
     if (!selected.length || selected.length > (name === "initiative-list" ? 1 : 2) || new Set(selected).size !== selected.length || selected.some(k => k !== 1 && k !== 2)) throw new Error("出力する種別が正しくありません。");
   }
-  const previousSelections = options.previousSelections ?? { "cost-table": 1, "expansion-table": 1 };
-  if ((["cost-table", "expansion-table"] as const).some(screen => previousSelections[screen] !== 1 && previousSelections[screen] !== 2)) throw new Error("基準前年が正しくありません。");
+  const previousSelections = options.previousSelections ?? { "cost-table": {1:1,2:1}, "expansion-table": {1:1,2:1} };
+  if ((["cost-table", "expansion-table"] as const).some(screen => ([1,2] as const).some(kind => previousSelections[screen][kind] !== 1 && previousSelections[screen][kind] !== 2))) throw new Error("基準前年が正しくありません。");
+  options = { ...options, selections: { ...options.selections, "expansion-table": [...options.selections["expansion-table"]].sort() } };
   const wb = workbook();
   const masters = indexReportMasters(contents);
   const monetary: MonetaryCell[] = [];
@@ -133,8 +134,8 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
     cell.value = { formula: expression, result: result ?? "属性未設定" };
     if (money) monetary.push({ cell, expression, yen: result as number | null });
   };
-  const filtered = filterPlan({ ...contents, previousKind: previousSelections["cost-table"] }, options.costFilter);
-  const expansionTable = options.tables.includes("expansion-table") ? buildKindExpansionTable({ ...contents, previousKind: previousSelections["expansion-table"] }, options.selections["expansion-table"], "registered") : null;
+  const filtered = filterPlan({ ...contents, budgetPrevious: previousSelections["cost-table"] }, options.costFilter);
+  const expansionTable = options.tables.includes("expansion-table") ? buildKindExpansionTable({ ...contents, budgetPrevious: previousSelections["expansion-table"] }, options.selections["expansion-table"], "registered") : null;
   const unfiltered = sources(wb, contents, options.costFilter, masters);
   const range = (col: number) => reportSourceRange(unfiltered.ws.getColumn(col).letter);
   const conditionalSum = (month: number, criteria: [number, number | string][]) =>
@@ -142,7 +143,7 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
   if (options.tables.includes("cost-table")) {
     const selected = [...options.selections["cost-table"]].sort((a, b) => a - b);
     const table = buildPeriodCostComparison(filtered, selected);
-    const ws = sheet(wb, "総原価表", [25, ...tablePeriods.flatMap(() => table.labels.map(() => 10))], 2, 1);
+    const ws = sheet(wb, "総原価表", [25, ...tablePeriods.flatMap(() => table.labels.map(() => 18))], 2, 1);
     ws.getCell("A2").value = `${contents.fiscalYear}年度 · 単位：千円`;
     ws.mergeCells("A3:A4"); ws.getCell("A3").value = "科目・集計";
     const width = table.labels.length;
@@ -165,7 +166,7 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
         const value = values[period.id];
         const at = (ri: number, valueIndex = vi) => ws.getCell(ri, 2 + pi * width + valueIndex).address;
         let expression = "0";
-        if (vi > selected.length) expression = `${at(r, selected.length)}-${at(r, vi === selected.length + 1 ? 0 : 1)}`;
+        if (vi === 2) expression = `${at(r, 1)}-${at(r, 0)}`;
         else if (row.kind === "ratio") {
           const denominator = at(rowMap.get(`group:${sales.id}`)!);
           expression = `IF(${denominator}=0,"",${at(rowMap.get(`group:${profit.id}`)!)}/${denominator}*100)`;
@@ -181,15 +182,18 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
           const definition = masters.aggregations.get(row.id)!;
           expression = `${sum(definition.members.filter(m => m.sign === 1).map(m => at(rowMap.get(`${m.kind}:${m.id}`)!)))}-${sum(definition.members.filter(m => m.sign === -1).map(m => at(rowMap.get(`${m.kind}:${m.id}`)!)))}`;
         } else {
-          const prior = conditionalSum(period.months[0]!, [[reportSourceColumn("accountId"), row.id], [reportSourceColumn("kindId"), -previousSelections["cost-table"]], [reportSourceColumn("included"), 1]]);
-          expression = vi === 0 ? prior : `${prior}+${conditionalSum(period.months[0]!, [[reportSourceColumn("accountId"), row.id], [reportSourceColumn("kindId"), selected[vi - 1]!], [reportSourceColumn("included"), 1]])}`;
+          const kind = selected.length === 2 ? selected[vi]! : selected[0]!;
+          const prior = conditionalSum(period.months[0]!, [[reportSourceColumn("accountId"), row.id], [reportSourceColumn("kindId"), -previousSelections["cost-table"][kind]], [reportSourceColumn("included"), 1]]);
+          expression = selected.length === 1 && vi === 0 ? prior : `${prior}+${conditionalSum(period.months[0]!, [[reportSourceColumn("accountId"), row.id], [reportSourceColumn("kindId"), kind], [reportSourceColumn("included"), 1]])}`;
         }
-        if (row.kind === "ratio" && vi > selected.length) expression = `IF(OR(${at(r, selected.length)}="",${at(r, vi === selected.length + 1 ? 0 : 1)}=""),"",${expression})`;
+        if (row.kind === "ratio" && vi === 2) expression = `IF(OR(${at(r, 1)}="",${at(r, 0)}=""),"",${expression})`;
         formula(cell, expression, row.kind === "ratio" && row.configured ? value ?? "" : value, row.kind !== "ratio");
-        if (row.kind === "ratio") cell.numFmt = vi > selected.length ? '[>=0.05]0.0"pt";[<=-0.05]-0.0"pt";""' : '[>=0.05]0.0"%";[<=-0.05]-0.0"%";""';
+        if (row.kind === "ratio") cell.numFmt = vi === 2 ? '[>=0.05]0.0"pt";[<=-0.05]-0.0"pt";""' : '[>=0.05]0.0"%";[<=-0.05]-0.0"%";""';
       }));
     });
     finish(ws, 4, shaded);
+    ws.getRow(4).height = 36;
+    ws.getRow(4).eachCell(cell => { cell.alignment = { ...cell.alignment, wrapText: true }; });
     periodStyles(ws, 2, width);
     const salesRow = rowMap.get(`group:${sales.id}`)!;
     ws.views = [{ state: "frozen", xSplit: 1, ySplit: salesRow }];
@@ -237,7 +241,7 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
     const selected = options.selections["expansion-table"];
     const table = expansionTable!;
     const grouping = createExpansionGrouping(contents);
-    const labels = [...selected.map(k => masters.kinds.get(k)!.kindName), ...(selected.length === 2 ? ["比較"] : [])];
+    const labels = [...selected.map(k => comparisonName({ budgetPrevious: previousSelections["expansion-table"] }, k)), ...(selected.length === 2 ? ["差額\n確定予算 − 一次予算"] : [])];
     const width = labels.length * 2;
     const ws = sheet(wb, "展開表", [11, 11, 17, 34, ...tablePeriods.flatMap(() => labels.flatMap(() => [14, 14]))], 3, 4);
     ws.getCell("A2").value = `${contents.fiscalYear}年度 · 単位：千円`;
@@ -292,11 +296,13 @@ export function createReportWorkbook(contents: PlanContents, options: ExportOpti
       ws.getCell(r, 2).value = `${group.expansion.expansionName}計`;
       amountRow(r, group.values, (_, __, ___, col) => sum(members.map(ri => ws.getCell(ri, col).address)));
     }
-    [previousKindName(previousSelections["expansion-table"]), "合計", "展開計"].forEach((label, i) => { ws.mergeCells(6 + i, 1, 6 + i, 4); ws.getCell(6 + i, 1).value = label; });
-    amountRow(6, table.previous, (_, metric, m) => effectFormula(null, -previousSelections["expansion-table"], m, metric));
+    [selected.length === 2 ? "前年" : previousKindName(previousSelections["expansion-table"][selected[0]!]), "合計", "展開計"].forEach((label, i) => { ws.mergeCells(6 + i, 1, 6 + i, 4); ws.getCell(6 + i, 1).value = label; });
+    amountRow(6, table.previous, (ki, metric, m) => effectFormula(null, -previousSelections["expansion-table"][selected[ki]!], m, metric));
     amountRow(8, table.changes, (_, __, ___, col) => sum(subtotals.map(ri => ws.getCell(ri, col).address)));
     amountRow(7, table.total, (_, __, ___, col) => `${ws.getCell(6, col).address}+${ws.getCell(8, col).address}`);
     finish(ws, 5, shaded);
+    ws.getRow(4).height = 36;
+    ws.getRow(4).eachCell(cell => { cell.alignment = { ...cell.alignment, wrapText: true }; });
     periodStyles(ws, 5, width);
   }
   installPreciseCalculations(wb, monetary);

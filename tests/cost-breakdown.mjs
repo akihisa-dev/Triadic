@@ -18,7 +18,7 @@ export async function verifyCostBreakdown(api) {
   assert.equal(JSON.stringify(contents), original, "内訳の閲覧は元のデータを変更しない");
   const sales = contents.accounts.find(item => item.accountName === "売上高");
   const period = api.tablePeriods.find(item => item.id === "4");
-  const target = { kind: "account", id: sales.id, period, column: 2 };
+  const target = { kind: "account", id: sales.id, period, column: 1 };
   const synthetic = structuredClone(contents);
   synthetic.previousAmounts = [];
   synthetic.initiatives = [{ ...contents.initiatives[0], rows: [
@@ -28,7 +28,7 @@ export async function verifyCostBreakdown(api) {
   const confirmed = api.buildCostBreakdown(synthetic, target, [1, 2]);
   assert.equal(confirmed.total, -1, "手修正0を引き継ぎと区別する");
   assert.equal(confirmed.lines.length, 1);
-  const primary = api.buildCostBreakdown(synthetic, { ...target, column: 1 }, [1, 2]);
+  const primary = api.buildCostBreakdown(synthetic, { ...target, column: 0 }, [1, 2]);
   assert.equal(primary.total, 0);
   assert.deepEqual(primary.lines.map(line => line.amount), [1, -1], "同一科目の複数行を相殺せず表示する");
   const annual = api.buildCostBreakdown(synthetic, { ...target, column: 1, period: api.tablePeriods.find(item => item.id === "annual") }, [1]);

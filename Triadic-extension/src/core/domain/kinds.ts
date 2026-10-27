@@ -11,9 +11,21 @@ export type KindScreen = "initiative-list" | "cost-table" | "expansion-table";
 export type KindSelections = Record<KindScreen, KindId[]>;
 export type PreviousKind = 1 | 2;
 export const previousKindName = (kind: PreviousKind) => kind === 1 ? "前年見込" : "前年実績";
-export type PreviousSelections = Record<"cost-table" | "expansion-table", PreviousKind>;
+export type BudgetPrevious = Record<KindId, PreviousKind>;
+export const defaultBudgetPrevious = (): BudgetPrevious => ({ 1: 1, 2: 1 });
+export type PreviousSelections = Record<"cost-table" | "expansion-table", BudgetPrevious>;
+export function baselineFor(contents: { budgetPrevious?: BudgetPrevious; previousKind?: PreviousKind }, kind: KindId): PreviousKind {
+  return contents.budgetPrevious?.[kind] ?? contents.previousKind ?? 1;
+}
+export function comparisonName(contents: { budgetPrevious?: BudgetPrevious; previousKind?: PreviousKind }, kind: KindId) {
+  return `${kind === 1 ? "一次予算" : "確定予算"}\n${previousKindName(baselineFor(contents, kind))}基準`;
+}
+export function toggleComparison(selected: KindId[], previous: BudgetPrevious, kind: KindId, baseline: PreviousKind) {
+  if (selected.includes(kind) && previous[kind] === baseline) return { selected: selected.length === 1 ? selected : selected.filter(id => id !== kind), previous };
+  return { selected: [...new Set([...selected, kind])].sort() as KindId[], previous: { ...previous, [kind]: baseline } };
+}
 export type PreviousAmount = { previousKind: PreviousKind; accountId: number; industryId: number; departmentId: number; month: number; amount: string; revision: number; id: number };
-export type PlanSettings = { fiscalYear: number; kindSelections: KindSelections; previousAmounts: PreviousAmount[]; previousSelections: PreviousSelections; /** Calculation context only; never persisted. */ previousKind?: PreviousKind };
+export type PlanSettings = { fiscalYear: number; kindSelections: KindSelections; previousAmounts: PreviousAmount[]; previousSelections: PreviousSelections; /** Calculation context only; never persisted. */ previousKind?: PreviousKind; budgetPrevious?: BudgetPrevious };
 
 export function isKindId(value: number): value is KindId { return kindIds.some(id => id === value); }
 export function resolvedAmount(source: AmountSource, kind: KindId, month: number): string {
@@ -31,4 +43,4 @@ export const INITIAL_KINDS = [{ id: 1, kindName: "一次予算" }, { id: 2, kind
 export type Kind = { id: number; kindName: string };
 export type PreviousInput = { previousKind: PreviousKind; invalidNumbers?: boolean; industryId: number; departmentId: number; rows: { accountId: number; amounts: MonthAmounts }[] };
 export type PreviousPatch = { previousKind: PreviousKind; industryIdentity: string; departmentIdentity: string; industryId: number; departmentId: number; accountId: number; account: Pick<Account, "accountCode" | "accountName" | "accountType">; month: number; before: string; after: string };
-export type PlanChange = { type: "previous-selection"; screen: "cost-table" | "expansion-table"; previousKind: PreviousKind } | { type: "previous"; input: PreviousInput } | { type: "previous-import"; patches: PreviousPatch[] } | { type: "selection"; screen: KindScreen; selected: KindId[] };
+export type PlanChange = { type: "comparison"; screen: "cost-table" | "expansion-table"; selected: KindId[]; previous: BudgetPrevious } | { type: "previous"; input: PreviousInput } | { type: "previous-import"; patches: PreviousPatch[] } | { type: "selection"; screen: KindScreen; selected: KindId[] };
