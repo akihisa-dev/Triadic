@@ -14,12 +14,7 @@ export function useRelationGestures(view: RefObject<RelationView | null>, disabl
   const [focused, setFocused] = useState<string | null>(null);
   const [grabbed, setGrabbed] = useState<string | null>(null);
   const active = grabbed ?? selected ?? focused ?? highlighted;
-  const previousSelection = useRef(selected);
-  useLayoutEffect(() => {
-    if (view.current && previousSelection.current !== selected) view.current.fitted = true;
-    previousSelection.current = selected;
-    graph.retarget(layoutHomeRelations(nodes, edges, selected));
-  }, [selected]);
+  useLayoutEffect(() => { graph.retarget(layoutHomeRelations(nodes, edges, selected)); }, [selected]);
   const { camera, target: cameraTarget, update, smooth, cancel: cancelZoom } = useRelationCamera(view);
   const [dragging, setDragging] = useState(false);
   const points = useRef(new Map<number, { x: number; y: number }>());

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-export function verifyHomeMotion({ HomeMotion, motionLine, layoutHomeRelations, homeDestinations, homeRelations, tablePages, homeRelationLine, homeRelationDistances, homeRelationCurve, curvePoint, relationLabelWidth, segmentHitsRelationBox }) {
+export function verifyHomeMotion({ HomeMotion, motionLine, layoutHomeRelations, homeDestinations, homeRelations, tablePages, homeRelationLine }) {
   const nodes = [{ page: "a", x: 250, y: 300 }, { page: "b", x: 550, y: 300 }];
   const run = rate => {
     const motion = new HomeMotion(nodes);
@@ -61,11 +61,6 @@ export function verifyHomeMotion({ HomeMotion, motionLine, layoutHomeRelations, 
     assert.ok(Math.abs(diagonal[index + 3] - 200) >= 28 - .001, "斜めの二重線も終了カードへ入り込まない");
   }
 
-  const chain = ["a", "b", "c", "d", "e", "f"].map((from, i) => ({ from, to: "bcdefg"[i] }));
-  chain.push({ from: "g", to: "b" }, { from: "x", to: "y" });
-  assert.equal(homeRelationDistances(chain, "a").get("e"), 4, "循環があっても一階層で打ち切らず辿る");
-  assert.equal(homeRelationDistances(chain, "a").has("x"), false, "無関係な枝への線は作らない");
-  assert.equal(homeRelationDistances(chain, null).size, 0);
   const initial = layoutHomeRelations(homeDestinations, homeRelations, null);
   const ids = homeDestinations.map(node => node.page);
   for (const selected of [null, ...ids]) {
@@ -75,28 +70,6 @@ export function verifyHomeMotion({ HomeMotion, motionLine, layoutHomeRelations, 
     const sides = tablePages.map((page, i) => Math.hypot(result[page].x - result[tablePages[(i + 1) % 3]].x, result[page].y - result[tablePages[(i + 1) % 3]].y));
     assert.ok(Math.max(...sides) - Math.min(...sides) < .01, "どの表からも対等な三角形を保つ");
     if (tablePages.includes(selected)) assert.ok(tablePages.every(page => result[page].y >= result[selected].y), "選んだ表を上の頂点へ配置");
-    if (selected) {
-      assert.equal(homeRelationDistances(homeRelations, selected).size, ids.length, "どの入口からも全階層を辿れる");
-      const curves = homeRelations.map(edge => Array.from({ length: 101 }, (_, i) => curvePoint(homeRelationCurve(result[edge.from], result[edge.to], edge.from, edge.to), i / 100)));
-      const side = (a, b, c) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-      const crosses = (a, b, c, d) => side(a, b, c) * side(a, b, d) < 0 && side(c, d, a) * side(c, d, b) < 0;
-      curves.forEach((line, index) => curves.slice(index + 1).forEach(other => {
-        assert.equal(line.slice(1).some((b, i) => other.slice(1).some((d, j) => crosses(line[i], b, other[j], d))), false, `${selected}: 関係線同士が交差しない`);
-      }));
-      const boxes = homeRelations.map((edge, i) => {
-        const p = result[`relation-${i}`], width = relationLabelWidth(edge);
-        return { left: p.x - width / 2, right: p.x + width / 2, top: p.y - 14, bottom: p.y + 14 };
-      });
-      const intersects = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-      boxes.forEach((box, index) => {
-        boxes.slice(index + 1).forEach(other => assert.equal(intersects(box, other), false, "説明同士が重ならない"));
-        homeRelations.forEach((edge, other) => {
-          if (index === other) return;
-          const curve = homeRelationCurve(result[edge.from], result[edge.to], edge.from, edge.to);
-          for (let step = 0; step < 100; step++) assert.equal(segmentHitsRelationBox(curvePoint(curve, step / 100), curvePoint(curve, (step + 1) / 100), box), false, `${selected}: 別の線が説明へ入り込まない`);
-        });
-      });
-    }
     for (const edge of homeRelations) {
       const path = homeRelationLine(result[edge.from], result[edge.to], edge.from, edge.to, edge.kind === "view");
       assert.ok(!/NaN|Infinity/.test(path), "すべての配置の線が有効");

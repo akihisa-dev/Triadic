@@ -52,7 +52,7 @@
 @media (max-width: 600px) { .home-relations-legend { left: 4px; bottom: 70px; max-width: calc(100% - 8px); gap: 4px 12px; font-size: 11px; } }
 
 /* Three equal table destinations and monochrome orbit destinations. */
-.home-relations-map { width: 1800px; height: 1100px; }
+.home-relations-map { width: 800px; height: 1040px; }
 .home-relation-item { transition: opacity var(--motion-feedback) var(--motion-ease); }
 .home-relation-item.is-muted { opacity: .66; }
 .home-relation-node { flex-direction: column; gap: 10px; width: 180px; height: 110px; margin: 8px; padding: 0; border: 0; border-radius: 0; background: transparent; font-size: 16px; font-weight: 400; }
@@ -77,6 +77,3 @@
 .home-relations-brand { pointer-events: none; }
 .home-relations-brand foreignObject > div { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80px; gap: 8px; color: var(--ink); }
 .home-relations-brand strong { font-size: 34px; font-weight: 500; letter-spacing: -.06em; }
-
-.home-relation.is-indirect { opacity: .64; }
-.home-relation-item.is-indirect { opacity: .86; }
