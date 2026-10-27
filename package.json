@@ -1,7 +1,7 @@
 {
   "name": "triadic",
   "private": true,
-  "version": "33.6.0",
+  "version": "36.0.0",
   "description": "Triadic Chrome Extension development environment",
   "type": "module",
   "engines": {
