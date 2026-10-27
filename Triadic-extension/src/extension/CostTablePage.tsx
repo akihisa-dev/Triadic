@@ -153,7 +153,7 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
         }}
         onClick={event => {
           focused.current = { key: `${row.kind}:${row.id}`, label: event.currentTarget.getAttribute("aria-label")! };
-          setDetail({ target: { kind: row.kind as "account" | "group", id: row.id, period, column: columns[index]!.source }, selected: columns[index]!.selected, title: `${row.name} ${period.label} ${labels[index]}` });
+          setDetail({ target: { kind: row.kind as "account" | "group", id: row.id, period, column: columns[index]!.source, displayPrevious: contents.budgetPrevious?.display ?? 1 }, selected: columns[index]!.selected, title: `${row.name} ${period.label} ${labels[index]}` });
         }}>{formatTableYen(values[period.id])}</button>
       : formatTableYen(values[period.id])}</td>)}</Fragment>)}
   </tr>;

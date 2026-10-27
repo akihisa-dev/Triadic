@@ -18,7 +18,7 @@ export async function preparePlanCommand(target: OpenPlan, command: PlanCommand)
     const { screen, selected, previous } = command.change;
     const prepared = await prepareComparisonSelectionSave(target.bytes, screen, selected, previous);
     if (!prepared.operation) return { operation: null };
-    const contents = { ...planContents(target), kindSelections: { ...target.kindSelections, [screen]: [...selected] }, previousSelections: { ...target.previousSelections, [screen]: { ...previous } } };
+    const contents = { ...planContents(target), kindSelections: { ...target.kindSelections, [screen]: [...selected] }, previousSelections: { ...target.previousSelections, [screen]: { ...target.previousSelections[screen], ...previous } } };
     return { prepared: { ...prepared, contents }, operation: prepared.operation };
   }
   if (command.type === "aggregation") {

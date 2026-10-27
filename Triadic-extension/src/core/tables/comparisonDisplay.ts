@@ -1,32 +1,40 @@
-import { baselineFor, previousKindName, type KindId, type PreviousKind } from "../domain/kinds";
+import { previousKindName, type KindId, type PreviousKind } from "../domain/kinds";
+import { addYen } from "../domain/amounts";
 import type { PlanContents } from "../domain/plan";
 import { buildPeriodCostComparison } from "./periodTables";
 import { previousTotals } from "./planTables";
 
-/** Visible columns retain each selected previous-year value, independently of budget count. */
+/** Previous-year display and each budget have separate selections. */
 export function comparisonDisplayColumns(contents: PlanContents, selected: KindId[]) {
   const kinds = [...selected].sort() as KindId[];
-  const priors = [...new Set(kinds.map(kind => baselineFor(contents, kind)))].sort() as PreviousKind[];
+  const previous = contents.budgetPrevious?.display ?? 1;
   return [
-    ...priors.map(previous => ({ id: `previous-${previous}`, label: previousKindName(previous), previous, selected: [kinds.find(kind => baselineFor(contents, kind) === previous)!], source: 0 })),
-    ...kinds.map((kind, index) => ({ id: String(kind), label: kind === 1 ? "一次予算" : "確定予算", previous: null, selected: kinds, source: kinds.length === 1 ? 1 : index })),
-    { id: "difference", label: kinds.length === 1 ? "前年差" : "差額", previous: null, selected: kinds, source: 2 },
+    { id: "previous", label: previousKindName(previous), previous: previous as PreviousKind | null, selected: [kinds[0]!], source: 0 },
+    ...kinds.map((kind, index) => ({ id: String(kind), label: kind === 1 ? "一次予算" : "確定予算", previous: null as PreviousKind | null, selected: kinds, source: kinds.length === 1 ? 1 : index })),
+    { id: "difference", label: kinds.length === 1 ? "前年差" : "差額", previous: null as PreviousKind | null, selected: kinds, source: 2 },
   ];
 }
 
-/** Keep period aggregation, rates and breakdowns on the same original-yen calculation paths. */
+/** Aggregate displayed previous-year amounts separately, without recalculating either budget from them. */
 export function buildDisplayedCostComparison(contents: PlanContents, selected: KindId[]) {
   const columns = comparisonDisplayColumns(contents, selected);
   const base = buildPeriodCostComparison(contents, selected);
-  const priors = new Map(columns.filter(column => column.previous !== null).map(column => [column.previous!,
-    selected.length === 1 ? base : buildPeriodCostComparison({ ...contents, initiatives: [] }, column.selected)]));
-  return { columns, labels: columns.map(column => column.label), rows: base.rows.map((row, index) => ({ ...row,
-    values: columns.map(column => column.previous === null ? row.values[column.source]! : priors.get(column.previous)!.rows[index]!.values[0]!),
-  })) };
+  const previousKind = contents.budgetPrevious?.display ?? 1;
+  const prior = buildPeriodCostComparison({ ...contents, initiatives: [], budgetPrevious: { 1: previousKind, 2: previousKind } }, [1]);
+  return { columns, labels: columns.map(column => column.label), rows: base.rows.map((row, index) => {
+    const previous = prior.rows[index]!.values[0]!;
+    return { ...row, values: columns.map(column => {
+      if (column.previous !== null) return previous;
+      if (selected.length === 1 && column.source === 2) return Object.fromEntries(Object.keys(previous).map(period => {
+        const budget = row.values[1]![period], before = previous[period];
+        return [period, budget === undefined || before === undefined ? undefined : row.kind === "ratio" ? budget - before : addYen(budget, -before)];
+      }));
+      return row.values[column.source]!;
+    }) };
+  }) };
 }
 
-export function displayedExpansionPriors(contents: PlanContents, selected: KindId[]) {
-  return comparisonDisplayColumns(contents, selected).filter(column => column.previous !== null).map(column => ({
-    id: column.id, label: column.label, values: previousTotals({ ...contents, previousKind: column.previous! }),
-  }));
+export function displayedExpansionPriors(contents: PlanContents, _selected: KindId[]) {
+  const previous = contents.budgetPrevious?.display ?? 1;
+  return [{ id: "previous", label: previousKindName(previous), values: previousTotals({ ...contents, previousKind: previous }) }];
 }

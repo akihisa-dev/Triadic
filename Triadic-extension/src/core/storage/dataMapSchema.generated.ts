@@ -283,6 +283,9 @@ export const dataMapSchema = [
     "name": "kind_selections",
     "columns": [
       {
+        "name": "display_previous_kind"
+      },
+      {
         "name": "final_previous_kind"
       },
       {

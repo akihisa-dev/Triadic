@@ -6,3 +6,12 @@
 .comparison-cell:has(input:disabled) { opacity: .5; cursor: default; }
 .comparison-cell input:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
 @media (pointer: coarse) { .comparison-selection { height: 130px; } .comparison-cell { min-height: 44px; } }
+
+.comparison-selection-independent { grid-template-columns: 56px repeat(3, minmax(0, 1fr)); width: 260px; max-width: 100%; padding-inline: 0; }
+
+/* One shared heading row aligns screen names, comparison headings and classification labels. */
+.comparison-selection-independent { grid-template-rows: 24px repeat(2, minmax(29px, 1fr)); }
+.comparison-selection-independent > span:nth-child(-n+4) { line-height: 24px; }
+.comparison-selection-independent > .comparison-cell { align-self: start; }
+.comparison-selection-independent > .comparison-baseline { align-self: start; line-height: 29px; }
+@media (pointer: coarse) { .comparison-selection-independent > .comparison-baseline { line-height: 44px; } }

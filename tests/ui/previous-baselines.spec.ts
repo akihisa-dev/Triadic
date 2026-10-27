@@ -49,11 +49,16 @@ test('前年見込と実績の独立編集・コピー確認・予算別基準�
   const sales = app.getByRole('table', { name: '総原価表', exact: true }).getByRole('row').filter({ hasText: /^売上高/ }).first();
   await expect(sales.locator('td').first()).toHaveText('200');
   await basis.click();
+  await expect(sales.locator('td').first()).toHaveText('200');
+  await expect(sales.locator('td').nth(1)).toHaveText('100');
+  await app.getByRole('checkbox', { name: '前年列に前年実績を表示', exact: true }).click();
   await expect(sales.locator('td').first()).toHaveText('100');
+  await expect(basis).toBeChecked();
+  await expect(sales.locator('td').nth(1)).toHaveText('100');
   await app.getByRole('checkbox', {name:'前年実績を基準にした確定予算',exact:true}).click();
   await expect(app.getByRole('checkbox', {name:'前年実績を基準にした確定予算',exact:true})).toBeChecked();
   await expect(sales.locator('td').nth(1)).toHaveText('100');
-  await expect(sales.locator('td').nth(2)).toHaveText('');
+  await expect(sales.locator('td').nth(3)).toHaveText('');
   await navigate('展開表');
   await expect(basis).not.toBeChecked();
   await expect(app.getByRole('rowheader', { name: '前年見込', exact: true })).toBeVisible();

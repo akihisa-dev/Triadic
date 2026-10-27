@@ -13,20 +13,20 @@ export async function verifyPeriodTables(api) {
     id: previousKind, revision: 1, previousKind, accountId: account.id,
     industryId: contents.industries[0].id, departmentId: contents.departments[0].id, month: 4, amount: String(previousKind * 100),
   })), initiatives: [{ ...initiative, rows: [{ ...initiative.rows[0], accountId: account.id, amounts: { 4: "10" }, overrides: { 2: { 4: "20" } } }] }] };
-  for (const first of [1, 2]) for (const final of [1, 2]) for (const selected of [[1], [2], [1, 2], [2, 1]]) {
-    const context = { ...displayInput, budgetPrevious: { 1: first, 2: final } };
+  for (const display of [1, 2]) for (const first of [1, 2]) for (const final of [1, 2]) for (const selected of [[1], [2], [1, 2], [2, 1]]) {
+    const context = { ...displayInput, budgetPrevious: { 1: first, 2: final, display } };
     const kinds = [...selected].sort();
-    const priorKinds = [...new Set(kinds.map(kind => context.budgetPrevious[kind]))].sort();
+    const priorKinds = [display];
     const table = api.buildDisplayedCostComparison(context, selected);
     assert.deepEqual(table.labels, [...priorKinds.map(kind => kind === 1 ? "前年見込" : "前年実績"), ...kinds.map(kind => kind === 1 ? "一次予算" : "確定予算"), kinds.length === 1 ? "前年差" : "差額"]);
     assert.ok(table.labels.every(label => !label.includes("\n") && !label.includes("基準")));
     const row = table.rows.find(row => row.kind === "account" && row.id === account.id);
     const budgets = kinds.map(kind => context.budgetPrevious[kind] * 100000 + kind * 10000);
-    const expected = [...priorKinds.map(kind => kind * 100000), ...budgets, kinds.length === 1 ? kinds[0] * 10000 : budgets[1] - budgets[0]];
+    const expected = [...priorKinds.map(kind => kind * 100000), ...budgets, kinds.length === 1 ? budgets[0] - display * 100000 : budgets[1] - budgets[0]];
     for (const period of [periods[0], periods[3], periods.at(-1)]) {
       assert.deepEqual(row.values.map(values => values[period.id]), expected);
       for (const [column, definition] of table.columns.entries()) {
-        const detail = api.buildCostBreakdown(context, { kind: "account", id: account.id, period, column: definition.source }, definition.selected);
+        const detail = api.buildCostBreakdown(context, { kind: "account", id: account.id, period, column: definition.source, displayPrevious: display }, definition.selected);
         assert.equal(detail.total, expected[column], "表示した列と内訳の金額を一致させる");
       }
     }

@@ -10,7 +10,7 @@
 
 ## Previous-year forecast and actuals
 
-Previous-year forecast and actuals are independent inputs. All comparison screens use a 2×2 checkbox grid: previous-year forecast/actuals by initial/final budget. Each budget allows one baseline; selecting the other replaces it. At least one budget stays selected. Each budget uses its own baseline in tables, dashboard graphs, Excel exports, and history comparison. On-screen tables retain all selected previous-year forecast/actual columns alongside the selected budgets. Previous-year columns name forecast or actuals; budget headings use only initial/final budget on one line. Cost tables also show change for one budget or final-minus-initial for two. Cost and expansion tables save both baselines atomically. Storage format 32 rejects older or unknown formats without migration or rewriting. No new permissions or external transmission are introduced.
+Previous-year forecast and actuals are independent inputs. Cost and expansion screens use three independent columns: previous year, initial budget and final budget. Other comparison screens retain their two budget columns. Each budget allows one baseline; selecting the other replaces it. At least one budget stays selected. Each budget uses its own baseline in tables, dashboard graphs, Excel exports, and history comparison. On-screen tables use the independently selected previous-year value alongside the separately selected budgets; changing any one leaves the other two selections and amounts unchanged. Previous-year columns name forecast or actuals; budget headings use only initial/final budget on one line. Cost tables also show change for one budget or final-minus-initial for two. Cost and expansion tables save the previous-year display and both budget selections atomically. Storage format 33 rejects older or unknown formats without migration or rewriting. No new permissions or external transmission are introduced.
 
 ## English
 
@@ -238,7 +238,7 @@ The initiative-list heading, kind selector, and “Add initiative” share one r
 
 The breakdown table shows monthly revenue/profit for one or two budgets chosen with checkboxes. Only with two kinds does it show final-minus-initial comparison, independent of selection order. Previous year appears in top rows, not kind columns. Top rows are previous year, total, and breakdown total; total is previous year plus breakdown total. Initiatives group by category, including zero subtotals for categories without initiatives, then by period-master order and subcategory-master order within a period, merging equal subcategory names and placing blank subcategories last; registration order is retained within a subcategory. Unselected periods are blank and last. Initiative names open editing and allow return to the original table. Category/period/subcategory/name columns remain fixed at the left. Subcategories show the current master name for each initiative; unselected ones are blank. This does not change period ordering or subtotals. Only the table scrolls; its three header tiers (month/kind/revenue-profit) through previous year/total/breakdown total stay at the top, while initiatives and category subtotals below scroll. Header, amount, and subtotal boundaries align; long names wrap and narrow screens shrink name columns.
 
-The initiative list selects one budget. Comparison screens use a 2×2 checkbox matrix: previous forecast/actual rows and initial/final budget columns. Each column permits one baseline and at least one budget remains selected. Defaults are final budget for the initiative list and initial budget based on previous forecast for cost and breakdown tables. Selections save per screen. Cost summary always has three columns: previous/budget/year-on-year for one budget, or initial/final/difference for both. Each budget uses its own selected baseline, with final minus initial as the difference. Failed saves preserve the saved display; historical viewing changes selections temporarily. Initiative list and breakdown table include all industries/departments; cost summary filters by department and industry. Sorting and filtering remain available in initiative and breakdown tables and cost amount details.
+The initiative list selects one budget. Cost and expansion screens use independent previous-year, initial-budget and final-budget columns; forecast/actual is chosen separately in each. Other comparison screens use the two budget columns. Each column permits one baseline and at least one budget remains selected. Defaults are final budget for the initiative list and initial budget based on previous forecast for cost and breakdown tables. Selections save per screen. Cost summary retains its independently selected previous-year column: previous/budget/year-on-year for one budget, or previous/initial/final/difference for both. Each budget uses its own selected baseline, with final minus initial as the difference. Failed saves preserve the saved display; historical viewing changes selections temporarily. Initiative list and breakdown table include all industries/departments; cost summary filters by department and industry. Sorting and filtering remain available in initiative and breakdown tables and cost amount details.
 
 Monthly revenue/expense/profit totals sit at the initiative table's bottom, at the visible bottom even for short lists and fixed there during long-list scrolling. Rows do not stretch; extra height becomes space above totals. All initiatives for the displayed kind are summed in yen before rounding to thousands. Sorting never moves totals. Empty months total 0; months with unset attributes have unconfigured revenue/profit totals. Totals are not saved. Table-wide overflow displays reasons in totals while names remain editable; overflow within one initiative displays a reason in that row, preserves valid initiative amounts and all edit links, and hides totals. List calculations run only when displaying the list and do not block Home, editing, kind changes, undo, reload, or history viewing. Reading data/history and preparing saved contents do not calculate initiative totals. For both budget kinds, valid cell amounts remain readable, saveable, and correctable when only the initiative total overflows. The preview offers separate initial-budget and final-budget initiative-overflow cases.
 
@@ -641,8 +641,8 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 ### 前年見込・前年実績の使い分け
 
 「前年入力」で前年見込／前年実績を切り替えて入力します。前年実績の表示中はコピーアイコンから、選択中の部署・業種の12か月分を前年見込からコピーできます。対象と上書きを確認して実行し、取消可能です。両者は独立し、未入力は0です。
-比較条件は、行を前年見込・前年実績、列を一次予算・確定予算とする2×2のチェック欄で選びます。各列は一方の前年だけを選べ、新しいチェックで同じ列の他方を解除します。他列は保持し、最後の1つは解除できません。 総原価表・展開表は選択予算と両方の前年条件を一度に保存します。入出力でも表ごとに選び、Excelの見出しと数式へ反映します。前年フォーマットは見込／実績を選んで出力し、取り込み時はファイルに記録された側だけを確認・更新します。用途のない旧Excelは出力し直してください。履歴の収支比較も同じチェック欄を使用します。
-保存場所・保持期間・削除・外部送信は変わりません。見込・実績・基準選択を同じファイルと履歴に保存し、旧保存形式31以前は移行せず拒否します。失敗・キャンセルでは入力と元ファイルを保持します。
+総原価表・展開表の比較条件は、行を前年見込・前年実績、列を前年・一次予算・確定予算とする3列のチェック欄で選びます。前年列は見込か実績の一方を選び、一次・確定も各列で独立して選びます。同じ列の見込と実績は排他で、一次・確定のどちらかは表示します。一つの列を変更しても他の2列の選択・金額・見出しは変えません。ダッシュボード・入出力・履歴収支は予算2列のチェック欄を使用します。 総原価表・展開表は選択予算と両方の前年条件を一度に保存します。入出力でも表ごとに選び、Excelの見出しと数式へ反映します。前年フォーマットは見込／実績を選んで出力し、取り込み時はファイルに記録された側だけを確認・更新します。用途のない旧Excelは出力し直してください。履歴の収支比較も同じチェック欄を使用します。
+保存場所・保持期間・削除・外部送信は変わりません。見込・実績・基準選択を同じファイルと履歴に保存し、旧保存形式32以前は移行せず拒否します。失敗・キャンセルでは入力と元ファイルを保持します。
 
 ### 一次予算と確定予算の使い分け
 
@@ -669,7 +669,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 ### 現在の対応範囲と制限
 
 - Chrome拡張機能として動作し、利用者が読み書きを許可したローカルファイルを扱います。データの外部送信やブラウザ間の同期は行いません。
-- 保存形式は32です。31以前や未知の形式は読み込みを拒否し、移行・上書きは行いません。ファイル更新時は、今回の編集と別の行への変更を自動で合わせて保存します。同じ行の変更や整合しない変更は上書きせず、入力済みのデータ全体を別ファイルへ保存して編集を続けられます。キャンセル・保存失敗では入力と元ファイルを保持します。外部変更の反映時には過去の操作取消を初期化し、今回の編集だけを取り消せます。「別名で保存」は保存済みのデータ・マスタ・履歴を別の.triadicファイルへ保存し、新しい保存先で編集を続けます。操作取消・やり直しを維持し、ファイル名と「続きから」は書き込み成功後だけ切り替えます。 別ウィンドウが開いている保存先や別ファイルの保存先切り替え中のファイルは、書き込み前に拒否します。双方の内容と入力を保持し、保存先を開いている画面を閉じるか別の保存先を選び直せます。切り替え中の保存先を開く操作は完了を待ち、同じ担当へ接続します。
+- 保存形式は33です。32以前や未知の形式は読み込みを拒否し、移行・上書きは行いません。ファイル更新時は、今回の編集と別の行への変更を自動で合わせて保存します。同じ行の変更や整合しない変更は上書きせず、入力済みのデータ全体を別ファイルへ保存して編集を続けられます。キャンセル・保存失敗では入力と元ファイルを保持します。外部変更の反映時には過去の操作取消を初期化し、今回の編集だけを取り消せます。「別名で保存」は保存済みのデータ・マスタ・履歴を別の.triadicファイルへ保存し、新しい保存先で編集を続けます。操作取消・やり直しを維持し、ファイル名と「続きから」は書き込み成功後だけ切り替えます。 別ウィンドウが開いている保存先や別ファイルの保存先切り替え中のファイルは、書き込み前に拒否します。双方の内容と入力を保持し、保存先を開いている画面を閉じるか別の保存先を選び直せます。切り替え中の保存先を開く操作は完了を待ち、同じ担当へ接続します。
 - 競合から別ファイルへ保存できた場合は、通常の編集・操作取消・履歴操作・終了時の記録を含め、画面のファイル名と「続きから」の参照を保存成功先へ揃えます。キャンセルや書き込み失敗では参照を変更しません。端末内への参照の記憶に失敗した場合は通知し、同じ画面内では成功先から再開できます。
 - Excel出力は総原価表・展開表・施策一覧と計算元を扱い、取り込みはアプリから出力した前年入力フォーマットが対象です。任意のExcelブックや、出力した総原価表・展開表・施策一覧の編集内容をデータへ取り込む機能はありません。Excel実機での再計算は未確認です。
 - 保存に失敗した入力は画面内で保持しますが、タブ終了・再読み込み・強制終了後の復元は保証しません。複数の画面や外部アプリで同じファイルを変更した場合は、外部更新を検出して上書きを止めます。
@@ -680,7 +680,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 ### ダッシュボード
 
-メニューの「ダッシュボード」で年間売上・利益・利益率、前年増減、月別推移、部署別比較、施策の影響をグラフ中心に確認できます。2×2のチェック欄は総原価表・展開表と同じ操作で選びます。収支は展開表と同じ科目属性の加減算で計算し、集計マスタの設定に従う総原価表の小計とは計算規則が異なります。金額は既存の表と同じ千円表示です。
+メニューの「ダッシュボード」で年間売上・利益・利益率、前年増減、月別推移、部署別比較、施策の影響をグラフ中心に確認できます。予算2列のチェック欄は総原価表・展開表の一次・確定と同じ操作で選びます。収支は展開表と同じ科目属性の加減算で計算し、集計マスタの設定に従う総原価表の小計とは計算規則が異なります。金額は既存の表と同じ千円表示です。
 
 部署別に売上・利益・前年増減額と増減率・利益率を示し、部署名や金額から比較条件を引き継いだ総原価表を開けます。部署未所属の施策も全体と「未所属」に含めます。施策の影響は売上・利益の増加と減少を分け、年間または選択月の丸め前の影響額の絶対値で降順に並べます。同額は施策ID順、0は順位外です。初期表示の上位5件から全件へ展開でき、両予算を選んだ場合は順位の基準予算を切り替えられます。施策名でその種別の詳細を開き、戻ると表示条件を保ちます。
 
@@ -784,7 +784,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 総原価表・展開表では、横スクロールバーへマウスを重ねると、その帯の中にQ1〜Q4・上期計・下期計・年間計を表示します。期間名を押すと対応する列へ移動し、末尾は表の右端までの範囲に収めます。表や下の余白を広げず、吹き出しや表に重なる表示は設けません。通常のドラッグ・横スクロール・表示位置の復帰を維持し、狭い幅ではポインター付近に収まる期間名を表示します。キーボードフォーカスでも期間名を表示し、Escで閉じます。移動で金額・表示条件・保存内容・履歴を変更しません。
 
-総原価表・展開表の通常画面は、選択した前年見込・前年実績と一次予算・確定予算をそれぞれ省略せず表示します。同じ前年を選んだ場合は前年列を一つにまとめ、異なる前年を選んだ場合は両方を表示します。前年列は「前年見込」「前年実績」、予算列は「一次予算」「確定予算」の一行見出しとし、基準の注記を付けません。総原価表は1予算時に前年差、両予算時に差額も表示し、展開表は両予算時に差額を表示します。予算と差額の計算規則は変更しません。 差は丸める前に計算します。未設定集計や計算できない利益率は空欄です。前年未入力と施策未入力は計算上0とし、表で表示上0になる金額・差額・利益率は空白にします。保存値や計算値は変更しません。
+総原価表・展開表の通常画面は、選択した前年見込・前年実績と一次予算・確定予算をそれぞれ省略せず表示します。前年の表示は前年列専用の選択だけで決め、一次・確定の選択から推定・連動しません。前年列は「前年見込」「前年実績」、予算列は「一次予算」「確定予算」の一行見出しとし、基準の注記を付けません。総原価表は1予算時に前年差、両予算時に差額も表示し、展開表は両予算時に差額を表示します。予算は各予算で選んだ前年額と施策増減から求めます。前年差は予算から表示した前年額を引き、差額は確定予算から一次予算を引きます。 差は丸める前に計算します。未設定集計や計算できない利益率は空欄です。前年未入力と施策未入力は計算上0とし、表で表示上0になる金額・差額・利益率は空白にします。保存値や計算値は変更しません。
 
 展開表の縦スクロールバーでは、ホバー時に展開名を表示し、近接して名前が重なる箇所だけ実際の展開IDへ切り替えます。IDへマウスを重ねると、周囲のIDを上下へ押し広げながら縦に伸びて展開名を表示し、ホバー中の対象は入れ替えません。クリックでは押してから離すまで移動先のIDを保持し、その展開の先頭行へ移動します。表の幅や右側の余白を広げず、通常のドラッグ・ホイール操作を維持します。IDでも全件が収まらない場合はバー上の位置付近のものを表示し、名前の拡大に必要な場所を先に確保します。長い名前はバー内で省略します。キーボードフォーカスでも名前を広げ、Escで閉じます。動きを抑える設定では即座に表示・移動します。大量行でも画面外の展開へ移動でき、金額・表示条件・保存内容・履歴を変更しません。総原価表の縦バーは変更しません。
 
@@ -836,7 +836,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 展開表はチェックで選んだ1〜2種別の月別売上・利益を表示します。2種選択時だけ、選択順に関係なく「確定予算−一次予算」の比較列を表示します。前年は上部の行で扱い、種別の列には加えません。上部は前年・合計・展開計で、合計は前年＋展開計です。展開名ごとに施策をまとめ、施策がない展開も小計0で表示します。各展開名の中は期間マスタ順にまとめ、同じ期間内を区分マスタ順にまとめて区分名も縦結合します。区分未選択は最後の空欄とし、区分内は登録順で表示します。期間未選択の施策は最後に空欄の期間として表示します。施策名から編集へ進み、元の表へ戻れます。展開区分は各施策の選択済み区分の現在のマスタ名を表示し、未選択は空欄です。区分別小計は追加しません。表の表示幅が650pxを超える場合は展開名・期間名・展開区分・施策名の4列、650px以下は施策名だけを左端に固定し、表の領域だけを縦横にスクロールできます。月・種別・売上／利益の3段の列見出しから前年・合計・展開計までをまとめて上端に固定し、縦スクロールでは下の施策行と展開別小計だけが移動します。見出し・金額・小計の列境界をそろえ、長い名称は折り返します。狭い画面では名称列を縮めて表示します。
 
-比較条件は、行を前年見込・前年実績、列を一次予算・確定予算とする2×2のチェック欄で選びます。各列は一方の前年だけを選べ、新しいチェックで同じ列の他方を解除します。他列は保持し、最後の1つは解除できません。 初期値は前年見込の一次予算です。総原価表・展開表は画面別に保存し、保存失敗時は保存済み表示を維持します。過去閲覧は一時選択です。施策一覧は従来の横並び候補で1種を選び、初期値は確定予算です。総原価表は見出し・チェック欄・部署名・業種名の順に配置し、狭い幅では折り返します。総原価表・展開表の通常画面は、選択した前年見込・前年実績と一次予算・確定予算をそれぞれ省略せず表示します。同じ前年を選んだ場合は前年列を一つにまとめ、異なる前年を選んだ場合は両方を表示します。前年列は「前年見込」「前年実績」、予算列は「一次予算」「確定予算」の一行見出しとし、基準の注記を付けません。総原価表は1予算時に前年差、両予算時に差額も表示し、展開表は両予算時に差額を表示します。予算と差額の計算規則は変更しません。
+総原価表・展開表の比較条件は、行を前年見込・前年実績、列を前年・一次予算・確定予算とする3列のチェック欄で選びます。前年列は見込か実績の一方を選び、一次・確定も各列で独立して選びます。同じ列の見込と実績は排他で、一次・確定のどちらかは表示します。一つの列を変更しても他の2列の選択・金額・見出しは変えません。ダッシュボード・入出力・履歴収支は予算2列のチェック欄を使用します。 初期値は前年見込の一次予算です。総原価表・展開表は画面別に保存し、保存失敗時は保存済み表示を維持します。過去閲覧は一時選択です。施策一覧は従来の横並び候補で1種を選び、初期値は確定予算です。総原価表は画面名と前年・一次・確定・部署名・業種名の見出しを上段に揃え、部署名・業種名のプルダウンは各ラベルの下に置きます。狭い幅では折り返します。展開表も画面名と3列の見出しを上段に揃えます。総原価表・展開表の通常画面は、選択した前年見込・前年実績と一次予算・確定予算をそれぞれ省略せず表示します。前年の表示は前年列専用の選択だけで決め、一次・確定の選択から推定・連動しません。前年列は「前年見込」「前年実績」、予算列は「一次予算」「確定予算」の一行見出しとし、基準の注記を付けません。総原価表は1予算時に前年差、両予算時に差額も表示し、展開表は両予算時に差額を表示します。予算は各予算で選んだ前年額と施策増減から求めます。前年差は予算から表示した前年額を引き、差額は確定予算から一次予算を引きます。
 
 施策一覧は表の最下部に月別の売上・費用・利益の合計行を置き、短い一覧でも表の表示領域の下端に置き、長い一覧では縦スクロール中も下端に追従して表示します。施策の行高は広げず、残る高さは合計の上の空白に割り当てます。表示中の種別の全施策を1円単位で合算してから千円表示に丸め、並べ替えで合計行は動きません。空の月は0、属性未設定を含む月の売上・利益の合計は属性未設定です。合計は保存せず、表全体の上限超過は合計部分に理由を表示し、施策名から編集へ進めます。一つの施策内で上限を超える場合はその行の金額欄へ理由を表示し、正常な施策の金額と全施策の編集導線を維持します。この場合は合計を表示しません。一覧用の計算は一覧表示時だけ行い、ホーム・施策編集・種別切り替え・取消・再読込・履歴閲覧を妨げません。
 
@@ -935,7 +935,7 @@ Chromeのファイル選択、新規作成、ファイル参照を取得でき�
 
 施策・勘定科目・年月と月別金額を同じデータとして持ち、施策一覧・総原価表・展開表はそのデータを異なる視点で表します。集計結果を別の正本として重複保存しません。現在はファイルの新規作成、形式検証を伴う読込、勘定科目マスタ・集計マスタ・展開マスタ・業種マスタ・部署マスタ・期間マスタ・固定種別マスタ・固定科目属性マスタの閲覧、施策・前年入力の保存を実装しています。
 
-保存形式は32です。明細の有無にかかわらず、保存形式31以前のファイルは開けません。新規ファイルから使用します。対応しない旧形式や未知の形式は読み込み時に拒否し、移行や上書きは行いません。新しい形式のファイルは旧アプリで開けません。
+保存形式は33です。明細の有無にかかわらず、保存形式32以前のファイルは開けません。新規ファイルから使用します。対応しない旧形式や未知の形式は読み込み時に拒否し、移行や上書きは行いません。新しい形式のファイルは旧アプリで開けません。
 
 「基本情報」（`document_info`）に基準年度・作成日時・更新日時を保存します。保存データ全体に関する情報だけを扱い、保存形式などは`triadic_metadata`で管理します。一次予算・確定予算の2種別は業務定義で固定します。種別表や施策ごとの年度は保存しません。開始年月は基準年度・期間の算出規則・各科目行の種別別有効月額から読み込み時に導出し、保存列は持ちません。共通属性は`initiatives`、共通科目行は`initiative_rows`へ保存し、追加時から同じ文字列識別子を使います。施策金額は`initiative_amounts`へ科目行・種別ID・月で区別して円の整数を保存します。種別1（一次予算）は12か月、種別2（確定予算）は手修正月だけを保持します。明示した0と一次予算と同額の手修正もレコードとして保持し、未指定月だけ一次予算を引き継ぎます。引き継ぎ値は共通の解決処理から求め、別の保存値へ複製しません。基準前年の金額は`previous_amounts`へ科目・業種・部署・月ごとに保存します。種別選択と一次・確定それぞれの基準前年は`kind_selections`に画面別で保存します。詳細は[月別金額と保存構造](DATA_MODEL.md)と[実装設計](docs/single-year-plan-design.md)を参照してください。外部送信はありません。
 

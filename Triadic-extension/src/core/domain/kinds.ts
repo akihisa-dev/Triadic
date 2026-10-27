@@ -11,7 +11,7 @@ export type KindScreen = "initiative-list" | "cost-table" | "expansion-table";
 export type KindSelections = Record<KindScreen, KindId[]>;
 export type PreviousKind = 1 | 2;
 export const previousKindName = (kind: PreviousKind) => kind === 1 ? "前年見込" : "前年実績";
-export type BudgetPrevious = Record<KindId, PreviousKind>;
+export type BudgetPrevious = Record<KindId, PreviousKind> & { /** Independently displayed previous-year value. */ display?: PreviousKind };
 export const defaultBudgetPrevious = (): BudgetPrevious => ({ 1: 1, 2: 1 });
 export type PreviousSelections = Record<"cost-table" | "expansion-table", BudgetPrevious>;
 export function baselineFor(contents: { budgetPrevious?: BudgetPrevious; previousKind?: PreviousKind }, kind: KindId): PreviousKind {

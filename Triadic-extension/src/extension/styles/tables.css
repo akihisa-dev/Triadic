@@ -98,4 +98,4 @@
 .expansion-table thead th { white-space: pre-line; }
 
 .expansion-table-page > .initiative-list-heading { align-items: flex-start; }
-.expansion-table-page > .initiative-list-heading h1 { margin-top: 9px; }
+.expansion-table-page > .initiative-list-heading h1 { margin-top: 0; line-height: 24px; }

@@ -91,7 +91,7 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   const openDashboardDepartment = (id: number) => {
     costTableView.current = { industries: [], departments: [id], top: 0, left: 0 };
     setLocalKinds(value => ({ ...value, "cost-table": dashboardSelection.kinds }));
-    setLocalPrevious(value => ({ ...value, "cost-table": dashboardSelection.previous }));
+    setLocalPrevious(value => ({ ...value, "cost-table": { ...dashboardSelection.previous, display: value["cost-table"].display ?? 1 } }));
     dismissNotice();
     setPage("cost-table");
   };
@@ -122,7 +122,7 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
     };
     return screen === "initiative-list"
       ? <KindSelectionSlots screen={screen} selected={localKinds[screen]} disabled={navigationBlocked || isSaving} onChange={selected => changeSelection(selected)} />
-      : <ComparisonSelection selected={localKinds[screen]} previous={localPrevious[screen]} disabled={navigationBlocked || isSaving} onChange={changeSelection} />;
+      : <ComparisonSelection independentPrevious selected={localKinds[screen]} previous={localPrevious[screen]} disabled={navigationBlocked || isSaving} onChange={changeSelection} />;
   };
   const { changeMaster, changePeriodTypes, changeDepartments, changeIndustries, changeExpansions, changeExpansionCategories, changeAggregations, update } = useWorkspaceCommands(
     { onChangeMaster, onChangePeriodTypes, onChangeDepartments, onChangeIndustries, onChangeExpansions, onChangeExpansionCategories, onChangeAggregations, onUpdateInitiative }, mutation, currentContents,

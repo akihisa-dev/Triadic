@@ -9,16 +9,30 @@ test("総原価表の見出しと比較対象を一行にまとめ、狭い画�
   await settleMotion(app.locator("body"));
   const heading = app.locator(".cost-table-page .initiative-list-heading");
   const metrics = await heading.evaluate(node => {
-    const rects = Array.from(node.querySelectorAll("h1, .comparison-selection, .cost-classification")).map(item => item.getBoundingClientRect());
+    const rects = Array.from(node.querySelectorAll("h1, .comparison-selection-independent > span:nth-child(n+2):nth-child(-n+4), .classification-field label")).map(item => item.getBoundingClientRect());
     return { tops: rects.map(rect => rect.y), height: node.getBoundingClientRect().height,
       inside: rects.every(rect => rect.left >= 0 && rect.right <= window.innerWidth),
       bodyOverflow: document.documentElement.scrollWidth > window.innerWidth };
   });
   expect(metrics.inside).toBe(true);
   expect(metrics.bodyOverflow).toBe(false);
+  const labels = await heading.locator(".classification-field").evaluateAll(fields => fields.map(field => {
+    const label = field.querySelector("label")!, select = field.querySelector("select")!;
+    const range = document.createRange(); range.selectNodeContents(label);
+    const text = range.getBoundingClientRect(), control = select.getBoundingClientRect();
+    return Math.abs((text.left + text.right - control.left - control.right) / 2);
+  }));
+  expect(labels).toHaveLength(2);
+  labels.forEach(offset => expect(offset).toBeLessThanOrEqual(1));
   if (testInfo.project.name === "desktop") {
-    expect(Math.max(...metrics.tops) - Math.min(...metrics.tops)).toBeLessThanOrEqual(10);
+    expect(Math.max(...metrics.tops) - Math.min(...metrics.tops)).toBeLessThanOrEqual(1);
     expect(metrics.height).toBeLessThanOrEqual(110);
+    const controls = await heading.evaluate(node => {
+      const cells = [...node.querySelectorAll(".comparison-cell")].slice(0, 3);
+      const selects = [...node.querySelectorAll(".classification-field select")];
+      return [...cells, ...selects].map(element => element.getBoundingClientRect().top);
+    });
+    expect(Math.max(...controls) - Math.min(...controls)).toBeLessThanOrEqual(1);
   }
   await selectBudgets(app, [1, 2]);
   await expect(app.getByRole("table", { name: "総原価表", exact: true }).getByRole("columnheader", { name: "確定予算", exact: true })).toHaveCount(19);
@@ -73,4 +87,18 @@ test("総原価表は画面内で縦横に移動でき、見出しから社内�
   await page.screenshot({ path: testInfo.outputPath("fixed-sales.png") });
   await region.evaluate(node => { node.scrollTop = 0; node.scrollLeft = 0; });
   expect((await sales.boundingBox())!.y).toBeGreaterThan(bounds.y + 200);
+});
+
+
+test("展開表の画面名と3列の見出しを上段で揃える", async ({ app }, info) => {
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "展開表", exact: true }).click();
+  await settleMotion(app.locator("body"));
+  const heading = app.locator(".expansion-table-page .initiative-list-heading");
+  const offsets = await heading.evaluate(node => {
+    const title = node.querySelector("h1")!.getBoundingClientRect(), choices = node.querySelector(".comparison-selection")!.getBoundingClientRect();
+    return { top: Math.abs(title.y - choices.y), inside: choices.right <= window.innerWidth };
+  });
+  if (info.project.name === "desktop") expect(offsets.top).toBeLessThanOrEqual(1);
+  expect(offsets.inside).toBe(true);
 });

@@ -13,7 +13,7 @@ test('全比較画面で列ごとの前年排他・最後の選択・結果の�
     await expect(groups).toHaveCount(name === '入出力' ? 2 : 1);
     for (let i = 0; i < await groups.count(); i++) {
       const group = groups.nth(i), boxes = group.getByRole('checkbox');
-      await expect(boxes).toHaveCount(4);
+      await expect(boxes).toHaveCount(["総原価表", "展開表"].includes(name) ? 6 : 4);
       const primaryForecast = group.getByRole('checkbox', { name: '前年見込を基準にした一次予算', exact: true });
       const primaryActual = group.getByRole('checkbox', { name: '前年実績を基準にした一次予算', exact: true });
       const finalForecast = group.getByRole('checkbox', { name: '前年見込を基準にした確定予算', exact: true });
@@ -35,9 +35,10 @@ test('全比較画面で列ごとの前年排他・最後の選択・結果の�
     }
     if (name === '総原価表' || name === '展開表') {
       const table = app.getByRole('table', { name, exact: true });
-      await expect(table.locator('thead')).toContainText(/一次予算\s*前年見込基準/);
-      await expect(table.locator('thead')).toContainText(/確定予算\s*前年実績基準/);
-      await expect(table.locator('thead')).toContainText('確定予算 − 一次予算');
+      await expect(table.getByRole('columnheader', { name: '前年見込', exact: true })).toHaveCount(19);
+      await expect(table.getByRole('columnheader', { name: '一次予算', exact: true })).toHaveCount(19);
+      await expect(table.getByRole('columnheader', { name: '確定予算', exact: true })).toHaveCount(19);
+      await expect(table.getByRole('columnheader', { name: '差額', exact: true })).toHaveCount(19);
     }
     if (name === '履歴') {
       const dialog = app.getByRole('dialog');

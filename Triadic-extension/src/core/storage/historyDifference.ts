@@ -14,7 +14,7 @@ type Item = { section: string; subject: string; fields: Record<string, Value> };
 const labels: Record<string, string> = {
   fiscal_year: "基準年度", name: "名称", note: "備考", code: "コード", attribute: "科目属性", display_name: "表示名",
   expansion_id: "展開", expansion_category_id: "展開区分", department_id: "部署", industry_id: "業種", period_type_id: "期間",
-  previous_kind: "基準前年", final_previous_kind: "確定予算の基準前年", account_id: "勘定科目", parent_id: "所属先の集計", sign: "集計の加減", position: "表示順", sort_order: "表示順",
+  previous_kind: "基準前年", final_previous_kind: "確定予算の基準前年", display_previous_kind: "前年の表示", account_id: "勘定科目", parent_id: "所属先の集計", sign: "集計の加減", position: "表示順", sort_order: "表示順",
 
   required_key: "必須集計", start_month_rule: "開始年月の規則", first_kind: "比較対象1", second_kind: "比較対象2",
 };
@@ -55,7 +55,7 @@ function* items(db: Database): Generator<[string, Item]> {
     if (raw === null) return value(null, "未設定");
     const table = references[field];
     if (table) return value(identity(table, raw), name(table, raw));
-    if (field === "previous_kind" || field === "final_previous_kind") return value(raw, raw === 1 ? "前年見込" : "前年実績");
+    if (field === "previous_kind" || field === "final_previous_kind" || field === "display_previous_kind") return value(raw, raw === 1 ? "前年見込" : "前年実績");
     if (field === "first_kind" || field === "second_kind") return value(raw, raw === 1 ? "一次予算" : "確定予算");
     if (field === "position" || field === "sort_order") return value(raw, String(Number(raw) + 1));
     if (field === "sign") return value(raw, raw === 1 ? "＋" : "−");

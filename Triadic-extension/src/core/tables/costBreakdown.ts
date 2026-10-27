@@ -1,10 +1,10 @@
 import { baselineFor, previousKindName } from "../domain/kinds";
 import { amountToYen, checkedYen } from "../domain/amounts";
-import { resolvedAmount, type KindId } from "../domain/kinds";
+import { isKindId, resolvedAmount, type KindId, type PreviousKind } from "../domain/kinds";
 import type { PlanContents } from "../domain/plan";
 import type { TablePeriod } from "./periodTables";
 
-export type CostBreakdownTarget = { kind: "account" | "group"; id: number; column: number; period: TablePeriod };
+export type CostBreakdownTarget = { kind: "account" | "group"; id: number; column: number; period: TablePeriod; displayPrevious?: PreviousKind };
 export type CostBreakdownLine = {
   key: string; initiativeId: number | null; name: string; accountId: number;
   departmentId: number | null; industryId: number | null; sign: number; amount: number;
@@ -66,7 +66,7 @@ export function indexCostBreakdown(contents: Pick<PlanContents, "previousAmounts
 /** Use the same membership signs as the cost table, never account-attribute signs. */
 export function buildCostBreakdown(contents: PlanContents, target: CostBreakdownTarget, selected: KindId[], candidates = indexCostBreakdown(contents)) {
   const kinds = [...selected].sort((a, b) => a - b);
-  if (!kinds.length || target.column < 0 || target.column > 2) throw new Error("比較対象が正しくありません。");
+  if (!kinds.length || target.column < 0 || target.column > 2 || (target.displayPrevious !== undefined && !isKindId(target.displayPrevious))) throw new Error("比較対象が正しくありません。");
   const groups = new Map(contents.aggregations.map(group => [group.id, group]));
   const signs = new Map<number, number>();
   const pending = [{ kind: target.kind, id: target.id, sign: 1 }];
@@ -85,9 +85,12 @@ export function buildCostBreakdown(contents: PlanContents, target: CostBreakdown
   const primaryDifference = kinds.length === 2 && target.column === 2;
   const kind = kinds[kinds.length === 2 && budget ? target.column : kinds.length - 1]!;
   const lines: CostBreakdownLine[] = [];
-  if (prior || budget || primaryDifference) {
-    const baselines = primaryDifference && baselineFor(contents, 1) === baselineFor(contents, 2) ? [] : primaryDifference ? [{ kind: baselineFor(contents, 2), factor: 1 }, { kind: baselineFor(contents, 1), factor: -1 }]
-      : [{ kind: baselineFor(contents, kind), factor: 1 }];
+  const displayedDifference = kinds.length === 1 && target.column === 2 && target.displayPrevious !== undefined;
+  if (prior || budget || primaryDifference || displayedDifference) {
+    const baselines = displayedDifference
+      ? baselineFor(contents, kind) === target.displayPrevious ? [] : [{ kind: baselineFor(contents, kind), factor: 1 }, { kind: target.displayPrevious!, factor: -1 }]
+      : primaryDifference && baselineFor(contents, 1) === baselineFor(contents, 2) ? [] : primaryDifference ? [{ kind: baselineFor(contents, 2), factor: 1 }, { kind: baselineFor(contents, 1), factor: -1 }]
+      : [{ kind: prior ? target.displayPrevious ?? baselineFor(contents, kind) : baselineFor(contents, kind), factor: 1 }];
     for (const baseline of baselines) {
     const previous = new Map<string, { line: Omit<CostBreakdownLine, "amount">; amount: bigint }>();
     for (const record of candidates.previous(signs.keys(), baseline.kind, target.period.months)) {

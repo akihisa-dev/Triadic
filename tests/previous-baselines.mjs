@@ -106,7 +106,7 @@ export async function verifyPreviousBaselines(api, { excel = false } = {}) {
     const expanded=api.buildKindExpansionTable(context,[1,2],'registered');
     assert.deepEqual(expanded.total.map(value=>value[4].sales),[...expected,expected[1]-expected[0]]);
     const saved=await api.readPlanContents(await api.changePlanSettings(bytes,{type:'comparison',screen:'cost-table',selected:[1,2],previous}));
-    assert.deepEqual(saved.previousSelections['cost-table'],previous);
+    assert.deepEqual(saved.previousSelections['cost-table'],{...previous,display:1});
     for(const selected of [[1],[2],[1,2]]) for(const kind of [1,2]) for(const baseline of [1,2]) {
       const next=api.toggleComparison(selected,previous,kind,baseline);
       assert.ok(next.selected.length>=1&&next.selected.length<=2);
@@ -117,9 +117,26 @@ export async function verifyPreviousBaselines(api, { excel = false } = {}) {
       else assert.ok(!next.selected.includes(kind));
     }
   }
+  // Previous display is persisted separately and never changes either budget selection or its amounts.
+  let independent = await api.changePlanSettings(bytes, { type: 'comparison', screen: 'cost-table', selected: [1,2], previous: {1:1,2:2,display:1} });
+  const beforeDisplay = await api.readPlanContents(independent);
+  const changedDisplay = await api.processingTasks.prepareComparisonSelectionSave(independent, 'cost-table', [1,2], {1:1,2:2,display:2});
+  assert.ok(changedDisplay.operation);
+  const afterDisplay = await api.readPlanContents(changedDisplay.bytes);
+  assert.deepEqual(afterDisplay.previousSelections['cost-table'], {1:1,2:2,display:2});
+  assert.deepEqual(afterDisplay.kindSelections, beforeDisplay.kindSelections);
+  assert.deepEqual(afterDisplay.previousAmounts, beforeDisplay.previousAmounts);
+  assert.deepEqual(afterDisplay.initiatives, beforeDisplay.initiatives);
+  assert.deepEqual(api.buildPeriodCostComparison({...beforeDisplay,budgetPrevious:beforeDisplay.previousSelections['cost-table']},[1,2]), api.buildPeriodCostComparison({...afterDisplay,budgetPrevious:afterDisplay.previousSelections['cost-table']},[1,2]));
+  const restoredDisplay = await api.readPlanContents(await api.applyOperationSnapshot(changedDisplay.bytes, changedDisplay.operation.before));
+  assert.deepEqual(restoredDisplay.previousSelections, beforeDisplay.previousSelections);
+  // A budget-only caller must preserve the independently saved previous column too.
+  independent = await api.changePlanSettings(changedDisplay.bytes, {type:'comparison',screen:'cost-table',selected:[1,2],previous:{1:2,2:1}});
+  assert.deepEqual((await api.readPlanContents(independent)).previousSelections['cost-table'],{1:2,2:1,display:2});
+  await assert.rejects(api.changePlanSettings(independent, {type:'comparison',screen:'cost-table',selected:[1,2],previous:{1:1,2:1,display:3}}),/基準前年/);
   assert.deepEqual(contents, original, '基準切替は入力値を書き換えない');
   const selected = await api.changePlanSettings(bytes, { type: 'comparison', screen: 'cost-table', selected: [1,2], previous: {1:2,2:1} });
-  assert.deepEqual((await api.readPlanContents(selected)).previousSelections, { 'cost-table': {1:2,2:1}, 'expansion-table': {1:1,2:1} });
+  assert.deepEqual((await api.readPlanContents(selected)).previousSelections, { 'cost-table': {1:2,2:1,display:1}, 'expansion-table': {1:1,2:1,display:1} });
   const left = await api.savePreviousAmounts(bytes, input(1, '101'));
   const right = await api.savePreviousAmounts(bytes, input(2, '112'));
   for (const [local, external] of [[left, right], [right, left]]) {

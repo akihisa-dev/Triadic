@@ -98,7 +98,14 @@ import { accountTypes } from "../../Triadic-extension/src/core/domain/accountTyp
 // Shared by the preview and the generated .triadic sample, using the app's own validation.
 
 export async function createSamplePlan(fiscalYear = currentFiscalYear(), large = false): Promise<Uint8Array> {
-  if (large) return createBusinessSample(fiscalYear);
+  if (large) {
+    const sample = await createBusinessSample(fiscalYear);
+    const settings = await readPlanContents(sample);
+    for (const screen of ["cost-table", "expansion-table"] as const) {
+      if (settings.previousSelections[screen].display !== 1) throw new Error("サンプルの前年表示の初期選択が一致しません。");
+    }
+    return sample;
+  }
   let bytes = await createTriadicDatabase(fiscalYear);
   const categoryIdsByName = new Map((await readPlanContents(bytes)).expansionCategories.map(item => [item.categoryName, item.id]));
   if (Object.values(accountTypes).join("・") !== "売上・売上原価・費用・利益") throw new Error("科目属性マスタの固定4件が一致しません。");
