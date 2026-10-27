@@ -6,7 +6,7 @@ test("関連図の初期配置は三つの対等な表と全14入口を示す", 
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
   const home = app.getByRole("main", { name: "ホーム", exact: true });
   await expect(home.locator(".home-relation-node")).toHaveCount(14);
-  await expect(home.locator(".home-relations-brand")).toHaveText("Triadic三面等価");
+  await expect(home.locator(".home-relations-brand")).toHaveText("Triadic");
   await expect(home.locator(".home-relation-subnode:visible")).toHaveCount(0);
   await expect(home.locator(".home-relation.is-peer")).toHaveCount(3);
   const sizes = await home.locator(".home-relation-node.is-core").evaluateAll(nodes => nodes.map(node => [getComputedStyle(node).width, getComputedStyle(node).height]));
@@ -121,7 +121,7 @@ test("各入口を選んでも名称・関係説明・中央の名前が重な�
       return groups.every((group, i) => group.getAttribute("transform") === before[i]);
     })).toBe(true);
     const overlaps = await home.locator(".home-relations-map").evaluate(svg => {
-      const labels = [...svg.querySelectorAll(".home-relation-name, .home-relation-subnode, .home-relations-brand strong, .home-relations-brand span")].filter(node => getComputedStyle(node).visibility !== "hidden");
+      const labels = [...svg.querySelectorAll(".home-relation-name, .home-relation-subnode, .home-relations-brand strong")].filter(node => getComputedStyle(node).visibility !== "hidden");
       const results: string[] = [];
       for (let i = 0; i < labels.length; i++) for (let j = i + 1; j < labels.length; j++) {
         const a = labels[i]!, b = labels[j]!, x = a.getBoundingClientRect(), y = b.getBoundingClientRect();

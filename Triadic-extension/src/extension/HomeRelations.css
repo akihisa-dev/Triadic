@@ -59,8 +59,7 @@
 .home-relation-icon, .home-relation-node.is-entry .home-relation-icon { flex: 0 0 48px; width: 48px; height: 48px; border: 1px solid var(--control-line); border-radius: 50%; background: var(--surface); color: var(--ink); box-shadow: 0 4px 12px rgb(var(--shadow-rgb) / 4%); }
 .home-relation-icon svg, .home-relation-node.is-entry .home-relation-icon svg { width: 26px; height: 26px; }
 .home-relation-name { padding: 0 4px; background: var(--canvas); line-height: 24px; }
-.home-relation-node.is-core { width: 128px; height: 128px; border: 1px solid var(--control-line); border-radius: 50%; background: var(--ink); color: var(--on-ink); font-weight: 500; box-shadow: 0 8px 22px rgb(var(--shadow-rgb) / 7%); }
-:root[data-theme="dark"] .home-relation-node.is-core { background: var(--surface); color: var(--ink); }
+.home-relation-node.is-core { width: 128px; height: 128px; border: 1px solid var(--control-line); border-radius: 50%; background: var(--surface); color: var(--ink); font-weight: 500; box-shadow: 0 8px 22px rgb(var(--shadow-rgb) / 7%); }
 .home-relation-node.is-core .home-relation-icon { flex: 0 0 34px; width: 34px; height: 34px; border: 0; background: transparent; color: inherit; box-shadow: none; }
 .home-relation-node.is-core .home-relation-icon svg { width: 32px; height: 32px; }
 .home-relation-node.is-core .home-relation-name { background: transparent; }
@@ -78,4 +77,3 @@
 .home-relations-brand { pointer-events: none; }
 .home-relations-brand foreignObject > div { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80px; gap: 8px; color: var(--ink); }
 .home-relations-brand strong { font-size: 34px; font-weight: 500; letter-spacing: -.06em; }
-.home-relations-brand span { font-size: 12px; letter-spacing: .28em; color: var(--muted); }

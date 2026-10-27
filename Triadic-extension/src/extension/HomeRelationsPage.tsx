@@ -50,8 +50,8 @@ export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
             </foreignObject>
           </g>
         </g>)}
-        <g className="home-relations-brand" ref={element => { if (element) graph.groups.current.set("brand", element); else graph.groups.current.delete("brand"); }} aria-label="Triadic 三面等価">
-          <foreignObject x={graphNodes.find(node => node.page === "brand")!.x + 15} y={graphNodes.find(node => node.page === "brand")!.y - 28} width="170" height="80"><div><strong>Triadic</strong><span>三面等価</span></div></foreignObject>
+        <g className="home-relations-brand" ref={element => { if (element) graph.groups.current.set("brand", element); else graph.groups.current.delete("brand"); }} aria-label="Triadic">
+          <foreignObject x={graphNodes.find(node => node.page === "brand")!.x + 15} y={graphNodes.find(node => node.page === "brand")!.y - 28} width="170" height="80"><div><strong>Triadic</strong></div></foreignObject>
         </g>
         {nodes.map(destination => {
           const node = graphNodes.find(item => item.page === destination.page)!;
