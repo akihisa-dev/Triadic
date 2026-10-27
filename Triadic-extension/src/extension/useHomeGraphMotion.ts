@@ -4,7 +4,7 @@ import type { RelationView } from "./useRelationCamera";
 
 type Pull = { page: string; pointerId: number; x: number; y: number; startX: number; startY: number };
 
-export function useHomeGraphMotion(nodes: readonly MotionNode[], edges: readonly MotionEdge[], view: RefObject<RelationView | null>, onLayout?: () => void) {
+export function useHomeGraphMotion(nodes: readonly MotionNode[], edges: readonly MotionEdge[], view: RefObject<RelationView | null>, onLayout?: () => void, route?: (edge: MotionEdge, positions: Record<string, { x: number; y: number }>) => string) {
   const groups = useRef(new Map<string, SVGGElement>());
   const paths = useRef(new Map<number, SVGPathElement>());
   const pull = useRef<Pull | null>(null);
@@ -13,6 +13,7 @@ export function useHomeGraphMotion(nodes: readonly MotionNode[], edges: readonly
   const paint = useRef(() => {});
   const layout = useRef(onLayout);
   layout.current = onLayout;
+  const routeRef = useRef(route); routeRef.current = route;
 
   useLayoutEffect(() => {
     const preference = matchMedia("(prefers-reduced-motion: reduce)");
@@ -28,7 +29,8 @@ export function useHomeGraphMotion(nodes: readonly MotionNode[], edges: readonly
         const body = motion.bodies.get(node.page)!;
         groups.current.get(node.page)?.setAttribute("transform", `translate(${body.x - node.x - 100} ${body.y - node.y - 12})`);
       }
-      edges.forEach((edge, index) => paths.current.get(index)?.setAttribute("d", motionLine(motion.bodies.get(edge.from)!, motion.bodies.get(edge.to)!, edge.double)));
+      const positions = motion.positions();
+      edges.forEach((edge, index) => paths.current.get(index)?.setAttribute("d", routeRef.current?.(edge, positions) ?? motionLine(motion.bodies.get(edge.from)!, motion.bodies.get(edge.to)!, edge.double)));
       if (view.current) view.current.positions = motion.positions();
       layout.current?.();
     };
@@ -47,6 +49,7 @@ export function useHomeGraphMotion(nodes: readonly MotionNode[], edges: readonly
 
   return {
     groups, paths, pull,
+    retarget(positions: Record<string, { x: number; y: number }>) { simulation.current?.retarget(positions); wake.current(); },
     begin(page: string, pointerId: number, x: number, y: number) {
       const body = simulation.current?.bodies.get(page);
       if (!body) return;

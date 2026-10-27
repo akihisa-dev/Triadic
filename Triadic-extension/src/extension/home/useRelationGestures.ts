@@ -1,18 +1,20 @@
 import { useLayoutEffect, useRef, useState, type RefObject, type PointerEvent, type HTMLAttributes } from "react";
-import { graphNodes, graphEdges } from "./homeRelations";
+import { graphNodes, graphEdges, nodes, edges } from "./homeRelations";
+import { homeRelationLine, layoutHomeRelations } from "./homeRelationLayout";
 import { useHomeGraphMotion } from "../useHomeGraphMotion";
 import { useRelationCamera, type RelationView } from "../useRelationCamera";
 export const MIN_SCALE = .05;
 export const MAX_SCALE = 2.5;
 
 export function useRelationGestures(view: RefObject<RelationView | null>, disabled: boolean) {
-  const graph = useHomeGraphMotion(graphNodes, graphEdges, view, () => { if (view.current?.fitted && !cameraTarget.current) fit(); });
+  const graph = useHomeGraphMotion(graphNodes, graphEdges, view, () => { if (view.current?.fitted && !cameraTarget.current) fit(); }, (edge, positions) => homeRelationLine(positions[edge.from]!, positions[edge.to]!, edge.from, edge.to, edge.double));
   const viewport = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [highlighted, setActive] = useState<string | null>(null);
   const [focused, setFocused] = useState<string | null>(null);
   const [grabbed, setGrabbed] = useState<string | null>(null);
-  const active = grabbed ?? focused ?? highlighted ?? selected;
+  const active = grabbed ?? selected ?? focused ?? highlighted;
+  useLayoutEffect(() => { graph.retarget(layoutHomeRelations(nodes, edges, selected)); }, [selected]);
   const { camera, target: cameraTarget, update, smooth, cancel: cancelZoom } = useRelationCamera(view);
   const [dragging, setDragging] = useState(false);
   const points = useRef(new Map<number, { x: number; y: number }>());

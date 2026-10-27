@@ -2,7 +2,7 @@ export type MotionNode = { page: string; x: number; y: number; width?: number; h
 export type MotionEdge = { from: string; to: string; double?: boolean };
 type Body = { x: number; y: number; vx: number; vy: number; width: number; height: number; sub: boolean };
 
-/** Each item returns to its own layout anchor; dragging never rearranges the diagram. */
+/** Dragging returns to the current layout; selection can move all layout anchors. */
 export class HomeMotion {
   readonly bodies: Map<string, Body>;
   private readonly anchors: Map<string, { x: number; y: number }>;
@@ -19,6 +19,11 @@ export class HomeMotion {
     const anchor = this.anchors.get(page)!;
     return body.x !== anchor.x || body.y !== anchor.y;
   }); }
+  retarget(positions: Record<string, { x: number; y: number }>) {
+    for (const [page, point] of Object.entries(positions)) {
+      if (this.bodies.has(page)) this.anchors.set(page, { ...point });
+    }
+  }
   hold(page: string) {
     this.held = page;
     const body = this.bodies.get(page)!;

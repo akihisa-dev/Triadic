@@ -1,4 +1,5 @@
 import { pageMetadata } from "../pageMetadata";
+import { isTablePage, layoutHomeRelations } from "./homeRelationLayout";
 
 export const nodes = ([
   { page: "aggregation-master", x: 900, y: -210 },
@@ -43,11 +44,13 @@ export const edges: { from: HomeDestination; to: HomeDestination; label: string;
   { from: "expansion-master", to: "expansion-table", label: "グループ分け", kind: "structure", at: { x: 1100, y: 378 } },
 ];
 
-// Relation descriptions are graph nodes, joined to both destinations.
-export const subNodes = edges.map((edge, index) => {
-  const from = nodes.find(node => node.page === edge.from)!, to = nodes.find(node => node.page === edge.to)!;
-  return { page: `relation-${index}`, name: edge.label, x: edge.at?.x ?? (from.x + to.x) / 2,
-    y: edge.at?.y ?? (from.y + to.y) / 2, width: Math.max(112, edge.label.length * 12 + 24), height: 32, sub: true };
-});
-export const graphNodes = [...nodes.map(node => ({ ...node, width: 200, height: 56 })), ...subNodes];
-export const graphEdges = edges.flatMap((edge, index) => [{ from: edge.from, to: subNodes[index]!.page, double: edge.kind === "view" }, { from: subNodes[index]!.page, to: edge.to, double: edge.kind === "view" }]);
+edges.push({ from: "cost-table", to: "expansion-table", label: "同じ内容を別の切り口で確認", kind: "view", at: { x: 0, y: 0 } });
+const initial = layoutHomeRelations(nodes, edges, null);
+export const subNodes = edges.map((edge, index) => ({ page: `relation-${index}`, name: edge.label,
+  x: initial[`relation-${index}`]!.x - 100, y: initial[`relation-${index}`]!.y - 12,
+  width: Math.max(112, edge.label.length * 13 + 12), height: 28, sub: true }));
+export const graphNodes = [
+  ...nodes.map(node => ({ ...node, x: initial[node.page]!.x - 100, y: initial[node.page]!.y - 12, width: isTablePage(node.page) ? 128 : 180, height: isTablePage(node.page) ? 128 : 110 })),
+  ...subNodes, { page: "brand", x: initial.brand!.x - 100, y: initial.brand!.y - 12, width: 170, height: 80, sub: true },
+];
+export const graphEdges = edges.map(edge => ({ from: edge.from, to: edge.to, double: edge.kind === "view" }));

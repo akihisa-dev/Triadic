@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-export function verifyHomeMotion({ HomeMotion, motionLine }) {
+export function verifyHomeMotion({ HomeMotion, motionLine, layoutHomeRelations, homeDestinations, homeRelations, tablePages, homeRelationLine }) {
   const nodes = [{ page: "a", x: 250, y: 300 }, { page: "b", x: 550, y: 300 }];
   const run = rate => {
     const motion = new HomeMotion(nodes);
@@ -60,6 +60,31 @@ export function verifyHomeMotion({ HomeMotion, motionLine }) {
     assert.ok(Math.abs(diagonal[index + 1]) >= 28 - .001, "斜めの二重線も開始カードの外端で止まる");
     assert.ok(Math.abs(diagonal[index + 3] - 200) >= 28 - .001, "斜めの二重線も終了カードへ入り込まない");
   }
+
+  const initial = layoutHomeRelations(homeDestinations, homeRelations, null);
+  const ids = homeDestinations.map(node => node.page);
+  for (const selected of [null, ...ids]) {
+    const result = layoutHomeRelations(homeDestinations, homeRelations, selected);
+    for (const id of [...ids, "brand", ...homeRelations.map((_, i) => `relation-${i}`)])
+      assert.ok(Number.isFinite(result[id].x) && Number.isFinite(result[id].y), `${selected}: 全項目・説明の位置が揃う`);
+    const sides = tablePages.map((page, i) => Math.hypot(result[page].x - result[tablePages[(i + 1) % 3]].x, result[page].y - result[tablePages[(i + 1) % 3]].y));
+    assert.ok(Math.max(...sides) - Math.min(...sides) < .01, "どの表からも対等な三角形を保つ");
+    if (tablePages.includes(selected)) assert.ok(tablePages.every(page => result[page].y >= result[selected].y), "選んだ表を上の頂点へ配置");
+    for (const edge of homeRelations) {
+      const path = homeRelationLine(result[edge.from], result[edge.to], edge.from, edge.to, edge.kind === "view");
+      assert.ok(!/NaN|Infinity/.test(path), "すべての配置の線が有効");
+    }
+  }
+  const focused = layoutHomeRelations(homeDestinations, homeRelations, "cost-table");
+  assert.notDeepEqual(focused["account-type-master"], initial["account-type-master"], "直接関係のない項目も場所を空ける");
+  const changing = new HomeMotion(ids.map(page => ({ page, x: initial[page].x - 100, y: initial[page].y - 12 })));
+  changing.retarget(focused);
+  assert.deepEqual(changing.positions()["cost-table"], initial["cost-table"], "選択した瞬間に位置を飛ばさない");
+  for (let i = 0; i < 300; i++) changing.advance(1 / 60);
+  for (const page of ids) assert.deepEqual(changing.positions()[page], focused[page], "全項目が選択後の定位置に収束する");
+  changing.retarget(initial);
+  for (let i = 0; i < 300; i++) changing.advance(1 / 60, true);
+  for (const page of ids) assert.deepEqual(changing.positions()[page], initial[page], "解除で初期配置へ正確に戻る");
 
   console.log("PASS: home graph pointer response, settling, anchor return, refresh rate and line endpoints");
 }

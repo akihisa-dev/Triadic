@@ -4,7 +4,8 @@ import "./HomeRelations.css";
 import { SidebarIcon } from "./SidebarIcon";
 import { ScreenDataMap } from "./ScreenDataMap";
 import { MechanismMap } from "./MechanismMap";
-import { nodes, edges, subNodes, relationKinds, type HomeDestination } from "./home/homeRelations";
+import { nodes, edges, subNodes, graphNodes, relationKinds, type HomeDestination } from "./home/homeRelations";
+import { isTablePage, relationDescription } from "./home/homeRelationLayout";
 import { useRelationGestures, MIN_SCALE, MAX_SCALE } from "./home/useRelationGestures";
 export type { HomeDestination } from "./home/homeRelations";
 import { type RelationView } from "./useRelationCamera";
@@ -18,7 +19,7 @@ type Props = {
 export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
   const [mode, setMode] = useWindowViewState("home:mode", "relations");
   const { viewport, selected, setSelected, setActive, setFocused, active, camera, dragging, graph, focusNode, fit, zoomCenter, handlers } = useRelationGestures(view, disabled);
-  const isRelated = (edge: typeof edges[number], index: number) => edge.from === active || edge.to === active || subNodes[index]!.page === active;
+  const isRelated = (edge: typeof edges[number], index: number) => edge.from === selected || edge.to === selected || subNodes[index]!.page === selected;
   const related = new Set(edges.flatMap((edge, index) => isRelated(edge, index) ? [edge.from, edge.to] : []));
   return <main className="home-relations" aria-label="ホーム">
     <header className="home-relations-heading"><h1>Home</h1>
@@ -35,27 +36,35 @@ export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
     <div className="home-relations-canvas" hidden={mode !== "relations"}>
     <div ref={viewport} className={`home-relations-viewport${dragging ? " is-dragging" : ""}`} role="region" aria-label="画面とマスタの相関図" tabIndex={0}
       {...handlers}>
-      <svg className="home-relations-map" viewBox="0 0 1240 640" aria-label="画面とマスタの関係" style={{ transform: `translate(${camera.x}px, ${camera.y}px) scale(${camera.scale})` }}>
-        {edges.map((edge, index) => <g key={`${edge.from}-${edge.to}`} data-kind={edge.kind} className={`home-relation relation-${edge.kind}${active && isRelated(edge, index) ? " is-active" : active ? " is-muted" : ""}`}>
-          <title>{relationKinds.find(([kind]) => kind === edge.kind)![1]}：{edge.label}</title>
-          {[0, 1].map(part => <path key={part} ref={element => { const key = index * 2 + part; if (element) graph.paths.current.set(key, element); else graph.paths.current.delete(key); }} />)}
-          <g ref={element => { const key = subNodes[index]!.page; if (element) graph.groups.current.set(key, element); else graph.groups.current.delete(key); }}>
-            <foreignObject x={subNodes[index]!.x + 100 - subNodes[index]!.width / 2} y={subNodes[index]!.y - 4} width={subNodes[index]!.width} height="32">
-              <div className="home-relation-subnode" data-page={subNodes[index]!.page} role="group" tabIndex={0}
-                aria-label={`${nodes.find(node => node.page === edge.from)!.name}と${nodes.find(node => node.page === edge.to)!.name}の関係：${edge.label}`}
+      <svg className="home-relations-map" viewBox="0 0 800 1040" aria-label="画面とマスタの関係" style={{ transform: `translate(${camera.x}px, ${camera.y}px) scale(${camera.scale})` }}>
+        {edges.map((edge, index) => <g key={`${edge.from}-${edge.to}`} data-kind={edge.kind} className={`home-relation relation-${edge.kind}${isRelated(edge, index) ? " is-active" : edge.kind === "view" ? " is-peer" : " is-hidden"}`}>
+          <title>{`${relationKinds.find(([kind]) => kind === edge.kind)![1]}：${edge.label}`}</title>
+          <path ref={element => { if (element) graph.paths.current.set(index, element); else graph.paths.current.delete(index); }} />
+          <g className={isRelated(edge, index) ? "" : "home-relation-description-hidden"} aria-hidden={!isRelated(edge, index)} ref={element => { const key = subNodes[index]!.page; if (element) graph.groups.current.set(key, element); else graph.groups.current.delete(key); }}>
+            <foreignObject x={subNodes[index]!.x + 100 - subNodes[index]!.width / 2} y={subNodes[index]!.y + 12 - 14} width={subNodes[index]!.width} height="28">
+              <div className="home-relation-subnode" data-page={subNodes[index]!.page} role="group" tabIndex={isRelated(edge, index) ? 0 : -1}
+                aria-label={`${nodes.find(node => node.page === edge.from)!.name}と${nodes.find(node => node.page === edge.to)!.name}の関係：${relationDescription(edge, selected)}`}
                 onMouseEnter={() => setActive(subNodes[index]!.page)} onMouseLeave={() => setActive(null)} onFocus={() => focusNode(subNodes[index]!)} onBlur={() => setFocused(null)}>
-                {edge.label}
+                {relationDescription(edge, selected)}
               </div>
             </foreignObject>
           </g>
         </g>)}
-        {nodes.map(node => <g key={node.page} ref={element => { if (element) graph.groups.current.set(node.page, element); else graph.groups.current.delete(node.page); }} className="home-relation-item"><foreignObject x={node.x - 6} y={node.y - 22} width="212" height="68">
-          <button type="button" data-page={node.page} className={`home-relation-node${node.master ? " is-master" : ""}${node.page === "initiative-list" ? " is-entry" : ""}${related.has(node.page) ? " is-related" : ""}${active === node.page ? " is-selected" : ""}`}
-            aria-pressed={selected === node.page} disabled={disabled} onMouseEnter={() => setActive(node.page)} onMouseLeave={() => setActive(null)} onFocus={() => focusNode({ ...node, width: 200, height: 56 })} onBlur={() => setFocused(null)} onClick={() => { if (selected === node.page) onNavigate(node.page); else setSelected(node.page); }}>
-            <span className="home-relation-icon"><SidebarIcon name={node.icon} /></span>
-            <span className="home-relation-name">{node.name}</span>
+        <g className="home-relations-brand" ref={element => { if (element) graph.groups.current.set("brand", element); else graph.groups.current.delete("brand"); }} aria-label="Triadic 三面等価">
+          <foreignObject x={graphNodes.find(node => node.page === "brand")!.x + 15} y={graphNodes.find(node => node.page === "brand")!.y - 28} width="170" height="80"><div><strong>Triadic</strong><span>三面等価</span></div></foreignObject>
+        </g>
+        {nodes.map(destination => {
+          const node = graphNodes.find(item => item.page === destination.page)!;
+          const core = isTablePage(node.page);
+          return <g key={node.page} ref={element => { if (element) graph.groups.current.set(node.page, element); else graph.groups.current.delete(node.page); }} className={`home-relation-item${core ? " is-core" : ""}${selected && selected !== node.page && !related.has(destination.page) ? " is-muted" : ""}`}>
+          <foreignObject x={node.x + 100 - node.width / 2 - 8} y={node.y + 12 - node.height / 2 - 8} width={node.width + 16} height={node.height + 16}>
+          <button type="button" data-page={node.page} className={`home-relation-node${destination.master ? " is-master" : ""}${core ? " is-core" : ""}${node.page === "initiative-list" ? " is-entry" : ""}${related.has(destination.page) ? " is-related" : ""}${active === node.page ? " is-selected" : ""}`}
+            aria-pressed={selected === node.page} disabled={disabled} onMouseEnter={() => setActive(node.page)} onMouseLeave={() => setActive(null)} onFocus={() => focusNode(node)} onBlur={() => setFocused(null)} onClick={() => { if (selected === node.page) onNavigate(destination.page); else setSelected(node.page); }}>
+            <span className="home-relation-icon"><SidebarIcon name={destination.icon} /></span>
+            <span className="home-relation-name">{destination.name}</span>
           </button>
-        </foreignObject></g>)}
+          </foreignObject></g>;
+        })}
       </svg>
     </div>
     <div className="home-relations-legend" role="list" aria-label="関係の線の意味">

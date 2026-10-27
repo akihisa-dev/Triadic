@@ -41,7 +41,7 @@
 | Excel出力・前年フォーマット取込 | core/spreadsheets/* | 総原価表・展開表・施策一覧と計算元、見込/実績、地域/事業 | 関連変更時だけ専用コマンドで出力/再読込/取込 | 選択した条件・名称・金額を保持し、拒否時は部分更新しない | 追加検証: npm run test:excel / test:ui:excel。通常検証には含めない |
 | ファイル・再選択・別名保存 | extension/useFileEntry.ts・extension/PlanSession.ts | 正常実ファイル、模擬ファイルの失敗/取消/許可拒否 | 模擬保存先で保存・取消・再試行 | 元ファイル・入力・参照を保持。成功後だけ参照切替 | 自動: file-boundaries.mjs・new-plan-file.mjs・save-as.mjs・recent-file.mjs |
 | 複数ウィンドウ・競合・所有識別 | extension/windowSession*・core/storage/rebase* | 既存の私有コピーと同時編集fixture | 同時編集、外部更新、取消後番号再利用 | 独立変更だけ統合、衝突時入力保護。古い行を別所有者へ移さない | 自動: window-session.mjs・initiative-owner-rebase.mjs・account-reference-rebase.mjsほか |
-| ホーム・関連図・仕組みの開示 | extension/HomePage.tsx・screenDataModel.ts・mechanismModel.ts | 現行実装から生成した構造と説明 | ホームの4表示を開く | 実装と説明が一致。説明は縦一列で全文を読み、全保存項目・参照先を開ける。データ変更だけで開示の構造を増やさない | 自動: data-map:check・mechanism-map.test.mjs。画面テスト: home-relations.spec.ts・home-explanation-layout.spec.ts・screen-data-map.spec.ts・mechanism-map.spec.ts |
+| ホーム・関連図・仕組みの開示 | extension/HomePage.tsx・screenDataModel.ts・mechanismModel.ts | 現行実装から生成した構造と説明 | ホームの4表示を開く | 実装と説明が一致。説明は縦一列で全文を読み、全保存項目・参照先を開ける。データ変更だけで開示の構造を増やさない | 自動: data-map:check・mechanism-map.test.mjs。配置・移動の検証: home-graph-motion.mjs。画面テスト: home-relations.spec.ts・home-explanation-layout.spec.ts・screen-data-map.spec.ts・mechanism-map.spec.ts |
 | テーマ・狭幅・長名・大量行・上限 | extension/styles/*・core/domain/amounts.ts | 会社予算と用途別fixture | 明暗/狭幅、負ID、長名、上限超過等の専用テスト | 業務予算を水増しせず操作・表示・失敗保護を検証 | 各専用テスト。会社予算だけでは全境界を再現しない |
 
 ## 更新と検証
