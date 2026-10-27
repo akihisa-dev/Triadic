@@ -14,23 +14,21 @@ import { Fragment, memo, useMemo, useRef, useState } from "react";
 import { expansionPeriodAmount, tablePeriods } from "../core/tables/periodTables";
 import { type Initiative, type PlanContents } from "../core/domain/plan";
 import { createExpansionTableView, selectExpansionView, type ExpansionViewItem } from "../core/tables/expansionTableView";
-import { baselineFor, previousKindName } from "../core/domain/kinds";
 import type { KindId } from "../core/domain/kinds";
-import { displayedExpansionPriors } from "../core/tables/comparisonDisplay";
+import { displayedExpansionPrevious } from "../core/tables/comparisonDisplay";
 import { formatTableYen } from "./tableNumberFormat";
 
 type Props = {
   contents: PlanContents; selected: KindId[]; selection: ReactNode;
   onOpenInitiative: (initiative: Initiative, kind: KindId) => void;
 };
-const AmountCells = memo(function AmountCells({ values: source, priorCount = 0, copyRow, error = "" }: { values: (ExpansionMonths | undefined)[]; priorCount?: number; copyRow: number; error?: string }) {
-  const values = [...Array<undefined>(priorCount).fill(undefined), ...source];
+const AmountCells = memo(function AmountCells({ values, copyRow, error = "" }: { values: ExpansionMonths[]; copyRow: number; error?: string }) {
   return tablePeriods.map(period => <Fragment key={period.id}>{values.map((months, index) => <Fragment key={index}>
     {(["sales", "profit"] as const).map(metric => {
       let text: string, reason = "";
       try {
-        const amount = months === undefined ? undefined : expansionPeriodAmount(months, period, metric);
-        text = amount === undefined ? "" : amount === null ? error ? "計算不可" : "属性未設定" : formatTableYen(amount);
+        const amount = expansionPeriodAmount(months, period, metric);
+        text = amount === null ? error ? "計算不可" : "属性未設定" : formatTableYen(amount);
         if (amount === null && error) reason = error;
       } catch (failure) { text = "範囲超過"; reason = (failure as Error).message; }
       return <td key={metric} {...tableCopyCell(copyRow, tablePeriods.indexOf(period) * values.length * 2 + index * 2 + (metric === "profit" ? 1 : 0))} title={reason || text} className={periodCellClass(period, metric === "sales" && index === 0, metric === "profit" && index === values.length - 1)}>{text}</td>;
@@ -41,12 +39,12 @@ type ExpansionItem = NonNullable<ReturnType<ReturnType<typeof createExpansionTab
 function ExpansionGroupCell({ name, span, title, cellProps }: { name: string; span?: number; title?: string; cellProps: HTMLAttributes<HTMLTableCellElement> }) {
   return <th {...cellProps} rowSpan={span} scope="rowgroup" className="expansion-group" title={title}>{name}</th>;
 }
-function ExpansionSubtotalCells({ name, values, filtered, copyRow, priorCount, error = "" }: { name: string; values: ExpansionMonths[]; copyRow: number; priorCount: number; filtered?: boolean; error?: string }) {
-  return <><th colSpan={3} scope="row" className="expansion-subtotal-name">{name}計{filtered ? "（表示中）" : ""}</th><AmountCells values={values} priorCount={priorCount} error={error} copyRow={copyRow} /></>;
+function ExpansionSubtotalCells({ name, values, filtered, copyRow, error = "" }: { name: string; values: ExpansionMonths[]; copyRow: number; filtered?: boolean; error?: string }) {
+  return <><th colSpan={3} scope="row" className="expansion-subtotal-name">{name}計{filtered ? "（表示中）" : ""}</th><AmountCells values={values} error={error} copyRow={copyRow} /></>;
 }
 /** Row content and navigation are identical; each renderer owns spans and focus retention. */
-function ExpansionInitiativeCells({ item, source, kind, onOpen, period, category, focusHandlers, cellFilter, copyRow, priorCount }: {
-  priorCount: number; copyRow: number; item: ExpansionItem; source: Initiative; kind: KindId; onOpen: Props["onOpenInitiative"];
+function ExpansionInitiativeCells({ item, source, kind, onOpen, period, category, focusHandlers, cellFilter, copyRow }: {
+  copyRow: number; item: ExpansionItem; source: Initiative; kind: KindId; onOpen: Props["onOpenInitiative"];
   period: { name: string; span: number } | null; category: { name: string; span: number } | null;
   focusHandlers?: Pick<ButtonHTMLAttributes<HTMLButtonElement>, "onFocus" | "onBlur">;
   cellFilter: ReturnType<typeof useTableCellFilter<ExpansionViewItem>>;
@@ -56,7 +54,7 @@ function ExpansionInitiativeCells({ item, source, kind, onOpen, period, category
     {category && <td {...cellFilter.props("category", category.name)} rowSpan={category.span} className="expansion-category" title={category.name}>{category.name}</td>}
     <th {...cellFilter.props("name", item.name)} scope="row" className="expansion-name"><button className="initiative-name-button" type="button" {...focusHandlers}
       title={item.note || item.name} onClick={() => onOpen(source, kind)}>{item.name}</button></th>
-    <AmountCells values={item.values} priorCount={priorCount} copyRow={copyRow} />
+    <AmountCells values={item.values} copyRow={copyRow} />
   </>;
 }
 export function ExpansionTablePage({ contents, selected: requested, selection, onOpenInitiative }: Props) {
@@ -76,8 +74,7 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
   const viewForSelection = useMemo(() => createExpansionTableView(contents),
     [contents.initiatives, contents.accounts, contents.previousAmounts, contents.previousKind, contents.budgetPrevious, contents.expansions, contents.periodTypes, contents.expansionCategories, contents.fiscalYear]);
   const baseView = viewForSelection(selected);
-  const priors = useMemo(() => displayedExpansionPriors(contents, selected), [contents, selected]);
-  const priorCount = priors.length;
+  const previousRow = useMemo(() => displayedExpansionPrevious(contents, selected), [contents, selected]);
   const categoryNames = useMemo(() => new Map(contents.expansionCategories.map(category => [category.id, category.categoryName])), [contents.expansionCategories]);
   const sourceInitiatives = useMemo(() => new Map(contents.initiatives.map(item => [item.id, item])), [contents.initiatives]);
   const categoryName = (item: Pick<Initiative, "expansionCategoryId">) => item.expansionCategoryId == null ? "" : categoryNames.get(item.expansionCategoryId) ?? "";
@@ -86,7 +83,7 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
   const columns = useMemo<TableColumn<ExpansionViewItem>[]>(() => {
     const expansionNames = new Map(contents.expansions.map(item => [item.id, item.expansionName]));
     const periodNames = new Map(contents.periodTypes.map(item => [item.id, item.periodName]));
-    const labels = [...selected.map(id => id === 1 ? "一次予算" : "確定予算"), ...(selected.length === 2 ? ["差額"] : [])];
+    const labels = [...selected.map(id => id === 1 ? "一次予算" : "確定予算"), ...(selected.length === 2 ? ["確定予算−一次予算"] : [])];
     return [
       { id: "expansion", label: "展開名", type: "choice", value: row => expansionNames.get(row.expansionId!) },
       { id: "period", label: "期間名", type: "choice", value: row => periodNames.get(row.periodTypeId!) },
@@ -104,14 +101,13 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
   const cellFilter = useTableCellFilter(tableView);
   const { table, groups, flat, calculationError } = useMemo(() => selectExpansionView(baseView, contents, columns, viewState), [baseView, contents, columns, viewState]);
   const copyIndices = useMemo(() => new Map(flat.map((row, index) => [row.item ? `initiative:${row.item.id}` : `subtotal:${row.group.expansion.id}`, index + 3])), [flat]);
-  const copyColumns = (priorCount + (selected.length === 2 ? 3 : 1)) * 2;
+  const copyColumns = (selected.length === 2 ? 3 : 1) * 2;
   const rangeCopy = useTableRangeCopy(container, { rowCount: flat.length + 3, columnCount: tablePeriods.length * copyColumns, resetKey: flat,
     textAt: (rowIndex, column) => {
       const row = flat[rowIndex - 3];
-      const values = rowIndex === 0 ? table.previous : rowIndex === 1 ? table.total : rowIndex === 2 ? table.changes : row!.item ? row!.item.values : row!.group.values;
+      const values = rowIndex === 0 ? previousRow.values : rowIndex === 1 ? table.total : rowIndex === 2 ? table.changes : row!.item ? row!.item.values : row!.group.values;
       const period = tablePeriods[Math.floor(column / copyColumns)]!, index = Math.floor((column % copyColumns) / 2), metric = column % 2 ? "profit" : "sales";
-      if (index < priorCount && rowIndex >= 2) return "";
-      const months = index < priorCount ? priors[index]!.values : values[index - priorCount]!;
+      const months = values[index]!;
       try { const amount = expansionPeriodAmount(months, period, metric); return amount === null ? calculationError ? "計算不可" : "属性未設定" : formatTableYen(amount); }
       catch { return "範囲超過"; }
     } });
@@ -150,7 +146,7 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
       if (!(event.relatedTarget instanceof Node && event.currentTarget.closest("tbody")?.contains(event.relatedTarget))) setFocusedId(null);
     },
   });
-  const labels = [...priors.map(prior => prior.label), ...[...selected.map(id => id === 1 ? "一次予算" : "確定予算"), ...(selected.length === 2 ? ["差額"] : [])]];
+  const labels = [...selected.map(id => id === 1 ? "一次予算" : "確定予算"), ...(selected.length === 2 ? ["確定予算−一次予算"] : [])];
   return <PeriodScrollFrame container={container} label="展開表" layoutKey={selected.join(",")}><div id={expansionScrollRegionId} ref={container} {...rangeCopy} className="initiative-list-container" role="region" aria-label="展開表の月別種別・比較" tabIndex={0}>
       <table className={`initiative-list-table expansion-table${virtual ? " virtual-table" : ""}`} style={{ "--virtual-row-height": "28px" } as React.CSSProperties} aria-label="展開表" aria-rowcount={flat.length + 6}>
         {calculationError && <caption role="alert">絞り込み後の集計を計算できません。{calculationError}</caption>}
@@ -163,10 +159,10 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
           {tablePeriods.map(period => <th key={period.id} data-table-period={period.id} colSpan={labels.length * 2} scope="colgroup" className={periodCellClass(period, true)}>{period.label}</th>)}
         </tr>
         <tr>{tablePeriods.map(period => <Fragment key={period.id}>{labels.map((label, index) => <th key={index} scope="colgroup" colSpan={2} className={periodCellClass(period, index === 0)}>{label}</th>)}</Fragment>)}</tr>
-        <tr>{tablePeriods.map(period => <Fragment key={period.id}>{labels.flatMap((_, index) => (["sales", "profit"] as const).map(key => index < priorCount ? <th key={`${index}-${key}`} scope="col" className={periodCellClass(period, key === "sales" && index === 0)}>{key === "sales" ? "売上" : "利益"}</th> : <TableViewHeader key={`${index}-${key}`} view={tableView} column={`${period.id}:${selected[index - priorCount] ?? "difference"}:${key}`} className={periodCellClass(period, false)} />))}</Fragment>)}</tr>
-        <tr className="expansion-previous"><th colSpan={4} scope="row" className="expansion-summary">{selected.length === 2 ? "前年" : previousKindName(baselineFor(contents, selected[0]!))}</th><AmountCells values={[...priors.map(prior => prior.values), ...table.previous]} copyRow={0} /></tr>
-        <tr className="expansion-total"><th colSpan={4} scope="row" className="expansion-summary">{tableView.filtered ? "合計（絞り込み後）" : "合計"}</th><AmountCells values={[...priors.map(prior => prior.values), ...table.total]} error={calculationError} copyRow={1} /></tr>
-        <tr className="expansion-total"><th colSpan={4} scope="row" className="expansion-summary">{tableView.filtered ? "展開計（表示中）" : "展開計"}</th><AmountCells priorCount={priorCount} values={table.changes} error={calculationError} copyRow={2} /></tr>
+        <tr>{tablePeriods.map(period => <Fragment key={period.id}>{labels.flatMap((_, index) => (["sales", "profit"] as const).map(key => <TableViewHeader key={`${index}-${key}`} view={tableView} column={`${period.id}:${selected[index] ?? "difference"}:${key}`} className={periodCellClass(period, key === "sales" && index === 0)} />))}</Fragment>)}</tr>
+        <tr className="expansion-previous"><th colSpan={4} scope="row" className="expansion-summary">{previousRow.label}</th><AmountCells values={previousRow.values} copyRow={0} /></tr>
+        <tr className="expansion-total"><th colSpan={4} scope="row" className="expansion-summary">{tableView.filtered ? "合計（絞り込み後）" : "合計"}</th><AmountCells values={table.total} error={calculationError} copyRow={1} /></tr>
+        <tr className="expansion-total"><th colSpan={4} scope="row" className="expansion-summary">{tableView.filtered ? "展開計（表示中）" : "展開計"}</th><AmountCells values={table.changes} error={calculationError} copyRow={2} /></tr>
       </thead>
       {virtual ? <tbody><WindowRows items={rendered} count={flat.length} height={28} columns={4 + labels.length * tablePeriods.length * 2} render={({ row, range }, index) => {
         const firstGroup = row.groupOffset === 0 || index === range.start;
@@ -177,8 +173,8 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
         const periodSpan = Math.min((row.period?.initiatives.length ?? 0) - row.periodOffset, range.end - index);
         return <tr data-expansion-start={row.groupOffset === 0 ? row.group.expansion.id : undefined} key={row.item?.id ?? `subtotal:${row.group.expansion.id}`} className={row.subtotal ? "expansion-subtotal" : undefined} aria-rowindex={index + 7}>
           {firstGroup && <ExpansionGroupCell cellProps={cellFilter.props("expansion", row.group.expansion.expansionName)} name={row.group.expansion.expansionName} span={groupSpan} title={row.group.expansion.expansionName} />}
-          {row.subtotal ? <ExpansionSubtotalCells priorCount={priorCount} copyRow={index + 3} name={row.group.expansion.expansionName} values={row.group.values} filtered={tableView.filtered} error={calculationError} />
-            : <ExpansionInitiativeCells priorCount={priorCount} copyRow={index + 3} cellFilter={cellFilter} item={row.item!} source={sourceInitiatives.get(row.item!.id)!} kind={selected[0]!} onOpen={onOpenInitiative}
+          {row.subtotal ? <ExpansionSubtotalCells copyRow={index + 3} name={row.group.expansion.expansionName} values={row.group.values} filtered={tableView.filtered} error={calculationError} />
+            : <ExpansionInitiativeCells copyRow={index + 3} cellFilter={cellFilter} item={row.item!} source={sourceInitiatives.get(row.item!.id)!} kind={selected[0]!} onOpen={onOpenInitiative}
               period={firstPeriod ? { name: row.period!.name, span: periodSpan } : null}
               category={firstCategory ? { name: categoryName(row.item!), span: categorySpan } : null}
               focusHandlers={focusHandlers(row.item!.id)} />}
@@ -188,12 +184,12 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
           const firstPeriod = categoryGroupIndex === 0 && categoryIndex === 0;
           return <tr key={item.id} data-expansion-start={periodIndex === 0 && firstPeriod ? group.expansion.id : undefined}>
           {periodIndex === 0 && firstPeriod && <ExpansionGroupCell cellProps={cellFilter.props("expansion", group.expansion.expansionName)} name={group.expansion.expansionName} span={group.initiatives.length + 1} />}
-          <ExpansionInitiativeCells priorCount={priorCount} copyRow={copyIndices.get(`initiative:${item.id}`)!} cellFilter={cellFilter} item={item} source={sourceInitiatives.get(item.id)!} kind={selected[0]!} onOpen={onOpenInitiative}
+          <ExpansionInitiativeCells copyRow={copyIndices.get(`initiative:${item.id}`)!} cellFilter={cellFilter} item={item} source={sourceInitiatives.get(item.id)!} kind={selected[0]!} onOpen={onOpenInitiative}
             period={firstPeriod ? { name: period.name, span: period.initiatives.length } : null}
             category={categoryIndex === 0 ? { name: categoryName(item), span: category.initiatives.length } : null} />
         </tr>; }))) }
         <tr className="expansion-subtotal" data-expansion-start={group.initiatives.length === 0 ? group.expansion.id : undefined}>{group.initiatives.length === 0 && <ExpansionGroupCell cellProps={cellFilter.props("expansion", group.expansion.expansionName)} name={group.expansion.expansionName} />}
-          <ExpansionSubtotalCells priorCount={priorCount} copyRow={copyIndices.get(`subtotal:${group.expansion.id}`)!} name={group.expansion.expansionName} values={group.values} filtered={tableView.filtered} error={calculationError} />
+          <ExpansionSubtotalCells copyRow={copyIndices.get(`subtotal:${group.expansion.id}`)!} name={group.expansion.expansionName} values={group.values} filtered={tableView.filtered} error={calculationError} />
         </tr>
       </tbody>; })}{!groups.length && <TableViewEmpty columns={4 + labels.length * tablePeriods.length * 2} />}</table>
     </div>{cellFilter.menu}<ExpansionScrollbar container={container} targets={scrollTargets} virtual={virtual} /></PeriodScrollFrame>;

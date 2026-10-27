@@ -3,6 +3,12 @@ import { verifyKindExpansionIndex } from "./kind-expansion-index.mjs";
 
 export async function verifyPeriodTables(api) {
   const { tablePeriods: periods } = api;
+  // Later additions must become the left-hand side, with no comparisons between earlier kinds.
+  assert.deepEqual(api.latestComparisonPairs(["前年", "一次", "確定", "追加種別"]), [
+    { latest: "追加種別", earlier: "前年" }, { latest: "追加種別", earlier: "一次" }, { latest: "追加種別", earlier: "確定" },
+  ]);
+  assert.deepEqual(api.latestComparisonPairs(["前年", "一次"]), [{ latest: "一次", earlier: "前年" }]);
+  assert.deepEqual(api.latestComparisonPairs(["前年", "確定"]), [{ latest: "確定", earlier: "前年" }]);
   assert.deepEqual(periods.map(period => period.label), ["4月", "5月", "6月", "Q1", "7月", "8月", "9月", "Q2", "上期計", "10月", "11月", "12月", "Q3", "1月", "2月", "3月", "Q4", "下期計", "年間計"]);
   const contents = await api.readPlanContents(await api.createSamplePlan(2026));
   verifyKindExpansionIndex(api, contents);
@@ -18,11 +24,11 @@ export async function verifyPeriodTables(api) {
     const kinds = [...selected].sort();
     const priorKinds = [display];
     const table = api.buildDisplayedCostComparison(context, selected);
-    assert.deepEqual(table.labels, [...priorKinds.map(kind => kind === 1 ? "前年見込" : "前年実績"), ...kinds.map(kind => kind === 1 ? "一次予算" : "確定予算"), kinds.length === 1 ? "前年差" : "差額"]);
+    assert.deepEqual(table.labels, [...priorKinds.map(kind => kind === 1 ? "前年見込" : "前年実績"), ...kinds.map(kind => kind === 1 ? "一次予算" : "確定予算"), ...(kinds.length === 1 ? [kinds[0] === 1 ? "一次予算−前年" : "確定予算−前年"] : ["確定予算−前年", "確定予算−一次予算"])]);
     assert.ok(table.labels.every(label => !label.includes("\n") && !label.includes("基準")));
     const row = table.rows.find(row => row.kind === "account" && row.id === account.id);
     const budgets = kinds.map(kind => context.budgetPrevious[kind] * 100000 + kind * 10000);
-    const expected = [...priorKinds.map(kind => kind * 100000), ...budgets, kinds.length === 1 ? budgets[0] - display * 100000 : budgets[1] - budgets[0]];
+    const expected = [...priorKinds.map(kind => kind * 100000), ...budgets, budgets.at(-1) - display * 100000, ...(kinds.length === 2 ? [budgets[1] - budgets[0]] : [])];
     for (const period of [periods[0], periods[3], periods.at(-1)]) {
       assert.deepEqual(row.values.map(values => values[period.id]), expected);
       for (const [column, definition] of table.columns.entries()) {
@@ -30,9 +36,9 @@ export async function verifyPeriodTables(api) {
         assert.equal(detail.total, expected[column], "表示した列と内訳の金額を一致させる");
       }
     }
-    const expansion = api.displayedExpansionPriors(context, selected);
-    assert.deepEqual(expansion.map(prior => prior.label), priorKinds.map(kind => kind === 1 ? "前年見込" : "前年実績"));
-    assert.deepEqual(expansion.map(prior => api.expansionPeriodAmount(prior.values, periods[0], "sales")), priorKinds.map(kind => kind * 100000));
+    const expansion = api.displayedExpansionPrevious(context, selected);
+    assert.equal(expansion.label, display === 1 ? "前年見込" : "前年実績");
+    assert.deepEqual(expansion.values.map(values => api.expansionPeriodAmount(values, periods[0], "sales")), [...selected.map(() => display * 100000), ...(selected.length === 2 ? [0] : [])]);
   }
 
   for (const selected of [[1], [2], [1, 2], [2, 1]]) {

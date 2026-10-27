@@ -97,10 +97,10 @@ test('展開表: 分類のまとまり・小計・期間金額と空結果の解
   const sum = await table.locator('tbody tr:has(.initiative-name-button)').evaluateAll(rows => rows.reduce((total, row) => {
     const amounts = row.querySelectorAll('td[title]');
     // Amount cells include title; category titles are excluded by their class.
-    const profit = [...amounts].filter(cell => !cell.classList.contains('expansion-category'))[3];
+    const profit = [...amounts].filter(cell => !cell.classList.contains('expansion-category'))[1];
     return total + Number((profit?.textContent ?? '').replaceAll(',', '') || 0);
   }, 0));
-  const subtotal = table.locator('.expansion-subtotal td').nth(3);
+  const subtotal = table.locator('.expansion-subtotal td').nth(1);
   await expect(subtotal).toHaveText(new Intl.NumberFormat('ja-JP').format(sum));
   await text(app, table, '施策名', '存在しない名称');
   await expect(table.getByRole('status')).toBeVisible();

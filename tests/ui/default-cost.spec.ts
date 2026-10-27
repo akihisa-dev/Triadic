@@ -34,10 +34,10 @@ test("新規ファイルに承認済みマスタを用意し、千円入力・�
   const sales = table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "売上高", exact: true }) });
   await expect(sales.getByRole("cell").nth(1)).toHaveText("1");
   await expect(sales.getByRole("cell").nth(2)).toHaveText("1");
-  await expect(sales.getByRole("cell").nth(3)).toHaveText("");
+  await expect(sales.getByRole("cell").nth(4)).toHaveText("");
   const ratio = table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "利益率", exact: true }) });
   await expect(ratio.getByRole("cell").nth(2)).toHaveText("100.0%");
-  await expect(ratio.getByRole("cell").nth(3)).toHaveText("");
+  await expect(ratio.getByRole("cell").nth(4)).toHaveText("");
   // Check the usable table area with the narrow-screen navigation drawer closed.
   await app.getByRole("banner").getByRole("button", { name: "サイドバーを閉じる", exact: true }).click();
   await settleMotion(app.locator("body"));

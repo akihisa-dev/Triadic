@@ -32,14 +32,14 @@ test("金額と期間計・差額の内訳を開き、閉じると元の金額�
   await dialog.getByRole("button", { name: "閉じる", exact: true }).press("Escape");
   await expect(dialog).toHaveCount(0);
   await expect(button).toBeFocused();
-  const annual = app.getByRole("button", { name: "売上高 年間計 前年差の内訳", exact: true });
+  const annual = app.getByRole("button", { name: "売上高 年間計 一次予算−前年の内訳", exact: true });
   await revealAmount(annual);
   await annual.click();
   await expect(dialog.getByRole("rowheader", { name: "前年見込", exact: true })).toHaveCount(0);
-  await expect(dialog.getByRole("heading")).toHaveText("売上高 年間計 前年差の内訳");
+  await expect(dialog.getByRole("heading")).toHaveText("売上高 年間計 一次予算−前年の内訳");
   await dialog.getByRole("button", { name: "閉じる", exact: true }).click();
   await selectBudgets(app, [1, 2]);
-  const difference = app.getByRole("button", { name: "売上高 4月 差額の内訳", exact: true });
+  const difference = app.getByRole("button", { name: "売上高 4月 確定予算−一次予算の内訳", exact: true });
   await revealAmount(difference);
   await difference.click();
   await expect(dialog.getByRole("row").last()).toContainText("30");

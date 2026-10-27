@@ -8,7 +8,7 @@ test("総原価表の月境界が見出しから金額行まで途切れず、�
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "総原価表", exact: true }).click();
   const table = app.getByRole("table", { name: "総原価表", exact: true });
   for (const both of [false, true]) {
-    const columns = both ? 4 : 3;
+    const columns = both ? 5 : 3;
     if (both) await selectBudgets(app, [1, 2]);
     const borders = await table.evaluate((node, columns) => {
       const monthHeaders = [...node.querySelectorAll("thead tr:first-child th.period-month")];

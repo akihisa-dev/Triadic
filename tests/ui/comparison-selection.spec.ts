@@ -35,10 +35,10 @@ test('全比較画面で列ごとの前年排他・最後の選択・結果の�
     }
     if (name === '総原価表' || name === '展開表') {
       const table = app.getByRole('table', { name, exact: true });
-      await expect(table.getByRole('columnheader', { name: '前年見込', exact: true })).toHaveCount(19);
+      await expect(table.getByRole('columnheader', { name: '前年見込', exact: true })).toHaveCount(name === '総原価表' ? 19 : 0);
       await expect(table.getByRole('columnheader', { name: '一次予算', exact: true })).toHaveCount(19);
       await expect(table.getByRole('columnheader', { name: '確定予算', exact: true })).toHaveCount(19);
-      await expect(table.getByRole('columnheader', { name: '差額', exact: true })).toHaveCount(19);
+      await expect(table.getByRole('columnheader', { name: '確定予算−一次予算', exact: true })).toHaveCount(19);
     }
     if (name === '履歴') {
       const dialog = app.getByRole('dialog');

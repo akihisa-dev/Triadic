@@ -15,12 +15,13 @@ for (const screen of ["総原価表", "展開表"]) test(`${screen}の前年・�
   const select = async (name: string) => { const box = group.getByRole("checkbox", { name, exact: true }); if (!await box.isChecked()) await box.click(); await expect(box).toBeChecked(); };
   const budgetAmounts = async (only?: string) => {
     const count = (await states()).filter(box => box.name?.includes("基準") && box.checked).length;
+    const offset = screen === "総原価表" ? 1 : 0;
     const metrics = screen === "総原価表" ? 1 : 2;
     const span = (await headers.count()) / 19 * metrics;
-    return table.locator(`[data-copy-row="${screen === "総原価表" ? 0 : 1}"]`).evaluateAll((nodes, { count, metrics, span, only }) => nodes.filter(node => {
+    return table.locator(`[data-copy-row="${screen === "総原価表" ? 0 : 1}"]`).evaluateAll((nodes, { count, metrics, span, only, offset }) => nodes.filter(node => {
       const position = Number((node as HTMLElement).dataset.copyColumn) % span;
-      return only ? Math.floor(position / metrics) === (only === "一次予算" ? 1 : 2) : position >= metrics && position < metrics * (1 + count);
-    }).map(node => node.textContent), { count, metrics, span, only });
+      return only ? Math.floor(position / metrics) === (only === "一次予算" ? offset : offset + 1) : position >= metrics * offset && position < metrics * (offset + count);
+    }).map(node => node.textContent), { count, metrics, span, only, offset });
   };
   for (const display of [1, 2]) for (const [first, final] of [[1, 1], [2, 2], [1, 2], [2, 1]]) {
     const before = await states();
@@ -38,7 +39,8 @@ for (const screen of ["総原価表", "展開表"]) test(`${screen}の前年・�
       expect(await budgetAmounts(other)).toEqual(otherAmounts);
       expect(afterBudget.filter(box => box.name?.includes("前年列") || box.name?.includes(other))).toEqual(beforeBudget.filter(box => box.name?.includes("前年列") || box.name?.includes(other)));
     }
-    const expected = [display === 1 ? "前年見込" : "前年実績", "一次予算", "確定予算", "差額"];
+    const expected = screen === "総原価表" ? [display === 1 ? "前年見込" : "前年実績", "一次予算", "確定予算", "確定予算−前年", "確定予算−一次予算"] : ["一次予算", "確定予算", "確定予算−一次予算"];
+    if (screen === "展開表") await expect(table.locator(".expansion-previous th")).toHaveText(display === 1 ? "前年見込" : "前年実績");
     await expect(headers).toHaveText(Array(19).fill(expected).flat());
     expect(await headers.evaluateAll(nodes => nodes.every(node => { const range = document.createRange(); range.selectNodeContents(node); return range.getClientRects().length === 1; }))).toBe(true);
   }

@@ -93,6 +93,7 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
   const measuredHeight = useRef(-1);
   const focused = useRef<{ key: string; label: string } | null>(null);
   const restoreFocus = useRef(false);
+  const leavingForInitiative = useRef(false);
   const rowHeights = useMemo(() => view.current.rowHeights ??= { width: 0, rows: {} }, [view]);
   const freezeHeader = useAdaptiveTableHeader(tableElement);
   useLayoutEffect(() => {
@@ -110,7 +111,7 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
   const rangeCopy = useTableRangeCopy(container, { rowCount: rows.length, columnCount: tablePeriods.length * labels.length, resetKey: rows,
     textAt: (rowIndex, column) => {
       const row = rows[rowIndex]!, period = tablePeriods[Math.floor(column / labels.length)]!, index = column % labels.length;
-      return row.kind === "ratio" ? formatTableRate(row.values[index]![period.id], labels[index] === "前年差" || labels[index]!.startsWith("差額"))
+      return row.kind === "ratio" ? formatTableRate(row.values[index]![period.id], Boolean(columns[index]!.difference))
         : formatTableYen(row.values[index]![period.id]);
     } });
   const salesGroupId = contents.aggregations.find(group => group.required === "sales")?.id;
@@ -139,10 +140,11 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
   }, [availableHeight, virtualPrefix, detail]);
   const renderRow = (row: (typeof rows)[number]) => <tr key={`${row.kind}:${row.id}`} data-cost-row={`${row.kind}:${row.id}`} className={`cost-data-row${row.kind !== "account" ? ` cost-subtotal${row.required ? " cost-required" : ""}` : ""}${row.kind === "group" && row.id === salesGroupId ? " cost-sales-anchor" : ""}`}>
     <th scope="row" className="initiative-list-name">{row.name}{!row.configured && <span className="cost-unconfigured">未設定</span>}</th>
-    {tablePeriods.map(period => <Fragment key={period.id}>{row.values.map((values, index) => <td key={index} {...tableCopyCell(copyRowIndices.get(row)!, tablePeriods.indexOf(period) * labels.length + index)} className={periodCellClass(period, index === 0, index === labels.length - 1)}>{row.kind === "ratio" ? formatTableRate(values[period.id], labels[index] === "前年差" || labels[index]!.startsWith("差額"))
+    {tablePeriods.map(period => <Fragment key={period.id}>{row.values.map((values, index) => <td key={index} {...tableCopyCell(copyRowIndices.get(row)!, tablePeriods.indexOf(period) * labels.length + index)} className={periodCellClass(period, index === 0, index === labels.length - 1)}>{row.kind === "ratio" ? formatTableRate(values[period.id], Boolean(columns[index]!.difference))
       : row.configured && values[period.id] !== undefined ? <button type="button" className="cost-amount-button"
         aria-label={`${row.name} ${period.label} ${labels[index]}の内訳`} aria-description={formatTableYen(values[period.id]) || "0"} disabled={navigationBlocked}
         onFocus={event => {
+          if (leavingForInitiative.current) return;
           const region = container.current;
           if (!region) return;
           const left = region.querySelector("th")!.getBoundingClientRect().right;
@@ -178,6 +180,8 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
       </table>
     </div></PeriodScrollFrame>
     {detail && <CostBreakdownDialog contents={contents} selected={detail.selected} target={detail.target} title={detail.title}
-      candidates={breakdownCandidates} navigationBlocked={navigationBlocked} onClose={() => { restoreFocus.current = true; setDetail(null); }} onOpenInitiative={onOpenInitiative} />}
+      candidates={breakdownCandidates} navigationBlocked={navigationBlocked} onClose={() => { restoreFocus.current = true; setDetail(null); }} onOpenInitiative={(initiative, kind) => {
+        leavingForInitiative.current = true; restoreFocus.current = false; onOpenInitiative(initiative, kind);
+      }} />}
     </>;
 });
