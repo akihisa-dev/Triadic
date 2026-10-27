@@ -60,3 +60,5 @@ export * from "../../Triadic-extension/src/core/domain/initiativeDraft";
 export * from "../../Triadic-extension/src/core/domain/windowCommand";
 
 export * from "../../Triadic-extension/src/core/tables/dashboard";
+
+export * from "../../Triadic-extension/src/core/tables/comparisonDisplay";

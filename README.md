@@ -10,7 +10,7 @@
 
 ## Previous-year forecast and actuals
 
-Previous-year forecast and actuals are independent inputs. All comparison screens use a 2×2 checkbox grid: previous-year forecast/actuals by initial/final budget. Each budget allows one baseline; selecting the other replaces it. At least one budget stays selected. Each budget uses its own baseline in tables, dashboard graphs, Excel exports, and history comparison. Cost tables show previous/budget/change for one budget, or initial/final/final-minus-initial for two. Cost and expansion tables save both baselines atomically. Storage format 32 rejects older or unknown formats without migration or rewriting. No new permissions or external transmission are introduced.
+Previous-year forecast and actuals are independent inputs. All comparison screens use a 2×2 checkbox grid: previous-year forecast/actuals by initial/final budget. Each budget allows one baseline; selecting the other replaces it. At least one budget stays selected. Each budget uses its own baseline in tables, dashboard graphs, Excel exports, and history comparison. On-screen tables retain all selected previous-year forecast/actual columns alongside the selected budgets. Previous-year columns name forecast or actuals; budget headings use only initial/final budget on one line. Cost tables also show change for one budget or final-minus-initial for two. Cost and expansion tables save both baselines atomically. Storage format 32 rejects older or unknown formats without migration or rewriting. No new permissions or external transmission are introduced.
 
 ## English
 
@@ -784,7 +784,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 総原価表・展開表では、横スクロールバーへマウスを重ねると、その帯の中にQ1〜Q4・上期計・下期計・年間計を表示します。期間名を押すと対応する列へ移動し、末尾は表の右端までの範囲に収めます。表や下の余白を広げず、吹き出しや表に重なる表示は設けません。通常のドラッグ・横スクロール・表示位置の復帰を維持し、狭い幅ではポインター付近に収まる期間名を表示します。キーボードフォーカスでも期間名を表示し、Escで閉じます。移動で金額・表示条件・保存内容・履歴を変更しません。
 
-1予算時は「選んだ前年・予算・前年差」、2予算時は「一次予算・確定予算・差額」の3列です。予算はそれぞれ選んだ前年額に施策増減を加え、列見出しに基準前年を表示します。差額は確定予算−一次予算、利益率の差はポイントです。 差は丸める前に計算します。未設定集計や計算できない利益率は空欄です。前年未入力と施策未入力は計算上0とし、表で表示上0になる金額・差額・利益率は空白にします。保存値や計算値は変更しません。
+総原価表・展開表の通常画面は、選択した前年見込・前年実績と一次予算・確定予算をそれぞれ省略せず表示します。同じ前年を選んだ場合は前年列を一つにまとめ、異なる前年を選んだ場合は両方を表示します。前年列は「前年見込」「前年実績」、予算列は「一次予算」「確定予算」の一行見出しとし、基準の注記を付けません。総原価表は1予算時に前年差、両予算時に差額も表示し、展開表は両予算時に差額を表示します。予算と差額の計算規則は変更しません。 差は丸める前に計算します。未設定集計や計算できない利益率は空欄です。前年未入力と施策未入力は計算上0とし、表で表示上0になる金額・差額・利益率は空白にします。保存値や計算値は変更しません。
 
 展開表の縦スクロールバーでは、ホバー時に展開名を表示し、近接して名前が重なる箇所だけ実際の展開IDへ切り替えます。IDへマウスを重ねると、周囲のIDを上下へ押し広げながら縦に伸びて展開名を表示し、ホバー中の対象は入れ替えません。クリックでは押してから離すまで移動先のIDを保持し、その展開の先頭行へ移動します。表の幅や右側の余白を広げず、通常のドラッグ・ホイール操作を維持します。IDでも全件が収まらない場合はバー上の位置付近のものを表示し、名前の拡大に必要な場所を先に確保します。長い名前はバー内で省略します。キーボードフォーカスでも名前を広げ、Escで閉じます。動きを抑える設定では即座に表示・移動します。大量行でも画面外の展開へ移動でき、金額・表示条件・保存内容・履歴を変更しません。総原価表の縦バーは変更しません。
 
@@ -836,7 +836,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 展開表はチェックで選んだ1〜2種別の月別売上・利益を表示します。2種選択時だけ、選択順に関係なく「確定予算−一次予算」の比較列を表示します。前年は上部の行で扱い、種別の列には加えません。上部は前年・合計・展開計で、合計は前年＋展開計です。展開名ごとに施策をまとめ、施策がない展開も小計0で表示します。各展開名の中は期間マスタ順にまとめ、同じ期間内を区分マスタ順にまとめて区分名も縦結合します。区分未選択は最後の空欄とし、区分内は登録順で表示します。期間未選択の施策は最後に空欄の期間として表示します。施策名から編集へ進み、元の表へ戻れます。展開区分は各施策の選択済み区分の現在のマスタ名を表示し、未選択は空欄です。区分別小計は追加しません。表の表示幅が650pxを超える場合は展開名・期間名・展開区分・施策名の4列、650px以下は施策名だけを左端に固定し、表の領域だけを縦横にスクロールできます。月・種別・売上／利益の3段の列見出しから前年・合計・展開計までをまとめて上端に固定し、縦スクロールでは下の施策行と展開別小計だけが移動します。見出し・金額・小計の列境界をそろえ、長い名称は折り返します。狭い画面では名称列を縮めて表示します。
 
-比較条件は、行を前年見込・前年実績、列を一次予算・確定予算とする2×2のチェック欄で選びます。各列は一方の前年だけを選べ、新しいチェックで同じ列の他方を解除します。他列は保持し、最後の1つは解除できません。 初期値は前年見込の一次予算です。総原価表・展開表は画面別に保存し、保存失敗時は保存済み表示を維持します。過去閲覧は一時選択です。施策一覧は従来の横並び候補で1種を選び、初期値は確定予算です。総原価表は見出し・チェック欄・部署名・業種名の順に配置し、狭い幅では折り返します。1予算時は「選んだ前年・予算・前年差」、2予算時は「一次予算・確定予算・差額」の3列です。予算はそれぞれ選んだ前年額に施策増減を加え、列見出しに基準前年を表示します。差額は確定予算−一次予算、利益率の差はポイントです。
+比較条件は、行を前年見込・前年実績、列を一次予算・確定予算とする2×2のチェック欄で選びます。各列は一方の前年だけを選べ、新しいチェックで同じ列の他方を解除します。他列は保持し、最後の1つは解除できません。 初期値は前年見込の一次予算です。総原価表・展開表は画面別に保存し、保存失敗時は保存済み表示を維持します。過去閲覧は一時選択です。施策一覧は従来の横並び候補で1種を選び、初期値は確定予算です。総原価表は見出し・チェック欄・部署名・業種名の順に配置し、狭い幅では折り返します。総原価表・展開表の通常画面は、選択した前年見込・前年実績と一次予算・確定予算をそれぞれ省略せず表示します。同じ前年を選んだ場合は前年列を一つにまとめ、異なる前年を選んだ場合は両方を表示します。前年列は「前年見込」「前年実績」、予算列は「一次予算」「確定予算」の一行見出しとし、基準の注記を付けません。総原価表は1予算時に前年差、両予算時に差額も表示し、展開表は両予算時に差額を表示します。予算と差額の計算規則は変更しません。
 
 施策一覧は表の最下部に月別の売上・費用・利益の合計行を置き、短い一覧でも表の表示領域の下端に置き、長い一覧では縦スクロール中も下端に追従して表示します。施策の行高は広げず、残る高さは合計の上の空白に割り当てます。表示中の種別の全施策を1円単位で合算してから千円表示に丸め、並べ替えで合計行は動きません。空の月は0、属性未設定を含む月の売上・利益の合計は属性未設定です。合計は保存せず、表全体の上限超過は合計部分に理由を表示し、施策名から編集へ進めます。一つの施策内で上限を超える場合はその行の金額欄へ理由を表示し、正常な施策の金額と全施策の編集導線を維持します。この場合は合計を表示しません。一覧用の計算は一覧表示時だけ行い、ホーム・施策編集・種別切り替え・取消・再読込・履歴閲覧を妨げません。
 

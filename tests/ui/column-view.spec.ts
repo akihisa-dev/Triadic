@@ -86,7 +86,7 @@ test('展開表: 分類のまとまり・小計・期間金額と空結果の解
   await table.getByRole('button', { name: '施策名', exact: true }).click();
   await table.getByRole('button', { name: '施策名', exact: true }).click();
   await expect(names).toHaveCount(groupCount);
-  const numeric = await filter(app, table, '4月 一次予算 前年見込基準 利益');
+  const numeric = await filter(app, table, '4月 一次予算 利益');
   await numeric.getByRole('radio', { name: '0より大きい', exact: true }).check();
   await numeric.getByRole('button', { name: '適用', exact: true }).click();
   const visible = await names.count(); expect(visible).toBeGreaterThan(0);
@@ -97,16 +97,16 @@ test('展開表: 分類のまとまり・小計・期間金額と空結果の解
   const sum = await table.locator('tbody tr:has(.initiative-name-button)').evaluateAll(rows => rows.reduce((total, row) => {
     const amounts = row.querySelectorAll('td[title]');
     // Amount cells include title; category titles are excluded by their class.
-    const profit = [...amounts].filter(cell => !cell.classList.contains('expansion-category'))[1];
+    const profit = [...amounts].filter(cell => !cell.classList.contains('expansion-category'))[3];
     return total + Number((profit?.textContent ?? '').replaceAll(',', '') || 0);
   }, 0));
-  const subtotal = table.locator('.expansion-subtotal td').nth(1);
+  const subtotal = table.locator('.expansion-subtotal td').nth(3);
   await expect(subtotal).toHaveText(new Intl.NumberFormat('ja-JP').format(sum));
   await text(app, table, '施策名', '存在しない名称');
   await expect(table.getByRole('status')).toBeVisible();
   await clear(app, table, '施策名');
   await expect(names).toHaveCount(visible);
-  await clear(app, table, '4月 一次予算 前年見込基準 利益');
+  await clear(app, table, '4月 一次予算 利益');
   await clear(app, table, '展開名');
   await expect(names).toHaveCount(count);
   expect(await app.locator('body').evaluate(() => (window as unknown as { headerWrites: number }).headerWrites)).toBe(0);
@@ -168,9 +168,9 @@ test('履歴: 表示中だけを全選択し、隠れた履歴の削除選択を
 
 test('内訳と履歴差分: 親ダイアログを閉じずに条件編集を取り消せる', async ({ page, app }) => {
   await open(page, app, '総原価表');
-  const amount = app.getByRole('button', { name: '売上高 4月 一次予算 前年見込基準の内訳', exact: true });
+  const amount = app.getByRole('button', { name: '売上高 4月 一次予算の内訳', exact: true });
   await amount.focus(); await amount.press('Enter');
-  const breakdown = app.getByRole('dialog', { name: '売上高 4月 一次予算 前年見込基準の内訳', exact: true });
+  const breakdown = app.getByRole('dialog', { name: '売上高 4月 一次予算の内訳', exact: true });
   const table = breakdown.getByRole('table');
   await text(app, table, '前年・施策', '存在しない名称');
   await expect(table.getByRole('status')).toBeVisible();
@@ -280,9 +280,9 @@ test('セルのアイコン: 展開表の結合セルと大量行でも同じ条
 
 test('セルのアイコン: 内訳と履歴差分で取消・適用しても親を閉じない', async ({ page, app }) => {
   await open(page, app, '総原価表');
-  const amountTrigger = app.getByRole('button', { name: '売上高 4月 一次予算 前年見込基準の内訳', exact: true });
+  const amountTrigger = app.getByRole('button', { name: '売上高 4月 一次予算の内訳', exact: true });
   await amountTrigger.focus(); await amountTrigger.press('Enter');
-  const parent = app.getByRole('dialog', { name: '売上高 4月 一次予算 前年見込基準の内訳', exact: true });
+  const parent = app.getByRole('dialog', { name: '売上高 4月 一次予算の内訳', exact: true });
   const menu = app.getByRole('menu', { name: 'セルの絞り込み', exact: true });
   const account = parent.locator('tbody tr').first().locator('td').first(), value = await account.innerText();
   await account.click({ button: 'right' }); await menu.getByRole('menuitem').press('Escape');

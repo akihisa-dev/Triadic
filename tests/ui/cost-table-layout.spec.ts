@@ -21,7 +21,7 @@ test("総原価表の見出しと比較対象を一行にまとめ、狭い画�
     expect(metrics.height).toBeLessThanOrEqual(110);
   }
   await selectBudgets(app, [1, 2]);
-  await expect(app.getByRole("table", { name: "総原価表", exact: true }).getByRole("columnheader", { name: "確定予算 前年見込基準", exact: true })).toHaveCount(19);
+  await expect(app.getByRole("table", { name: "総原価表", exact: true }).getByRole("columnheader", { name: "確定予算", exact: true })).toHaveCount(19);
 });
 
 test("総原価表は画面内で縦横に移動でき、見出しから社内控除後売上までと科目名を固定する", async ({ page, app }, testInfo) => {

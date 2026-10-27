@@ -10,7 +10,7 @@ test("新規ファイルに承認済みマスタを用意し、千円入力・�
   const table = app.getByRole("table", { name: "総原価表", exact: true });
   await expect(table.getByRole("rowheader")).toHaveCount(73);
   await expect(app.getByText("単位：千円", { exact: true })).toHaveCount(0);
-  await expect(table.getByRole("columnheader", { name: "一次予算 前年見込基準", exact: true })).toHaveCount(19);
+  await expect(table.getByRole("columnheader", { name: "一次予算", exact: true })).toHaveCount(19);
   await selectBudgets(app, [1, 2]);
   await expect(table.getByRole("rowheader").first()).toHaveText("売上高");
   await expect(table.getByRole("rowheader").last()).toHaveText("利益率");
@@ -32,12 +32,12 @@ test("新規ファイルに承認済みマスタを用意し、千円入力・�
   await expect(app.getByRole("heading", { name: "施策一覧", exact: true })).toBeVisible();
   await app.getByRole("complementary", { name: "メニュー" }).getByRole("button", { name: "総原価表", exact: true }).click();
   const sales = table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "売上高", exact: true }) });
-  await expect(sales.getByRole("cell").nth(0)).toHaveText("1");
   await expect(sales.getByRole("cell").nth(1)).toHaveText("1");
-  await expect(sales.getByRole("cell").nth(2)).toHaveText("");
+  await expect(sales.getByRole("cell").nth(2)).toHaveText("1");
+  await expect(sales.getByRole("cell").nth(3)).toHaveText("");
   const ratio = table.getByRole("row").filter({ has: app.getByRole("rowheader", { name: "利益率", exact: true }) });
-  await expect(ratio.getByRole("cell").nth(1)).toHaveText("100.0%");
-  await expect(ratio.getByRole("cell").nth(2)).toHaveText("");
+  await expect(ratio.getByRole("cell").nth(2)).toHaveText("100.0%");
+  await expect(ratio.getByRole("cell").nth(3)).toHaveText("");
   // Check the usable table area with the narrow-screen navigation drawer closed.
   await app.getByRole("banner").getByRole("button", { name: "サイドバーを閉じる", exact: true }).click();
   await settleMotion(app.locator("body"));
@@ -49,8 +49,8 @@ test("新規ファイルに承認済みマスタを用意し、千円入力・�
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("button", { name: "サイドバーを開く", exact: true }).click();
   await app.getByRole("complementary", { name: "メニュー" }).getByRole("button", { name: "総原価表", exact: true }).click();
-  await expect(sales.getByRole("cell").nth(1)).toHaveText("1");
-  await expect(ratio.getByRole("cell").nth(1)).toHaveText("100.0%");
+  await expect(sales.getByRole("cell").nth(2)).toHaveText("1");
+  await expect(ratio.getByRole("cell").nth(2)).toHaveText("100.0%");
   await expect(table.getByRole("rowheader")).toHaveCount(73);
   await app.getByRole("complementary", { name: "メニュー" }).getByRole("button", { name: "施策一覧", exact: true }).click();
   await app.getByRole("button", { name: "1円精度の確認", exact: true }).click();

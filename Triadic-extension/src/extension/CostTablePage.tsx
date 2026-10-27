@@ -10,7 +10,8 @@ import { indexCostBreakdown, type CostBreakdownTarget } from "../core/tables/cos
 import type { Initiative } from "../core/domain/plan";
 import "./CostBreakdown.css";
 import { Fragment, memo, useMemo, useState, useLayoutEffect, useRef } from "react";
-import { buildPeriodCostComparison, tablePeriods } from "../core/tables/periodTables";
+import { tablePeriods } from "../core/tables/periodTables";
+import { buildDisplayedCostComparison } from "../core/tables/comparisonDisplay";
 import { filterPlan } from "../core/tables/planTables";
 import "./CostClassification.css";
 import "./KindSelectionSlots.css";
@@ -85,7 +86,7 @@ export function CostTablePage({ contents, selected, selection, view, onOpenIniti
 
 const CostTableContents = memo(function CostTableContents({ contents, selected, view, onOpenInitiative, navigationBlocked }: Omit<Props, "selection">) {
   const breakdownCandidates = useMemo(() => indexCostBreakdown(contents), [contents.previousAmounts, contents.initiatives]);
-  const [detail, setDetail] = useState<{ target: CostBreakdownTarget; title: string } | null>(null);
+  const [detail, setDetail] = useState<{ target: CostBreakdownTarget; title: string; selected: KindId[] } | null>(null);
   const container = useRef<HTMLDivElement>(null);
   const tableElement = useRef<HTMLTableElement>(null);
   const [availableHeight, setAvailableHeight] = useState(0);
@@ -97,14 +98,14 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
   useLayoutEffect(() => {
     if (container.current) { container.current.scrollTop = view.current.top; container.current.scrollLeft = view.current.left; }
   }, [view]);
-  const comparisons = useMemo(() => new Map<string, ReturnType<typeof buildPeriodCostComparison>>(), [contents]);
+  const comparisons = useMemo(() => new Map<string, ReturnType<typeof buildDisplayedCostComparison>>(), [contents]);
   const key = `${contents.previousKind ?? 1}:${[...selected].sort().join(",")}`;
   let table = comparisons.get(key);
   if (!table) {
-    table = buildPeriodCostComparison(contents, selected);
+    table = buildDisplayedCostComparison(contents, selected);
     comparisons.set(key, table);
   }
-  const { labels, rows } = table;
+  const { labels, rows, columns } = table;
   const copyRowIndices = useMemo(() => new Map(rows.map((row, index) => [row, index])), [rows]);
   const rangeCopy = useTableRangeCopy(container, { rowCount: rows.length, columnCount: tablePeriods.length * labels.length, resetKey: rows,
     textAt: (rowIndex, column) => {
@@ -152,7 +153,7 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
         }}
         onClick={event => {
           focused.current = { key: `${row.kind}:${row.id}`, label: event.currentTarget.getAttribute("aria-label")! };
-          setDetail({ target: { kind: row.kind as "account" | "group", id: row.id, period, column: index }, title: `${row.name} ${period.label} ${labels[index]}` });
+          setDetail({ target: { kind: row.kind as "account" | "group", id: row.id, period, column: columns[index]!.source }, selected: columns[index]!.selected, title: `${row.name} ${period.label} ${labels[index]}` });
         }}>{formatTableYen(values[period.id])}</button>
       : formatTableYen(values[period.id])}</td>)}</Fragment>)}
   </tr>;
@@ -176,7 +177,7 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
           retainKey={focused.current?.key ?? null} heightCache={rowHeights} rowKey={row => `${row.kind}:${row.id}`} render={renderRow} />
       </table>
     </div></PeriodScrollFrame>
-    {detail && <CostBreakdownDialog contents={contents} selected={selected} target={detail.target} title={detail.title}
+    {detail && <CostBreakdownDialog contents={contents} selected={detail.selected} target={detail.target} title={detail.title}
       candidates={breakdownCandidates} navigationBlocked={navigationBlocked} onClose={() => { restoreFocus.current = true; setDetail(null); }} onOpenInitiative={onOpenInitiative} />}
     </>;
 });
