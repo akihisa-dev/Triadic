@@ -6,7 +6,6 @@ type Body = { x: number; y: number; vx: number; vy: number; width: number; heigh
 export class HomeMotion {
   readonly bodies: Map<string, Body>;
   private readonly anchors: Map<string, { x: number; y: number }>;
-  private remainder = 0;
   held: string | null = null;
   constructor(nodes: readonly MotionNode[]) {
     this.anchors = new Map(nodes.map(node => [node.page, { x: node.x + 100, y: node.y + 12 }]));
@@ -17,7 +16,7 @@ export class HomeMotion {
   }
   get active() { return this.held !== null || [...this.bodies].some(([page, body]) => {
     const anchor = this.anchors.get(page)!;
-    return body.x !== anchor.x || body.y !== anchor.y;
+    return body.x !== anchor.x || body.y !== anchor.y || body.vx !== 0 || body.vy !== 0;
   }); }
   retarget(positions: Record<string, { x: number; y: number }>) {
     for (const [page, point] of Object.entries(positions)) {
@@ -36,18 +35,16 @@ export class HomeMotion {
   }
   release() { this.held = null; }
   advance(seconds: number, reduced = false) {
-    this.remainder += Math.min(.05, Math.max(0, seconds));
-    while (this.remainder >= 1 / 120) {
-      this.step(1 / 120, reduced);
-      this.remainder -= 1 / 120;
-    }
+    const dt = Math.min(.05, Math.max(0, seconds));
+    if (dt > 0) this.step(dt, reduced);
   }
   private step(dt: number, reduced: boolean) {
     for (const [page, body] of this.bodies) {
       if (page === this.held) continue;
       const anchor = this.anchors.get(page)!;
-      // Critically damped return: continuous position, no overshoot or oscillation.
-      const speed = reduced ? 45 : 14;
+      // Exact solution at the actual frame time; no fixed-step pauses on fast displays.
+      // Retargeting preserves both position and velocity, with a gentle, non-bouncing stop.
+      const speed = reduced ? 45 : 10;
       for (const [axis, velocity] of [["x", "vx"], ["y", "vy"]] as const) {
         const offset = body[axis] - anchor[axis];
         const impulse = body[velocity] + speed * offset;

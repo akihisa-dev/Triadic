@@ -12,6 +12,29 @@ export function verifyHomeMotion({ HomeMotion, motionLine, layoutHomeRelations, 
   for (const key of ["a", "b"]) {
     assert.ok(Math.abs(slow.bodies.get(key).x - fast.bodies.get(key).x) < .1, "表示更新頻度で配置が変わらない");
   }
+  for (const rate of [60, 120, 144, 240]) {
+    const continuous = new HomeMotion(nodes);
+    continuous.retarget({ a: { x: 850, y: 600 } });
+    let previous = continuous.positions().a.x;
+    for (let frame = 0; frame < rate / 2; frame++) {
+      continuous.advance(1 / rate);
+      const current = continuous.positions().a.x;
+      assert.ok(current > previous, `${rate}Hz: 移動中は毎フレーム位置を更新し、同じ位置を繰り返さない`);
+      previous = current;
+    }
+    const elapsed = Math.ceil(rate / 2) / rate;
+    assert.ok(Math.abs(previous - (850 - 500 * (1 + 10 * elapsed) * Math.exp(-10 * elapsed))) < 1e-9, "更新頻度によらず同じ時間で同じ場所へ進む");
+  }
+  const interrupted = new HomeMotion(nodes);
+  interrupted.retarget({ a: { x: 850, y: 600 } });
+  interrupted.advance(.04);
+  const moving = { ...interrupted.bodies.get("a") };
+  interrupted.retarget({ a: { x: moving.x, y: moving.y } });
+  assert.equal(interrupted.bodies.get("a").vx, moving.vx, "選び直しても速度をリセットしない");
+  assert.deepEqual(interrupted.positions().a, { x: moving.x, y: moving.y }, "選び直した瞬間に位置を飛ばさない");
+  assert.equal(interrupted.active, true, "新しい定位置と現在位置が同じでも、移動の勢いが残っていれば続行する");
+  interrupted.advance(.0001);
+  assert.ok(Math.abs((interrupted.positions().a.x - moving.x) / .0001 - moving.vx) < 2, "切り替え前後の速度を連続させる");
   const motion = new HomeMotion(nodes);
   assert.equal(motion.active, false, "保持した配置は再配置しない");
   motion.hold("a"); motion.release(); motion.advance(.05);

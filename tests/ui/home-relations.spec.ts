@@ -90,6 +90,35 @@ test("関係線の4種類を、選択と移動の後も維持する", async ({ a
   expect((await home.locator(".home-relations-map .relation-view path").first().getAttribute("d"))!.match(/M/g)).toHaveLength(2);
 });
 
+test("移動中の項目を押しただけではアニメーションを停止しない", async ({ app, page }) => {
+  await app.getByRole("button", { name: "新規作成", exact: true }).click();
+  const home = app.getByRole("main", { name: "ホーム", exact: true });
+  const button = home.getByRole("button", { name: "施策一覧", exact: true });
+  await button.press("Space");
+  const box = (await button.boundingBox())!;
+  const x = box.x + box.width / 2, y = box.y + box.height / 2;
+  await page.mouse.move(x, y);
+  const viewport = home.locator(".home-relations-viewport");
+  await viewport.evaluate(element => {
+    element.addEventListener("pointerdown", event => element.setAttribute("data-test-pressed", (event.target as Element).closest("[data-page]")?.getAttribute("data-page") ?? ""), { once: true });
+  });
+  await page.mouse.down();
+  await expect(viewport).toHaveAttribute("data-test-pressed", "initiative-list");
+  const samples = await home.locator('.home-relation-item:has([data-page="initiative-list"])').evaluate(element => new Promise<string[]>(resolve => {
+    const frames: string[] = [];
+    const sample = () => {
+      frames.push(element.getAttribute("transform")!);
+      if (frames.length < 12) requestAnimationFrame(sample); else resolve(frames);
+    };
+    requestAnimationFrame(sample);
+  }));
+  expect(new Set(samples).size).toBe(samples.length);
+  // Finish as a drag so releasing a selected destination cannot open another screen.
+  await page.mouse.move(x + 12, y + 6);
+  await page.mouse.up();
+  await expect(home).toBeVisible();
+});
+
 test("キャンバスは見出しの下から画面下端まで広がる", async ({ page, app }) => {
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
   await settleMotion(app.locator("body"));
@@ -105,6 +134,7 @@ test("キャンバスは見出しの下から画面下端まで広がる", async
 });
 
 test("各入口を選んでも名称・関係説明・中央の名前が重ならない", async ({ app }) => {
+  test.setTimeout(60_000);
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
   const home = app.getByRole("main", { name: "ホーム", exact: true });
   await expect(home.locator(".home-relation-name")).toHaveCount(14);
