@@ -10,7 +10,7 @@
 
 ## Previous-year forecast and actuals
 
-Previous-year forecast and actuals are independent inputs. All comparison screens use a 2×2 checkbox grid: previous-year forecast/actuals by initial/final budget. Each budget allows one baseline; selecting the other replaces it. At least one budget stays selected. Each budget uses its own baseline in tables, dashboard graphs, Excel exports, and history comparison. Cost tables show previous/budget/change for one budget, or initial/final/final-minus-initial for two. Cost and expansion tables save both baselines atomically. Storage format 31 rejects older or unknown formats without migration or rewriting. No new permissions or external transmission are introduced.
+Previous-year forecast and actuals are independent inputs. All comparison screens use a 2×2 checkbox grid: previous-year forecast/actuals by initial/final budget. Each budget allows one baseline; selecting the other replaces it. At least one budget stays selected. Each budget uses its own baseline in tables, dashboard graphs, Excel exports, and history comparison. Cost tables show previous/budget/change for one budget, or initial/final/final-minus-initial for two. Cost and expansion tables save both baselines atomically. Storage format 32 rejects older or unknown formats without migration or rewriting. No new permissions or external transmission are introduced.
 
 ## English
 
@@ -146,9 +146,9 @@ In “Screens and data” (画面とデータ), select a screen to inspect how s
 
 ### Managing and selecting breakdown subcategories
 
-In Masters, “Breakdown subcategory master” (展開区分マスタ) supports registration, editing, and deletion. New files contain six subcategories—“下払いUP,” “ベースアップ,” “設備投資,” “燃料費UP,” “電気料金UP,” and “その他”—all assigned to “コスト” (Cost). In the breakdown-category master's subcategory column, checkboxes assign multiple subcategories to each category. A subcategory may belong to multiple categories or none.
+In Masters, “Breakdown subcategory master” (展開区分マスタ) supports registration, editing, and deletion. New files contain six subcategories—“下払いUP,” “ベースアップ,” “設備投資,” “燃料費UP,” “電気料金UP,” and “その他”—all assigned to “コスト” (Cost). When registering a subcategory, select exactly one parent breakdown category. Each subcategory belongs exclusively to that category. Edit its name and parent in the subcategory master; the breakdown-category master only displays its subcategories.
 
-When entering or editing an initiative, the “Breakdown subcategory” field beside the category name offers only assigned subcategories. It is optional, is not auto-selected, and may remain empty. Changing the category keeps a valid selection and clears one no longer offered. The field is disabled without a category or assigned subcategories. Assignments in use cannot be removed, and assigned subcategories cannot be deleted. Name edits and selection changes on registered initiatives autosave; failures preserve input and saved content. Subcategories, assignments, and selections are included in the same `.triadic` file, snapshots, and undo. They do not alter amounts or calculation methods.
+When entering or editing an initiative, the “Breakdown subcategory” field beside the category name offers only assigned subcategories. It is optional, is not auto-selected, and may remain empty. Changing the category clears the selected subcategory. The field is disabled without a category or assigned subcategories. Subcategories selected by saved or unsaved initiatives cannot change parent or be deleted. Unused subcategories can change parent or be deleted. A category with subcategories cannot be deleted. Name edits and selection changes on registered initiatives autosave; failures preserve input and saved content. Subcategories, assignments, and selections are included in the same `.triadic` file, snapshots, and undo. They do not alter amounts or calculation methods.
 
 ### Registering initiatives and entering monthly amounts
 
@@ -642,7 +642,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 「前年入力」で前年見込／前年実績を切り替えて入力します。前年実績の表示中はコピーアイコンから、選択中の部署・業種の12か月分を前年見込からコピーできます。対象と上書きを確認して実行し、取消可能です。両者は独立し、未入力は0です。
 比較条件は、行を前年見込・前年実績、列を一次予算・確定予算とする2×2のチェック欄で選びます。各列は一方の前年だけを選べ、新しいチェックで同じ列の他方を解除します。他列は保持し、最後の1つは解除できません。 総原価表・展開表は選択予算と両方の前年条件を一度に保存します。入出力でも表ごとに選び、Excelの見出しと数式へ反映します。前年フォーマットは見込／実績を選んで出力し、取り込み時はファイルに記録された側だけを確認・更新します。用途のない旧Excelは出力し直してください。履歴の収支比較も同じチェック欄を使用します。
-保存場所・保持期間・削除・外部送信は変わりません。見込・実績・基準選択を同じファイルと履歴に保存し、旧保存形式30以前は移行せず拒否します。失敗・キャンセルでは入力と元ファイルを保持します。
+保存場所・保持期間・削除・外部送信は変わりません。見込・実績・基準選択を同じファイルと履歴に保存し、旧保存形式31以前は移行せず拒否します。失敗・キャンセルでは入力と元ファイルを保持します。
 
 ### 一次予算と確定予算の使い分け
 
@@ -669,7 +669,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 ### 現在の対応範囲と制限
 
 - Chrome拡張機能として動作し、利用者が読み書きを許可したローカルファイルを扱います。データの外部送信やブラウザ間の同期は行いません。
-- 保存形式は31です。29以前や未知の形式は読み込みを拒否し、移行・上書きは行いません。ファイル更新時は、今回の編集と別の行への変更を自動で合わせて保存します。同じ行の変更や整合しない変更は上書きせず、入力済みのデータ全体を別ファイルへ保存して編集を続けられます。キャンセル・保存失敗では入力と元ファイルを保持します。外部変更の反映時には過去の操作取消を初期化し、今回の編集だけを取り消せます。「別名で保存」は保存済みのデータ・マスタ・履歴を別の.triadicファイルへ保存し、新しい保存先で編集を続けます。操作取消・やり直しを維持し、ファイル名と「続きから」は書き込み成功後だけ切り替えます。 別ウィンドウが開いている保存先や別ファイルの保存先切り替え中のファイルは、書き込み前に拒否します。双方の内容と入力を保持し、保存先を開いている画面を閉じるか別の保存先を選び直せます。切り替え中の保存先を開く操作は完了を待ち、同じ担当へ接続します。
+- 保存形式は32です。31以前や未知の形式は読み込みを拒否し、移行・上書きは行いません。ファイル更新時は、今回の編集と別の行への変更を自動で合わせて保存します。同じ行の変更や整合しない変更は上書きせず、入力済みのデータ全体を別ファイルへ保存して編集を続けられます。キャンセル・保存失敗では入力と元ファイルを保持します。外部変更の反映時には過去の操作取消を初期化し、今回の編集だけを取り消せます。「別名で保存」は保存済みのデータ・マスタ・履歴を別の.triadicファイルへ保存し、新しい保存先で編集を続けます。操作取消・やり直しを維持し、ファイル名と「続きから」は書き込み成功後だけ切り替えます。 別ウィンドウが開いている保存先や別ファイルの保存先切り替え中のファイルは、書き込み前に拒否します。双方の内容と入力を保持し、保存先を開いている画面を閉じるか別の保存先を選び直せます。切り替え中の保存先を開く操作は完了を待ち、同じ担当へ接続します。
 - 競合から別ファイルへ保存できた場合は、通常の編集・操作取消・履歴操作・終了時の記録を含め、画面のファイル名と「続きから」の参照を保存成功先へ揃えます。キャンセルや書き込み失敗では参照を変更しません。端末内への参照の記憶に失敗した場合は通知し、同じ画面内では成功先から再開できます。
 - Excel出力は総原価表・展開表・施策一覧と計算元を扱い、取り込みはアプリから出力した前年入力フォーマットが対象です。任意のExcelブックや、出力した総原価表・展開表・施策一覧の編集内容をデータへ取り込む機能はありません。Excel実機での再計算は未確認です。
 - 保存に失敗した入力は画面内で保持しますが、タブ終了・再読み込み・強制終了後の復元は保証しません。複数の画面や外部アプリで同じファイルを変更した場合は、外部更新を検出して上書きを止めます。
@@ -734,9 +734,9 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 ### 展開区分の管理と選択
 
-「マスタ」の「展開区分マスタ」で区分名を登録・編集・削除できます。新規ファイルの区分は「下払いUP」「ベースアップ」「設備投資」「燃料費UP」「電気料金UP」「その他」の6件で、すべて展開名「コスト」に割り当てます。「展開マスタ」の展開区分列で、各展開に使う区分をチェックボックスで複数割り当てます。同じ区分を複数の展開へ設定でき、割当なしも可能です。
-施策入力・登録済み施策の編集では、展開名の右の「展開区分」から、その展開に割り当てた区分だけを選べます。任意項目で、自動選択せず、未選択のまま登録できます。展開の変更時は有効な区分を保持し、候補から外れた区分を未選択へ戻します。展開未選択・割当なしでは選択欄を無効にします。
-使用中の割当は解除できず、割当中の区分は削除できません。区分名の編集・登録済み施策の選択変更は自動保存し、保存失敗では入力と保存済み内容を保持します。区分・割当・選択は同じ.triadicファイル、時点履歴、操作取消に含めます。区分で金額と集計方法を変更しません。
+「マスタ」の「展開区分マスタ」で区分名を登録・編集・削除できます。新規ファイルの区分は「下払いUP」「ベースアップ」「設備投資」「燃料費UP」「電気料金UP」「その他」の6件で、すべて展開名「コスト」に割り当てます。展開区分の新規登録では「展開名」を一つ必ず選びます。区分はその展開だけに所属し、ほかの展開では使えません。一覧に所属する展開名を表示し、同じ行で区分名・所属を編集できます。「展開マスタ」の展開区分列は所属する区分の表示だけです。
+施策入力・登録済み施策の編集では、展開名の右の「展開区分」から、その展開に割り当てた区分だけを選べます。任意項目で、自動選択せず、未選択のまま登録できます。展開名を変更した場合、選択済みの区分は未選択へ戻します。展開未選択・割当なしでは選択欄を無効にします。
+施策で使用中、または登録前の施策で選択中の区分は所属変更・削除できません。未使用区分は所属変更・削除できます。区分が所属している展開名は削除できません。区分名の編集・登録済み施策の選択変更は自動保存し、保存失敗では入力と保存済み内容を保持します。区分・割当・選択は同じ.triadicファイル、時点履歴、操作取消に含めます。区分で金額と集計方法を変更しません。
 
 ### 施策の登録と月別金額の入力
 
@@ -935,7 +935,7 @@ Chromeのファイル選択、新規作成、ファイル参照を取得でき�
 
 施策・勘定科目・年月と月別金額を同じデータとして持ち、施策一覧・総原価表・展開表はそのデータを異なる視点で表します。集計結果を別の正本として重複保存しません。現在はファイルの新規作成、形式検証を伴う読込、勘定科目マスタ・集計マスタ・展開マスタ・業種マスタ・部署マスタ・期間マスタ・固定種別マスタ・固定科目属性マスタの閲覧、施策・前年入力の保存を実装しています。
 
-保存形式は31です。明細の有無にかかわらず、保存形式30以前のファイルは開けません。新規ファイルから使用します。対応しない旧形式や未知の形式は読み込み時に拒否し、移行や上書きは行いません。新しい形式のファイルは旧アプリで開けません。
+保存形式は32です。明細の有無にかかわらず、保存形式31以前のファイルは開けません。新規ファイルから使用します。対応しない旧形式や未知の形式は読み込み時に拒否し、移行や上書きは行いません。新しい形式のファイルは旧アプリで開けません。
 
 「基本情報」（`document_info`）に基準年度・作成日時・更新日時を保存します。保存データ全体に関する情報だけを扱い、保存形式などは`triadic_metadata`で管理します。一次予算・確定予算の2種別は業務定義で固定します。種別表や施策ごとの年度は保存しません。開始年月は基準年度・期間の算出規則・各科目行の種別別有効月額から読み込み時に導出し、保存列は持ちません。共通属性は`initiatives`、共通科目行は`initiative_rows`へ保存し、追加時から同じ文字列識別子を使います。施策金額は`initiative_amounts`へ科目行・種別ID・月で区別して円の整数を保存します。種別1（一次予算）は12か月、種別2（確定予算）は手修正月だけを保持します。明示した0と一次予算と同額の手修正もレコードとして保持し、未指定月だけ一次予算を引き継ぎます。引き継ぎ値は共通の解決処理から求め、別の保存値へ複製しません。基準前年の金額は`previous_amounts`へ科目・業種・部署・月ごとに保存します。種別選択と一次・確定それぞれの基準前年は`kind_selections`に画面別で保存します。詳細は[月別金額と保存構造](DATA_MODEL.md)と[実装設計](docs/single-year-plan-design.md)を参照してください。外部送信はありません。
 

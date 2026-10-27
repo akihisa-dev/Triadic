@@ -42,12 +42,12 @@ export function useWorkspaceCommands(props: Pick<HomePageProps, "onChangeMaster"
   });
   const changeExpansions = (change: ExpansionChange) => mutation.run(async () => {
     if (change.type === "delete" && initiativeDraft.expansionId === change.id) throw new Error("施策入力で選択している展開名は削除できません。");
-    if (change.type === "update" && change.id === initiativeDraft.expansionId && initiativeDraft.expansionCategoryId != null && change.categoryIds && !change.categoryIds.includes(initiativeDraft.expansionCategoryId)) throw new Error("施策入力で選択している展開区分は展開から外せません。");
     await saveReferencedMaster(change.type === "update" ? { collection: "expansions", id: change.id,
       expected: { ...currentContents.expansions.find(item => item.id === change.id), ...change } } : null, () => onChangeExpansions(change));
   });
   const changeExpansionCategories = (change: ExpansionCategoryChange) => mutation.run(async () => {
     if (change.type === "delete" && initiativeDraft.expansionCategoryId === change.id) throw new Error("施策入力で選択している展開区分は削除できません。");
+    if (change.type === "update" && initiativeDraft.expansionCategoryId === change.id && initiativeDraft.expansionId !== change.expansionId) throw new Error("施策入力で選択している展開区分は所属する展開名を変更できません。");
     await saveReferencedMaster(change.type === "update" ? { collection: "expansionCategories", id: change.id,
       expected: { ...currentContents.expansionCategories.find(item => item.id === change.id), ...change } } : null, () => onChangeExpansionCategories(change));
   });

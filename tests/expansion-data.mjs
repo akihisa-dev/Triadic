@@ -29,7 +29,7 @@ export async function verifyExpansionData(api) {
     recreated,
     await changeExpansionMaster(bytes, { type: "update", id: target.id, expansionCode: target.expansionCode, expansionName: "改名した展開" }),
     await changeExpansionMaster(bytes, { type: "update", id: target.id, expansionCode: "99", expansionName: target.expansionName }),
-    await changeExpansionMaster(bytes, { type: "update", id: target.id, expansionCode: target.expansionCode, expansionName: target.expansionName, categoryIds: [1] }),
+    await api.changeExpansionCategoryMaster(bytes, { type: "update", id: 1, categoryName: "下払いUP", expansionId: target.id }),
   ]) {
     await assert.rejects(changeExpansionMaster(replacement, deletion), /削除対象の展開が変更/);
     const current = await readPlanContents(replacement), old = await readPlanContents(bytes);
@@ -42,6 +42,7 @@ export async function verifyExpansionData(api) {
   assert.equal(api.expansionDeletionKey({ ...target, categoryIds: [2, 1] }), api.expansionDeletionKey({ ...target, categoryIds: [1, 2] }), "所属順だけでは対象変更にしない");
 
   let empty = bytes;
+  for (const category of (await readPlanContents(empty)).expansionCategories) empty = await api.changeExpansionCategoryMaster(empty, { type: "delete", id: category.id });
   for (const item of initial) empty = await changeExpansionMaster(empty, { type: "delete", id: item.id });
   assert.deepEqual((await readPlanContents(empty)).expansions, [], "全件削除しても初期データを復活させない");
   const otherChange = await changeAccountMaster(empty, { type: "add", accountCode: "001", accountName: "別マスタ更新", accountType: "expense" });
@@ -66,7 +67,7 @@ export async function verifyExpansionData(api) {
   assert.equal(writes, 1);
   const before = stored.slice();
   const fail = { ...handle, async createWritable() { return { async write() { throw new Error("保存失敗"); }, async close() {}, async abort() {} }; } };
-  await assert.rejects(saveExpansionMaster({ ...saved, handle: fail }, { type: "delete", id: 1 }, noPicker), /保存失敗/);
+  await assert.rejects(saveExpansionMaster({ ...saved, handle: fail }, { type: "delete", id: 2 }, noPicker), /保存失敗/);
   assert.deepEqual(stored, before);
   await assert.rejects(saveExpansionMaster({ ...plan, handle: undefined }, add, async () => { throw new DOMException("キャンセル", "AbortError"); }), { name: "AbortError" });
   assert.deepEqual((await readPlanContents(bytes)).expansions, initial);

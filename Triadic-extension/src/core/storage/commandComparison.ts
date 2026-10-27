@@ -13,7 +13,7 @@ function targets(command: PlanCommand): Target[] {
     ];
     case "account": return [{ table: "accounts", ...("id" in command.change ? { where: "id = ?", params: [command.change.id] } : {}) }, { table: "master_order" }];
     case "expansion": return [{ table: "expansions" }, { table: "expansion_category_assignments" }];
-    case "expansion-category": return [{ table: "expansion_categories" }];
+    case "expansion-category": return [{ table: "expansion_categories" }, { table: "expansion_category_assignments" }];
     case "industry": return [{ table: "industries" }];
     case "department": return [{ table: "departments" }, { table: "department_industries" }];
     case "period": return [{ table: "period_types" }];

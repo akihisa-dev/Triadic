@@ -8,7 +8,7 @@ const items: Initiative[] = Array.from({ length: 125 }, (_, id) => ({ id, name: 
   expansionId: 0, expansionCategoryId: -1, departmentId: id === 124 ? 3 : 4, industryId: 5, periodTypeId: 6, fiscalYear: 2026, rows: [], revision: 1, startYearMonths: { 1: "", 2: "" }, months: {} }));
 const masters = {
   expansions: [{ id: 0, expansionCode: "0", expansionName: "コスト" }],
-  expansionCategories: [{ id: -1, categoryName: "運行効率化" }],
+  expansionCategories: [{ id: -1, categoryName: "運行効率化", expansionId: 0 }],
   departments: [{ id: 3, departmentName: "運輸部", industryIds: [5] }, { id: 4, departmentName: "倉庫部", industryIds: [5] }],
   industries: [{ id: 5, industryCode: "5", industryName: "一般貨物ＸＹＺ" }],
   periodTypes: [{ id: 6, periodName: "上期" }],

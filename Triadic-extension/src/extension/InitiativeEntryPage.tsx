@@ -83,8 +83,7 @@ export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions
         <ClassificationSelect id="initiative-expansion" label="展開名" value={draft.expansionId} disabled={readOnly || isSaving} required
           options={expansions.map(item => ({ id: item.id, name: item.expansionName }))}
           onChange={expansionId => {
-            const ids = expansions.find(item => item.id === expansionId)?.categoryIds ?? [];
-            onDraftChange({ ...draft, expansionId, expansionCategoryId: ids.includes(draft.expansionCategoryId!) ? draft.expansionCategoryId ?? null : null });
+            onDraftChange({ ...draft, expansionId, expansionCategoryId: expansionId === draft.expansionId ? draft.expansionCategoryId ?? null : null });
           }} />
         <ClassificationSelect id="initiative-expansion-category" label="展開区分" value={draft.expansionCategoryId}
           disabled={readOnly || isSaving || draft.expansionId == null || allowedCategories.length === 0}

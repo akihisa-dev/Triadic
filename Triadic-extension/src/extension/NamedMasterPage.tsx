@@ -10,22 +10,23 @@ import { AutoSaveStatus } from "./AutoSaveStatus";
 import { ConfirmationDialog } from "./ConfirmationDialog";
 import { StatusNotice } from "./StatusNotice";
 
-export type NamedMasterRow = { id: number; identity?: string; name: string; code: string; relationIds?: number[]; deletionKey?: string };
-export type NamedMasterChange = { type: "add"; name: string; code: string; relationIds?: number[] } | ({ type: "update" } & NamedMasterRow) | { type: "delete"; id: number; deletionKey?: string };
+export type NamedMasterRow = { id: number; identity?: string; name: string; code: string; relationIds?: number[]; relationId?: number | null; deletionKey?: string };
+export type NamedMasterChange = { type: "add"; name: string; code: string; relationIds?: number[]; relationId?: number | null } | ({ type: "update" } & NamedMasterRow) | { type: "delete"; id: number; deletionKey?: string };
 type Props = AutoSaveProps & {
   rows: NamedMasterRow[]; usedIds?: Set<number>; isSaving: boolean;
   subject: string; slug: string; coded?: boolean;
-  relationLabel?: string; relationRequired?: boolean;
+  relationLabel?: string; relationRequired?: boolean; relationMode?: "multiple" | "single" | "readonly";
   relationOptions?: { id: number; name: string }[];
   onChange: (change: NamedMasterChange) => Promise<void>; onBack: () => void;
 };
 /** Common lifecycle for naming masters; domain adapters own their constraints. */
-export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange, onBack, onPendingChange, onPrepareSave, subject, slug, coded = false, relationOptions, relationLabel = "業種名", relationRequired = true }: Props) {
+export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange, onBack, onPendingChange, onPrepareSave, subject, slug, coded = false, relationOptions, relationLabel = "業種名", relationRequired = true, relationMode = "multiple" }: Props) {
   const [code, setCode] = useState("");
   const readOnly = useHistoryReadOnly();
   const [name, setName] = useState("");
   const [relationIds, setRelationIds] = useState<number[]>([]);
-  const relationChoices = (selected: number[], change: (ids: number[]) => void, disabled: boolean, label: string, options = relationOptions) => <fieldset className="department-industry-choices"><legend>{label}</legend>{options?.map(item => <label key={item.id}><input type="checkbox" checked={selected.includes(item.id)} disabled={disabled} onChange={event => change(event.target.checked ? [...selected, item.id] : selected.filter(id => id !== item.id))} />{item.name}</label>)}</fieldset>;
+  const relationChoices = (selected: number[], change: (ids: number[]) => void, disabled: boolean, label: string, options = relationOptions) => relationMode === "single" ? <div className="initiative-field"><label htmlFor={`${slug}-${label}`}>{label}</label><select id={`${slug}-${label}`} value={selected[0] ?? ""} disabled={disabled} onChange={event => change(event.target.value === "" ? [] : [Number(event.target.value)])}><option value="">未選択</option>{options?.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div> : <fieldset className="department-industry-choices"><legend>{label}</legend>{options?.map(item => <label key={item.id}><input type="checkbox" checked={selected.includes(item.id)} disabled={disabled} onChange={event => change(event.target.checked ? [...selected, item.id] : selected.filter(id => id !== item.id))} />{item.name}</label>)}</fieldset>;
+  const selectedRelations = (row: NamedMasterRow) => relationMode === "single" ? (row.relationId == null ? [] : [row.relationId]) : row.relationIds ?? [];
   const [deleting, setDeleting] = useState<NamedMasterRow | null>(null);
   const autoSave = useAutoSave<Extract<NamedMasterChange, { type: "update" }>>(onChange, onPendingChange);
   const { draft, controller } = autoSave;
@@ -53,7 +54,7 @@ export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange,
   const columns: TableColumn<NamedMasterRow>[] = [
     ...(coded ? [{ id: "code", label: `${subject}コード`, value: (row: NamedMasterRow) => row.code }] : []),
     { id: "name", label: `${subject}名`, value: row => row.name },
-    ...(relationOptions ? [{ id: "relations", label: relationLabel, type: "choice" as const, value: (row: NamedMasterRow) => relationOptions.filter(option => row.relationIds?.includes(option.id)).map(option => option.name) }] : []),
+    ...(relationOptions ? [{ id: "relations", label: relationLabel, type: "choice" as const, value: (row: NamedMasterRow) => relationOptions.filter(option => selectedRelations(row).includes(option.id)).map(option => option.name) }] : []),
   ];
   const tableView = useTableView(rows, columns);
   const cellFilter = useTableCellFilter(tableView, !!draft || isSaving);
@@ -66,7 +67,7 @@ export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange,
     <h1 id={`${slug}-master-title`}>{subject}マスタ</h1><span className="master-count">{tableView.filtered ? `${displayed.length} / ${rows.length}` : rows.length}件</span></div>
     <form className="account-master-form" aria-label={`${subject}の新規登録`} onSubmit={event => {
       event.preventDefault();
-      if (!isSaving && !draft) void save({ type: "add", code, name, ...(relationOptions ? { relationIds } : {}) });
+      if (!isSaving && !draft) void save({ type: "add", code, name, ...(relationOptions ? relationMode === "single" ? { relationId: relationIds[0] ?? null } : { relationIds } : {}) });
     }}>
       <span className="master-form-label">新規登録</span><div className="account-master-fields">
         {coded && <div className="initiative-field account-code-field">
@@ -78,9 +79,9 @@ export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange,
           <label htmlFor={`${slug}-name`}>{subject}名</label>
           <input id={`${slug}-name`} autoComplete="off" value={name} disabled={readOnly || isSaving || draft !== null} onChange={event => setName(event.target.value)} />
         </div>
-        {relationOptions && relationChoices(relationIds, setRelationIds, readOnly || isSaving || draft !== null, relationLabel)}
+        {relationOptions && relationMode !== "readonly" && relationChoices(relationIds, setRelationIds, readOnly || isSaving || draft !== null, relationLabel)}
       </div>
-      <button className="primary-button" type="submit" disabled={readOnly || isSaving || draft !== null || (coded && !code.trim()) || !name.trim() || (relationRequired && relationOptions !== undefined && !relationIds.length)}>登録</button>
+      <button className="primary-button" type="submit" disabled={readOnly || isSaving || draft !== null || (coded && !code.trim()) || !name.trim() || (relationMode !== "readonly" && relationRequired && relationOptions !== undefined && !relationIds.length)}>登録</button>
     </form>
     {draft && <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave} />}
     <StatusNotice {...notice} onDismiss={dismissNotice} />
@@ -101,7 +102,7 @@ export function NamedMasterPage({ rows, usedIds = new Set(), isSaving, onChange,
             }}>
               {coded && <td className="account-code">{editing ? <input readOnly={protectedInput} autoFocus aria-label={`${item.name}の${subject}コード`} inputMode="numeric" value={editing.code} onChange={event => controller.change({ ...editing, code: event.target.value })} /> : item.code}</td>}
               <th {...cellFilter.props("name", item.name)} scope="row" className="account-master-name">{editing && protectedInput && <span className="field-hint">{item.name}</span>}{editing ? <input readOnly={protectedInput} autoFocus={!coded} aria-label={`${item.name}の${subject}名`} value={editing.name} onChange={event => controller.change({ ...editing, name: event.target.value })} /> : item.name}</th>
-              {relationOptions && <td {...cellFilter.props("relations", relationOptions.filter(option => item.relationIds?.includes(option.id)).map(option => option.name))}>{editing ? relationChoices(editing.relationIds ?? [], relationIds => controller.change({ ...editing, relationIds }), readOnly || protectedInput, `${item.name}の${relationLabel}`, protectedInput ? retained.current?.options : relationOptions) : relationOptions.filter(option => item.relationIds?.includes(option.id)).map(option => option.name).join("・")}</td>}
+              {relationOptions && <td {...cellFilter.props("relations", relationOptions.filter(option => selectedRelations(item).includes(option.id)).map(option => option.name))}>{editing && relationMode !== "readonly" ? relationChoices(selectedRelations(editing), relationIds => controller.change(relationMode === "single" ? { ...editing, relationId: relationIds[0] ?? null } : { ...editing, relationIds }), readOnly || protectedInput, `${item.name}の${relationLabel}`, protectedInput ? retained.current?.options : relationOptions) : relationOptions.filter(option => selectedRelations(item).includes(option.id)).map(option => option.name).join("・")}</td>}
               <td><div className="form-actions">{editing
                 ? <button className="text-button" type="button" disabled={readOnly || autoSave.pending} onClick={() => controller.end()}>完了</button>
                 : <><button className="text-button" type="button" aria-label={`${item.name}を編集`} disabled={readOnly || isSaving || draft !== null} onClick={() => { dismissNotice(); retained.current = { row: item, options: relationOptions }; controller.begin({ type: "update", ...item }, JSON.stringify([item.id, item.identity])); }}>編集</button>

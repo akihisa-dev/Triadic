@@ -9,7 +9,7 @@ function signature(collection: ReferenceCollection, item: object) {
   const value = item as Record<string, unknown>;
   const fields = collection === "accounts" ? ["accountCode", "accountName", "accountType"]
     : collection === "expansions" ? ["expansionCode", "expansionName"]
-    : collection === "expansionCategories" ? ["categoryName"] : ["periodName", "startMonthRule"];
+    : collection === "expansionCategories" ? ["categoryName", "expansionId"] : ["periodName", "startMonthRule"];
   return JSON.stringify(fields.map(field => typeof value[field] === "string" ? value[field].trim() : value[field] ?? null));
 }
 

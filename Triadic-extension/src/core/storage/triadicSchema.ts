@@ -6,7 +6,7 @@ import { AGGREGATION_SQL } from "./aggregationSchema";
 export const TRIADIC_FILE_EXTENSION = ".triadic";
 export const TRIADIC_MIME_TYPE = "application/vnd.triadic+sqlite";
 export const TRIADIC_FORMAT_ID = "triadic";
-export const TRIADIC_FORMAT_VERSION = 31;
+export const TRIADIC_FORMAT_VERSION = 32;
 const revision = "INTEGER NOT NULL DEFAULT 0 CHECK (typeof(revision) = 'integer' AND revision >= 0)";
 const amount = "INTEGER NOT NULL DEFAULT 0 CHECK (typeof(amount_yen) = 'integer' AND amount_yen BETWEEN -9007199254740991 AND 9007199254740991)";
 const month = "INTEGER NOT NULL CHECK (typeof(month) = 'integer' AND month BETWEEN 1 AND 12)";
@@ -47,7 +47,7 @@ INSERT INTO expansion_categories (id, name) VALUES
  (1, '下払いUP'), (2, 'ベースアップ'), (3, '設備投資'), (4, '燃料費UP'), (5, '電気料金UP'), (6, 'その他');
 CREATE TABLE expansion_category_assignments (
  expansion_id INTEGER NOT NULL REFERENCES expansions(id) ON DELETE CASCADE,
- category_id INTEGER NOT NULL REFERENCES expansion_categories(id),
+ category_id INTEGER NOT NULL UNIQUE REFERENCES expansion_categories(id),
  PRIMARY KEY (expansion_id, category_id)
 );
 INSERT INTO expansion_category_assignments (expansion_id, category_id)

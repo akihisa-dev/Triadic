@@ -43,7 +43,7 @@ export async function verifyAccountAddRebase(api){
   }
   for(const addOther of [
     name=>api.registerInitiative(base,{name,fiscalYear:'2026',note:'',expansionId:1,industryId:1,departmentId:1,rows:[{id:name,accountId:original.id,amounts:{4:'1'}}]}),
-    name=>api.changeExpansionCategoryMaster(base,{type:'add',categoryName:name}),
+    name=>api.changeExpansionCategoryMaster(base,{type:'add',categoryName:name,expansionId:1}),
     name=>api.changeAggregationMaster(base,{type:'add',name}),
   ]){
     const a=await addOther('独立追加A'),b=await addOther('独立追加B');

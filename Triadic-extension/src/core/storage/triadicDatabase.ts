@@ -114,6 +114,7 @@ function assertDatabase(db: Database, documentType: DocumentType): void {
     if (db.exec(`SELECT identity FROM ${table} WHERE typeof(identity) != 'text' OR length(identity) != 32 OR identity GLOB '*[^0-9a-f]*'`).length
       || db.exec(`SELECT identity FROM ${table} GROUP BY identity HAVING COUNT(*) > 1`).length) invalid();
   }
+  if (db.exec("SELECT id FROM expansion_categories WHERE NOT EXISTS (SELECT 1 FROM expansion_category_assignments WHERE category_id = expansion_categories.id)").length) invalid();
   validateMasterPresentation(db);
   if (db.exec("SELECT position FROM aggregation_members WHERE typeof(position) != 'integer' OR position NOT BETWEEN 0 AND 9007199254740991").length) invalid();
   validateAggregations(listAggregations(db), new Set((db.exec("SELECT id FROM accounts")[0]?.values ?? []).map(([id]) => Number(id))));

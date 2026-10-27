@@ -1,7 +1,7 @@
 export type Expansion = { id: number; expansionCode: string; expansionName: string; categoryIds?: number[] };
 export type ExpansionChange =
-  | { type: "add"; expansionCode: string; expansionName: string; categoryIds?: number[] }
-  | { type: "update"; id: number; expansionCode: string; expansionName: string; categoryIds?: number[] }
+  | { type: "add"; expansionCode: string; expansionName: string }
+  | { type: "update"; id: number; expansionCode: string; expansionName: string }
   | { type: "delete"; id: number; deletionKey?: string };
 
 export const expansionDeletionKey = (item: Expansion) => JSON.stringify([
