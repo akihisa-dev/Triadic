@@ -7,12 +7,13 @@ import type { ClientReply, HubMessage, HubRequest, HubMethod, HubResult, WindowC
 import type { WindowView } from "./windowView";
 import { emptyDataHistory } from "../core/domain/dataHistory";
 import { scheduleHistoryCheckpoint } from "./historyCheckpoint";
+import { WindowMasterIdentity } from "../core/domain/windowMasterIdentity";
 import { reconcileWindowCommand } from "../core/domain/windowCommand";
 import type { PlanContents } from "../core/domain/plan";
 import { createNewPlanFile } from "./newPlanFile";
 
-type Peer = { port: Pick<MessagePort, "postMessage">; group: Group | null; number: number; label: string; initialView: WindowView | null; publishedContents?: PlanContents | null; opening?: boolean };
-type Group = { id: string; session: PlanSession; peers: Set<Peer>; openingPeers: number; nextNumber: number; cancelCheckpoint?: () => void; releaseRecovery?: () => void; actionTail: Promise<void>; coordinating: boolean; historyPreparing: boolean; historyOwner: Peer | null; tail: Promise<unknown>; acting: Peer | null; openingHandle: FileSystemFileHandle | undefined; opened: Promise<void>; releasing?: Promise<void> };
+type Peer = { port: Pick<MessagePort, "postMessage">; group: Group | null; number: number; label: string; initialView: WindowView | null; publishedContents?: PlanContents | null; publishedMasterIdentities?: Record<string, number>; opening?: boolean };
+type Group = { id: string; masterIdentity: WindowMasterIdentity; session: PlanSession; peers: Set<Peer>; openingPeers: number; nextNumber: number; cancelCheckpoint?: () => void; releaseRecovery?: () => void; actionTail: Promise<void>; coordinating: boolean; historyPreparing: boolean; historyOwner: Peer | null; tail: Promise<unknown>; acting: Peer | null; openingHandle: FileSystemFileHandle | undefined; opened: Promise<void>; releasing?: Promise<void> };
 const destinationMissing = async (): Promise<FileSystemFileHandle> => { throw new Error("保存先を選択してください。入力は保持しています。"); };
 const errorText = (failure: unknown, field: "message" | "name", fallback: string) => failure && typeof failure === "object" && field in failure && typeof Reflect.get(failure, field) === "string" ? String(Reflect.get(failure, field)) : fallback;
 class WindowControlTimeoutError extends Error {}
@@ -108,6 +109,7 @@ export class WindowSessionHub {
   private publish(group: Group) {
     const snapshot = group.session.getSnapshot();
     const handle = group.session.getHandle();
+    const masterIdentities = snapshot.contents ? group.masterIdentity.sync(snapshot.contents) : undefined;
     const patches = new Map<PlanContents, PlanContentsPatch | null>();
     for (const peer of group.peers) {
       const preserveContents = peer.publishedContents === snapshot.contents;
@@ -116,8 +118,12 @@ export class WindowSessionHub {
         if (!patches.has(peer.publishedContents)) patches.set(peer.publishedContents, diffPlanContents(peer.publishedContents, snapshot.contents));
         contentsPatch = patches.get(peer.publishedContents)!;
       }
+      const identityChanged = peer.publishedMasterIdentities !== masterIdentities;
+      if (masterIdentities) peer.publishedMasterIdentities = masterIdentities;
+      else delete peer.publishedMasterIdentities;
       peer.publishedContents = snapshot.contents;
       this.send(peer, { type: "state", snapshot: preserveContents || contentsPatch ? { ...snapshot, contents: null } : snapshot,
+        ...(identityChanged && masterIdentities ? { masterIdentities } : {}),
         preserveContents, ...(contentsPatch ? { contentsPatch } : {}), info: this.info(peer), ...(handle ? { handle } : {}) });
     }
     group.cancelCheckpoint?.();
@@ -131,7 +137,7 @@ export class WindowSessionHub {
   }
 
   private newGroup(plan: Pick<OpenPlan, "name" | "bytes" | "handle">) {
-    const group: Group = { id: crypto.randomUUID(), session: this.makeSession(async name => {
+    const group: Group = { id: crypto.randomUUID(), masterIdentity: new WindowMasterIdentity(), session: this.makeSession(async name => {
       if (!group.acting) return null;
       const destination = await this.control(group.acting, "recover", name) as RecoveryDestination | null;
       if (destination) group.releaseRecovery = await this.reserveSaveTarget(group, destination.handle);
@@ -379,7 +385,7 @@ export class WindowSessionHub {
               const command = args[0];
               const base = args[1];
               const current = group.session.getSnapshot().contents!;
-              return group.session.dispatch(base ? reconcileWindowCommand(command, base, current) : command, destinationMissing) satisfies Promise<HubResult<typeof method>>;
+              return group.session.dispatch(base ? reconcileWindowCommand(command, base, current, group.masterIdentity.sync(current)) : command, destinationMissing) satisfies Promise<HubResult<typeof method>>;
             }
             case "prepareSave": return group.session.prepareSave(destinationMissing) satisfies Promise<HubResult<typeof method>>;
             case "checkpoint": return group.session.checkpoint(args[0], destinationMissing) satisfies Promise<HubResult<typeof method>>;

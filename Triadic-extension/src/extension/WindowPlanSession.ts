@@ -21,6 +21,7 @@ export class WindowPlanSession implements SessionAccess {
   private port?: MessagePort;
   private started?: Promise<void>;
   private snapshot = emptySnapshot;
+  private masterIdentities: Record<string, number> = {};
   private info: WindowInfo & { settling: boolean } = { group: null, number: 1, peers: 1, initialView: null, settling: false };
   private handle: FileSystemFileHandle | undefined;
   private sequence = 0;
@@ -106,6 +107,8 @@ export class WindowPlanSession implements SessionAccess {
       else request.resolve(message.contentsPatch ? applyPlanContentsPatch(this.snapshot.contents!, message.contentsPatch) : message.value);
     } else if (message.type === "state") {
       const sameGroup = message.info.group === this.info.group;
+      if (message.masterIdentities) this.masterIdentities = message.masterIdentities;
+      else if (!sameGroup) this.masterIdentities = {};
       this.updateInfo({ ...message.info, initialView: sameGroup ? this.info.initialView : message.info.initialView });
       this.handle = message.handle;
       this.snapshot = message.contentsPatch ? { ...message.snapshot, contents: applyPlanContentsPatch(this.snapshot.contents!, message.contentsPatch) }
@@ -187,7 +190,7 @@ export class WindowPlanSession implements SessionAccess {
     await this.request("prepareSave");
   }
   async dispatch(command: PlanCommand, _destination: () => Promise<FileSystemFileHandle>): Promise<PlanContents> {
-    const base = this.snapshot.contents ? windowCommandBase(command, this.snapshot.contents) : null;
+    const base = this.snapshot.contents ? windowCommandBase(command, this.snapshot.contents, this.masterIdentities) : null;
     if (!this.flushDepth) {
       let release!: () => void;
       const forcedFlush = new Promise<void>(resolve => { release = resolve; });

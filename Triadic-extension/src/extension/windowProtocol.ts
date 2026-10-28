@@ -44,7 +44,7 @@ export function hubRequest<M extends HubMethod>(id: number, method: M, ...args: 
 }
 export type ClientReply = { type: "reply"; id: number; value?: unknown; error?: string };
 export type HubMessage =
-  | { type: "state"; snapshot: SessionSnapshot; info: WindowInfo; handle?: FileSystemFileHandle; preserveContents?: boolean; contentsPatch?: PlanContentsPatch }
+  | { type: "state"; snapshot: SessionSnapshot; info: WindowInfo; handle?: FileSystemFileHandle; preserveContents?: boolean; contentsPatch?: PlanContentsPatch; masterIdentities?: Record<string, number> }
   | { type: "result"; id: number; value?: HubResult<HubMethod>; contentsPatch?: PlanContentsPatch; error?: string; errorName?: string }
   | { type: "control"; id: number; action: WindowControl; detail?: string; expiresAt?: number }
   | { type: "history-decision"; transaction: string; commit: boolean }

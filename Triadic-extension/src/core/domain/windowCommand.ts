@@ -9,9 +9,10 @@ import { periodDeletionKey } from "./periodMaster";
 import { aggregationDeletionKey } from "./aggregationMaster";
 import { orderedMasterRows } from "./masterRows";
 import { reconcileInitiativeDraftReferences } from "./initiativeDraftReferences";
+import { windowMasterTargets } from "./windowMasterIdentity";
 
 const collections = { account: "accounts", aggregation: "aggregations", expansion: "expansions", "expansion-category": "expansionCategories", department: "departments", industry: "industries", period: "periodTypes" } as const;
-export type WindowCommandBase = Partial<Pick<PlanContents, typeof collections[keyof typeof collections] | "initiatives" | "previousAmounts">>;
+export type WindowCommandBase = Partial<Pick<PlanContents, typeof collections[keyof typeof collections] | "initiatives" | "previousAmounts">> & { masterIdentities?: Record<string, number | null> };
 
 /** Only references selected by this edit need their original master baseline. */
 function selectedUpdateReferences(draft: InitiativeEntryDraft, original: InitiativeEntryDraft): InitiativeEntryDraft {
@@ -29,7 +30,12 @@ function selectedUpdateReferences(draft: InitiativeEntryDraft, original: Initiat
 }
 
 /** Capture the same reconciliation baseline without copying unrelated plans. */
-export function windowCommandBase(command: PlanCommand, contents: PlanContents): WindowCommandBase {
+export function windowCommandBase(command: PlanCommand, contents: PlanContents, identities?: Record<string, number>): WindowCommandBase {
+  const base = commandContentsBase(command, contents);
+  const targets = windowMasterTargets(command);
+  return identities && targets.length ? { ...base, masterIdentities: Object.fromEntries(targets.map(key => [key, identities[key] ?? null])) } : base;
+}
+function commandContentsBase(command: PlanCommand, contents: PlanContents): WindowCommandBase {
   if (command.type === "initiative.register") return {
     accounts: contents.accounts, expansions: contents.expansions, expansionCategories: contents.expansionCategories,
     periodTypes: contents.periodTypes, departments: contents.departments, industries: contents.industries,
@@ -60,7 +66,10 @@ export function windowCommandBase(command: PlanCommand, contents: PlanContents):
 }
 
 /** A focus change can arrive ahead of the previous window's save publication. Apply only this window's edits. */
-export function reconcileWindowCommand(command: PlanCommand, base: WindowCommandBase, current: PlanContents): PlanCommand {
+export function reconcileWindowCommand(command: PlanCommand, base: WindowCommandBase, current: PlanContents, identities?: Record<string, number>): PlanCommand {
+  if (base.masterIdentities && identities && windowMasterTargets(command).some(key => base.masterIdentities![key] == null || base.masterIdentities![key] !== identities[key])) {
+    throw new Error("選択した対象が削除・再作成されています。入力は保持しています。最新の対象を選び直してください。");
+  }
   if (command.type === "initiative.register") {
     const before = {
       accounts: base.accounts ?? [], expansions: base.expansions ?? [], expansionCategories: base.expansionCategories ?? [],

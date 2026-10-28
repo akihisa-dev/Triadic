@@ -64,13 +64,14 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
   useLayoutEffect(() => {
     if (!editing) { savedSource.current = null; return; }
     const group = byGroup.get(editing.id);
-    if (!group) return;
+    if (!group) { controller.sourceMissing(); return; }
     const saved = { id: group.id, name: group.name, displayName: group.displayName ?? group.name };
     const key = JSON.stringify(saved);
     if (key === savedSource.current) return;
     savedSource.current = key;
     controller.syncSaved(saved);
   }, [byGroup, controller, editing?.id]);
+  const protectedInput = !!editing && autoSave.pending && (controller.hasSourceChange() || !byGroup.has(editing.id));
   const [deleting, setDeleting] = useState<Aggregation | null>(null);
   const disabled = readOnly || isSaving || busy || editing !== null;
   const keyboardFocus = useRef<{ key: string; button: HTMLButtonElement } | null>(null);
@@ -224,7 +225,7 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
             if (next) { keyboardFocus.current = { key, button: event.currentTarget }; void perform({ type: "reorder", order: next }); }
           }
         }} onClick={event => { event.stopPropagation(); if (consumeClick.current) { consumeClick.current = false; return; } if (dragged && group && masterRowKey(dragged) !== key) attach(dragged, group); else setDragged(current => current && masterRowKey(current) === key ? null : row); }}>⠿</button></td>
-      <th scope="row" onDoubleClick={() => { if (group) editGroup(group); }}>{editing?.id === group?.id && editing ? <div className="aggregation-inline-edit" onKeyDown={event => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); void finishEdit(); } if (event.key === "Escape" && !autoSave.pending) controller.end(); }}>
+      <th scope="row" onDoubleClick={() => { if (group) editGroup(group); }}>{editing?.id === group?.id && editing && !protectedInput ? <div className="aggregation-inline-edit" onKeyDown={event => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); void finishEdit(); } if (event.key === "Escape" && !autoSave.pending) controller.end(); }}>
         <input autoFocus aria-label={`${label}の集計名`} value={editing.name} disabled={!!group?.required} onChange={event => controller.change({ ...editing, name: event.target.value, displayName: editing.name.trim() === editing.displayName.trim() ? event.target.value : editing.displayName })} />
         <input autoFocus={!!group?.required} aria-label={`${label}の表示名`} value={editing.displayName} onChange={event => controller.change({ ...editing, displayName: event.target.value })} />
         <button type="button" className="text-button" disabled={autoSave.saving} onClick={() => void finishEdit()}>完了</button>
@@ -245,6 +246,10 @@ export function AggregationMasterPage({ accounts, groups, isSaving, onChange, on
       <button className="primary-button" type="submit" disabled={disabled || !name.trim() || !displayName.trim()}>登録</button><button className="text-button" type="button" disabled={disabled} onClick={() => setAdding(false)}>キャンセル</button></form>}
     <StatusNotice {...notice} onDismiss={dismiss} />
     <AutoSaveStatus state={autoSave} controller={controller} onPrepareSave={onPrepareSave} />
+    {protectedInput && editing && <div className="aggregation-inline-edit" aria-label="保持している集計の入力">
+      <label>集計名<input value={editing.name} readOnly /></label>
+      <label>表示名<input value={editing.displayName} readOnly /></label>
+    </div>}
     <ConfirmationDialog open={deleting !== null} title="集計を削除" message={`「${deleting?.name ?? ""}」を削除しますか？`} confirmLabel="削除する" busy={isSaving || busy} onCancel={() => setDeleting(null)} onConfirm={() => { if (deleting && !disabled) void perform({ type: "delete", id: deleting.id, deletionKey: aggregationDeletionKey(deleting) }).then(() => setDeleting(null)); }} />
     <div className="aggregation-workspace">
     <div className="aggregation-grid-scroll" ref={viewport} role="region" aria-label="集計の構成" tabIndex={0}>
