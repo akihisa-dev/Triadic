@@ -3,7 +3,7 @@
 // 月額の切り取り移動と表示表の範囲コピーは既存金額・分類・小計を使い、clipboard-move-copy.spec.tsで重なり・拒否・取消・大規模表示を確認する。保存データの追加・変更はない。
 // 列見出しの絞り込み・並べ替えは column-view.spec.ts と tests/column-view.mjs で全適用先・複合条件・表示合計・分類構造・保存対象保護を確認する。保存項目は追加しない。
 // 金額欄の計算は amount-expression.spec.ts と tests/amount-expression.mjs で新規・詳細・前年の両種別、保存・取消・入力保護を確認する。保存データは追加しない。
-// 墨色・象牙色と青・金のパレットは palette.spec.ts で明暗の色・読みやすさ・強調を確認する。保存データは変更しない。
+// 墨色・黄みのない白と青・金のパレットは palette.spec.ts で明暗の色・読みやすさ・強調を確認する。保存データは変更しない。
 // 内訳の全列並べ替えは既存サンプルの前年・科目・分類・正負額で cost-breakdown.spec.ts、大量行は breakdown-window.spec.ts で確認する。保存データは変更しない。
 // 密集する展開IDの伸縮・移動・大量行は expansion-scrollbar-dense.html と expansion-scrollbar-dense.spec.ts で確認する。既存サンプルを基にした画面内データで、保存項目は追加しない。
 // 展開表の縦バー移動は既存の展開・空グループと大規模データを使い expansion-scrollbar.spec.ts で確認する。保存データは変更しない。

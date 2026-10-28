@@ -22,15 +22,15 @@ async function expectReadable(locator: Locator) {
   expect(ratio, "実際の文字と背景のコントラスト").toBeGreaterThanOrEqual(4.5);
 }
 
-test("象牙色・墨色の面と文字、青・金の操作対象、期間列の濃淡を保つ", async ({ page, app }) => {
+test("白・墨色の面と文字、青・金の操作対象、期間列の濃淡を保つ", async ({ page, app }) => {
   await page.goto("/tests/ui/preview.html");
   await expect(page.getByRole("status")).toHaveText("操作できます");
   const toggle = app.getByRole("switch", { name: "ダークテーマ" });
   for (const dark of [false, true]) {
     await toggle.setChecked(dark);
     await settleMotion(app.locator("body"));
-    await expect(app.locator(".entry-page")).toHaveCSS("background-color", dark ? "rgb(41, 41, 41)" : "rgb(247, 247, 243)");
-    await expect(app.locator(".entry-page")).toHaveCSS("color", dark ? "rgb(244, 240, 230)" : "rgb(52, 52, 52)");
+    await expect(app.locator(".entry-page")).toHaveCSS("background-color", dark ? "rgb(41, 41, 41)" : "rgb(247, 247, 247)");
+    await expect(app.locator(".entry-page")).toHaveCSS("color", dark ? "rgb(242, 242, 242)" : "rgb(52, 52, 52)");
     await expectReadable(app.locator(".entry-drop-description"));
     await expectReadable(app.getByRole("button", { name: "ファイルを開く", exact: true }));
   }
@@ -46,8 +46,9 @@ test("象牙色・墨色の面と文字、青・金の操作対象、期間列�
     await expect(node.locator(".home-relation-name")).not.toHaveCSS("color", accent);
     await nav.getByRole("button", { name: "総原価表", exact: true }).click();
     await expect(nav.locator('[aria-current="page"] svg')).toHaveCSS("color", accent);
-    const selectedKind = app.locator('.gliding-kind-slot [aria-pressed="true"]').first();
-    await expect(selectedKind).toHaveCSS("color", accent);
+    const selectedKind = app.locator('.comparison-cell input:checked').first();
+    await expect(selectedKind).toHaveCSS("accent-color", accent);
+    await expect(app.locator('.comparison-cell:has(input:checked)').first()).toHaveCSS("border-color", accent);
     await settleMotion(app.locator("body"));
     const bands = [];
     for (const period of ["quarter", "half", "annual"]) {
@@ -62,7 +63,7 @@ test("象牙色・墨色の面と文字、青・金の操作対象、期間列�
     await expectReadable(app.locator(".master-form-label"));
     await expectReadable(app.locator(".master-count"));
     const input = app.locator(".master-data-page input").first();
-    await expect(input).toHaveCSS("background-color", dark ? "rgb(52, 52, 52)" : "rgb(251, 251, 248)");
+    await expect(input).toHaveCSS("background-color", dark ? "rgb(52, 52, 52)" : "rgb(251, 251, 251)");
     await input.focus();
     await expect(input).toHaveCSS("outline-color", accent);
   }

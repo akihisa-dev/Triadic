@@ -37,7 +37,7 @@ test("初回ライト・キーボード切替・記憶・画面移動・表・�
     await expect(toggle).toBeChecked();
     if (name === "総原価表") {
       await expect(app.locator(".cost-table tbody tr").first()).toBeVisible();
-      await expect(app.locator(".cost-table .period-quarter").first()).toHaveCSS("background-color", "rgb(64, 64, 61)");
+      await expect(app.locator(".cost-table .period-quarter").first()).toHaveCSS("background-color", "rgb(64, 64, 64)");
     }
     await settleMotion(app.locator("body"));
     // No horizontal overflow from the new header control, even on narrow screens.

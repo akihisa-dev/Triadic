@@ -2,16 +2,16 @@
    Plan data, exported spreadsheets and packaged logo assets are independent. */
 :root {
   color-scheme: light;
-  --canvas: #f7f7f3;
-  --surface: #fbfbf8;
-  --soft: #eeeee9;
+  --canvas: #f7f7f7;
+  --surface: #fbfbfb;
+  --soft: #eeeeee;
   --ink: #343434;
-  --muted: #666660;
-  --line: #c6c6bd;
-  --table-line: #b9b9b0;
-  --table-divider: #9b9b92;
-  --control-track: #d5d5ce;
-  --control-line: #8b8b84;
+  --muted: #666666;
+  --line: #c6c6c6;
+  --table-line: #b9b9b9;
+  --table-divider: #9b9b9b;
+  --control-track: #d5d5d5;
+  --control-line: #8b8b8b;
   --accent: #0033ff;
 
   /* Existing restrained blue for aggregation membership. */
@@ -22,10 +22,10 @@
   --accent-drop: #d7e6f3;
 
   /* Derived roles keep tables, selected cells and inverse controls coherent. */
-  --selected-month: #d5d5ce;
+  --selected-month: #d5d5d5;
   --period-quarter: var(--soft);
   --period-half: color-mix(in srgb, var(--soft) 50%, var(--period-annual));
-  --period-annual: #d5d5ce;
+  --period-annual: #d5d5d5;
   --focus: var(--ink);
   --on-ink: var(--canvas);
   --ink-hover: color-mix(in srgb, var(--ink) 85%, var(--canvas));
@@ -38,16 +38,16 @@
   color-scheme: dark;
   --canvas: #292929;
   --surface: #343434;
-  --soft: #40403d;
-  --ink: #f4f0e6;
-  --muted: #bdb9af;
-  --line: #62625b;
-  --table-line: #707068;
-  --table-divider: #929287;
-  --control-track: #55544f;
-  --selected-month: #55544f;
-  --period-annual: #55544f;
-  --control-line: #8f8c82;
+  --soft: #404040;
+  --ink: #f2f2f2;
+  --muted: #bababa;
+  --line: #626262;
+  --table-line: #707070;
+  --table-divider: #929292;
+  --control-track: #555555;
+  --selected-month: #555555;
+  --period-annual: #555555;
+  --control-line: #8c8c8c;
   --accent: #d6b86c;
   --accent-ink: var(--accent);
   --accent-subtle: color-mix(in srgb, var(--accent) 8%, var(--surface));
