@@ -21,6 +21,22 @@ const main = document.querySelector("main")!;
 const choices = document.querySelector<HTMLFieldSetElement>("#materials")!;
 const previews = document.querySelector<HTMLElement>("#large-previews")!;
 const range = document.querySelector<HTMLInputElement>("#strength")!;
+const message = document.querySelector<HTMLTextAreaElement>("#selection-message")!;
+const copyButton = document.querySelector<HTMLButtonElement>("#copy-selection")!;
+const copyStatus = document.querySelector<HTMLElement>("#copy-status")!;
+copyButton.addEventListener("click", async () => {
+  const copied = message.value;
+  try {
+    await navigator.clipboard.writeText(copied);
+    if (message.value === copied) copyStatus.textContent = "コピーしました。チャットに貼り付けてください。";
+  } catch {
+    if (message.value === copied) {
+      message.focus();
+      message.select();
+      copyStatus.textContent = "コピーできませんでした。選択された文章を手動でコピーしてください。";
+    }
+  }
+});
 
 function createStage(theme: string, material: Material, mini = false): HTMLElement {
   const stage = document.createElement("div");
@@ -86,6 +102,11 @@ function update(save: boolean) {
     const url = new URL(location.href); url.searchParams.set("material", selected); url.searchParams.set("strength", String(strength));
     history.replaceState(null, "", url);
   }
+  const shareUrl = new URL(location.href);
+  shareUrl.search = new URLSearchParams({ material: selected, strength: String(strength) }).toString();
+  shareUrl.hash = "";
+  message.value = `素材：${material.name}（${selected}）\n質感の強さ：${strength}%\n確認URL：${shareUrl.href}`;
+  copyStatus.textContent = "";
 }
 range.addEventListener("input", () => { strength = Number(range.value); update(true); });
 update(false);

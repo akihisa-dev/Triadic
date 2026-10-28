@@ -1,5 +1,36 @@
 import { test, expect } from "@playwright/test";
 
+test("選択内容だけをコピーし、選び直しとコピー失敗を扱える", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: {
+      writeText: async (text: string) => { document.documentElement.dataset.copied = text; },
+    } });
+  });
+  await page.goto("/dev-tools/material-design/index.html?material=paper&strength=100");
+  const content = page.getByRole("textbox", { name: "コピー内容" });
+  const button = page.getByRole("button", { name: "選択内容をコピー", exact: true });
+  const expected = `素材：マットな紙（paper）\n質感の強さ：100%\n確認URL：${page.url()}`;
+  await expect(content).toHaveValue(expected);
+  await button.click();
+  await expect(page.locator("html")).toHaveAttribute("data-copied", expected);
+  await expect(page.locator("#copy-status")).toContainText("コピーしました");
+  await page.getByRole("radio", { name: "金属", exact: true }).check();
+  await page.getByRole("slider", { name: "質感の強さ" }).fill("35");
+  await expect(page.locator("#copy-status")).toBeEmpty();
+  await button.click();
+  await expect(page.locator("html")).toHaveAttribute("data-copied", `素材：金属（metal）\n質感の強さ：35%\n確認URL：${page.url()}`);
+  await page.evaluate(() => { Object.defineProperty(navigator, "clipboard", { value: {
+    writeText: async () => { throw new Error("denied"); },
+  } }); });
+  await button.click();
+  await expect(page.locator("#copy-status")).toContainText("手動でコピー");
+  await expect(content).toBeFocused();
+  expect(await content.evaluate(node => {
+    const field = node as HTMLTextAreaElement;
+    return field.selectionEnd - field.selectionStart;
+  })).toBe((await content.inputValue()).length);
+});
+
 test("素材と強さを比較し、同じURLで選択を復元してダイアログを確認できる", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));

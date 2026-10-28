@@ -41,6 +41,11 @@ input, button, summary { accent-color: #343434; }
 .selection-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px; margin: 32px 0 6px; }
 #selection-status { color: #666; }
 #material-description { margin: 0 0 18px; color: #666; }
+.selection-share { margin-bottom: 24px; }
+.selection-share button { padding: 8px 12px; border: 1px solid #343434; border-radius: 4px; background: #343434; color: #fbfbfb; cursor: pointer; }
+.selection-share label { display: block; margin: 10px 0 6px; }
+.selection-share textarea { display: block; width: 100%; padding: 10px; border: 1px solid #8b8b8b; border-radius: 4px; background: #fbfbfb; color: #343434; font: inherit; resize: vertical; }
+#copy-status { display: inline-block; margin-left: 12px; }
 #large-previews { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; }
 .large-preview { min-width: 0; }
 .sample-label { color: var(--muted); }

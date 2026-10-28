@@ -22,6 +22,12 @@
       <fieldset id="materials" aria-label="素材感の候補"></fieldset>
       <div class="selection-heading"><h2 id="selected-name">マットな紙</h2><output id="selection-status" role="status" aria-label="選択中の素材感"></output></div>
       <p id="material-description"></p>
+      <div class="selection-share">
+        <button id="copy-selection" type="button">選択内容をコピー</button>
+        <span id="copy-status" role="status"></span>
+        <label for="selection-message">コピー内容</label>
+        <textarea id="selection-message" rows="3" readonly></textarea>
+      </div>
       <div id="large-previews"></div>
       <details>
         <summary>仕様カラーパレット</summary>
