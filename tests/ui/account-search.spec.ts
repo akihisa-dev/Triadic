@@ -77,7 +77,7 @@ test('選択済みの欄をクリックしてそのまま文字を打ち、候�
   await expect(page.getByRole('option')).toHaveText(['科目7']);
 });
 
-test('狭い画面でも候補は画面内に表示し、金額入力後は科目変更を禁止する', async ({ page }) => {
+test('狭い画面でも候補は画面内に表示し、金額入力後の科目変更でも金額を保持する', async ({ page }) => {
   const field = page.getByRole('combobox', { name: '1行目の勘定科目', exact: true });
   await field.click();
   const list = page.getByRole('listbox');
@@ -88,7 +88,12 @@ test('狭い画面でも候補は画面内に表示し、金額入力後は科�
   await page.getByRole('option', { name: '科目5', exact: true }).click();
   const cell = page.locator('input[data-row="0"][data-column="0"]');
   await cell.fill('0.001');
-  await expect(field).toBeDisabled();
+  await expect(field).toBeEnabled();
   await expect(field).toHaveValue('科目5');
+  await expect(cell).toHaveValue('0.001');
+  await field.fill('目6');
+  await page.getByRole('option', { name: '科目6', exact: true }).click();
+  await expect(field).toHaveValue('科目6');
+  await expect(cell).toHaveAttribute('aria-label', '科目6 4月の金額');
   await expect(cell).toHaveValue('0.001');
 });
