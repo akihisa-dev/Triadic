@@ -1,3 +1,6 @@
+import { amountItems } from "../domain/amountItems";
+import { initiativeMonths } from "../domain/calendar";
+import type { TableColumn } from "./columnView";
 import type { Account } from "../domain/accountMaster";
 import type { KindId } from "../domain/kinds";
 import type { Initiative } from "../domain/plan";
@@ -46,4 +49,16 @@ export function createInitiativeListView(initiatives: Initiative[], accounts: Ac
     views.set(kind, view);
     return view;
   };
+}
+
+/** The same column values drive the visible headers, sorting and filtering. */
+export function initiativeListColumns(expansionNames: ReadonlyMap<number, string>, periodNames: ReadonlyMap<number, string>, selectedKind: KindId): TableColumn<InitiativeListRow>[] {
+  return [
+    { id: "expansion", label: "展開名", type: "choice", value: row => expansionNames.get(row.expansionId!) ?? "" },
+    { id: "period", label: "期間名", type: "choice", value: row => periodNames.get(row.periodTypeId!) ?? "" },
+    { id: "name", label: "施策名", value: row => row.name },
+    { id: "start", label: "開始年月", type: "choice", value: row => row.startYearMonths[selectedKind] ?? "" },
+    ...initiativeMonths.flatMap(month => amountItems.map(metric => ({ id: `${month}:${metric.id}`, label: metric.name, name: `${month}月 ${metric.name}`, type: "number" as const, scale: 1000,
+      value: (row: InitiativeListRow) => row.calculation === "ready" ? row.months[month]?.[metric.id] : null }))),
+  ];
 }

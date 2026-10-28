@@ -34,14 +34,11 @@ export * from "../../Triadic-extension/src/core/tables/planTables";
 export * from "../../Triadic-extension/src/core/tables/previousGrid";
 export * from "../../Triadic-extension/src/core/tables/grid";
 export * from "../../Triadic-extension/src/core/tables/selectionTotal";
-export * from "../../Triadic-extension/src/core/tables/tableView";
 export * from "../../Triadic-extension/src/core/domain/planCommands";
 export * from "../../Triadic-extension/src/core/graph/homeMotion";
 export * from "../../Triadic-extension/src/core/tables/periodTables";
 export * from "../../Triadic-extension/src/core/domain/historySelection";
-export * from "../../Triadic-extension/src/core/tables/initiativeSort";
 export * from "../../Triadic-extension/src/core/tables/initiativeTotals";
-export * from "../../Triadic-extension/src/core/tables/tableSort";
 export { visibleRows } from '../../Triadic-extension/src/core/tables/visibleRows';
 export * from "../../Triadic-extension/src/core/domain/previousAmounts";
 export * from "../../Triadic-extension/src/core/tables/previousPeriods";
@@ -62,3 +59,5 @@ export * from "../../Triadic-extension/src/core/domain/windowCommand";
 export * from "../../Triadic-extension/src/core/tables/dashboard";
 
 export * from "../../Triadic-extension/src/core/tables/comparisonDisplay";
+
+export { initiativeListColumns } from "../../Triadic-extension/src/core/tables/initiativeListView";

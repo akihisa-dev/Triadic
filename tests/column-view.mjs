@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
 export async function verifyColumnView(api) {
+  verifyInitiativeColumns(api);
   const rows = [
     { id: 1, name: 'Ａ施策', group: ['部署A', '部署B'], amount: 1001 },
     { id: 2, name: 'B施策', group: ['部署B'], amount: -1001 },
@@ -77,4 +78,40 @@ export async function verifyColumnView(api) {
   assert.equal(overflow.table.changes[0][4].sales, null);
   assert.equal(api.selectExpansionView(safe, huge, definitions, api.emptyTableView()), safe);
   console.log('PASS: 列の複合条件・円精度・空欄・安定順序・元データ保護、展開表の分類・結合長・小計・相殺後の集計超過からの復帰');
+}
+
+function verifyInitiativeColumns(api) {
+  const source = [
+    { id: 1, name: "施策10", expansionId: 2, periodTypeId: 1, startYearMonths: { 1: "2027-01", 2: "2026-08" } },
+    { id: 2, name: "施策2", expansionId: 1, periodTypeId: 2, startYearMonths: { 1: "2026-12", 2: "2026-09" } },
+    { id: 3, name: "施策2", expansionId: 1, periodTypeId: 2, startYearMonths: { 1: "2026-12", 2: "2026-07" } },
+    { id: 4, name: "", expansionId: null, periodTypeId: null, startYearMonths: { 1: null, 2: null } },
+  ];
+  const snapshot = structuredClone(source);
+  const expansions = new Map([[1, "あ行"], [2, "か行"]]);
+  const periods = new Map([[1, "か行"], [2, "あ行"]]);
+  const sorted = (column, direction, kind = 1) => api.selectTableRows(source, api.initiativeListColumns(expansions, periods, kind), { sort: { column, direction }, filters: {} }).map(item => item.id);
+  for (const column of ["expansion", "period", "name", "start"]) {
+    assert.deepEqual(sorted(column, "ascending"), [2, 3, 1, 4], `${column}: 同値は登録順・空欄は末尾`);
+    assert.deepEqual(sorted(column, "descending"), [1, 2, 3, 4], `${column}: 降順でも同値と空欄の位置を維持`);
+  }
+  assert.deepEqual(sorted("start", "ascending", 2), [3, 1, 2, 4], "表示種別の年月を使用");
+  assert.deepEqual(sorted("start", "descending", 2), [2, 1, 3, 4]);
+  assert.deepEqual(api.selectTableRows(source, api.initiativeListColumns(expansions, periods, 1), api.emptyTableView()), source, "初期表示は登録順");
+  assert.deepEqual(source, snapshot, "保存データを変更しない");
+  assert.deepEqual(api.selectTableRows([], api.initiativeListColumns(expansions, periods, 1), { sort: { column: "name", direction: "ascending" }, filters: {} }), []);
+  const signed=[null,-1,0,2,-1].map((periodTypeId,id)=>({id,periodTypeId,expansionId:periodTypeId,name:String(id),startYearMonths:{1:null,2:null}}));
+  const signedNames=new Map([[-1,'あ'],[0,'か'],[2,'さ']]);
+  for(const column of ['period','expansion']) for(const kind of [1,2]) {
+    assert.deepEqual(api.selectTableRows(signed,api.initiativeListColumns(signedNames,signedNames,kind),{sort:{column,direction:'ascending'},filters:{}}).map(item=>item.id),[1,4,2,3,0]);
+    assert.deepEqual(api.selectTableRows(signed,api.initiativeListColumns(signedNames,signedNames,kind),{sort:{column,direction:'descending'},filters:{}}).map(item=>item.id),[3,2,1,4,0],'未選択を実ID -1 と区別し、同値順を保持');
+  }
+
+
+  const amounts = [2, 1, -10000, null, 1].map((sales, id) => ({ id, calculation: 'ready', months: { 4: { sales } } }));
+  const amountColumns = api.initiativeListColumns(expansions, periods, 1);
+  const sortedAmounts = direction => api.selectTableRows(amounts, amountColumns, { sort: { column: '4:sales', direction }, filters: {} }).map(row => row.id);
+  assert.deepEqual(sortedAmounts('ascending'), [2, 1, 4, 0, 3], '実画面の金額列で負数・1円差・同値・未設定を比較');
+  assert.deepEqual(sortedAmounts('descending'), [0, 1, 4, 2, 3]);
+  assert.deepEqual(amounts.map(row => row.months[4].sales), [2, 1, -10000, null, 1]);
 }

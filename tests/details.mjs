@@ -47,9 +47,8 @@ export async function verifyDetails(api) {
   assert.throws(()=>db.run("INSERT INTO initiative_amounts(row_id,kind_id,month) VALUES (?,1,4)",[rowId]),/UNIQUE/);
   db.run("DELETE FROM initiative_amounts WHERE row_id=? AND kind_id=1 AND month=4",[rowId]);
   const broken=db.export();db.close();await assert.rejects(api.validateTriadicDatabase(broken),/読み込めません/);
-  const amountColumn={id:"amount",label:"金額",amount:true,numeric:true,value:row=>row.amount};
   const roundedRows=[{amount:"1.234"},{amount:"1.499"},{amount:"1.5"},{amount:"-0.001"}];
-  assert.deepEqual(roundedRows.map(row=>api.tableDisplayValue(amountColumn,row)),["1","1","2","0"]);
+  assert.deepEqual(roundedRows.map(row=>api.formatYen(api.amountToYen(row.amount))),["1","1","2","0"]);
   assert.deepEqual(roundedRows.map(row=>row.amount),["1.234","1.499","1.5","-0.001"]);
   let stored=bytes,writes=0;
   const handle={name:"test.triadic",async getFile(){return new File([stored],this.name)},async createWritable(){return {async write(){writes++},async close(){throw new Error("保存失敗")},async abort(){}}}};

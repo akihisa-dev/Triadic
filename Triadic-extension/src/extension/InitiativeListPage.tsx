@@ -3,7 +3,7 @@ import { InitiativeNameButton } from "./InitiativeNameButton";
 import { hasUnclassifiedAmount } from "../core/domain/budgetHints";
 import { useRowWindow, WindowRows } from "./VirtualTableRows";
 import { TableCalculationBoundary } from "./TableCalculationBoundary";
-import { createInitiativeListView, type InitiativeListView } from "../core/tables/initiativeListView";
+import { createInitiativeListView, initiativeListColumns, type InitiativeListView } from "../core/tables/initiativeListView";
 import type { Account } from "../core/domain/accountMaster";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
 import { Fragment, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
@@ -14,11 +14,10 @@ import type { Expansion } from "../core/domain/expansionMaster";
 import type { PeriodType } from "../core/domain/periodMaster";
 import type { KindId } from "../core/domain/kinds";
 
-import { type TableColumn, type TableSort, type TableViewState } from "../core/tables/columnView";
+import { type TableSort, type TableViewState } from "../core/tables/columnView";
 import { useTableCellFilter } from "./TableCellFilter";
 import { TableViewHeader, TableViewEmpty, useTableView } from "./TableViewHeader";
 import { initiativeTotals } from "../core/tables/initiativeTotals";
-import type { InitiativeListRow } from "../core/tables/initiativeListView";
 
 import { formatYen } from "../core/domain/amounts";
 import { useWindowViewState } from "./windowView";
@@ -68,14 +67,7 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
   const viewForKind = useMemo(() => createInitiativeListView(initiatives, accounts, fiscalYear), [initiatives, accounts, fiscalYear]);
   const view = viewForKind(selectedKind);
   const { source } = view;
-  const columns = useMemo<TableColumn<InitiativeListRow>[]>(() => [
-    { id: "expansion", label: "展開名", type: "choice", value: row => expansionNames.get(row.expansionId!) ?? "" },
-    { id: "period", label: "期間名", type: "choice", value: row => periodNames.get(row.periodTypeId!) ?? "" },
-    { id: "name", label: "施策名", value: row => row.name },
-    { id: "start", label: "開始年月", type: "choice", value: row => row.startYearMonths[selectedKind] ?? "" },
-    ...initiativeMonths.flatMap(month => amountItems.map(metric => ({ id: `${month}:${metric.id}`, label: metric.name, name: `${month}月 ${metric.name}`, type: "number" as const, scale: 1000,
-      value: (row: InitiativeListRow) => row.calculation === "ready" ? row.months[month]?.[metric.id] : null }))),
-  ], [expansionNames, periodNames, selectedKind]);
+  const columns = useMemo(() => initiativeListColumns(expansionNames, periodNames, selectedKind), [expansionNames, periodNames, selectedKind]);
   const tableState = useMemo(() => ({ sort, filters }), [sort, filters]);
   const tableView = useTableView(source, columns, { state: tableState, change: state => {
     setSort(state.sort); setFilters(state.filters); if (container.current) container.current.scrollTop = 0;
