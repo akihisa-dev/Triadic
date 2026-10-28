@@ -8,7 +8,7 @@ test("アイコンのレールはホバーで展開し、移動後もカーソ�
   await settleMotion(app.locator("body"));
   expect((await sidebar.boundingBox())!.width).toBe(64);
   await expect(entry.locator("span")).toHaveCSS("opacity", "0");
-  await expect(sidebar.getByRole("navigation").getByRole("button")).toHaveCount(8);
+  await expect(sidebar.getByRole("navigation").getByRole("button")).toHaveText(["Home", "ダッシュボード", "施策一覧", "総原価表", "展開表", "前年入力", "入出力", "マスタ", "履歴"]);
   const icon = (await entry.locator("svg").boundingBox())!;
 
   await entry.hover();
@@ -64,20 +64,33 @@ test("キーボードでレールへ入ると項目名が現れ、外へ戻る�
   const trigger = app.locator(".home-header").getByRole("button", { name: /サイドバー/ });
   const sidebar = app.getByRole("complementary", { name: "メニュー" });
   await trigger.focus();
-  await page.keyboard.press("Tab");
-  await expect(sidebar.getByRole("button", { name: "Home", exact: true })).toBeFocused();
+  for (const control of [
+    app.getByRole("button", { name: "施策を検索", exact: true }),
+    app.getByRole("button", { name: "ウィンドウを複製", exact: true }),
+    app.getByRole("switch", { name: "ダークテーマ", exact: true }),
+    sidebar.getByRole("button", { name: "Home", exact: true }),
+    sidebar.getByRole("button", { name: "ダッシュボード", exact: true }),
+    sidebar.getByRole("button", { name: "施策一覧", exact: true }),
+  ]) {
+    await page.keyboard.press("Tab");
+    await expect(control).toBeFocused();
+  }
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
-  await page.keyboard.press("Tab");
-  await expect(sidebar.getByRole("button", { name: "施策一覧", exact: true })).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(app.getByRole("main", { name: "施策一覧", exact: true })).toBeVisible();
-  await page.keyboard.press("Shift+Tab");
-  await page.keyboard.press("Shift+Tab");
-  await expect(sidebar.getByRole("button", { name: "サイドバーを閉じる", exact: true })).toBeFocused();
-  await page.keyboard.press("Shift+Tab");
-  await expect(app.getByRole("button", { name: "前の画面に戻る", exact: true })).toBeFocused();
-  await page.keyboard.press("Shift+Tab");
-  await expect(trigger).toBeFocused();
+  for (const control of [
+    sidebar.getByRole("button", { name: "ダッシュボード", exact: true }),
+    sidebar.getByRole("button", { name: "Home", exact: true }),
+    sidebar.getByRole("button", { name: "サイドバーを閉じる", exact: true }),
+    app.getByRole("switch", { name: "ダークテーマ", exact: true }),
+    app.getByRole("button", { name: "ウィンドウを複製", exact: true }),
+    app.getByRole("button", { name: "施策を検索", exact: true }),
+    app.getByRole("button", { name: "前の画面に戻る", exact: true }),
+    trigger,
+  ]) {
+    await page.keyboard.press("Shift+Tab");
+    await expect(control).toBeFocused();
+  }
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
 });
 
