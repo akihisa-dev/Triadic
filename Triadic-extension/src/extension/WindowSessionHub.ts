@@ -275,10 +275,10 @@ export class WindowSessionHub {
         const [groupId, ticket] = args;
         if (groupId) {
           const group = this.groups.get(groupId);
-          if (!group) throw new Error("このファイルは既に閉じられています。「ファイルを開く」から開き直してください。");
+          if (!group || group.releasing) throw new Error("このファイルは既に閉じられています。「ファイルを開く」から開き直してください。");
           if (group.historyPreparing || group.historyOwner) throw new Error("履歴の閲覧中はウィンドウを複製できません。");
           while (group.coordinating) await group.actionTail;
-          if (group.historyPreparing || group.historyOwner || !this.groups.has(group.id)) throw new Error("このファイルへ参加できません。通常画面へ戻ってから開き直してください。");
+          if (!this.peers.has(peer) || group.releasing || group.historyPreparing || group.historyOwner || !this.groups.has(group.id)) throw new Error("このファイルへ参加できません。通常画面へ戻ってから開き直してください。");
           let reserved = ticket ? this.tickets.get(ticket) : undefined;
           if (ticket && reserved && reserved.expiresAt <= Date.now()) { this.removeTicket(ticket); reserved = undefined; }
           if (ticket && (!reserved || reserved.group !== group)) throw new Error("ウィンドウを開き直してください。");
