@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { DashboardPage } from "../../Triadic-extension/src/extension/DashboardPage";
 import { ComparisonSelection } from "../../Triadic-extension/src/extension/ComparisonSelection";
 import { SidebarIcon } from "../../Triadic-extension/src/extension/SidebarIcon";
@@ -32,6 +32,7 @@ function App() {
   const root = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
+  const detailTitleId = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const view = useRef<WindowViewValues>({});
   const drag = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
@@ -106,7 +107,7 @@ function App() {
       }}>移動</button><button ref={trigger} className="floating-trigger" aria-expanded={visible} onClick={() => { const next = !pinned; setPinned(next); setOpen(next); }}>表示条件 <span>{label}</span></button><button className="pin-control" aria-pressed={pinned} onClick={() => setPinned(value => !value)}>{pinned ? "固定中" : "固定"}</button></div>
 
     </aside>
-    <dialog ref={dialog} className="preview-detail" onCancel={() => setDetail(null)} onClick={event => { if (event.target === event.currentTarget) setDetail(null); }}><div className="preview-detail-heading"><h2>{detail?.name}</h2><button onClick={() => setDetail(null)}>閉じる</button></div><p>金額：千円</p><table><thead><tr><th>月</th><th>種別</th><th>売上</th><th>利益</th></tr></thead><tbody>{detail?.rows.map(row => <tr key={`${row.month}:${row.kind}`}><th>{row.month}月</th><td>{row.kind === 1 ? "一次予算" : "確定予算"}</td><td>{formatYen(row.sales)}</td><td>{formatYen(row.profit)}</td></tr>)}</tbody></table></dialog>
+    <dialog ref={dialog} aria-labelledby={detailTitleId} className="preview-detail" onCancel={() => setDetail(null)} onClick={event => { if (event.target === event.currentTarget) setDetail(null); }}><div className="preview-detail-heading"><h2 id={detailTitleId}>{detail?.name}</h2><button onClick={() => setDetail(null)}>閉じる</button></div><p>金額：千円</p><table><thead><tr><th>月</th><th>種別</th><th>売上</th><th>利益</th></tr></thead><tbody>{detail?.rows.map(row => <tr key={`${row.month}:${row.kind}`}><th>{row.month}月</th><td>{row.kind === 1 ? "一次予算" : "確定予算"}</td><td>{formatYen(row.sales)}</td><td>{formatYen(row.profit)}</td></tr>)}</tbody></table></dialog>
   </>;
 }
 createRoot(document.getElementById("root")!).render(<App />);

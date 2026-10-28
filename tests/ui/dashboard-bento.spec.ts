@@ -21,3 +21,28 @@ test("グラフのクリックで対象を減らさず、表示条件から月�
   await expect(page.locator(".floating-trigger")).toContainText("年間");
   await expect(amounts).toHaveText(original);
 });
+
+
+test("施策詳細ダイアログを表示中の施策名で識別し、閉じるとEscを使える", async ({ page }) => {
+  await page.goto("/dev-tools/dashboard-bento/index.html");
+  const buttons = page.locator(".dashboard-rank .initiative-name-button");
+  await expect(buttons.first()).toBeVisible();
+  const names = await buttons.allTextContents();
+  expect(new Set(names.slice(0, 2)).size).toBe(2);
+  for (const [index, name] of names.slice(0, 2).entries()) {
+    await buttons.nth(index).click();
+    const dialog = page.getByRole("dialog", { name: `${name} · 月別増減`, exact: true });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("heading", { level: 2 })).toHaveText(`${name} · 月別増減`);
+    expect(await dialog.ariaSnapshot()).toContain(`${name} · 月別増減`);
+    const rows = await dialog.locator("tbody tr").allTextContents();
+    expect(rows.length).toBe(12);
+    if (index === 0) await dialog.getByRole("button", { name: "閉じる", exact: true }).click();
+    else await page.keyboard.press("Escape");
+    await expect(dialog).not.toBeVisible();
+    await buttons.nth(index).click();
+    await expect(dialog.locator("tbody tr")).toHaveText(rows);
+    await page.keyboard.press("Escape");
+  }
+  await expect(page.locator(".floating-trigger")).toContainText("年間");
+});
