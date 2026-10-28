@@ -43,3 +43,21 @@ test("不明な素材や不正な強さを含むURLでも表示できる", async
   await expect(page.getByRole("radio", { name: "マットな紙", exact: true })).toBeChecked();
   await expect(page.getByRole("slider", { name: "質感の強さ" })).toHaveValue("60");
 });
+
+test("墨色の液体の枠はライト以上の明暗差で背景から識別できる", async ({ page }) => {
+  await page.goto("/dev-tools/material-design/index.html?material=liquid-smoke&strength=60");
+  const contrast = async (theme: string) => page.locator(`.large-preview > .stage[data-theme="${theme}"] > .material-surface`).evaluate(node => {
+    const luminance = (color: string) => {
+      const values = color.match(/[\d.]+/g)!.slice(0, 3).map(Number);
+      const channels = values.map(value => color.startsWith("color(srgb") ? value : value / 255);
+      return channels.map(value => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4)
+        .reduce((sum, value, index) => sum + value * [.2126, .7152, .0722][index]!, 0);
+    };
+    const border = luminance(getComputedStyle(node).borderBottomColor);
+    const background = luminance(getComputedStyle(node.parentElement!).backgroundColor);
+    return (Math.max(border, background) + .05) / (Math.min(border, background) + .05);
+  });
+  const light = await contrast("light");
+  expect(light).toBeGreaterThan(1.25);
+  expect(await contrast("dark")).toBeGreaterThanOrEqual(light);
+});
