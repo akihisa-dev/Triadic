@@ -146,6 +146,8 @@ In “Screens and data” (画面とデータ), select a screen to inspect how s
 
 ### Managing and selecting breakdown subcategories
 
+Deletion checks the confirmed subcategory name and parent breakdown immediately before saving. Changed targets, including different replacements after undo, are rejected without writing; select the target again. Unrelated changes do not block deletion. Re-creation with the same ID, name, and parent cannot be distinguished. The file format is unchanged.
+
 In Masters, “Breakdown subcategory master” (展開区分マスタ) supports registration, editing, and deletion. New files contain six subcategories—“下払いUP,” “ベースアップ,” “設備投資,” “燃料費UP,” “電気料金UP,” and “その他”—all assigned to “コスト” (Cost). When registering a subcategory, select exactly one parent breakdown category. Each subcategory belongs exclusively to that category. Edit its name and parent in the subcategory master; the breakdown-category master only displays its subcategories.
 
 When entering or editing an initiative, the “Breakdown subcategory” field beside the category name offers only assigned subcategories. It is optional, is not auto-selected, and may remain empty. Changing the category clears the selected subcategory. The field is disabled without a category or assigned subcategories. Subcategories selected by saved or unsaved initiatives cannot change parent or be deleted. Unused subcategories can change parent or be deleted. A category with subcategories cannot be deleted. Name edits and selection changes on registered initiatives autosave; failures preserve input and saved content. Subcategories, assignments, and selections are included in the same `.triadic` file, snapshots, and undo. They do not alter amounts or calculation methods.
@@ -733,6 +735,8 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 新規ファイルの展開マスタは、1「コスト」、2「料金改定」、3「荷主撤退」、4「物量増減」、5「売上拡販」、6「拠点集約」、7「生産性向上」、8「効率化」の8件です。既存ファイルの登録内容は自動で置き換えません。
 
 ### 展開区分の管理と選択
+
+展開区分の削除は確認時の名称・所属する展開を保存直前に照合し、変更後や追加取消後に別内容で再作成された対象を削除しません。確認を閉じて対象を選び直す案内を表示します。無関係の変更では削除を許可し、失敗時は保存済みの区分と所属を保持します。同じ番号・名称・所属での再作成は区別できません。照合情報は削除命令内だけで保持し、保存形式は変更しません。
 
 「マスタ」の「展開区分マスタ」で区分名を登録・編集・削除できます。新規ファイルの区分は「下払いUP」「ベースアップ」「設備投資」「燃料費UP」「電気料金UP」「その他」の6件で、すべて展開名「コスト」に割り当てます。展開区分の新規登録では「展開名」を一つ必ず選びます。区分はその展開だけに所属し、ほかの展開では使えません。一覧に所属する展開名を表示し、同じ行で区分名・所属を編集できます。「展開マスタ」の展開区分列は所属する区分の表示だけです。
 施策入力・登録済み施策の編集では、展開名の右の「展開区分」から、その展開に割り当てた区分だけを選べます。任意項目で、自動選択せず、未選択のまま登録できます。展開名を変更した場合、選択済みの区分は未選択へ戻します。展開未選択・割当なしでは選択欄を無効にします。

@@ -3,6 +3,7 @@ import type { PlanContents, InitiativeEntryDraft } from "./plan";
 import { initiativeDraft } from "./initiativeDraft";
 import { reconcileSavedDraft } from "../reconcileSavedDraft";
 import { createPreviousInput } from "./previousAmounts";
+import { expansionCategoryDeletionKey } from "./expansionCategoryMaster";
 import { expansionDeletionKey } from "./expansionMaster";
 import { periodDeletionKey } from "./periodMaster";
 import { aggregationDeletionKey } from "./aggregationMaster";
@@ -51,7 +52,7 @@ export function windowCommandBase(command: PlanCommand, contents: PlanContents):
       accounts: contents.accounts, previousAmounts: contents.previousAmounts.filter(item => item.industryId === industryId && item.departmentId === departmentId && item.previousKind === previousKind) };
   }
   if (command.type !== "settings" && (command.change.type === "update"
-    || ((command.type === "period" || command.type === "expansion" || command.type === "department" || command.type === "industry") && command.change.type === "delete"))) {
+    || ((command.type === "period" || command.type === "expansion" || command.type === "expansion-category" || command.type === "department" || command.type === "industry") && command.change.type === "delete"))) {
     const key = collections[command.type], id = command.change.id;
     return { [key]: contents[key].filter(item => item.id === id) };
   }
@@ -90,6 +91,12 @@ export function reconcileWindowCommand(command: PlanCommand, base: WindowCommand
     const before = base.expansions?.find(item => item.id === id);
     if (!before) throw new Error("削除対象の展開が変更されています。対象を選び直してください。");
     return { ...command, change: { ...command.change, deletionKey: command.change.deletionKey ?? expansionDeletionKey(before) } };
+  }
+  if (command.type === "expansion-category" && command.change.type === "delete") {
+    const id = command.change.id;
+    const before = base.expansionCategories?.find(item => item.id === id);
+    if (!before) throw new Error("削除対象の展開区分が変更されています。対象を選び直してください。");
+    return { ...command, change: { ...command.change, deletionKey: command.change.deletionKey ?? expansionCategoryDeletionKey(before) } };
   }
   if (command.type === "period" && command.change.type === "delete") {
     const id = command.change.id;
