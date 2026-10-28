@@ -13,7 +13,7 @@ import type { PlanContents } from "../core/domain/plan";
 import { createNewPlanFile } from "./newPlanFile";
 
 type Peer = { port: Pick<MessagePort, "postMessage">; group: Group | null; number: number; label: string; initialView: WindowView | null; publishedContents?: PlanContents | null; publishedMasterIdentities?: Record<string, number>; opening?: boolean };
-type Group = { id: string; masterIdentity: WindowMasterIdentity; session: PlanSession; peers: Set<Peer>; openingPeers: number; nextNumber: number; cancelCheckpoint?: () => void; releaseRecovery?: () => void; actionTail: Promise<void>; coordinating: boolean; historyPreparing: boolean; historyOwner: Peer | null; tail: Promise<unknown>; acting: Peer | null; openingHandle: FileSystemFileHandle | undefined; opened: Promise<void>; releasing?: Promise<void> };
+type Group = { id: string; masterIdentity: WindowMasterIdentity; session: PlanSession; peers: Set<Peer>; openingPeers: number; nextNumber: number; cancelCheckpoint?: () => void; releaseRecovery?: () => void; actionTail: Promise<void>; coordinating: boolean; historyPreparing: boolean; historyOwner: Peer | null; tail: Promise<unknown>; acting: Peer | null; openingHandle: FileSystemFileHandle | undefined; opened: Promise<void>; releasing?: Promise<void>; closing?: Promise<void> };
 const destinationMissing = async (): Promise<FileSystemFileHandle> => { throw new Error("保存先を選択してください。入力は保持しています。"); };
 const errorText = (failure: unknown, field: "message" | "name", fallback: string) => failure && typeof failure === "object" && field in failure && typeof Reflect.get(failure, field) === "string" ? String(Reflect.get(failure, field)) : fallback;
 class WindowControlTimeoutError extends Error {}
@@ -167,6 +167,7 @@ export class WindowSessionHub {
           const handle = group.openingHandle ?? group.session.getHandle();
           if (handle && plan.handle && await handle.isSameEntry(plan.handle)) {
             if (group.releasing) return { wait: group.releasing };
+            if (group.closing) return { wait: group.closing };
             if (group.coordinating && !group.historyPreparing) return { wait: group.actionTail };
             group.openingPeers++; return { group };
           }
@@ -283,7 +284,7 @@ export class WindowSessionHub {
           const group = this.groups.get(groupId);
           if (!group || group.releasing) throw new Error("このファイルは既に閉じられています。「ファイルを開く」から開き直してください。");
           if (group.historyPreparing || group.historyOwner) throw new Error("履歴の閲覧中はウィンドウを複製できません。");
-          while (group.coordinating) await group.actionTail;
+          while (group.coordinating || group.closing) await (group.closing ?? group.actionTail);
           if (!this.peers.has(peer) || group.releasing || group.historyPreparing || group.historyOwner || !this.groups.has(group.id)) throw new Error("このファイルへ参加できません。通常画面へ戻ってから開き直してください。");
           let reserved = ticket ? this.tickets.get(ticket) : undefined;
           if (ticket && reserved && reserved.expiresAt <= Date.now()) { this.removeTicket(ticket); reserved = undefined; }
@@ -334,10 +335,10 @@ export class WindowSessionHub {
               group = await this.selectGroup(plan);
               openingGroup = group;
               await group.opened;
-              if (!group.coordinating || group.historyPreparing) break;
+              if (!group.closing && (!group.coordinating || group.historyPreparing)) break;
               // Coordination may have started after identity selection; select again after it ends.
               group.openingPeers--; openingGroup = undefined;
-              await group.actionTail;
+              await (group.closing ?? group.actionTail);
               if (plan.handle) plan = { ...plan, bytes: new Uint8Array(await (await plan.handle.getFile()).arrayBuffer()) };
             }
           }
@@ -371,9 +372,18 @@ export class WindowSessionHub {
         try {
           await this.control(peer, "flush");
           return await this.enqueue(peer, async () => {
-            if (group.peers.size === 1) await group.session.close(destinationMissing);
-            this.detach(peer, false);
-            this.send(peer, { type: "state", info: this.info(peer), snapshot: { contents: null, name: "", history: emptyDataHistory, busy: false, historyError: "", canUndo: false, canRedo: false, operationRevision: 0 } });
+            let finishClose: (() => void) | undefined;
+            try {
+              if (group.peers.size === 1) {
+                // Freeze membership until close has either detached this peer or kept its contents.
+                group.closing = new Promise<void>(resolve => { finishClose = resolve; });
+                await group.session.close(destinationMissing);
+              }
+              this.detach(peer, false);
+              this.send(peer, { type: "state", info: this.info(peer), snapshot: { contents: null, name: "", history: emptyDataHistory, busy: false, historyError: "", canUndo: false, canRedo: false, operationRevision: 0 } });
+            } finally {
+              if (finishClose) { delete group.closing; finishClose(); }
+            }
           });
         } finally { void this.control(peer, "resume").catch(() => {}); }
       }
