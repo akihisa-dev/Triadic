@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { connectWindowSession } from "./window-transport.mjs";
 export async function verifyFileRecovery(api) {
   const bytes = await api.createTriadicDatabase(2026);
   const file = (name, initial = bytes) => {
@@ -32,7 +33,7 @@ export async function verifyFileRecovery(api) {
   const copy = file("入力を保持.triadic", new Uint8Array());
   let asked = 0;
   let stop = api.registerFileConflictRecovery(async name => {
-    asked++; assert.equal(name, "元.triadic"); assert.equal(original.locked, false, "画面確認中は書き込みロックを保持しない"); return copy.handle;
+    asked++; assert.equal(name, "元.triadic"); assert.equal(original.locked, false, "画面確認中は書き込みロックを保持しない"); return api.captureRecoveryDestination(copy.handle);
   });
   try {
     const result = await api.writePlanChange(plan, original.handle, local, { allowRebase: true });
@@ -42,13 +43,13 @@ export async function verifyFileRecovery(api) {
     assert.equal(asked, 1);
   } finally { stop(); }
   for (const destination of [null, original.handle, { name: "無効.txt" }]) {
-    stop = api.registerFileConflictRecovery(async () => destination);
+    stop = api.registerFileConflictRecovery(async () => api.captureRecoveryDestination(destination));
     try { await assert.rejects(api.writePlanChange(plan, original.handle, local), /入力は.*保持/); }
     finally { stop(); }
     assert.deepEqual(original.bytes, overlap);
   }
   const failed = file("失敗.triadic", new Uint8Array()); failed.fail();
-  stop = api.registerFileConflictRecovery(async () => failed.handle);
+  stop = api.registerFileConflictRecovery(async () => api.captureRecoveryDestination(failed.handle));
   try { await assert.rejects(api.writePlanChange(plan, original.handle, local), /保存失敗/); }
   finally { stop(); }
   assert.deepEqual(failed.bytes, new Uint8Array());
@@ -75,7 +76,7 @@ export async function verifyFileRecovery(api) {
     await active.dispatch({ type: "settings", change: { type: "selection", screen: "cost-table", selected: [1, 2] } }, async () => source.handle);
     const historyId = active.getSnapshot().history.entries[0].id;
     source.replace(overlap);
-    stop = api.registerFileConflictRecovery(async () => destination.handle);
+    stop = api.registerFileConflictRecovery(async () => api.captureRecoveryDestination(destination.handle));
     try {
       if (action === "dispatch") await active.dispatch({ type: "settings", change: { type: "selection", screen: "cost-table", selected: [1] } }, async () => source.handle);
       if (action === "preview") await active.preview(historyId, async () => source.handle);
@@ -99,7 +100,7 @@ export async function verifyFileRecovery(api) {
     let notifications = 0;
     active.subscribeFileSave(async () => { notifications++; });
     source.replace(overlap);
-    stop = api.registerFileConflictRecovery(async () => recovery);
+    stop = api.registerFileConflictRecovery(async () => api.captureRecoveryDestination(recovery));
     try { await assert.rejects(active.preview(before.history.entries[0].id, async () => source.handle)); }
     finally { stop(); }
     assert.equal(notifications, 0, "取消・失敗では保存成功を通知しない");
@@ -108,5 +109,34 @@ export async function verifyFileRecovery(api) {
     assert.deepEqual(active.getSnapshot().contents, before.contents, "保存失敗でも入力内容を保持する");
     assert.deepEqual(source.bytes, overlap);
   }
-  console.log("PASS: ファイル更新の自動統合、取消での外部変更保護、別ファイル保存、キャンセル・失敗時の入力と元ファイル保護");
+  for (const stage of ['同一性確認', '共有予約']) {
+    const source = file('基準取得元.triadic'), destination = file('基準取得先.triadic', new Uint8Array()), other = file('別ファイル.triadic');
+    const hub = new api.WindowSessionHub(), a = connectWindowSession(api, hub), b = connectWindowSession(api, hub);
+    let entered, release, waiting = true;
+    const started = new Promise(resolve => { entered = resolve; }), gate = new Promise(resolve => { release = resolve; });
+    const wait = async target => {
+      if (waiting && target === destination.handle) { waiting = false; entered(); await gate; }
+      return false;
+    };
+    const unregister = api.registerFileConflictRecovery(async () => api.captureRecoveryDestination(destination.handle));
+    try {
+      await a.session.open({ name: source.handle.name, handle: source.handle, bytes });
+      await b.session.open({ name: other.handle.name, handle: other.handle, bytes });
+      source.replace(overlap);
+      if (stage === '同一性確認') source.handle.isSameEntry = wait;
+      else other.handle.isSameEntry = wait;
+      const saving = a.session.dispatch({ type: 'settings', change: { type: 'selection', screen: 'cost-table', selected: [1, 2] } });
+      await started;
+      destination.replace(external);
+      release();
+      await assert.rejects(saving, /保存先のファイルが更新/);
+      assert.deepEqual(destination.bytes, external, `${stage}待機中の外部更新を上書きしない`);
+      assert.deepEqual(source.bytes, overlap);
+      assert.equal(a.session.getSnapshot().name, source.handle.name);
+      assert.equal(hub.saveTargets.size, 0);
+      await a.session.dispatch({ type: 'settings', change: { type: 'selection', screen: 'cost-table', selected: [1, 2] } });
+      assert.equal(a.session.getSnapshot().name, destination.handle.name, '選び直した保存先へ再試行できる');
+    } finally { release(); unregister(); a.dispose(); b.dispose(); }
+  }
+  console.log("PASS: ファイル更新の自動統合、取消での外部変更保護、別ファイル保存、キャンセル・失敗時の入力と元ファイル保護、復旧先選択直後の基準を二画面の同一性確認・共有予約待ちまで保持");
 }

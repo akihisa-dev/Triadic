@@ -42,7 +42,7 @@ export async function verifyReferenceRecovery(api, base, external, command) {
     const session=new api.PlanSession();const contents=await api.readPlanContents(base);await session.open({...contents,bytes:base,name:original.name,handle:original});
     const originalSnapshot=session.getSnapshot();
     let fail=mode==='failure';
-    const before=structuredClone(command),unregister=api.registerFileConflictRecovery(async()=>mode==='cancel'?null:destination);
+    const before=structuredClone(command),unregister=api.registerFileConflictRecovery(async()=>api.captureRecoveryDestination(mode==='cancel'?null:destination));
     try {
       if(mode==='save-as') {await session.dispatch(command,async()=>original);assert.equal(session.getHandle(),destination);await api.validateTriadicDatabase(destinationBytes)}
       else {await assert.rejects(session.dispatch(command,async()=>original),mode==='cancel'?/入力は.*保持/:/保存失敗/);assert.deepEqual(session.getSnapshot().contents.initiatives,contents.initiatives);assert.equal(destinationBytes,null)}
@@ -51,7 +51,7 @@ export async function verifyReferenceRecovery(api, base, external, command) {
     if(mode!=='save-as') {
       assert.deepEqual(session.getSnapshot(),originalSnapshot,'失敗でデータ・履歴・操作取消を保持');
       fail=false;
-      const stop=api.registerFileConflictRecovery(async()=>destination);
+      const stop=api.registerFileConflictRecovery(async()=>api.captureRecoveryDestination(destination));
       try {
         await session.dispatch(command,async()=>original);
         assert.equal(session.getHandle(),destination,'同じ入力の再試行で別ファイルへ保存');

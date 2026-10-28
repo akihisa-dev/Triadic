@@ -1,6 +1,6 @@
 import { diffPlanContents, type PlanContentsPatch } from "../core/domain/planContentsPatch";
 import { cloneWindowView } from "./windowViewClone";
-import type { Recovery } from "./fileConflict";
+import type { Recovery, RecoveryDestination } from "./fileConflict";
 import { PlanSession } from "./PlanSession";
 import type { OpenPlan } from "./planFile";
 import type { ClientReply, HubMessage, HubRequest, HubMethod, HubResult, WindowControl, WindowInfo } from "./windowProtocol";
@@ -133,9 +133,9 @@ export class WindowSessionHub {
   private newGroup(plan: Pick<OpenPlan, "name" | "bytes" | "handle">) {
     const group: Group = { id: crypto.randomUUID(), session: this.makeSession(async name => {
       if (!group.acting) return null;
-      const handle = await this.control(group.acting, "recover", name) as FileSystemFileHandle | null;
-      if (handle) group.releaseRecovery = await this.reserveSaveTarget(group, handle);
-      return handle;
+      const destination = await this.control(group.acting, "recover", name) as RecoveryDestination | null;
+      if (destination) group.releaseRecovery = await this.reserveSaveTarget(group, destination.handle);
+      return destination;
     }),
       peers: new Set(), openingPeers: 0, nextNumber: 1, actionTail: Promise.resolve(), coordinating: false, historyPreparing: false, historyOwner: null, tail: Promise.resolve(), acting: null, opened: Promise.resolve(), openingHandle: plan.handle };
     this.groups.set(group.id, group);

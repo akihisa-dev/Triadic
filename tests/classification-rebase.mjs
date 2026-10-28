@@ -102,7 +102,7 @@ export async function verifyClassificationRebase(api) {
     const categorySession=new api.PlanSession();await categorySession.open({...oldCategoryContents,bytes:originalCategory,name:sourceHandle.name,handle:sourceHandle});
     const command={type:'expansion-category',change:{type:'update',id:categoryId,categoryName:'旧区分',expansionId:1}};
     const commandBefore=structuredClone(command);
-    const unregister=api.registerFileConflictRecovery(async()=>mode==='cancel'?null:destination);
+    const unregister=api.registerFileConflictRecovery(async()=>api.captureRecoveryDestination(mode==='cancel'?null:destination));
     try {
       if(mode==='save-as') {
         const saved=await categorySession.dispatch(command,async()=>sourceHandle);

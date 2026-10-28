@@ -50,8 +50,7 @@ async function writeCheckedFile(plan: OpenPlan, prepared: OpenPlan & { handle: F
   } catch (error) {
     if (!(error instanceof FileConflictError)) throw error;
     // The old writer has been aborted before showing a dialog or opening a picker.
-    const handle = await recoverFileConflict(prepared.handle, recovery);
-    const expected = new Uint8Array(await (await handle.getFile()).arrayBuffer());
+    const { handle, expected } = await recoverFileConflict(prepared.handle, recovery);
     await writeTriadicFile(handle, prepared.bytes, async () => {
       const current = new Uint8Array(await (await handle.getFile()).arrayBuffer());
       if (!await processPlan("bytesEqual", current, expected)) throw new FileConflictError();

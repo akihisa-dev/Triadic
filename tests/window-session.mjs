@@ -39,7 +39,7 @@ export async function verifyWindowSession(api) {
         try {
           let value;
           if (message.action === "flush") await client.flush();
-          if (message.action === "recover") { client.recovered.push(message.detail); value = client.recoveryTarget; }
+          if (message.action === "recover") { client.recovered.push(message.detail); value = await api.captureRecoveryDestination(client.recoveryTarget); }
           if (message.action === "draft") value = client.hasDraft;
           if (message.action === "confirm-discard") value = client.accept;
           if (message.action === "discard" || message.action === "close") {
@@ -303,7 +303,7 @@ export async function verifyWindowSession(api) {
     await within(Promise.all([recoveryA.request("dispatch", {}), recoveryB.request("dispatch", {})]));
     assert.deepEqual(recoveryA.recovered, ["同名.triadic"]);
     assert.deepEqual(recoveryB.recovered, ["同名.triadic"]);
-    assert.deepEqual(new Set(recoveries), new Set([slowFile.handle, fastFile.handle]), "並行回復要求をそれぞれの操作元へ返す");
+    assert.deepEqual(new Set(recoveries.map(item => item?.handle)), new Set([slowFile.handle, fastFile.handle]), "並行回復要求をそれぞれの操作元へ返す");
   } finally { releaseRecovery(); recoveryA.disconnect(); recoveryB.disconnect(); }
   console.log("PASS: 別ファイルの保存・取消・読込は独立、同一ファイルの順序と読込中の実体判定は維持");
 

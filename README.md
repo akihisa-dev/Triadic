@@ -90,7 +90,7 @@ Joining or duplicating the same file is blocked throughout history consolidation
 
 History consolidation waits for every window to prepare discarding and closing before committing either action. A missing response or disconnect during preparation keeps input in the remaining windows; retry starts a separate decision.
 
-Save As captures the destination contents immediately after selection, before waiting for other windows to finish saving, and rejects later external changes.
+Save As and conflict recovery capture the destination contents immediately after selection, before identity checks or shared-operation waits, and reject later external changes.
 
 Save As and conflict recovery both reject destinations used by another open/loading file or pending save. A recovery destination stays reserved until the new file reference is shared; cancellation or failure releases the reservation.
 
@@ -1197,6 +1197,8 @@ Excel入出力画面は初めて選択したときに読み込みます。ExcelJ
 取消・時点履歴の保存内容は、正規の業務テーブルと採番状態だけを別のメモリ領域へ転記して作ります。過去履歴の全体複製・削除を行わず、完成後に従来と同じ履歴用の完全検査を通します。元のデータ・履歴は変更せず、失敗時は作業領域を解放します。[業務スナップショットの比較](docs/business-snapshot-performance.md)に、履歴量によるコピー量・時間の差と負担が増える条件を記載しています。
 
 外部更新との統合では、同じ施策行の科目変更・削除と他方の月額・明示手修正を同時に採用せず、競合回復へ戻します。科目が同じままの異なる月の独立変更は統合します。
+
+競合復旧の保存先は選択直後の内容を保持し、同一ファイルかの確認・共有予約を待つ間の外部更新も保存直前に検出して拒否します。拒否・キャンセル・保存失敗では元ファイル・復旧先と入力を保持し、選び直して再試行できます。
 
 自動保存の失敗時も、保存中に受信した他画面の変更を未編集項目へ反映してから再試行します。同じ項目の異なる変更は入力を保持して再保存を止め、入力取消で最新の保存内容へ戻します。
 
