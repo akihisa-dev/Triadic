@@ -170,7 +170,7 @@ for (const name of ['総原価表', '展開表', '施策一覧']) test(`${name}�
   await expect(region).toBeFocused();
   await expect(region).toHaveAttribute('aria-describedby', /instructions/);
   await expect(region.locator('[id$="-instructions"]')).toContainText('矢印キーで先頭の金額');
-  const status = region.getByRole('status');
+  const status = region.locator('span[role="status"]');
   await region.press('ArrowDown');
   const first = table.locator('[data-copy-row="0"][data-copy-column="0"]');
   await expect(first).toHaveAttribute('data-range-selected', 'true');

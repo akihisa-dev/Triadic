@@ -358,7 +358,7 @@ test("新しいファイルの年度を一度選び、閉じた後に同じ年�
   await expect(app.locator(".home-header")).toContainText("2030年度");
   await expect(app.locator(".home-file-name")).toHaveText("Untitled.triadic");
   await app.getByRole("button", { name: "サイドバーを開く" }).click();
-  await app.getByRole("button", { name: "閉じる" }).click();
+  await app.getByRole("complementary", { name: "メニュー", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await expect(app.locator(".home-file-name")).toHaveText("Untitled.triadic");
