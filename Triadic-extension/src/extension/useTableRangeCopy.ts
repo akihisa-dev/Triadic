@@ -1,14 +1,18 @@
-import { useEffect, useLayoutEffect, useRef, type ClipboardEvent, type KeyboardEvent, type MouseEvent, type PointerEvent, type RefObject } from "react";
+import { Fragment, createElement, useId, useState, useEffect, useLayoutEffect, useRef, type ClipboardEvent, type KeyboardEvent, type MouseEvent, type PointerEvent, type RefObject } from "react";
 import { gridBounds, type GridCell, type GridSelection } from "../core/tables/grid";
 import { revealTableRangeCell } from "./tableRangeVisibility";
+import { describeTableRange, moveTableRangeSelection, tableRangeInstructions } from "../core/tables/tableRangeSelection";
 import "./TableRangeCopy.css";
 
 export const tableCopyCell = (row: number, column: number) => ({ "data-copy-row": row, "data-copy-column": column });
 
 /** Coordinates refer to the full displayed model, including rows outside the DOM window. */
 export function useTableRangeCopy(container: RefObject<HTMLDivElement | null>, options: {
-  rowCount: number; columnCount: number; textAt: (row: number, column: number) => string; resetKey: unknown;
+  rowCount: number; columnCount: number; textAt: (row: number, column: number) => string; describeAt: (row: number, column: number) => string; resetKey: unknown;
 }) {
+  const statusId = useId();
+  const [description, setDescription] = useState("選択なし。");
+  const pendingReveal = useRef(false);
   const latest = useRef(options); latest.current = options;
   const selection = useRef<GridSelection | null>(null);
   const drag = useRef<{ anchor: GridCell; x: number; y: number; moved: boolean } | null>(null);
@@ -19,6 +23,7 @@ export function useTableRangeCopy(container: RefObject<HTMLDivElement | null>, o
     return { row: Number(cell.dataset.copyRow), column: Number(cell.dataset.copyColumn) };
   };
   const paint = () => {
+    setDescription(describeTableRange(selection.current, latest.current.describeAt));
     const bounds = selection.current ? gridBounds(selection.current) : null;
     if (!bounds) {
       for (const cell of container.current?.querySelectorAll("[data-range-selected]") ?? []) cell.removeAttribute("data-range-selected");
@@ -30,8 +35,14 @@ export function useTableRangeCopy(container: RefObject<HTMLDivElement | null>, o
       else cell.removeAttribute("data-range-selected");
     }
   };
-  useLayoutEffect(() => { selection.current = null; drag.current = null; suppressClick.current = false; paint(); }, [options.resetKey]);
-  useLayoutEffect(paint);
+  useLayoutEffect(() => { selection.current = null; drag.current = null; suppressClick.current = false; pendingReveal.current = false; paint(); }, [options.resetKey]);
+  const reveal = () => {
+    const region = container.current, end = selection.current?.end;
+    if (!pendingReveal.current || !region || !end) return;
+    const cell = region.querySelector<HTMLElement>(`[data-copy-row="${end.row}"][data-copy-column="${end.column}"]`);
+    if (cell) { revealTableRangeCell(region, cell); pendingReveal.current = false; }
+  };
+  useLayoutEffect(() => { paint(); reveal(); });
   useEffect(() => {
     let frame = 0;
     const extend = (target: EventTarget | null) => {
@@ -75,48 +86,53 @@ export function useTableRangeCopy(container: RefObject<HTMLDivElement | null>, o
     };
   }, [container]);
   return {
-    onPointerDownCapture(event: PointerEvent<HTMLDivElement>) {
-      if (event.button !== 0) return;
-      const cell = cellAt(event.target);
-      suppressClick.current = false;
-      if (!cell) { selection.current = null; drag.current = null; paint(); return; }
-      event.preventDefault();
-      const anchor = event.shiftKey && selection.current ? selection.current.anchor : cell;
-      selection.current = { anchor, end: cell };
-      drag.current = { anchor, x: event.clientX, y: event.clientY, moved: event.shiftKey };
-      suppressClick.current = event.shiftKey;
-      container.current?.focus({ preventScroll: true }); paint();
-    },
-    onClickCapture(event: MouseEvent<HTMLDivElement>) {
-      if (event.detail !== 0 && suppressClick.current && cellAt(event.target)) { event.preventDefault(); event.stopPropagation(); suppressClick.current = false; }
-    },
-    onCopy(event: ClipboardEvent<HTMLDivElement>) {
-      if ((event.target as HTMLElement).closest("input,textarea")) return;
-      const chosen = selection.current ?? (cellAt(event.target) ? { anchor: cellAt(event.target)!, end: cellAt(event.target)! } : null);
-      if (!chosen) return;
-      const bounds = gridBounds(chosen), { rowCount, columnCount, textAt } = latest.current;
-      if (bounds.bottom >= rowCount || bounds.right >= columnCount) return;
-      const lines: string[] = [];
-      for (let row = bounds.top; row <= bounds.bottom; row++) {
-        const values: string[] = [];
-        for (let column = bounds.left; column <= bounds.right; column++) values.push(textAt(row, column));
-        lines.push(values.join("\t"));
-      }
-      event.preventDefault(); event.clipboardData.setData("text/plain", lines.join("\n"));
-    },
-    onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-      if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229 || (event.target as HTMLElement).closest("input,textarea")) return;
-      if (event.key === "Escape") { selection.current = null; drag.current = null; suppressClick.current = false; paint(); return; }
-      const active = selection.current ?? (cellAt(event.target) ? { anchor: cellAt(event.target)!, end: cellAt(event.target)! } : null);
-      if (!active || !["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
-      drag.current = null;
-      const { rowCount, columnCount } = latest.current;
-      const end = { row: Math.max(0, Math.min(rowCount - 1, active.end.row + (event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0))),
-        column: Math.max(0, Math.min(columnCount - 1, active.end.column + (event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0))) };
-      event.preventDefault(); selection.current = { anchor: event.shiftKey ? active.anchor : end, end }; paint();
-      const region = container.current;
-      const cell = region?.querySelector<HTMLElement>(`[data-copy-row="${end.row}"][data-copy-column="${end.column}"]`);
-      if (region && cell) revealTableRangeCell(region, cell);
+    status: createElement(Fragment, null,
+      createElement("span", { id: `${statusId}-instructions`, className: "table-range-description" }, tableRangeInstructions),
+      createElement("span", { id: statusId, className: "table-range-description", role: "status", "aria-live": "polite", "aria-atomic": true }, description)),
+    props: {
+      "aria-describedby": `${statusId}-instructions ${statusId}`,
+      onPointerDownCapture(event: PointerEvent<HTMLDivElement>) {
+        if (event.button !== 0) return;
+        const cell = cellAt(event.target);
+        suppressClick.current = false;
+        if (!cell) { selection.current = null; drag.current = null; paint(); return; }
+        event.preventDefault();
+        const anchor = event.shiftKey && selection.current ? selection.current.anchor : cell;
+        selection.current = { anchor, end: cell };
+        drag.current = { anchor, x: event.clientX, y: event.clientY, moved: event.shiftKey };
+        suppressClick.current = event.shiftKey;
+        container.current?.focus({ preventScroll: true }); paint();
+      },
+      onClickCapture(event: MouseEvent<HTMLDivElement>) {
+        if (event.detail !== 0 && suppressClick.current && cellAt(event.target)) { event.preventDefault(); event.stopPropagation(); suppressClick.current = false; }
+      },
+      onCopy(event: ClipboardEvent<HTMLDivElement>) {
+        if ((event.target as HTMLElement).closest("input,textarea")) return;
+        const chosen = selection.current ?? (cellAt(event.target) ? { anchor: cellAt(event.target)!, end: cellAt(event.target)! } : null);
+        if (!chosen) return;
+        const bounds = gridBounds(chosen), { rowCount, columnCount, textAt } = latest.current;
+        if (bounds.bottom >= rowCount || bounds.right >= columnCount) return;
+        const lines: string[] = [];
+        for (let row = bounds.top; row <= bounds.bottom; row++) {
+          const values: string[] = [];
+          for (let column = bounds.left; column <= bounds.right; column++) values.push(textAt(row, column));
+          lines.push(values.join("\t"));
+        }
+        event.preventDefault(); event.clipboardData.setData("text/plain", lines.join("\n"));
+      },
+      onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+        if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229 || (event.target as HTMLElement).closest("input,textarea")) return;
+        if (event.target !== event.currentTarget && !cellAt(event.target)) return;
+        if (event.key === "Escape") { selection.current = null; drag.current = null; suppressClick.current = false; pendingReveal.current = false; paint(); return; }
+        const active = selection.current ?? (cellAt(event.target) ? { anchor: cellAt(event.target)!, end: cellAt(event.target)! } : null);
+        if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
+        drag.current = null;
+        const { rowCount, columnCount } = latest.current;
+        const next = moveTableRangeSelection(active, event.key, event.shiftKey, rowCount, columnCount);
+        if (!next) return;
+        if (!active && container.current) container.current.scrollTop = 0;
+        event.preventDefault(); selection.current = next; pendingReveal.current = true; paint(); reveal();
+      },
     },
   };
 }

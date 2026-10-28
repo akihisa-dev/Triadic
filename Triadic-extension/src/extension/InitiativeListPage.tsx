@@ -81,13 +81,16 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
     catch (failure) { return { source: displayed, errors, totals: null, totalError: (failure as Error).message }; }
   }, [view, displayed, tableView.filtered]);
   const { errors } = displayedView;
-  const rangeCopy = useTableRangeCopy(container, { rowCount: displayed.length + 1, columnCount: 36, resetKey: displayedView,
-    textAt: (row, column) => {
-      const month = initiativeMonths[Math.floor(column / amountItems.length)]!, metric = amountItems[column % amountItems.length]!;
-      if (row === displayed.length) return displayedView.totals ? amountText(displayedView.totals[month]?.[metric.id]) : "計算不可";
-      const item = displayed[row]!;
-      return item.calculation === "failed" ? "計算不可" : amountText(item.months[month]?.[metric.id]);
-    } });
+  const copyTextAt = (row: number, column: number) => {
+    const month = initiativeMonths[Math.floor(column / amountItems.length)]!, metric = amountItems[column % amountItems.length]!;
+    if (row === displayed.length) return displayedView.totals ? amountText(displayedView.totals[month]?.[metric.id]) : "計算不可";
+    const item = displayed[row]!;
+    return item.calculation === "failed" ? "計算不可" : amountText(item.months[month]?.[metric.id]);
+  };
+  const rangeCopy = useTableRangeCopy(container, { rowCount: displayed.length + 1, columnCount: 36, resetKey: displayed,
+    textAt: copyTextAt,
+    describeAt: (row, column) => `${row === displayed.length ? "合計" : displayed[row]!.name} ${initiativeMonths[Math.floor(column / amountItems.length)]}月 ${selectedKind === 1 ? "一次予算" : "確定予算"} ${amountItems[column % amountItems.length]!.name} 金額（千円）${copyTextAt(row, column) || "空欄"}`,
+  });
   const window = useRowWindow(container, displayed.length, 28, 200, 56);
   const virtual = displayed.length > 200;
   const focusedIndex = useMemo(() => focusedId === null ? -1 : displayed.findIndex(item => item.id === focusedId), [displayed, focusedId]);
@@ -108,7 +111,8 @@ export function InitiativeListPage({ returnTo, selection, selectedKind, initiati
       <button ref={addButton} className="primary-button" type="button" disabled={navigationBlocked || readOnly} onClick={onAddInitiative}>施策を追加</button>
     </div>
     <TableCalculationBoundary resetKeys={[initiatives, accounts, selectedKind, fiscalYear]}>
-    <div ref={container} {...rangeCopy} className="initiative-list-container" role="region" aria-label="施策一覧の月別売上・費用・利益" tabIndex={0}>
+    <div ref={container} {...rangeCopy.props} className="initiative-list-container" role="region" aria-label="施策一覧の月別売上・費用・利益" tabIndex={0}>
+      {rangeCopy.status}
       <table className={`initiative-list-table${virtual ? " virtual-table" : ""}`} style={{ "--virtual-row-height": "28px" } as React.CSSProperties} aria-label="施策一覧" aria-rowcount={displayed.length + 3}>
         <colgroup>
           <col className="initiative-expansion-column" />

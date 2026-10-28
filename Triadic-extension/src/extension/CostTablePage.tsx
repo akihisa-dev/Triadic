@@ -1,3 +1,4 @@
+import { formatYen, formatRate } from "../core/domain/amounts";
 import { tableCopyCell, useTableRangeCopy } from "./useTableRangeCopy";
 import { useAdaptiveTableHeader } from "./useAdaptiveTableHeader";
 import { PeriodScrollFrame } from "./PeriodScrollbar";
@@ -109,6 +110,12 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
   const { labels, rows, columns } = table;
   const copyRowIndices = useMemo(() => new Map(rows.map((row, index) => [row, index])), [rows]);
   const rangeCopy = useTableRangeCopy(container, { rowCount: rows.length, columnCount: tablePeriods.length * labels.length, resetKey: rows,
+    describeAt: (rowIndex, column) => {
+      const row = rows[rowIndex]!, period = tablePeriods[Math.floor(column / labels.length)]!, index = column % labels.length;
+      const amount = row.values[index]![period.id];
+      const value = amount === undefined ? "未設定" : row.kind === "ratio" ? formatRate(amount, Boolean(columns[index]!.difference)) : `${formatYen(amount)}千円`;
+      return `${row.name} ${period.label} ${labels[index]} ${value}`;
+    },
     textAt: (rowIndex, column) => {
       const row = rows[rowIndex]!, period = tablePeriods[Math.floor(column / labels.length)]!, index = column % labels.length;
       return row.kind === "ratio" ? formatTableRate(row.values[index]![period.id], Boolean(columns[index]!.difference))
@@ -159,7 +166,8 @@ const CostTableContents = memo(function CostTableContents({ contents, selected, 
         }}>{formatTableYen(values[period.id])}</button>
       : formatTableYen(values[period.id])}</td>)}</Fragment>)}
   </tr>;
-  return <><PeriodScrollFrame container={container} label="総原価表" layoutKey={key}><div ref={container} {...rangeCopy} onScroll={event => { view.current.top = event.currentTarget.scrollTop; view.current.left = event.currentTarget.scrollLeft; }} className="initiative-list-container cost-table-container" role="region" aria-label="総原価表の月別前年・種別別金額" tabIndex={0}>
+  return <><PeriodScrollFrame container={container} label="総原価表" layoutKey={key}><div ref={container} {...rangeCopy.props} onScroll={event => { view.current.top = event.currentTarget.scrollTop; view.current.left = event.currentTarget.scrollLeft; }} className="initiative-list-container cost-table-container" role="region" aria-label="総原価表の月別前年・種別別金額" tabIndex={0}>
+      {rangeCopy.status}
       <table ref={tableElement} onFocusCapture={event => {
         const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button[aria-label]"), key = button?.closest<HTMLElement>("tr[data-cost-row]")?.dataset.costRow;
         if (button && key) focused.current = { key, label: button.getAttribute("aria-label")! };

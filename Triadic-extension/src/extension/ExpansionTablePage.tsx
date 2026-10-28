@@ -102,15 +102,22 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
   const { table, groups, flat, calculationError } = useMemo(() => selectExpansionView(baseView, contents, columns, viewState), [baseView, contents, columns, viewState]);
   const copyIndices = useMemo(() => new Map(flat.map((row, index) => [row.item ? `initiative:${row.item.id}` : `subtotal:${row.group.expansion.id}`, index + 3])), [flat]);
   const copyColumns = (selected.length === 2 ? 3 : 1) * 2;
+  const copyTextAt = (rowIndex: number, column: number) => {
+    const row = flat[rowIndex - 3];
+    const values = rowIndex === 0 ? previousRow.values : rowIndex === 1 ? table.total : rowIndex === 2 ? table.changes : row!.item ? row!.item.values : row!.group.values;
+    const period = tablePeriods[Math.floor(column / copyColumns)]!, index = Math.floor((column % copyColumns) / 2), metric = column % 2 ? "profit" : "sales";
+    const months = values[index]!;
+    try { const amount = expansionPeriodAmount(months, period, metric); return amount === null ? calculationError ? "計算不可" : "属性未設定" : formatTableYen(amount); }
+    catch { return "範囲超過"; }
+  };
   const rangeCopy = useTableRangeCopy(container, { rowCount: flat.length + 3, columnCount: tablePeriods.length * copyColumns, resetKey: flat,
-    textAt: (rowIndex, column) => {
+    textAt: copyTextAt,
+    describeAt: (rowIndex, column) => {
       const row = flat[rowIndex - 3];
-      const values = rowIndex === 0 ? previousRow.values : rowIndex === 1 ? table.total : rowIndex === 2 ? table.changes : row!.item ? row!.item.values : row!.group.values;
-      const period = tablePeriods[Math.floor(column / copyColumns)]!, index = Math.floor((column % copyColumns) / 2), metric = column % 2 ? "profit" : "sales";
-      const months = values[index]!;
-      try { const amount = expansionPeriodAmount(months, period, metric); return amount === null ? calculationError ? "計算不可" : "属性未設定" : formatTableYen(amount); }
-      catch { return "範囲超過"; }
-    } });
+      const name = rowIndex < 3 ? [previousRow.label, "合計", "展開計"][rowIndex] : row!.item?.name ?? `${row!.group.expansion.expansionName}計`;
+      return `${name} ${tablePeriods[Math.floor(column / copyColumns)]!.label} ${labels[Math.floor((column % copyColumns) / 2)]} ${column % 2 ? "利益" : "売上"} 金額（千円）${copyTextAt(rowIndex, column) || "0（表示は空欄）"}`;
+    },
+  });
   const window = useRowWindow(container, flat.length, 28, 200, 165);
   const virtual = flat.length > 200;
   const scrollTargets = useMemo(() => flat.flatMap((row, index) => row.groupOffset === 0
@@ -147,7 +154,8 @@ function ExpansionTableContents({ contents, selected, onOpenInitiative }: Omit<P
     },
   });
   const labels = [...selected.map(id => id === 1 ? "一次予算" : "確定予算"), ...(selected.length === 2 ? ["確定予算−一次予算"] : [])];
-  return <PeriodScrollFrame container={container} label="展開表" layoutKey={selected.join(",")}><div id={expansionScrollRegionId} ref={container} {...rangeCopy} className="initiative-list-container" role="region" aria-label="展開表の月別種別・比較" tabIndex={0}>
+  return <PeriodScrollFrame container={container} label="展開表" layoutKey={selected.join(",")}><div id={expansionScrollRegionId} ref={container} {...rangeCopy.props} className="initiative-list-container" role="region" aria-label="展開表の月別種別・比較" tabIndex={0}>
+      {rangeCopy.status}
       <table className={`initiative-list-table expansion-table${virtual ? " virtual-table" : ""}`} style={{ "--virtual-row-height": "28px" } as React.CSSProperties} aria-label="展開表" aria-rowcount={flat.length + 6}>
         {calculationError && <caption role="alert">絞り込み後の集計を計算できません。{calculationError}</caption>}
         <colgroup>

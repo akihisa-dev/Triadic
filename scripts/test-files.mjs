@@ -1,4 +1,5 @@
 import { verifyDashboard } from "../tests/dashboard.mjs";
+import { verifyTableRangeSelection } from "../tests/table-range-selection.mjs";
 import { verifyTableRangeVisibility } from "../tests/table-range-visibility.mjs";
 import { verifyColumnView } from "../tests/column-view.mjs";
 import { verifyAmountExpression } from "../tests/amount-expression.mjs";
@@ -105,6 +106,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   }
   await verifyDashboard(api);
   verifyTableRangeVisibility(api);
+  verifyTableRangeSelection(api);
   verifySpreadsheetOperation(api);
   await verifyPreviousBaselines(api);
   await verifyInitiativeDraftReferences(api);

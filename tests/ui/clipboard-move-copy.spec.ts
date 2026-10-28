@@ -159,3 +159,62 @@ for (const name of ['総原価表', '展開表', '施策一覧']) test(`${name}�
   expect((await transfer(region, 'copy')).text).toBe(await cell(33, 6).textContent());
   await expect(app.getByRole('dialog')).toHaveCount(0);
 });
+
+for (const name of ['総原価表', '展開表', '施策一覧']) test(`${name}のコピーはキーボードから開始・解除・再開始でき選択を通知する`, async ({ page, app }) => {
+  await page.goto('/tests/ui/preview.html?data=signed-categories-large');
+  await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
+  await app.getByRole('navigation', { name: 'メインナビゲーション' }).getByRole('button', { name, exact: true }).click();
+  const table = app.getByRole('table', { name, exact: true }), region = table.locator('..');
+  // Enter the region with Tab from the preceding control, without selecting an amount by pointer.
+  await region.focus(); await region.press('Shift+Tab'); await page.keyboard.press('Tab');
+  await expect(region).toBeFocused();
+  await expect(region).toHaveAttribute('aria-describedby', /instructions/);
+  await expect(region.locator('[id$="-instructions"]')).toContainText('矢印キーで先頭の金額');
+  const status = region.getByRole('status');
+  await region.press('ArrowDown');
+  const first = table.locator('[data-copy-row="0"][data-copy-column="0"]');
+  await expect(first).toHaveAttribute('data-range-selected', 'true');
+  await expect(status).toContainText('現在 1行目・1列目');
+  await expect(status).toContainText('1行×1列、1セル');
+  expect((await transfer(region, 'copy')).text).toBe(await first.textContent());
+  await region.press('Shift+ArrowRight'); await region.press('Shift+ArrowDown');
+  await expect(status).toContainText('2行×2列、4セル');
+  await expect(status).toContainText('範囲 1行目・1列目');
+  expect((await transfer(region, 'copy')).text.split('\n').map(row => row.split('\t').length)).toEqual([2, 2]);
+  await region.press('Escape');
+  await expect(status).toHaveText('選択なし。');
+  await expect(table.locator('[data-range-selected]')).toHaveCount(0);
+  await region.press('ArrowRight');
+  await expect(first).toHaveAttribute('data-range-selected', 'true');
+  await region.press('Tab');
+  await expect(region).not.toBeFocused();
+  if (name === '総原価表') {
+    await first.getByRole('button').focus(); await first.getByRole('button').press('Enter');
+    await expect(app.getByRole('dialog')).toBeVisible();
+  } else {
+    const sort = table.locator('thead').getByRole('button').first();
+    await sort.focus(); await sort.press('Enter');
+    await expect(status).toHaveText('選択なし。');
+    await region.focus(); await region.press('ArrowDown');
+    await expect(status).toContainText('現在 1行目・1列目');
+    // Arrow keys on a header must not move the amount selection.
+    const before = await status.textContent();
+    await sort.focus(); await sort.press('ArrowRight');
+    await expect(status).toHaveText(before!);
+    const filter = table.getByRole('button', { name: '施策名を絞り込む', exact: true });
+    await filter.focus(); await filter.press('Enter');
+    const panel = app.getByRole('dialog', { name: '施策名', exact: true });
+    await panel.getByRole('searchbox', { name: '含む文字', exact: true }).fill('存在しない施策');
+    await panel.getByRole('button', { name: '適用', exact: true }).press('Enter');
+    await expect(status).toHaveText('選択なし。');
+    await region.focus(); await region.press('ArrowDown');
+    await expect(status).toContainText('現在 1行目・1列目');
+    const kind = name === '施策一覧'
+      ? app.getByRole('group', { name: '表示種別', exact: true }).getByRole('button', { name: '一次予算', exact: true })
+      : app.getByRole('checkbox', { name: '前年見込を基準にした確定予算', exact: true });
+    await kind.focus(); await kind.press('Space');
+    await expect(status).toHaveText('選択なし。');
+    await region.focus(); await region.press('ArrowDown');
+    await expect(status).toContainText('現在 1行目・1列目');
+  }
+});

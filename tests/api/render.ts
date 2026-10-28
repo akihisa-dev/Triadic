@@ -7,3 +7,6 @@ export { revealTableRangeCell } from "../../Triadic-extension/src/extension/tabl
 
 export { layoutHomeRelations, homeRelationLine, relationDescription, tablePages } from "../../Triadic-extension/src/extension/home/homeRelationLayout";
 export { nodes as homeDestinations, edges as homeRelations } from "../../Triadic-extension/src/extension/home/homeRelations";
+
+export { moveTableRangeSelection, describeTableRange } from "../../Triadic-extension/src/core/tables/tableRangeSelection";
+export { useTableRangeCopy } from "../../Triadic-extension/src/extension/useTableRangeCopy";
