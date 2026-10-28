@@ -24,6 +24,11 @@ if (mode === "long") {
   plan.industries = plan.industries.map(item => ({ ...item, industryName: item.industryName.repeat(15) }));
   plan.accounts = plan.accounts.map(item => ({ ...item, accountName: item.accountName.repeat(10) }));
 }
+if (mode === "scatter-labels") {
+  plan.initiatives = [];
+  plan.industries = plan.industries.map((item, i) => ({ ...item, industryName: i === 0 ? "同じ位置に重なる長い業種名を省略せず確認するための業種" : item.industryName }));
+  plan.previousAmounts = plan.industries.map((industry, i) => ({ id: i + 1, revision: 1, previousKind: 1, accountId: sales.id, industryId: industry.id, departmentId: plan.departments[0]!.id, month: 4, amount: "1000" }));
+}
 const view: WindowViewValues = {};
 function Fixture() {
   const [kinds, setKinds] = useState<KindId[]>([1, 2]);

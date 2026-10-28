@@ -40,6 +40,13 @@ test("サンプル予算の明暗・全件表示と空のデータ", async ({ pa
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "ダッシュボード", exact: true }).click();
   await expect(app.locator(".dashboard-department-name")).toHaveCount(8);
+  const scatter = app.getByRole("region", { name: "業種別の売上と利益率", exact: true });
+  await expect(scatter.locator(".analysis-scatter-label text")).toHaveText(["直営自動車", "自動車取扱", "不動産B"]);
+  await expect(scatter.locator(".analysis-scatter-label line")).toHaveCount(0);
+  const axisWidth = await scatter.locator("svg").evaluate(svg => Math.max(...[...svg.querySelectorAll(".analysis-axis line")].map(line => Number(line.getAttribute("x2")))) - 100);
+  expect(axisWidth).toBe(500);
+
+
   await expect(app.locator(".dashboard-ranking")).toHaveCount(4);
   const more = app.getByRole("button", { name: /^全\d+件を表示$/ }).first();
   await more.click();
@@ -123,4 +130,33 @@ test("費用の2図は全幅で上下に並び、構成図に横スクロール�
   await expect.poll(() => scroll.evaluate(node => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1);
   await expect(sections.first().locator(".analysis-tile-label")).toContainText(["給料手当", "下払運賃", "賃借料", "臨時傭員費"]);
   await sections.first().screenshot({ path: "/tmp/triadic-dashboard-expenses.png" });
+});
+
+
+test("散布図は業種名を直接結び、同じ位置の点と長い名称でも照合番号を使わない", async ({ page }) => {
+  await page.goto("/tests/ui/dashboard-analysis.html?mode=scatter-labels");
+  const section = page.getByRole("region", { name: "業種別の売上と利益率", exact: true });
+  const labels = section.locator(".analysis-scatter-label");
+  for (const viewport of [{ width: 1440, height: 1000 }, { width: 375, height: 800 }]) {
+    await page.setViewportSize(viewport);
+    for (const dark of [false, true]) {
+      await page.evaluate(dark => { document.documentElement.dataset.theme = dark ? "dark" : "light"; }, dark);
+      for (const single of [true, false]) {
+        if (single) await page.getByRole("checkbox", { name: "前年見込を基準にした確定予算", exact: true }).uncheck();
+        else await page.getByRole("checkbox", { name: "前年見込を基準にした確定予算", exact: true }).check();
+        const names = await section.locator("tbody th").allTextContents();
+        await expect(labels.locator("text")).toHaveText([...new Set(names)]);
+        await expect(section.locator(".analysis-legend")).toHaveCount(1);
+        const geometry = await labels.evaluateAll(nodes => nodes.map(node => {
+          const text = node.querySelector("text")!, svg = text.ownerSVGElement!, box = text.getBBox();
+          return { left: box.x, right: box.x + box.width, top: box.y, bottom: box.y + box.height, inside: box.x >= 0 && box.y >= 0 && box.x + box.width <= svg.viewBox.baseVal.width && box.y + box.height <= svg.viewBox.baseVal.height };
+        }));
+        expect(geometry.length).toBeGreaterThan(1);
+        for (const [i, box] of geometry.entries()) {
+          expect(box.inside).toBe(true);
+          for (const other of geometry.slice(0, i)) expect(box.left >= other.right || box.right <= other.left || box.top >= other.bottom || box.bottom <= other.top).toBe(true);
+        }
+      }
+    }
+  }
 });

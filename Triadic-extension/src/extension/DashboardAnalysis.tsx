@@ -161,27 +161,53 @@ function Composition({ values, name, treemap = false }: { values: Datum[]; name:
 function Scatter({ groups, selected, prior, kindName }: { groups: AnalysisGroup[]; selected: KindId[]; prior: (kind: KindId) => string; kindName: (kind: KindId) => string }) {
   const dots = groups.flatMap((group, groupIndex) => selected.flatMap(kind => [{ name: `${prior(kind)}（${kindName(kind)}）`, kind: null, budgetKind: kind, ...analysisAnnual(group.budgets.find(entry => entry.kind === kind)!.previous) }, { name: kindName(kind), kind, budgetKind: kind, ...annual(group, kind) }]).map(item => ({ ...item, margin: margin(item.sales, item.profit), group: group.name, groupIndex })));
   const valid = dots.filter(item => item.margin !== undefined);
-  const x = scale(valid.map(item => item.sales), 100, 600), y = scale(valid.map(item => item.margin!), 290, 35);
+  const names = groups.flatMap((group, groupIndex) => {
+    const point = valid.filter(item => item.groupIndex === groupIndex).at(-1);
+    if (!point) return [];
+    const letters = Array.from(group.name);
+    const lines = Array.from({ length: Math.max(1, Math.ceil(letters.length / 14)) }, (_, i) => letters.slice(i * 14, (i + 1) * 14).join(""));
+    return [{ groupIndex, point, lines, width: Math.max(13, Math.min(14, letters.length) * 13), height: lines.length * 18, left: 0, top: 0 }];
+  });
+  const bottom = Math.max(290, 35 + names.reduce((sum, item) => sum + item.height + 16, 0));
+  const x = scale(valid.map(item => item.sales), 100, 600), y = scale(valid.map(item => item.margin!), bottom, 35);
+  const placed: typeof names = [];
+  for (const item of names) {
+    const px = x.at(item.point.sales), py = y.at(item.point.margin!);
+    const lefts = [px + 12, px - item.width - 12, px - item.width / 2].map(left => Math.max(100, Math.min(620 - item.width, left)));
+    const tops = [py - item.height - 12, py + 12, ...Array.from({ length: Math.ceil(bottom / 18) }, (_, i) => 28 + i * 18)]
+      .map(top => Math.max(28, Math.min(bottom - item.height, top)));
+    const candidates = tops.flatMap(top => lefts.map(left => ({ left, top }))).sort((a, b) =>
+      Math.hypot(a.left + item.width / 2 - px, a.top + item.height / 2 - py) - Math.hypot(b.left + item.width / 2 - px, b.top + item.height / 2 - py));
+    const position = candidates.find(box =>
+      !placed.some(other => box.left < other.left + other.width + 8 && box.left + item.width + 8 > other.left && box.top < other.top + other.height + 8 && box.top + item.height + 8 > other.top) &&
+      !valid.some(dot => x.at(dot.sales) > box.left - 9 && x.at(dot.sales) < box.left + item.width + 9 && y.at(dot.margin!) > box.top - 9 && y.at(dot.margin!) < box.top + item.height + 9));
+    if (position) Object.assign(item, position);
+    placed.push(item);
+  }
   const marker = useId();
-  const positions: { x: number; y: number }[] = [];
   return <><div className="analysis-legend"><span>○ {[...new Set(selected.map(prior))].join(" / ")}</span>{selected.map((kind, i) => <span key={kind}>{i === 0 ? "●" : "◆"} {kindName(kind)}</span>)}</div>
-    <Plot name="業種別の売上と利益率" height={355} headers={["業種", "種別", "売上（千円）", "利益率"]} rows={dots.map(item => [item.group, item.name, formatYen(item.sales), rate(item.margin)])}>
+    <Plot name="業種別の売上と利益率" width={640} height={bottom + 65} headers={["業種", "種別", "売上（千円）", "利益率"]} rows={dots.map(item => [item.group, item.name, formatYen(item.sales), rate(item.margin)])}>
       <defs><marker id={marker} markerWidth={6} markerHeight={6} refX={5} refY={3} orient="auto"><path d="M0,0L6,3L0,6" fill="var(--muted)" /></marker></defs>
-      <Axis extent={x} x1={100} x2={600} y={290} />
+      <Axis extent={x} x1={100} x2={600} y={bottom} />
       {[0, 1, 2, 3, 4].map(tick => { const value = y.low + (y.high - y.low) * tick / 4; return <g key={tick} className="analysis-axis"><line x1={100} x2={600} y1={y.at(value)} y2={y.at(value)} /><text x={90} y={y.at(value) + 4} textAnchor="end">{formatRate(value)}</text></g>; })}
-      <line className="analysis-zero" x1={100} x2={600} y1={y.at(0)} y2={y.at(0)} /><text x={100} y={18}>利益率（%）</text><text x={600} y={345} textAnchor="end">売上（千円）</text>
+      <line className="analysis-zero" x1={100} x2={600} y1={y.at(0)} y2={y.at(0)} /><text x={100} y={18}>利益率（%）</text><text x={600} y={bottom + 55} textAnchor="end">売上（千円）</text>
       {groups.map((group, groupIndex) => { const items = valid.filter(item => item.groupIndex === groupIndex); return <g key={groupIndex}>
         {items.filter(item => item.kind !== null).map(item => { const base = items.find(other => other.kind === null && other.budgetKind === item.kind); return base && <line key={item.name} className="analysis-connector" x1={x.at(base.sales)} y1={y.at(base.margin!)} x2={x.at(item.sales)} y2={y.at(item.margin!)} markerEnd={`url(#${marker})`} />; })}
         {items.map(item => <Mark key={item.name} label={`${group.name} ${item.name} 売上${formatYen(item.sales)}千円 利益率${rate(item.margin)}`}>
           {item.kind !== null && item.kind === selected[1] ? <path d={`M${x.at(item.sales)},${y.at(item.margin!) - 6}l6,6l-6,6l-6,-6Z`} fill="var(--ink)" /> : <circle cx={x.at(item.sales)} cy={y.at(item.margin!)} r={5} fill={item.kind === null ? "var(--surface)" : "var(--accent)"} stroke={item.kind === null ? "var(--muted)" : "var(--accent)"} strokeWidth={2} />}
         </Mark>)}
-        {(() => { const last = items.at(-1); if (!last) return null; const px = x.at(last.sales); let py = y.at(last.margin!) - 13;
-          while (positions.some(position => Math.abs(position.x - px) < 70 && Math.abs(position.y - py) < 18)) py += 18;
-          positions.push({ x: px, y: py });
-          return <text x={Math.min(580, px)} y={Math.min(280, py)} textAnchor={px > 475 ? "end" : "start"}>{groupIndex + 1}</text>;
-        })()}
       </g>; })}
-    </Plot><div className="analysis-legend">{groups.map((group, index) => <span key={group.id ?? "none"}>{index + 1} {group.name}</span>)}</div>
+      {names.map(item => {
+        const px = x.at(item.point.sales), py = y.at(item.point.margin!);
+        const edgeX = Math.max(item.left, Math.min(item.left + item.width, px));
+        const edgeY = Math.max(item.top, Math.min(item.top + item.height, py));
+        const distance = Math.hypot(edgeX - px, edgeY - py);
+        return <g key={item.groupIndex} className="analysis-scatter-label">
+          {distance > 24 && <line className="analysis-connector" x1={px + (edgeX - px) * 8 / distance} y1={py + (edgeY - py) * 8 / distance} x2={edgeX} y2={edgeY} />}
+          <text x={item.left} y={item.top + 14}>{item.lines.map((line, index) => <tspan key={index} x={item.left} dy={index === 0 ? 0 : 18}>{line}</tspan>)}</text>
+        </g>;
+      })}
+    </Plot>
     {valid.length < dots.length && <p className="dashboard-empty">売上0の項目は利益率を算出せず、点を表示しません。金額は「数値を表示」で確認できます。</p>}</>;
 }
 function Dumbbells({ groups, selected, prior, kindName }: { groups: AnalysisGroup[]; selected: KindId[]; prior: (kind: KindId) => string; kindName: (kind: KindId) => string }) {
