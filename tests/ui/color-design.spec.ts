@@ -3,7 +3,10 @@ import { test, expect } from "@playwright/test";
 test("仕様の配色を保ちながら確認案を試し、切替・初期化・ダイアログを確認できる", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
-  await page.goto("/tests/ui/color-design.html");
+  await page.goto("/dev-tools/index.html");
+  await expect(page).toHaveTitle("Triadic 開発ツール");
+  await expect(page.getByRole("heading", { name: "開発ツール", exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "カラーデザイン確認", exact: true }).click();
   await expect(page).toHaveTitle("Triadic カラーデザイン確認");
   await expect(page.getByRole("status")).toHaveText("確認できます");
   const light = page.getByRole("region", { name: "ライトの画面見本" });
@@ -34,5 +37,8 @@ test("仕様の配色を保ちながら確認案を試し、切替・初期化�
   await expect(light.getByRole("textbox", { name: "施策名", exact: true })).toBeFocused();
   expect(await page.locator("body").evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
   await expect(page.locator("vite-error-overlay")).toHaveCount(0);
+  await page.getByRole("link", { name: "開発ツール一覧", exact: true }).click();
+  await expect(page).toHaveURL(/\/dev-tools\/index\.html$/);
+  await expect(page.getByRole("link", { name: "実装画面の確認", exact: true })).toHaveAttribute("href", "/tests/ui/preview.html?data=large");
   expect(errors).toEqual([]);
 });

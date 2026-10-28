@@ -14,6 +14,7 @@
 - 作業はmainで行い、新しいブランチを作成しません。別作業との重複回避を理由にブランチへ分離することも禁止します。
 - パッケージ管理と実行手順はnpmを使用します。依存パッケージは完全な版で指定し、`package.json`と`package-lock.json`を揃えます。依存の更新を意図しない環境再現には`npm ci`を使います。追加・更新時には導入理由とライセンスを確認します。
 - `Triadic-extension/src/`は編集用のTypeScript/React正本です。Chrome APIに依存しないデータ処理は`Triadic-extension/src/core/`、`chrome.*`や拡張環境に依存する入口・adapterは`Triadic-extension/src/extension/`へ置きます。
+- 利用者と開発者の認識合わせに使う開発ツールは`dev-tools/`で一元管理し、追加・変更時は[開発ツールの案内](dev-tools/README.md)に従います。一覧・本体・確認案を同フォルダーへまとめ、製品のUIや配布物へ含めません。自動テストと共通の画面確認入口は複製せず参照します。
 - Manifest V3を使います。`Triadic-extension/src/extension/`はservice worker、独立拡張ページ、Chrome adapterを所有します。保存形式の処理と、File System Access APIによる実ファイルの読み書きを分離します。
 - `Triadic-extension/manifest.template.json`はManifestの編集用正本です。同ディレクトリ直下の`manifest.json`・独立ページ・assetsなどはbuildが同期する配布物であり、直接編集しません。ソース変更で配布物が変わる場合は正式なbuildで更新し、同じコミットに含めます。
 - Chrome読み込み用の生成先は`dist/extension/`、配布ZIPは`dist/Triadic-<version>.zip`です。ZIPには配布物だけを含め、ソース・確認用データ・一時ファイルを含めません。`dist/extension/`はGit管理し、成果物が変わる変更と同じコミットに含めます。配布ZIPはローカルで生成・保持し、Git管理・commit・pushから除外します。`dist/`内の一時作業ファイルも除外します。
@@ -38,7 +39,7 @@
 
 ## 検証と完了条件
 
-- カラーデザインの変更は、先に`tests/ui/color-design-draft.css`へ確認案を用意し、`tests/ui/color-design.html`で仕様カラーパレットとライト・ダークの画面見本を利用者へ提示する。利用者が確認案を承認してから製品の`styles/palette.css`と配色仕様へ反映する。承認前に製品の配色を変更しない。反映後は確認案を空に戻し、見本と仕様が一致することを確認する。確認ページの色は製品の正本から取得し、別の色番号一覧を正本として維持しない。
+- カラーデザインの変更は、先に`dev-tools/color-design/draft.css`へ確認案を用意し、`dev-tools/color-design/index.html`で仕様カラーパレットとライト・ダークの画面見本を利用者へ提示する。利用者が確認案を承認してから製品の`styles/palette.css`と配色仕様へ反映する。承認前に製品の配色を変更しない。反映後は確認案を空に戻し、見本と仕様が一致することを確認する。確認ページの色は製品の正本から取得し、別の色番号一覧を正本として維持しない。
 
 - 総原価表・展開表を変更するときは、REQUIREMENTS.mdの比較規則を先に照合します。前年・一次・確定の独立選択、総原価表の「表示中で最も後の種別−各先行表示対象」、展開表の「前年は既存行だけ・前年列なし」、見出し一行を守ります。共通部品の変更を理由に画面固有の列構成をそろえません。
 - `tests/table-contracts.mjs`は合意した表示と操作の検証です。失敗時は実装の逸脱を先に調べ、利用者が明示的に変更を求めていない列・選択・計算を、新実装に合わせて期待値から削除・変更しません。仕様変更の依頼がある場合だけ、根拠となる依頼に従って要件とテストを更新します。

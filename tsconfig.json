@@ -25,5 +25,5 @@
     "jsx": "react-jsx",
     "types": ["vite/client", "chrome", "node"]
   },
-  "include": ["Triadic-extension/src", "vite.config.ts", "playwright.config.ts", "tests/ui"]
+  "include": ["Triadic-extension/src", "vite.config.ts", "playwright.config.ts", "tests/ui", "dev-tools"]
 }

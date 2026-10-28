@@ -1,5 +1,5 @@
 import palette from "../../Triadic-extension/src/extension/styles/palette.css?raw";
-import draft from "./color-design-draft.css?raw";
+import draft from "./draft.css?raw";
 
 type Theme = "light" | "dark";
 const labels: Record<string, string> = {
