@@ -73,13 +73,16 @@ function DashboardContents({ contents, selected, disabled, onDepartment, onIniti
               </div>;
             })}</div>;
           })}
-          <div className="dashboard-department-metric"><span className="dashboard-mobile-label">利益率 / 前年差</span>{department.budgets.map((entry, index) => {
+          <div className="dashboard-department-metric"><span className="dashboard-mobile-label" aria-hidden="true">利益率 / 前年差</span>{department.budgets.map((entry, index) => {
             const prior = dashboardAmounts(entry.previous, departmentPeriod);
             const value = dashboardAmounts(entry.months, departmentPeriod).margin;
+            const difference = value === undefined || prior.margin === undefined ? undefined : value - prior.margin;
             const maximum = Math.max(1, ...dashboard.departments.flatMap(item => item.budgets.map(value => Math.abs(dashboardAmounts(value.months, departmentPeriod).margin ?? 0))));
-            return <div key={entry.kind} className={`dashboard-department-kind dashboard-series-${index}`}><span className="dashboard-series-label">{kindName(entry.kind)}</span><span>{rate(value)}</span>
-              {value !== undefined && <div className="dashboard-margin-track"><span style={{ left: `${50 + value / maximum * 46}%` }} /></div>}
-              <span className="dashboard-delta">{rate(value === undefined || prior.margin === undefined ? undefined : value - prior.margin, true)}</span></div>;
+            return <div key={entry.kind} className={`dashboard-department-kind dashboard-series-${index}`} role="group"
+              aria-label={`${department.name} ${kindName(entry.kind)} ${departmentPeriod === "annual" ? "年間" : `${departmentPeriod}月`} 利益率 ${value === undefined ? "計算できません" : rate(value)} 前年差 ${difference === undefined ? "計算できません" : rate(difference, true)}`}>
+              <span className="dashboard-series-label" aria-hidden="true">{kindName(entry.kind)}</span><span aria-hidden="true">{rate(value)}</span>
+              {value !== undefined && <div className="dashboard-margin-track" aria-hidden="true"><span style={{ left: `${50 + value / maximum * 46}%` }} /></div>}
+              <span className="dashboard-delta" aria-hidden="true">{rate(difference, true)}</span></div>;
           })}</div>
         </div>;
       })}
