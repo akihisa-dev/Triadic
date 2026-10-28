@@ -1,6 +1,7 @@
 import { verifyOperationMembership } from "./window-operation-membership.mjs";
 import { verifyWindowJoinLifetime } from "./window-join-lifetime.mjs";
 import { verifyWindowMasterIdentity } from "./window-master-identity.mjs";
+import { verifyWindowAccountDelete } from "./window-account-delete.mjs";
 import { verifyPlanContentsPatch } from "./plan-contents-patch.mjs";
 import { verifyPlanProcessing } from "./plan-processing.mjs";
 import { verifyLatestNavigation } from "./latest-navigation.mjs";
@@ -13,6 +14,7 @@ import { verifyWindowControlTimeout } from "./window-control-timeout.mjs";
 export async function verifyWindowSession(api) {
   await verifyWindowJoinLifetime(api);
   await verifyWindowMasterIdentity(api);
+  await verifyWindowAccountDelete(api);
   await verifyOperationMembership(api);
   await verifyLatestNavigation(api);
   await verifyPlanProcessing(api);

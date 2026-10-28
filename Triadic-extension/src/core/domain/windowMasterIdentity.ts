@@ -19,6 +19,7 @@ export class WindowMasterIdentity {
 }
 
 export function windowMasterTargets(command: PlanCommand): string[] {
+  if (command.type === "account" && command.change.type === "delete") return [`account:${command.change.id}`];
   if ((command.type === "expansion" || command.type === "period" || command.type === "aggregation") && command.change.type === "update") return [`${command.type}:${command.change.id}`];
   if (command.type === "aggregation" && command.change.type === "move") {
     const { member, parentId } = command.change;
