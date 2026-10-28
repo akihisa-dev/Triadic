@@ -5,6 +5,7 @@ const materials = [
   { id: "paper", name: "マットな紙", description: "細かな粒子と控えめな影で、ざらつきのある面を表します。" },
   { id: "glass", name: "すりガラス", description: "背後の帯を透かしてぼかし、縁に薄い光を加えます。" },
   { id: "metal", name: "金属", description: "方向のそろった細い筋と、なだらかな反射で硬い面を表します。" },
+  { id: "liquid-smoke", name: "リキッドスモーク", description: "ライトは煙の灰色が均一に溶けた透明な液体、ダークは墨が完全に溶けた深い黒の液体。筋や粒を残さず、光沢と厚みを表します。" },
 ] as const;
 type Material = typeof materials[number]["id"];
 const params = new URLSearchParams(location.search);

@@ -9,7 +9,7 @@ test("素材と強さを比較し、同じURLで選択を復元してダイア�
   const light = page.getByRole("region", { name: "ライトの素材感見本" });
   const dark = page.getByRole("region", { name: "ダークの素材感見本" });
   await expect(page.getByRole("radio", { name: "マットな紙", exact: true })).toBeChecked();
-  for (const [label, value] of [["なし", "none"], ["すりガラス", "glass"], ["金属", "metal"], ["マットな紙", "paper"]]) {
+  for (const [label, value] of [["なし", "none"], ["すりガラス", "glass"], ["金属", "metal"], ["リキッドスモーク", "liquid-smoke"], ["マットな紙", "paper"]]) {
     await page.getByRole("radio", { name: label!, exact: true }).check();
     await expect(light.locator(":scope > .stage")).toHaveAttribute("data-material", value!);
     await expect(dark.locator(":scope > .stage")).toHaveAttribute("data-material", value!);
