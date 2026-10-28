@@ -91,29 +91,58 @@ test("旧保存形式のデータ・履歴は読み込みと編集を拒否し�
   });
 });
 
+const runtimeFaultFilter = /[\\/]sqliteRuntime\.ts$/;
+const schemaFaultFilter = /[\\/]triadicDatabase\.ts$/;
+const sameSource = (file, expected) => file.replaceAll('\\', '/') === expected.replaceAll('\\', '/');
+function replaceFaultSite(contents, anchor, replacement) {
+  assert.equal(contents.split(anchor).length - 1, 1, `障害注入箇所が一意に見つかりません: ${anchor}`);
+  return contents.replace(anchor, replacement);
+}
+
+test('障害注入はWindows・POSIXの対象パスだけを認識し、注入箇所の変更を検出する', () => {
+  for (const [filter, name] of [[runtimeFaultFilter, 'sqliteRuntime'], [schemaFaultFilter, 'triadicDatabase']]) {
+    for (const separator of ['/', '\\']) {
+      const file = ['C:', 'repo', 'Triadic-extension', 'src', 'core', 'storage', `${name}.ts`].join(separator);
+      assert.ok(filter.test(file));
+      assert.ok(sameSource(file, 'C:/repo/Triadic-extension/src/core/storage/' + name + '.ts'));
+      assert.ok(!sameSource(file, 'C:/repo/other/' + name + '.ts'));
+      assert.ok(!filter.test(file + '.backup'));
+    }
+  }
+  assert.throws(() => replaceFaultSite('changed', 'original', 'fault'), /障害注入箇所/);
+  assert.throws(() => replaceFaultSite('original original', 'original', 'fault'), /障害注入箇所/);
+});
+
 async function withInitializationFault({ failures = 0, schema = false }, operation) {
   const { mkdtemp, rm } = await import('node:fs/promises');
   const { pathToFileURL } = await import('node:url');
   const temporary = await mkdtemp(path.resolve('dist/.initialization-retry-'));
   try {
     const bundle = path.join(temporary,'entry.mjs');
+    let runtimeInjections = 0, schemaInjections = 0;
     await build({stdin:{contents:`export * from './tests/core-api.ts'; export { initializationAttempts } from './Triadic-extension/src/core/storage/sqliteRuntime.ts';`,resolveDir:process.cwd(),loader:'ts'},outfile:bundle,bundle:true,format:'esm',platform:'node',packages:'external',loader:{'.css':'empty'},plugins:[{
       name:'initialization-fault',setup(api) {
         api.onResolve({filter:/\.wasm\?url$/},()=>({path:'wasm',namespace:'fault-wasm'}));
         api.onLoad({filter:/.*/,namespace:'fault-wasm'},()=>({contents:`export default ${JSON.stringify(path.resolve('node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'))}`,loader:'js'}));
-        api.onLoad({filter:/\/sqliteRuntime\.ts$/},async({path:file})=>{
+        api.onLoad({filter:runtimeFaultFilter},async({path:file})=>{
+          if (!sameSource(file, path.resolve('Triadic-extension/src/core/storage/sqliteRuntime.ts'))) return;
+          runtimeInjections++;
           let contents=await readFile(file,'utf8');
-          contents=contents.replace('initialize({ locateFile: () => wasmUrl })','faultedInitialize({ locateFile: () => wasmUrl })');
+          contents=replaceFaultSite(contents,'initialize({ locateFile: () => wasmUrl })','faultedInitialize({ locateFile: () => wasmUrl })');
           contents+=`\nlet attempts=0; export function initializationAttempts(){return attempts;} async function faultedInitialize(options: {locateFile:(name:string)=>string}) { if (++attempts <= ${failures}) throw new Error('一時的な初期化失敗'); return initialize(options); }`;
           return {contents,loader:'ts'};
         });
-        if(schema) api.onLoad({filter:/\/triadicDatabase\.ts$/},async({path:file})=>{
+        if(schema) api.onLoad({filter:schemaFaultFilter},async({path:file})=>{
+          if (!sameSource(file, path.resolve('Triadic-extension/src/core/storage/triadicDatabase.ts'))) return;
+          schemaInjections++;
           let contents=await readFile(file,'utf8');
-          contents=contents.replace('canonical.exec(TRIADIC_SCHEMA_SQL);',`if(type === 'snapshot' && !faultedSchema) {faultedSchema=true;throw new Error('一時的なスキーマ準備失敗');} canonical.exec(TRIADIC_SCHEMA_SQL);`);
+          contents=replaceFaultSite(contents,'canonical.exec(TRIADIC_SCHEMA_SQL);',`if(type === 'snapshot' && !faultedSchema) {faultedSchema=true;throw new Error('一時的なスキーマ準備失敗');} canonical.exec(TRIADIC_SCHEMA_SQL);`);
           contents+='\nlet faultedSchema=false;';return {contents,loader:'ts'};
         });
       }
     }]});
+    assert.equal(runtimeInjections, 1, 'SQLite本体の障害注入は対象ファイル1件だけ');
+    assert.equal(schemaInjections, schema ? 1 : 0, 'スキーマの障害注入は指定した対象ファイルだけ');
     await operation(await import(pathToFileURL(bundle)));
   } finally {await rm(temporary,{recursive:true,force:true});}
 }
