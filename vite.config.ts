@@ -2,6 +2,7 @@ import path from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { bundledNotices } from "./scripts/bundled-notices";
+import { isBuildOutput } from "./scripts/build-watch";
 const notices = bundledNotices();
 
 const projectRoot = process.cwd();
@@ -12,6 +13,7 @@ const buildOutputRoot = process.env.TRIADIC_BUILD_OUTPUT
 export default defineConfig({
   root: projectRoot,
   base: "./",
+  server: { watch: { ignored: (file: string) => isBuildOutput(file, projectRoot) } },
   // Preserve embedded whitespace as escaped strings in distribution files.
   esbuild: { supported: { "template-literal": false } },
   plugins: [react(), notices.main()],

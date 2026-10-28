@@ -486,3 +486,63 @@ test("ExcelJSの事前同梱依存72組の原文も配布し、本文の対応�
     for (const text of Object.values(module.notices)) assert.ok(notice.includes(text.replace(/[ \t]+$/gm, "").trimEnd()));
   }
 });
+
+test("開発監視はWindows・POSIXの配布物だけを除外し、ソースを維持する", async () => {
+  await withNodeBundle("scripts/build-watch.ts", async ({ isBuildOutput }) => {
+    for (const separator of ["/", "\\"]) {
+      const root = ["C:", "repo"].join(separator);
+      const file = value => root + separator + value.replaceAll("/", separator);
+      for (const name of ["dist", "dist/extension", "dist/.triadic-build-123/index.html", "dist/.triadic-replace-123/next/index.html", "Triadic-extension/assets", "Triadic-extension/assets/code.js", "Triadic-extension/icons/icon.png", "Triadic-extension/index.html", "Triadic-extension/manifest.json", "Triadic-extension/src/extension/background.js", "Triadic-extension/.triadic-replace-123/next", "Triadic-extension/src/extension/.triadic-replace-123/previous"]) assert.ok(isBuildOutput(file(name), root), name);
+      for (const name of ["index.html", "Triadic-extension", "Triadic-extension/src", "Triadic-extension/src/extension", "Triadic-extension/src/extension/background.ts", "Triadic-extension/src/extension/App.tsx", "Triadic-extension/src/extension/App.css", "Triadic-extension/manifest.template.json", "branding/icons/icon.png", "tests/ui/preview.ts"]) assert.equal(isBuildOutput(file(name), root), false, name);
+      assert.equal(isBuildOutput(file("dist/extension"), root + "-other"), false);
+    }
+  });
+});
+
+test("Vite監視中の初回・再置換は生成物を通知せずソースの更新を検知する", async t => {
+  const { createServer } = await import("vite");
+  const { replaceBuildOutputs } = await import("../scripts/replace-build-outputs.mjs");
+  const root = await realpath(await mkdtemp(path.join(tmpdir(), "triadic-build-watch-")));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const source = path.join(root, "Triadic-extension/src/extension/source.ts");
+  await mkdir(path.dirname(source), { recursive: true });
+  await writeFile(source, "export const value = 1;");
+  await withNodeBundle("scripts/build-watch.ts", async ({ isBuildOutput }) => {
+    await withNodeBundle("vite.config.ts", async ({ default: config }) => {
+      assert.equal(config.server.watch.ignored(path.join(projectRoot, "dist/extension")), true);
+      assert.equal(config.server.watch.ignored(path.join(projectRoot, "Triadic-extension/src/extension/App.tsx")), false);
+    });
+    const server = await createServer({ root, configFile: false, logLevel: "silent", server: {
+      middlewareMode: true, hmr: false, watch: { ignored: file => isBuildOutput(file, root) },
+    }, optimizeDeps: { noDiscovery: true, include: [] } });
+    try {
+      await new Promise(resolve => server.watcher.once("ready", resolve));
+      const generatedEvents = [];
+      server.watcher.on("all", (event, file) => { if (isBuildOutput(file, root)) generatedEvents.push([event, file]); });
+      const sourceChange = async value => {
+        const changed = new Promise((resolve, reject) => {
+          const timer = setTimeout(() => { server.watcher.off("change", listener); reject(new Error("ソース更新が通知されません")); }, 5000);
+          const listener = file => { if (file === source) { clearTimeout(timer); server.watcher.off("change", listener); resolve(); } };
+          server.watcher.on("change", listener);
+        });
+        await writeFile(source, `export const value = ${value};`);
+        await changed;
+      };
+      for (let generation = 1; generation <= 2; generation++) {
+        const staging = path.join(root, `dist/.triadic-build-${generation}`);
+        await mkdir(staging, { recursive: true });
+        await writeFile(path.join(staging, "index.html"), String(generation));
+        const target = path.join(root, "dist/extension");
+        await replaceBuildOutputs([
+          { source: staging, target },
+          { bytes: String(generation), target: path.join(root, "Triadic-extension/index.html") },
+          { bytes: String(generation), target: path.join(root, "Triadic-extension/src/extension/background.js") },
+        ]);
+        assert.equal(await readFile(path.join(target, "index.html"), "utf8"), String(generation));
+        await sourceChange(generation + 1);
+      }
+      assert.deepEqual(generatedEvents, []);
+      assert.ok(!Object.keys(server.watcher.getWatched()).some(file => isBuildOutput(file, root)), "置換するフォルダーに監視ハンドルを保持しない");
+    } finally { await server.close(); }
+  });
+});

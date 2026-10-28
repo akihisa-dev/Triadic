@@ -367,6 +367,8 @@ SQLite is bundled and works in memory without external communication or extra pe
 
 `npm run build` typechecks, builds/validates in temporary storage, and generates loadable `dist/extension/` and distributable `dist/Triadic-<version>.zip`. ZIPs remain local and are excluded from Git/commit/push. Manifest is at ZIP root; source, test data, and temporary files are excluded. Tracked Manifest, standalone pages, assets, icons, and service worker continue to synchronize to `Triadic-extension/`. ZIP generation and runtime Excel ZIP inspection use runtime JSZip with the MIT license selected. Build then regenerates the [test .triadic file](#test-triadic-file).
 
+The development server excludes `dist/`, generated extension files, and replacement folders from watching while retaining source updates. If Windows still reports `EPERM` during replacement, stop the development server and retry the build; the build retains its rollback and ZIP validation. Windows machine validation of concurrent development/build is still pending.
+
 ## Verification and Git hooks
 
 [AGENTS.md](AGENTS.md) defines scope, safety, dependency, commit/version, and Issue rules. Normally run `npm run verify`. Excel export/import tests run only for changes affecting Excel output, its calculations/layout, or import, using `npm run test:excel`. They are excluded from `npm test`, `verify`, and push hooks. Ordinary Playwright runs also exclude Excel download/import tests; use `npm run test:ui:excel` only for related changes. Regular tests compare all masters in the master entry and Home graph, detecting omissions, duplicates, and extras. No dedicated browser installation is needed. See the browser section below for screen-impacting changes.
@@ -968,6 +970,8 @@ TypeScript、React、Vite、SQLite公式のWebAssembly配布（`@sqlite.org/sqli
 SQLite本体は拡張機能へ同梱し、メモリ内で処理します。外部通信・追加権限は不要です。保存形式と履歴の構造は維持します。SQLite公式のnpm配布部分はApache-2.0、SQLite本体は著作権放棄、補助コードはMIT・NCSAで提供されています。配布時には同梱のライセンス表示を保持します。
 
 `npm run build`は型チェック後に一時領域でビルド・検証し、Chrome読み込み用の`dist/extension/`と配布用の`dist/Triadic-<version>.zip`を生成します。配布ZIPはローカルに保持し、Git管理・commit・pushから除外します。 ページとWorkerの配布コードに実際に含まれる依存（推移依存を含む）の固定版・著作権・ライセンス本文を`assets/THIRD-PARTY-NOTICES.txt`へ生成し、Chrome導入用フォルダー・`dist/extension/`・ZIPへ同梱します。既存のSQLiteライセンス表示も維持します。ZIPの直下にManifestを置き、ソース・確認用データ・一時ファイルは含めません。Git管理されるManifest・独立ページ・assets・icons・service workerは、引き続き`Triadic-extension/`へ同期します。ZIP生成と実行時のExcel内容の検査には、実行用依存のJSZip（MITライセンスを選択）を使用します。続いて[確認用の.triadicファイル](#確認用のtriadicファイル)を再生成します。
+
+開発サーバーは`dist/`、拡張機能の生成ファイル、置換用フォルダーを監視対象から外し、編集用ソースの更新は引き続き検知します。Windowsで配布物の置換が`EPERM`となる場合は、開発サーバーを停止してbuildを再実行してください。失敗時の旧配布物の復元とZIP検証は維持します。開発中の同時buildのWindows実機確認は未実施です。
 
 ## 検証とGitフック
 
