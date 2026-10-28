@@ -1,0 +1,38 @@
+import { test, expect } from "@playwright/test";
+
+test("仕様の配色を保ちながら確認案を試し、切替・初期化・ダイアログを確認できる", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto("/tests/ui/color-design.html");
+  await expect(page).toHaveTitle("Triadic カラーデザイン確認");
+  await expect(page.getByRole("status")).toHaveText("確認できます");
+  const light = page.getByRole("region", { name: "ライトの画面見本" });
+  const dark = page.getByRole("region", { name: "ダークの画面見本" });
+  await expect(light).toHaveCSS("background-color", "rgb(247, 247, 247)");
+  await expect(dark).toHaveCSS("background-color", "rgb(41, 41, 41)");
+  const palette = page.getByRole("table", { name: "ライトの仕様カラーパレットと確認案" }).first();
+  const canvas = palette.locator('[data-token="canvas"]');
+  await expect(canvas.getByRole("cell").first()).toHaveText("#F7F7F7");
+  await page.getByLabel("ライトの画面背景の確認案", { exact: true }).fill("#e8eef8");
+  await expect(light).toHaveCSS("background-color", "rgb(232, 238, 248)");
+  await expect(dark).toHaveCSS("background-color", "rgb(41, 41, 41)");
+  await expect(canvas.getByRole("cell").first()).toHaveText("#F7F7F7");
+  await expect(canvas.getByRole("cell").last()).toHaveText("#E8EEF8");
+  await page.getByRole("radio", { name: "仕様の配色", exact: true }).check();
+  await expect(light).toHaveCSS("background-color", "rgb(247, 247, 247)");
+  await page.getByRole("radio", { name: "確認案", exact: true }).check();
+  await expect(light).toHaveCSS("background-color", "rgb(232, 238, 248)");
+  await page.getByRole("button", { name: "確認案を初期状態に戻す" }).click();
+  await expect(light).toHaveCSS("background-color", "rgb(247, 247, 247)");
+  await dark.getByRole("button", { name: "施策を追加", exact: true }).click();
+  const dialog = dark.getByRole("dialog", { name: "施策を追加" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toHaveCSS("background-color", "rgb(52, 52, 52)");
+  await dialog.getByRole("button", { name: "閉じる" }).click();
+  await expect(dialog).not.toBeVisible();
+  await light.getByRole("button", { name: "入力欄を選択" }).click();
+  await expect(light.getByRole("textbox", { name: "施策名", exact: true })).toBeFocused();
+  expect(await page.locator("body").evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
+  await expect(page.locator("vite-error-overlay")).toHaveCount(0);
+  expect(errors).toEqual([]);
+});

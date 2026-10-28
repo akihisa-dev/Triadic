@@ -1,0 +1,4 @@
+/* 次の配色案だけをここへ記述する。製品の palette.css は承認後に変更する。
+   :root { --canvas: #f7f7f7; }
+   :root[data-theme="dark"] { --canvas: #292929; }
+   候補がないときは空にして、仕様と同じ色を表示する。 */
