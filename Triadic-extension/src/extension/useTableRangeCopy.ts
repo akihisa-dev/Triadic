@@ -1,5 +1,6 @@
 import { Fragment, createElement, useId, useState, useEffect, useLayoutEffect, useRef, type ClipboardEvent, type KeyboardEvent, type MouseEvent, type PointerEvent, type RefObject } from "react";
 import { gridBounds, type GridCell, type GridSelection } from "../core/tables/grid";
+import { useTableMinimumHeight } from "./useTableMinimumHeight";
 import { revealTableRangeCell } from "./tableRangeVisibility";
 import { describeTableRange, moveTableRangeSelection, tableRangeInstructions } from "../core/tables/tableRangeSelection";
 import "./TableRangeCopy.css";
@@ -10,6 +11,7 @@ export const tableCopyCell = (row: number, column: number) => ({ "data-copy-row"
 export function useTableRangeCopy(container: RefObject<HTMLDivElement | null>, options: {
   rowCount: number; columnCount: number; textAt: (row: number, column: number) => string; describeAt: (row: number, column: number) => string; resetKey: unknown;
 }) {
+  useTableMinimumHeight(container);
   const statusId = useId();
   const [description, setDescription] = useState("選択なし。");
   const pendingReveal = useRef(false);

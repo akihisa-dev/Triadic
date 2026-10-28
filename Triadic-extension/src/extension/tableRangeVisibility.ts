@@ -31,4 +31,10 @@ export function revealTableRangeCell(region: HTMLElement, cell: HTMLElement): vo
   if (right > left) region.scrollLeft += rect.width > right - left
     ? rect.right - right // In a narrow viewport expose the right-aligned amount, rather than the cell padding.
     : offset(rect.left, rect.right, left, right);
+  // A short viewport may require scrolling the outer page as well as the table.
+  const page = region.closest<HTMLElement>(".home-content");
+  if (page) {
+    const visible = page.getBoundingClientRect(), selected = cell.getBoundingClientRect();
+    page.scrollTop += offset(selected.top, selected.bottom, visible.top + page.clientTop, visible.top + page.clientTop + page.clientHeight);
+  }
 }

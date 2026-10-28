@@ -283,7 +283,7 @@
 .initiative-year-field { width: 10rem; max-width: 100%; }
 .initiative-list-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 32px; }
 .initiative-list-heading .initiative-field { margin: 0; }
-.home-content:has(.initiative-overview-page) { overflow: hidden; }
+.home-content:has(.initiative-overview-page) { overflow: auto; }
 .page-switch:has(> .initiative-overview-page) { height: 100%; min-height: 0; grid-template-rows: minmax(0, 1fr); }
 .initiative-overview-page { display: flex; flex-direction: column; height: 100%; min-height: 0; gap: 12px; }
 .initiative-overview-page .initiative-list-heading { flex-shrink: 0; gap: 8px 16px; }

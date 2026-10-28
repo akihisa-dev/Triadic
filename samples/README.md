@@ -81,3 +81,5 @@
 三表のキーボードだけでの選択開始・再開始と範囲通知も同じ大規模表示用データで確認します。`tests/table-range-selection.mjs`で画面外までの選択と同名行・0の説明を検証し、画面操作は`clipboard-move-copy.spec.ts`を使用します。サンプルの保存内容は変更しません。
 
 総原価表の非表示の年間前年差・基準前年小計の超過は `tests/ui/cost-display-plan.ts` の専用データで検証します。既定マスタを維持した実SQLiteを作成・検査・再読込し、`tests/cost-display-overflow.mjs` と `cost-display-overflow.spec.ts` で確認します。会社予算の内容は変更しません。
+
+三表の高さ不足は既存の機能確認用データを使い、`short-table-viewport.spec.ts` で通常高・450px・300pxへの変更、キーボード選択と条件欄への復帰を確認します。会社予算の金額・マスタは変更しません。

@@ -10,7 +10,7 @@ export function verifyTableRangeVisibility({ revealTableRangeCell }) {
       const frozenLeft = layout.startsWith('cost') ? 176 : width <= 650 ? 144 : layout === 'initiative' ? 532 : 520;
       const footerHeight = layout === 'initiative' ? 28 : 0;
       const region = { scrollTop: 980, scrollLeft: 600, clientTop: 1, clientLeft: 1, clientHeight: 500, clientWidth: width,
-        contains: () => true, getBoundingClientRect: () => ({ top: 219, left: 19 }) };
+        closest: () => null, contains: () => true, getBoundingClientRect: () => ({ top: 219, left: 19 }) };
       const node = (rect, style = {}, contains = () => false) => ({ style: { position: 'static', top: 'auto', bottom: 'auto', left: 'auto', ...style },
         getBoundingClientRect: () => rect, contains });
       const top = 220 + frozenTop, bottom = 720 - footerHeight, left = 20 + frozenLeft, right = 20 + width;
@@ -49,7 +49,7 @@ export function verifyTableRangeVisibility({ revealTableRangeCell }) {
     }
     for (const width of [240, 279, 320, 375]) {
       const region = { clientTop: 0, clientLeft: 0, clientWidth: width, clientHeight: 500, scrollTop: 0, scrollLeft: 0,
-        contains: () => true, getBoundingClientRect: () => ({ top: 0, left: 0 }) };
+        closest: () => null, contains: () => true, getBoundingClientRect: () => ({ top: 0, left: 0 }) };
       const header = { style: { position: 'sticky', left: '0px' }, getBoundingClientRect: () => ({ right: 380 - region.scrollLeft, width: 144 }) };
       const table = { tHead: { contains: () => false, style: { position: 'static' }, rows: [{ contains: () => false, cells: [header], style: { position: 'static' } }] } };
       const cell = { closest: () => table, getBoundingClientRect: () => ({ top: 200, bottom: 228, left: 380 - region.scrollLeft, right: 476 - region.scrollLeft, width: 96 }) };
