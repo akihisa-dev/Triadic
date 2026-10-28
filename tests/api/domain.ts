@@ -61,3 +61,5 @@ export * from "../../Triadic-extension/src/core/tables/dashboard";
 export * from "../../Triadic-extension/src/core/tables/comparisonDisplay";
 
 export { initiativeListColumns } from "../../Triadic-extension/src/core/tables/initiativeListView";
+
+export { createCostDisplayOverflowPlan } from "../ui/cost-display-plan";

@@ -1,7 +1,9 @@
+import { verifyCostDisplayOverflow } from "./cost-display-overflow.mjs";
 import assert from "node:assert/strict";
 import { verifyKindExpansionIndex } from "./kind-expansion-index.mjs";
 
 export async function verifyPeriodTables(api) {
+  await verifyCostDisplayOverflow(api);
   const { tablePeriods: periods } = api;
   // Later additions must become the left-hand side, with no comparisons between earlier kinds.
   assert.deepEqual(api.latestComparisonPairs(["前年", "一次", "確定", "追加種別"]), [

@@ -79,3 +79,5 @@
 金額範囲の矢印移動は既存の大規模表示用データを使い、`clipboard-move-copy.spec.ts` で三表の上・左へ戻る操作、下端合計、範囲コピーを通常幅と狭幅で確認します。`tests/table-range-visibility.mjs` は固定範囲の寸法を与えてスクロール補正を検証します。`narrow-range-visibility.spec.ts`は320px・375pxで初回選択・右から左への復帰・サイドバー開閉後の金額全桁を確認します。保存データとサンプルの業務設定は変更しません。
 
 三表のキーボードだけでの選択開始・再開始と範囲通知も同じ大規模表示用データで確認します。`tests/table-range-selection.mjs`で画面外までの選択と同名行・0の説明を検証し、画面操作は`clipboard-move-copy.spec.ts`を使用します。サンプルの保存内容は変更しません。
+
+総原価表の非表示の年間前年差・基準前年小計の超過は `tests/ui/cost-display-plan.ts` の専用データで検証します。既定マスタを維持した実SQLiteを作成・検査・再読込し、`tests/cost-display-overflow.mjs` と `cost-display-overflow.spec.ts` で確認します。会社予算の内容は変更しません。
