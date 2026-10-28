@@ -19,6 +19,9 @@ plan.initiatives = mode === "zero" ? [] : [{ ...source, name: "境界確認", ex
   { accountId: expense.id, amounts: { 4: "-10", 5: "-20" } },
 ] }];
 if (mode === "negative") plan.initiatives[0]!.rows[0]!.amounts[5] = "0";
+if (mode === "axis-positive" || mode === "axis-negative") plan.initiatives = [{ ...source, name: "軸余白の境界", rows: [
+  { accountId: sales.id, amounts: { 4: mode === "axis-positive" ? "8500000000000" : "-8500000000000" } },
+] }];
 if (mode === "long") {
   plan.expansions = plan.expansions.map(item => ({ ...item, expansionName: item.expansionName.repeat(15) }));
   plan.industries = plan.industries.map(item => ({ ...item, industryName: item.industryName.repeat(15) }));

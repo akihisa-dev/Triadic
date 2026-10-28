@@ -1,5 +1,5 @@
 import { useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { addYen, formatRate, formatYen, sumYen } from "../core/domain/amounts";
+import { addYen, formatAmount, formatRate, formatYen, sumYen } from "../core/domain/amounts";
 import { initiativeMonths } from "../core/domain/calendar";
 import { baselineFor, comparisonName, previousKindName, type KindId } from "../core/domain/kinds";
 import type { PlanContents } from "../core/domain/plan";
@@ -49,8 +49,8 @@ function Axis({ extent, x1, x2, y, vertical = false }: { extent: ReturnType<type
   return <g className="analysis-axis">{[0, 1, 2, 3, 4].map(tick => {
     const value = extent.low + (extent.high - extent.low) * tick / 4;
     const at = extent.at(value);
-    return vertical ? <g key={tick}><line x1={x1} x2={x2} y1={at} y2={at} /><text x={x1 - 8} y={at + 4} textAnchor="end">{formatYen(Math.round(value))}</text></g>
-      : <g key={tick}><line x1={at} x2={at} y1={26} y2={y} /><text x={at} y={y + 20} textAnchor="middle">{formatYen(Math.round(value))}</text></g>;
+    return vertical ? <g key={tick}><line x1={x1} x2={x2} y1={at} y2={at} /><text x={x1 - 8} y={at + 4} textAnchor="end">{formatAmount(value / 1000)}</text></g>
+      : <g key={tick}><line x1={at} x2={at} y1={26} y2={y} /><text x={at} y={y + 20} textAnchor="middle">{formatAmount(value / 1000)}</text></g>;
   })}</g>;
 }
 function Waterfall({ groups, kind, start, end, prior, budget }: { groups: AnalysisGroup[]; kind: KindId; start: number; end: number; prior: string; budget: string }) {

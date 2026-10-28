@@ -3,6 +3,20 @@ import assert from "node:assert/strict";
 export async function verifyDashboard(api) {
   const sample = await api.readPlanContents(await api.createSamplePlan(2026));
   const sales = sample.accounts.find(item => item.accountType === "sales");
+  for (const sign of [1, -1]) {
+    const empty = await api.createTriadicDatabase(2026), initial = await api.readPlanContents(empty);
+    const bytes = await api.registerInitiative(empty, { ...api.createInitiativeDraft('2026'), name: '目盛余白の境界',
+      departmentId: initial.departments[0].id, industryId: initial.departments[0].industryIds[0], expansionId: initial.expansions[0].id,
+      rows: [{ accountId: sales.id, amounts: { 4: String(sign * 8500000000000) } }] });
+    await api.validateTriadicDatabase(bytes);
+    const contents = await api.readPlanContents(bytes);
+    for (const selected of [[1], [2], [1, 2]]) {
+      assert.equal(api.dashboardAmounts(api.buildDashboard(contents, selected).budgets[0].months).sales, sign * 8500000000000000);
+      const html = api.renderDashboard(contents, selected);
+      assert.match(html, /8,500,000,000,000/);
+      assert.match(html, /9,180,000,000,000/, '実額の上限を超える概算の軸余白も千円で表示');
+    }
+  }
   const expense = sample.accounts.find(item => item.accountType === "expense");
   const source = sample.initiatives[0];
   const row = (accountId, amount, confirmed) => ({ ...source.rows[0], accountId, amounts: { 4: amount }, overrides: confirmed === undefined ? {} : { 2: { 4: confirmed } } });
