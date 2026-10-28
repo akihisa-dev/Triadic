@@ -22,6 +22,14 @@ if (mode === "negative") plan.initiatives[0]!.rows[0]!.amounts[5] = "0";
 if (mode === "axis-positive" || mode === "axis-negative") plan.initiatives = [{ ...source, name: "軸余白の境界", rows: [
   { accountId: sales.id, amounts: { 4: mode === "axis-positive" ? "8500000000000" : "-8500000000000" } },
 ] }];
+if (mode === "hidden-expense") {
+  const expenses = plan.accounts.filter(account => account.accountType === "expense").slice(0, 2);
+  const profit = plan.accounts.find(account => account.accountType === "profit")!;
+  plan.initiatives = [1, -1].map((sign, index) => ({ ...source, id: index + 1, industryId: plan.industries[index]!.id, rows: [
+    ...expenses.map(account => ({ accountId: account.id, amounts: { 4: String(sign * 5000000000000) } })),
+    { accountId: profit.id, amounts: { 4: String(sign * 5000000000000) } }, { accountId: profit.id, amounts: { 4: String(sign * 5000000000000) } },
+  ] }));
+}
 if (mode === "long") {
   plan.expansions = plan.expansions.map(item => ({ ...item, expansionName: item.expansionName.repeat(15) }));
   plan.industries = plan.industries.map(item => ({ ...item, industryName: item.industryName.repeat(15) }));

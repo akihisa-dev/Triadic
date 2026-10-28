@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import { verifyDashboardHiddenExpense } from './dashboard-hidden-expense.mjs';
 
 export async function verifyDashboard(api) {
+  await verifyDashboardHiddenExpense(api);
   const sample = await api.readPlanContents(await api.createSamplePlan(2026));
   const sales = sample.accounts.find(item => item.accountType === "sales");
   for (const sign of [1, -1]) {

@@ -211,7 +211,7 @@ function Scatter({ groups, selected, prior, kindName }: { groups: AnalysisGroup[
     {valid.length < dots.length && <p className="dashboard-empty">売上0の項目は利益率を算出せず、点を表示しません。金額は「数値を表示」で確認できます。</p>}</>;
 }
 function Dumbbells({ groups, selected, prior, kindName }: { groups: AnalysisGroup[]; selected: KindId[]; prior: (kind: KindId) => string; kindName: (kind: KindId) => string }) {
-  const items = groups.map(group => ({ name: group.name, values: selected.map(kind => ({ kind, prior: analysisAnnual(group.budgets.find(entry => entry.kind === kind)!.previous).expense, value: annual(group, kind).expense })) })).filter(item => item.values.some(value => value.prior !== 0 || value.value !== 0));
+  const items = groups.map(group => ({ name: group.name, values: selected.map(kind => ({ kind, prior: analysisAnnual(group.budgets.find(entry => entry.kind === kind)!.previous).expense!, value: annual(group, kind).expense! })) })).filter(item => item.values.some(value => value.prior !== 0 || value.value !== 0));
   const step = selected.length * 22 + 22, height = Math.max(230, items.length * step + 65);
   const extent = scale(items.flatMap(item => item.values.flatMap(value => [value.prior, value.value])), 245, 530);
   return <><div className="analysis-legend"><span>○ {[...new Set(selected.map(prior))].join(" / ")}</span>{selected.map((kind, i) => <span key={kind}>{i === 0 ? "●" : "◆"} {kindName(kind)}</span>)}</div>
@@ -248,7 +248,7 @@ export function DashboardAnalysis({ contents, selected }: { contents: PlanConten
   const prior = priorName(kind), note = `年間・${kindName(kind)}・千円`;
   const total = (metric: "sales" | "profit", previous: boolean) => sumYen(data.industries.map(group => previous ? analysisAnnual(group.budgets.find(entry => entry.kind === kind)!.previous)[metric] : annual(group, kind)[metric]));
   const sales = data.industries.map(group => ({ name: group.name, value: annual(group, kind).sales }));
-  const expenses = data.accounts.map(group => ({ name: group.name, value: annual(group, kind).expense }));
+  const expenses = data.accounts.map(group => ({ name: group.name, value: annual(group, kind).expense! }));
   const categoryGroups = data.categoriesByExpansion.get(expansionId) ?? [];
   const industryGroups = data.industries;
   const matrixIndustries = data.industries;

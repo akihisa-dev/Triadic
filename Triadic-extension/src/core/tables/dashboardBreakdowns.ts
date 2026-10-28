@@ -5,26 +5,27 @@ import { baselineFor, resolvedAmount, type KindId } from "../domain/kinds";
 import type { PlanContents } from "../domain/plan";
 
 type Metric = "sales" | "profit" | "expense";
-export type AnalysisAmounts = Record<Metric, number>;
+export type AnalysisAmounts = { sales: number; profit: number; expense?: number };
 export type AnalysisMonths = Record<number, AnalysisAmounts>;
 export type AnalysisSeries = { previous: AnalysisMonths; budgets: { kind: KindId; previous: AnalysisMonths; months: AnalysisMonths }[] };
 export type AnalysisGroup = AnalysisSeries & { id: number | null; name: string };
 type ExactMonths = Map<number, Record<Metric, bigint>>;
 const empty = (): ExactMonths => new Map(initiativeMonths.map(month => [month, { sales: 0n, profit: 0n, expense: 0n }]));
-const add = (target: ExactMonths, month: number, values: AnalysisAmounts) => {
+const add = (target: ExactMonths, month: number, values: ReturnType<typeof accountEffectsYen>) => {
   const entry = target.get(month)!;
   for (const metric of ["sales", "profit", "expense"] as const) entry[metric] += BigInt(values[metric]);
 };
-const output = (months: ExactMonths): AnalysisMonths => Object.fromEntries([...months].map(([month, values]) => [month,
-  { sales: checkedYen(values.sales), profit: checkedYen(values.profit), expense: checkedYen(values.expense) }]));
+const output = (months: ExactMonths, includeExpense = false): AnalysisMonths => Object.fromEntries([...months].map(([month, values]) => [month,
+  { sales: checkedYen(values.sales), profit: checkedYen(values.profit), ...(includeExpense ? { expense: checkedYen(values.expense) } : {}) }]));
 export function analysisAnnual(months: AnalysisMonths): AnalysisAmounts {
-  return Object.fromEntries((["sales", "profit", "expense"] as const).map(metric => [metric, sumYen(initiativeMonths.map(month => months[month]![metric]))])) as AnalysisAmounts;
+  const sum = (metric: Metric) => sumYen(initiativeMonths.map(month => months[month]![metric] ?? 0));
+  return { sales: sum("sales"), profit: sum("profit"), ...(months[initiativeMonths[0]]!.expense !== undefined ? { expense: sum("expense") } : {}) };
 }
 
 /** A single pass over each kind's account rows feeds all classifications. No prior is assigned to initiative-only masters. */
 export function buildDashboardBreakdowns(contents: PlanContents, selected: KindId[]) {
   const attributes = new Map(contents.accounts.map(account => [account.id, account.accountType]));
-  const create = (definitions: { id: number; name: string }[]) => {
+  const create = (definitions: { id: number; name: string }[], includeExpense = false) => {
     const data = new Map<number | null, { id: number | null; name: string; previous: ExactMonths[]; budgets: ExactMonths[] }>(definitions.map(item => [item.id,
       { ...item, previous: selected.map(empty), budgets: selected.map(empty) }]));
     const get = (id: number | null | undefined) => {
@@ -33,10 +34,10 @@ export function buildDashboardBreakdowns(contents: PlanContents, selected: KindI
       return data.get(key)!;
     };
     return { get, finish: (): AnalysisGroup[] => [...data.values()].map(item => ({ id: item.id, name: item.name,
-      previous: output(item.previous[0]!), budgets: item.budgets.map((delta, index) => ({ kind: selected[index]!, previous: output(item.previous[index]!), months: output(new Map(initiativeMonths.map(month => {
+      previous: output(item.previous[0]!, includeExpense), budgets: item.budgets.map((delta, index) => ({ kind: selected[index]!, previous: output(item.previous[index]!, includeExpense), months: output(new Map(initiativeMonths.map(month => {
         const base = item.previous[index]!.get(month)!, change = delta.get(month)!;
         return [month, { sales: base.sales + change.sales, profit: base.profit + change.profit, expense: base.expense + change.expense }];
-      }))) })) })) };
+      })), includeExpense) })) })) };
   };
   const industries = create(contents.industries.map(item => ({ id: item.id, name: item.industryName })));
   const departments = create(contents.departments.map(item => ({ id: item.id, name: item.departmentName })));
@@ -49,7 +50,7 @@ export function buildDashboardBreakdowns(contents: PlanContents, selected: KindI
     if (!categoriesByExpansion.has(id)) categoriesByExpansion.set(id, create(categoryDefinitions.filter(item => id !== null && allowedCategories.get(id)?.has(item.id))));
     return categoriesByExpansion.get(id)!;
   };
-  const accounts = create(contents.accounts.filter(item => item.accountType === "expense").map(item => ({ id: item.id, name: item.accountName })));
+  const accounts = create(contents.accounts.filter(item => item.accountType === "expense").map(item => ({ id: item.id, name: item.accountName })), true);
   const cells = new Map<string, { department: number | null; industry: number | null; previous: ExactMonths[]; budgets: ExactMonths[] }>();
   const cell = (department: number | null, industry: number | null) => {
     const key = JSON.stringify([department, industry]);
