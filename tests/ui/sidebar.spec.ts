@@ -9,6 +9,7 @@ test("アイコンのレールはホバーで展開し、移動後もカーソ�
   expect((await sidebar.boundingBox())!.width).toBe(64);
   await expect(entry.locator("span")).toHaveCSS("opacity", "0");
   await expect(sidebar.getByRole("navigation").getByRole("button")).toHaveText(["Home", "ダッシュボード", "施策一覧", "総原価表", "展開表", "前年入力", "入出力", "マスタ", "履歴"]);
+  await settleMotion(app.locator("body"));
   const icon = (await entry.locator("svg").boundingBox())!;
 
   await entry.hover();
