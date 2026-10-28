@@ -57,7 +57,7 @@ export function combineTotals(left: ExpansionMonths, right: ExpansionMonths, sig
     profit: left[month]?.profit === null || right[month]?.profit === null ? null : addYen(left[month]?.profit ?? 0, (right[month]?.profit ?? 0) * sign),
   }]));
 }
-export function buildKindExpansionTable(contents: PlanContents, selected: KindId[], sort: ExpansionSort) {
+export function buildKindExpansionTable(contents: PlanContents, selected: KindId[], sort: ExpansionSort, options: { comparePrevious?: boolean } = {}) {
   const projections = selected.map(kind => initiativesForKind(contents.initiatives, contents.accounts, kind, ["sales", "profit"]));
   const indexes = projections.map(items => {
     const byId = new Map<number, (typeof items)[number]>();
@@ -75,7 +75,8 @@ export function buildKindExpansionTable(contents: PlanContents, selected: KindId
     ? [...values, combineTotals(values[selected.indexOf(2)]!, values[selected.indexOf(1)]!, -1)] : values;
   const totals = projections.map(totalInitiatives);
   return {
-    previous: compare(priors),
+    // The UI uses each baseline for filtered budgets, but never displays their difference.
+    previous: options.comparePrevious === false ? priors : compare(priors),
     total: compare(totals.map((total, index) => combineTotals(priors[index]!, total))),
     changes: compare(totals),
     groups: table.groups.map(group => {

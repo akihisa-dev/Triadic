@@ -22,7 +22,7 @@ const columnLabels: Record<string, string> = {
   "aggregation_groups.name": "集計名", "expansion_categories.name": "展開区分名", "expansion_category_assignments.expansion_id": "展開ID", "expansion_category_assignments.category_id": "展開区分ID", "initiatives.expansion_category_id": "展開区分ID", "expansions.code": "展開コード", "expansions.name": "展開名", "industries.code": "業種コード",
   "industries.name": "業種名", "departments.name": "部署名", "period_types.name": "期間名",
 };
-const baselineRule = "前年見込と前年実績はprevious_kindの1・2で独立して保存します。前年入力は切り替えて編集し、実績表示中のコピーアイコンで選択分類の12か月を確認後に見込からコピーします。総原価表・展開表の比較条件は、行を前年見込・前年実績、列を前年・一次予算・確定予算とする3列のチェック欄で選びます。前年列は見込か実績の一方を選び、一次・確定も各列で独立して選びます。同じ列の見込と実績は排他で、一次・確定のどちらかは表示します。一つの列を変更しても他の2列の選択・金額・見出しは変えません。ダッシュボード・入出力・履歴収支は予算2列のチェック欄を使用します。基準前年は各予算に独立し、切り替えても入力金額を変更しません。総原価表・展開表は前年表示・選択予算・両方の予算に使う前年を一回で画面別に保存し、初期値は見込です。入出力は表別に基準を選び、前年Excelは用途を記録して同じ側へ取り込みます。履歴収支も見込・実績を選べます。";
+const baselineRule = "展開表の画面では非表示の基準前年間の差を計算しません。絞り込み後も各予算は基準前年全体＋表示中の施策で求め、その予算どうしから確定−一次を計算します。実際に表示する値の上限検査とExcelの前年行・比較計算は維持します。前年見込と前年実績はprevious_kindの1・2で独立して保存します。前年入力は切り替えて編集し、実績表示中のコピーアイコンで選択分類の12か月を確認後に見込からコピーします。総原価表・展開表の比較条件は、行を前年見込・前年実績、列を前年・一次予算・確定予算とする3列のチェック欄で選びます。前年列は見込か実績の一方を選び、一次・確定も各列で独立して選びます。同じ列の見込と実績は排他で、一次・確定のどちらかは表示します。一つの列を変更しても他の2列の選択・金額・見出しは変えません。ダッシュボード・入出力・履歴収支は予算2列のチェック欄を使用します。基準前年は各予算に独立し、切り替えても入力金額を変更しません。総原価表・展開表は前年表示・選択予算・両方の予算に使う前年を一回で画面別に保存し、初期値は見込です。入出力は表別に基準を選び、前年Excelは用途を記録して同じ側へ取り込みます。履歴収支も見込・実績を選べます。";
 export const dataTables = describeDataTables(dataMapSchema, tableLabels, columnLabels);
 export type TableUse = { table: TableName; purpose: string; fields: string[] };
 export type ScreenData = { page: Exclude<Page, "home" | "master">; name: string; tables: TableUse[]; calculated: string[] };

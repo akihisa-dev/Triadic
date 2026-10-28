@@ -83,3 +83,5 @@
 総原価表の非表示の年間前年差・基準前年小計の超過は `tests/ui/cost-display-plan.ts` の専用データで検証します。既定マスタを維持した実SQLiteを作成・検査・再読込し、`tests/cost-display-overflow.mjs` と `cost-display-overflow.spec.ts` で確認します。会社予算の内容は変更しません。
 
 三表の高さ不足は既存の機能確認用データを使い、`short-table-viewport.spec.ts` で通常高・450px・300pxへの変更、キーボード選択と条件欄への復帰を確認します。会社予算の金額・マスタは変更しません。
+
+展開表の非表示の基準前年間の差は `tests/ui/expansion-previous-plan.ts` の既定マスタを保持した専用データで確認します。単独・両予算・逆順・表示用前年・絞り込み後の予算差と真の超過を `tests/expansion-previous-difference.mjs`、画面を `expansion-previous-difference.spec.ts` で検証し、会社予算の内容は変更しません。

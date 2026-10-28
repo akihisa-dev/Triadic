@@ -1,6 +1,8 @@
+import { verifyExpansionPreviousDifference } from "./expansion-previous-difference.mjs";
 import assert from 'node:assert/strict';
 
 export async function verifyExpansionTableView(api, { excel = false } = {}) {
+  if (!excel) await verifyExpansionPreviousDifference(api);
   const contents = await api.readPlanContents(await api.createSamplePlan(2026));
   const ordered={...contents,previousAmounts:[],expansions:contents.expansions.slice(0,1),
     periodTypes:[5,-1,0].map(id=>({id,periodName:`期間${id}`,startMonthRule:'new'})),
@@ -49,7 +51,7 @@ export async function verifyExpansionTableView(api, { excel = false } = {}) {
   const viewForSelection = api.createExpansionTableView(contents);
   for (const selected of [[1], [2], [1, 2], [2, 1]]) {
     const view = viewForSelection(selected);
-    assert.deepEqual(view.table, api.buildKindExpansionTable(contents, selected, 'registered'), '前年・合計・小計・施策の円単位金額と比較方向を維持');
+    assert.deepEqual(view.table, api.buildKindExpansionTable(contents, selected, 'registered', { comparePrevious: false }), '前年・合計・小計・施策の円単位金額と比較方向を維持');
     assert.equal(viewForSelection([...selected]), view, '選択配列が作り直されても同じ組み合わせの結果を再利用');
     assert.equal(view.flat.length, view.table.groups.reduce((sum, group) => sum + group.initiatives.length + 1, 0));
     for (const { group, periods } of view.groups) {
@@ -61,7 +63,7 @@ export async function verifyExpansionTableView(api, { excel = false } = {}) {
       assert.deepEqual(view.flat.filter(row => row.group === group && !row.subtotal).map(row => row.item.id), periods.flatMap(period => period.initiatives.map(item => item.id)));
     }
     for (const period of api.tablePeriods) for (const metric of ['sales', 'profit']) {
-      assert.deepEqual(view.table.total.map(months => api.expansionPeriodAmount(months, period, metric)), api.buildKindExpansionTable(contents, selected, 'registered').total.map(months => api.expansionPeriodAmount(months, period, metric)), '月・四半期・半期・年間の丸め前金額を維持');
+      assert.deepEqual(view.table.total.map(months => api.expansionPeriodAmount(months, period, metric)), api.buildKindExpansionTable(contents, selected, 'registered', { comparePrevious: false }).total.map(months => api.expansionPeriodAmount(months, period, metric)), '月・四半期・半期・年間の丸め前金額を維持');
     }
   }
   assert.notEqual(viewForSelection([1, 2]), viewForSelection([2, 1]), '列順を異なる選択として保持');
@@ -77,7 +79,7 @@ export async function verifyExpansionTableView(api, { excel = false } = {}) {
   for (const changed of variants) {
     const fresh = api.createExpansionTableView(changed)([1, 2]);
     assert.notEqual(fresh, viewForSelection([1, 2]), '計算元変更後のキャッシュは独立');
-    assert.deepEqual(fresh.table, api.buildKindExpansionTable(changed, [1, 2], 'registered'));
+    assert.deepEqual(fresh.table, api.buildKindExpansionTable(changed, [1, 2], 'registered', { comparePrevious: false }));
   }
   const salesId = contents.accounts.find(account => account.accountType === 'sales').id;
   const huge = { ...contents, initiatives: contents.initiatives.slice(0, 1).map(item => ({ ...item, rows: [1, 2].map(() => ({ accountId: salesId, amounts: { 4: '5000000000000' } })) })) };

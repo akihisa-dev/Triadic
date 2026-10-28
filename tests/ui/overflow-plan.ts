@@ -1,3 +1,4 @@
+import { createExpansionPreviousPlan } from "./expansion-previous-plan";
 import { createCostDisplayOverflowPlan } from "./cost-display-plan";
 import { createExpenseOverflowPlan, createPreviousExpansionCancellationPlan, createCostInitiativeCancellationPlan, createCostCancellationPlan, createInitiativeOverflowPlan } from "./sample-plan";
 import { createTriadicDatabase } from "../../Triadic-extension/src/core/storage/triadicDatabase";
@@ -6,10 +7,11 @@ import { registerInitiative } from "../../Triadic-extension/src/core/storage/ini
 import { saveKindSelection, savePreviousAmounts } from "../../Triadic-extension/src/core/storage/settings";
 import { createInitiativeDraft } from "../../Triadic-extension/src/core/domain/initiativeRules";
 
-export type OverflowScenario = "cost-annual" | "cost-baseline" | "expense-only" | "previous-cancellation" | "initiative-cancellation" | "monthly" | "period" | "previous" | "difference" | "normal" | "initiative" | "initiative-primary" | "previous-input" | "cancellation";
+export type OverflowScenario = "expansion-baseline-difference" | "cost-annual" | "cost-baseline" | "expense-only" | "previous-cancellation" | "initiative-cancellation" | "monthly" | "period" | "previous" | "difference" | "normal" | "initiative" | "initiative-primary" | "previous-input" | "cancellation";
 
 /** Real, accepted SQLite data; only file I/O is replaced by memory-files. */
 export async function createOverflowPlan(scenario: OverflowScenario) {
+  if (scenario === "expansion-baseline-difference") return createExpansionPreviousPlan();
   if (scenario === "cost-annual" || scenario === "cost-baseline") return createCostDisplayOverflowPlan(scenario === "cost-annual" ? "annual" : "baseline");
   if (scenario === "expense-only") return createExpenseOverflowPlan();
   if (scenario === "initiative" || scenario === "initiative-primary") return createInitiativeOverflowPlan(scenario === "initiative" ? 2 : 1);

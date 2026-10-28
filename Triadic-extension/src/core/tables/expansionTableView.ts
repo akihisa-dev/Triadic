@@ -5,10 +5,10 @@ import { buildKindExpansionTable, combineTotals } from "./planTables";
 import { selectTableRows, type TableColumn, type TableViewState } from "./columnView";
 
 function buildView(contents: PlanContents, selected: KindId[], grouping: ReturnType<typeof createExpansionGrouping>) {
-  const table = buildKindExpansionTable(contents, selected, "registered");
-  return shapeView(table, grouping);
+  const table = buildKindExpansionTable(contents, selected, "registered", { comparePrevious: false });
+  return shapeView(table, grouping, selected);
 }
-function shapeView(table: ReturnType<typeof buildKindExpansionTable>, grouping: ReturnType<typeof createExpansionGrouping>, state?: TableViewState) {
+function shapeView(table: ReturnType<typeof buildKindExpansionTable>, grouping: ReturnType<typeof createExpansionGrouping>, selected: KindId[], state?: TableViewState) {
   const order = <T>(rows: T[], column: string, value: (row: T) => string) => state?.sort?.column === column
     ? selectTableRows(rows, [{ id: column, label: column, value }], { sort: state.sort, filters: {} }) : rows;
   const orderedGroups = order(table.groups, "expansion", group => group.expansion.expansionName);
@@ -28,7 +28,7 @@ function shapeView(table: ReturnType<typeof buildKindExpansionTable>, grouping: 
     });
     return [...items, { group, item: null, period: null, groupOffset: offset, groupCount: count, periodOffset: 0, categoryOffset: 0, categoryCount: 0, subtotal: true }];
   });
-  return { table, groups, flat, calculationError: "" };
+  return { table, groups, flat, selected, calculationError: "" };
 }
 
 export type ExpansionView = ReturnType<typeof buildView>;
@@ -52,8 +52,10 @@ export function selectExpansionView(base: ExpansionView, contents: PlanContents,
   }).filter(group => !filtered || group.initiatives.length > 0);
   const members = groups.flatMap(group => group.initiatives);
   const changes = filtered ? base.table.changes.map((_, index) => calculate(() => totalInitiatives(members.map(item => ({ months: item.values[index]! }))))) : base.table.changes;
-  const total = filtered ? changes.map((amounts, index) => calculate(() => combineTotals(base.table.previous[index]!, amounts))) : base.table.total;
-  return { ...shapeView({ ...base.table, groups, changes, total }, createExpansionGrouping(contents), state), calculationError };
+  const budgets = filtered ? changes.slice(0, base.selected.length).map((amounts, index) => calculate(() => combineTotals(base.table.previous[index]!, amounts))) : [];
+  const total = !filtered ? base.table.total : base.selected.length === 2
+    ? [...budgets, calculate(() => combineTotals(budgets[base.selected.indexOf(2)]!, budgets[base.selected.indexOf(1)]!, -1))] : budgets;
+  return { ...shapeView({ ...base.table, groups, changes, total }, createExpansionGrouping(contents), base.selected, state), calculationError };
 }
 
 // The caller replaces this cache whenever immutable calculation inputs change.
