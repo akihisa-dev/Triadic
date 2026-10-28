@@ -39,7 +39,7 @@
 .floating-trigger span { display: block; margin-top: 4px; font-weight: 400; font-size: 11px; color: var(--muted); }
 .floating-controls .pin-control { border: 0; color: var(--muted); background: var(--soft); }
 .floating-controls .pin-control[aria-pressed="true"] { color: var(--accent); }
-.floating-body { border-top: 1px solid var(--line); padding: 18px; animation: panel-reveal 520ms cubic-bezier(.18,1,.32,1); }
+.floating-body { border-top: 1px solid var(--line); padding: 18px;  }
 .floating-body .comparison-selection { width: 100%; margin: 0 0 18px; grid-template-columns: 1fr 1fr 1fr; }
 .period-buttons { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
 .period-buttons button:first-child { grid-column: 1/-1; }
@@ -75,3 +75,10 @@
 .bento-preview .analysis-values { display: none; }
 
 .bento-preview :is(.dashboard-chart-point, .dashboard-department .dashboard-bar, .dashboard-rank .dashboard-bar) { cursor: pointer; }
+
+.floating-active { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 10px 0; }
+.floating-controls .floating-active button { font-size: 11px; padding: 6px 8px; border-color: var(--accent); color: var(--accent); }
+
+.bento-preview .dashboard-chart-point[data-selected="true"] { r: 5; stroke: var(--ink); stroke-width: 2; }
+.bento-preview .dashboard-department[data-selected="true"] .dashboard-department-name button { color: var(--accent); text-decoration: underline; }
+.bento-preview [data-preview-action]:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
