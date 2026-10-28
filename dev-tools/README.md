@@ -8,6 +8,7 @@
 
 | ツール | 確認すること | 本体・参照先 |
 |---|---|---|
+| [素材感の比較](http://127.0.0.1:4173/dev-tools/material-design/index.html) | なし・紙・すりガラス・金属の見え方、明暗、質感の強さ、ダイアログ | `material-design/` |
 | [カラーデザイン確認](http://127.0.0.1:4173/dev-tools/color-design/index.html) | 仕様と確認案の色、明暗の見本、入力・選択・ダイアログ | `color-design/` |
 | [実装画面の確認](http://127.0.0.1:4173/tests/ui/preview.html?data=large) | 現在の画面・操作とサンプル予算 | 自動テストと共通の `tests/ui/preview.html` を使用 |
 
@@ -21,9 +22,11 @@
 
 ## 配色の確認から反映まで
 
+素材感を選ぶ場合は、先に「素材感の比較」で候補を並べて確認します。素材と強さはURLの `material`・`strength` に保持するため、同じURLで案を再表示できます。製品の配色や保存データは変更せず、背景の粒子・透明感・反射を開発用の見本だけに適用します。仕様カラーパレットは製品の正本から取得します。
+
 1. `color-design/draft.css` に確認案を記述します。指定していない色は製品の `Triadic-extension/src/extension/styles/palette.css` を使います。
 2. カラーデザイン確認を開き、仕様カラーパレットと明暗の見本を提示します。ページ内の色選択は一時的な変更で、再読み込みすると候補ファイルの状態へ戻ります。
 3. 利用者が承認した色だけを製品の正本と `docs/color-palette.md` へ反映します。
 4. 候補ファイルを空に戻し、仕様と見本の一致、実画面の表示・操作を確認します。
 
-配色ページと一覧からの移動は `npx playwright test color-design.spec.ts` で通常幅・狭幅を検証します。コミット前の標準検証はリポジトリ共通の `npm run verify` です。
+配色ページと一覧からの移動は `npx playwright test color-design.spec.ts`、素材の選択・強さ・URLでの再表示は `npx playwright test material-design.spec.ts` で通常幅・狭幅を検証します。コミット前の標準検証はリポジトリ共通の `npm run verify` です。
