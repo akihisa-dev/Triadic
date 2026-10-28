@@ -5,6 +5,8 @@ import ExcelJS from 'exceljs';
 import { SaxesParser } from 'saxes';
 import { withNodeBundle } from '../scripts/node-bundle.mjs';
 import { evaluator } from './report-workbook.mjs';
+import { reportContractCells } from './report-contract.mjs';
+export { reportContractCells } from './report-contract.mjs';
 
 // Compare the production React markup, not a second implementation of its table model.
 function textOf(markup) {
@@ -110,24 +112,43 @@ export async function verifyReportParity(api) {
         previousSelections: { 'cost-table': plan.budgetPrevious ?? {1: plan.previousKind ?? 1, 2: plan.previousKind ?? 1}, 'expansion-table': plan.budgetPrevious ?? {1: plan.previousKind ?? 1, 2: plan.previousKind ?? 1} },
         selections: { 'cost-table': selected, 'expansion-table': selected, 'initiative-list': [kind] },
       })));
-      const markup = api.renderReportTables(plan, selected, kind, api.filterPlan(plan, filter));
+      const previous = plan.budgetPrevious ?? { 1: plan.previousKind ?? 1, 2: plan.previousKind ?? 1 };
+      const aligned = { ...plan, budgetPrevious: { ...previous, display: previous[[...selected].sort()[0]] } };
+      const markup = api.renderReportTables(aligned, selected, kind, api.filterPlan(aligned, filter));
+      const expansion = api.buildKindExpansionTable({ ...plan, budgetPrevious: previous }, [...selected].sort(), 'registered');
+      const expansionPrevious = api.tablePeriods.flatMap(period => expansion.previous.flatMap(months => ['sales', 'profit'].map(metric => {
+        const value = api.expansionPeriodAmount(months, period, metric);
+        return value === null ? '属性未設定' : api.formatTableYen(value);
+      })));
       const evaluate = evaluator(wb);
       for (const [name, html] of Object.entries(markup)) {
-        assert.deepEqual(workbookCells(wb.getWorksheet(name)), markupCells(html), `${scenario} ${name} 比較${selected} 施策種別${kind}`);
-        assert.deepEqual(workbookCells(wb.getWorksheet(name), evaluate), markupCells(html), `${scenario} ${name} 元金額から再計算`);
+        const expected = reportContractCells(markupCells(html), name, selected, previous, expansionPrevious);
+        assert.deepEqual(workbookCells(wb.getWorksheet(name)), expected, `${scenario} ${name} 比較${selected} 施策種別${kind} 出力契約`);
+        assert.deepEqual(workbookCells(wb.getWorksheet(name), evaluate), expected, `${scenario} ${name} 元金額から再計算`);
       }
       assert.deepEqual(plan, before, '照合と出力はデータを変更しない');
     }
   }
-  const original = markupCells(api.renderReportTables(sample, [1], 1).施策一覧);
-  for (const change of [ws => { ws.getCell('A3').value = '誤った見出し'; },
-    ws => { ws.getCell('E5').value = 999; }, ws => { ws.unMergeCells('A3:A4'); }]) {
-    const ws = api.createReportWorkbook(sample, { tables: ['initiative-list'], costFilter: { industries: null, departments: null },
-      selections: { 'cost-table': [1], 'expansion-table': [1], 'initiative-list': [1] } }).getWorksheet('施策一覧');
-    assert.deepEqual(workbookCells(ws), original);
-    change(ws);
-    assert.notDeepEqual(workbookCells(ws), original, '見出し・値・結合の不一致を検出する');
+  const markup = api.renderReportTables(sample, [1], 1);
+  for (const name of ['総原価表', '展開表', '施策一覧']) {
+    const expected = reportContractCells(markupCells(markup[name]), name, [1], { 1: 1, 2: 1 });
+    const valueAddress = name === '総原価表' ? 'B5' : name === '展開表' ? 'E7' : 'E5';
+    for (const defect of ['header', 'value', 'merge', 'formula']) {
+      const wb = api.createReportWorkbook(sample, { tables: ['cost-table', 'expansion-table', 'initiative-list'], costFilter: { industries: null, departments: null },
+        selections: { 'cost-table': [1], 'expansion-table': [1], 'initiative-list': [1] } });
+      const ws = wb.getWorksheet(name);
+      assert.deepEqual(workbookCells(ws), expected, `${name}の正常対照`);
+      if (defect === 'header') ws.getCell('A3').value = '誤った見出し';
+      if (defect === 'value') ws.getCell(valueAddress).value = 999;
+      if (defect === 'merge') ws.unMergeCells(name === '展開表' ? 'A3:A5' : 'A3:A4');
+      if (defect === 'formula') {
+        const cell = ws.getCell(valueAddress); assert.ok(cell.formula);
+        cell.value = { formula: '0', result: cell.result };
+        assert.deepEqual(workbookCells(ws), expected, '保存済み結果だけでは式の破損を隠せる対照');
+      }
+      assert.notDeepEqual(workbookCells(ws, defect === 'formula' ? evaluator(wb) : undefined), expected, `${name}: ${defect}の破損を検出`);
+    }
   }
-  console.log('report parity ok: production React tables vs serialized XLSX, every visible cell and merge');
+  console.log('report parity ok: explicit export columns/baselines vs shared React values, serialized caches and independently evaluated formulas, every cell and merge');
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await withNodeBundle('tests/report-parity-api.ts', verifyReportParity);
