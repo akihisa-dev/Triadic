@@ -4,6 +4,7 @@ export function revealTableRangeCell(region: HTMLElement, cell: HTMLElement): vo
   if (!table || !region.contains(cell)) return;
   const viewport = region.getBoundingClientRect();
   let top = viewport.top + region.clientTop, left = viewport.left + region.clientLeft;
+  const origin = left;
   let bottom = top + region.clientHeight;
   const right = left + region.clientWidth;
   // Cost tables can freeze the whole head or only its column-header rows.
@@ -21,11 +22,13 @@ export function revealTableRangeCell(region: HTMLElement, cell: HTMLElement): vo
   // In narrow layouts the non-name columns are static and are excluded here.
   for (const header of Array.from(head?.rows[0]?.cells ?? [])) {
     const style = getComputedStyle(header);
-    if (style.position === "sticky" && style.left !== "auto") left = Math.max(left, header.getBoundingClientRect().right);
+    if (style.position === "sticky" && style.left !== "auto") left = Math.max(left, origin + Number.parseFloat(style.left) + header.getBoundingClientRect().width);
   }
   const rect = cell.getBoundingClientRect();
   const offset = (start: number, end: number, min: number, max: number) =>
     start < min ? start - min : end > max ? Math.min(start - min, end - max) : 0;
   if (bottom > top) region.scrollTop += offset(rect.top, rect.bottom, top, bottom);
-  if (right > left) region.scrollLeft += offset(rect.left, rect.right, left, right);
+  if (right > left) region.scrollLeft += rect.width > right - left
+    ? rect.right - right // In a narrow viewport expose the right-aligned amount, rather than the cell padding.
+    : offset(rect.left, rect.right, left, right);
 }

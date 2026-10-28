@@ -1,4 +1,9 @@
 /* Use the table's available space, including changes from the sidebar. */
+.cost-table-page .cost-table-container { container: cost-table / inline-size; }
+@container cost-table (max-width: 272px) {
+  .cost-table { --cost-name-width: max(96px, calc(100cqw - 96px)); }
+}
+
 :is(.initiative-overview-page, .expansion-table-page) .initiative-list-container {
   container: plan-table / inline-size;
 }

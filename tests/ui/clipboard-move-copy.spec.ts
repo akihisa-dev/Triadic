@@ -134,6 +134,7 @@ for (const name of ['総原価表', '展開表', '施策一覧']) test(`${name}�
   await page.goto('/tests/ui/preview.html?data=signed-categories-large');
   await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
   await app.getByRole('navigation', { name: 'メインナビゲーション' }).getByRole('button', { name, exact: true }).click();
+  await app.locator('.home-brand').hover();
   await settleMotion(app.locator('body'));
   const table = app.getByRole('table', { name, exact: true }), region = table.locator('..');
   const cell = (row: number, column: number) => table.locator(`[data-copy-row="${row}"][data-copy-column="${column}"]`);
@@ -141,7 +142,13 @@ for (const name of ['総原価表', '展開表', '施策一覧']) test(`${name}�
     await expect(target).toHaveAttribute('data-range-selected', 'true');
     await expect.poll(() => target.evaluate(node => {
       const box = node.getBoundingClientRect();
-      return [[box.left + 2, box.top + 2], [box.right - 2, box.bottom - 2]].every(([x, y]) => {
+      const range = node.ownerDocument.createRange();
+      range.selectNodeContents(node.querySelector('button') ?? node);
+      const text = range.getBoundingClientRect();
+      // A narrow viewport can expose the complete number while clipping empty cell padding.
+      const left = text.width ? text.left + 1 : box.right - 8;
+      const right = text.width ? text.right - 1 : box.right - 8;
+      return [[left, box.top + 2], [right, box.bottom - 2]].every(([x, y]) => {
         const hit = node.ownerDocument.elementFromPoint(x!, y!);
         return hit === node || !!hit && node.contains(hit);
       });

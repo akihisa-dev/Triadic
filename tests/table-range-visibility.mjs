@@ -14,7 +14,7 @@ export function verifyTableRangeVisibility({ revealTableRangeCell }) {
       const node = (rect, style = {}, contains = () => false) => ({ style: { position: 'static', top: 'auto', bottom: 'auto', left: 'auto', ...style },
         getBoundingClientRect: () => rect, contains });
       const top = 220 + frozenTop, bottom = 720 - footerHeight, left = 20 + frozenLeft, right = 20 + width;
-      const fixedColumn = node({ right: left }, { position: 'sticky', left: '0px' });
+      const fixedColumn = node({ right: left, width: frozenLeft }, { position: 'sticky', left: '0px' });
       const staticColumn = node({ right: 8000 }); // Non-fixed columns must not reduce the narrow viewport.
       const headerRows = [node({ bottom: 244 }, layout === 'cost-columns' ? { position: 'sticky', top: '0px' } : {}),
         node({ bottom: 268 }, layout === 'cost-columns' ? { position: 'sticky', top: '24px' } : {})];
@@ -25,7 +25,7 @@ export function verifyTableRangeVisibility({ revealTableRangeCell }) {
       let position = { top: 220, left: 20, height: 28, width: 96 };
       const cell = { closest: () => table, getBoundingClientRect: () => ({
         top: position.top - (region.scrollTop - 980), bottom: position.top + position.height - (region.scrollTop - 980),
-        left: position.left - (region.scrollLeft - 600), right: position.left + position.width - (region.scrollLeft - 600),
+        left: position.left - (region.scrollLeft - 600), right: position.left + position.width - (region.scrollLeft - 600), width: position.width,
       }) };
       revealTableRangeCell(region, cell);
       assert.equal(cell.getBoundingClientRect().top, top, `${layout}/${width}: 上方向で固定見出しの直下へ戻す`);
@@ -46,6 +46,19 @@ export function verifyTableRangeVisibility({ revealTableRangeCell }) {
         revealTableRangeCell(region, cell);
         assert.equal(region.scrollTop, 980, '固定合計自身の選択で縦位置を動かさない');
       }
+    }
+    for (const width of [240, 279, 320, 375]) {
+      const region = { clientTop: 0, clientLeft: 0, clientWidth: width, clientHeight: 500, scrollTop: 0, scrollLeft: 0,
+        contains: () => true, getBoundingClientRect: () => ({ top: 0, left: 0 }) };
+      const header = { style: { position: 'sticky', left: '0px' }, getBoundingClientRect: () => ({ right: 380 - region.scrollLeft, width: 144 }) };
+      const table = { tHead: { contains: () => false, style: { position: 'static' }, rows: [{ contains: () => false, cells: [header], style: { position: 'static' } }] } };
+      const cell = { closest: () => table, getBoundingClientRect: () => ({ top: 200, bottom: 228, left: 380 - region.scrollLeft, right: 476 - region.scrollLeft, width: 96 }) };
+      revealTableRangeCell(region, cell);
+      assert.equal(cell.getBoundingClientRect().right, width, '貼り付く前の名称列の自然位置を遮蔽幅に使わない');
+      header.getBoundingClientRect = () => ({ right: 176, width: 176 });
+      const amount = { closest: () => table, getBoundingClientRect: () => ({ top: 200, bottom: 224, left: 176 - region.scrollLeft, right: 296 - region.scrollLeft, width: 120 }) };
+      revealTableRangeCell(region, amount);
+      assert.ok(amount.getBoundingClientRect().right <= width, 'セル全幅が収まらない場合も右寄せ金額の末尾へ到達する');
     }
   } finally {
     if (originalStyle === undefined) delete globalThis.getComputedStyle;
