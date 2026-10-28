@@ -190,7 +190,7 @@ Previous-year input places heading, department, and industry in that order, with
 
 ### Cost summary and breakdown comparisons and period totals
 
-The cost-summary amount-detail dialog sorts by all six column headers: source, account, department, industry, aggregation sign, and contribution. A new column starts ascending; subsequent activations alternate ascending ▲ and descending ▼. Display names use Japanese ordering with numeric digit sequences; blanks stay last. Signs and unrounded yen amounts sort numerically, with ties retaining original order. Sorting covers all detail rows, returns to the first row, and resets when the dialog closes. Sorting keeps totals unchanged; filtering totals only visible detail rows. Stored data does not change.
+The cost-summary amount-detail dialog sorts by all six column headers: source, account, department, industry, aggregation sign, and contribution. A new column starts ascending; subsequent activations alternate ascending ▲ and descending ▼. Display names use Japanese ordering with numeric digit sequences; blanks appear first in ascending order and last in descending order. Signs and unrounded yen amounts sort numerically, with ties retaining original order. Sorting covers all detail rows, returns to the first row, and resets when the dialog closes. Sorting keeps totals unchanged; filtering totals only visible detail rows. Stored data does not change.
 
 Hovering over the horizontal scrollbar reveals Q1–Q4, first-half, second-half, and annual labels inside the scrollbar itself. Click a label to scroll to its columns, bounded by the right edge. Table height and bottom spacing stay unchanged. Dragging and normal scrolling remain available. Narrow views show labels near the pointer when all labels cannot fit. Keyboard focus also reveals the labels; Esc dismisses them. Navigation does not save or change amounts, filters, undo, or history. Quarterly headings in both tables and Excel use Q1–Q4.
 
@@ -927,7 +927,7 @@ Chromeのファイル選択、新規作成、ファイル参照を取得でき�
 
 各日時の「差分を見る」から、履歴と現在の保存済みデータの追加・削除・変更を確認できます。施策の名称・備考・分類・科目行・月額、前年、マスタ・所属・集計符号・並び順・表示設定が対象です。過去と現在の値を並べ、対象の絞り込み・検索と50件ごとの表示で確認します。金額差分は編集値と同じ千円単位・小数点以下3桁まで表示し、確定予算の引き継ぎ・手修正0・同額手修正も区別します。前年の未入力と0、更新日時・改訂番号だけの違いは差分にしません。施策・部署・業種の作成識別子が変わった場合は削除・追加として扱います。比較は専用Workerで行い、ファイルや履歴を保存せず、操作取消・画面・削除用の選択を保持します。外部更新や未保存の入力は含めません。失敗時は「比較を再試行」で再比較でき、保存形式・権限・外部送信に変更はありません。
 
-サイドバーの「マスタ」の下にある「履歴」から、記録日時を選んで過去の状態を閲覧できます。 200件を超える一覧は表示範囲の周辺だけを描画し、スクロールで全履歴を確認できます。全選択・日時指定の削除は画面外を含む全履歴が対象です。各画面は閲覧専用になり、ヘッダーの「現在に戻る」で現在のデータへ戻ります。「この時点に戻す」を確認すると、施策・全種別の金額・前年・マスタ・集計・保存済み設定をまとめて復元します。復元前の状態と新しい履歴も残るので、選び直して復元を取り消せます。
+サイドバーの「マスタ」の下にある「履歴」から、記録日時を選んで過去の状態を閲覧できます。 200件を超える一覧は表示範囲の周辺だけを描画し、スクロールで全履歴を確認できます。全選択は絞り込み条件に一致する履歴全件（スクロールで画面外の行も含む）が対象で、絞り込みで隠れた選択は解除します。条件を解除しても隠れていた履歴を自動選択しません。日時指定の削除は絞り込みにかかわらず全履歴が対象です。各画面は閲覧専用になり、ヘッダーの「現在に戻る」で現在のデータへ戻ります。「この時点に戻す」を確認すると、施策・全種別の金額・前年・マスタ・集計・保存済み設定をまとめて復元します。復元前の状態と新しい履歴も残るので、選び直して復元を取り消せます。
 
 履歴は同じ`.triadic`内に保存します。最初の未記録の変更の保存成功から5分後に記録し、追加の保存で期限を延ばしません。正常にファイルを閉じるときと過去閲覧に入るときも未記録分を残します。登録前・保存失敗中の入力は履歴に含みません。現行形式の新規ファイルは履歴管理状態を備え、最初の変更前の状態を初回保存時に記録します。閲覧だけでは書き換えません。
 
