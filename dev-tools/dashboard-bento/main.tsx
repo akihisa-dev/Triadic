@@ -53,6 +53,8 @@ function App() {
   }, []);
   useLayoutEffect(() => {
     const elements = [...root.current!.querySelectorAll<HTMLElement>(".dashboard-stat, .dashboard-panel, .dashboard-analysis-section")];
+    for (const title of root.current!.querySelectorAll("svg > title")) title.textContent = (title.textContent ?? "").replace("各項目の数値は下の「数値を表示」で確認できます。", "");
+    for (const paragraph of root.current!.querySelectorAll(".dashboard-empty")) if (paragraph.textContent?.includes("金額は「数値を表示」で確認できます。")) paragraph.textContent = paragraph.textContent.replace("金額は「数値を表示」で確認できます。", "");
     elements.forEach(element => {
       element.classList.add("bento-card");
       for (const number of element.querySelectorAll(".dashboard-number")) number.setAttribute("aria-label", (number.getAttribute("aria-label") ?? "").replace("の総原価表", "の部署で絞り込む"));
@@ -105,6 +107,19 @@ function App() {
     <div className="bento-preview" ref={root} onClick={event => {
       const target = event.target as Element;
       if (target.closest("button, input, select, a, summary")) return;
+      if (target.closest(".dashboard-chart")) {
+        const text = target.closest("circle")?.querySelector("title")?.textContent ?? (target.tagName.toLowerCase() === "text" ? target.textContent : "");
+        const month = Number(text?.match(/^(\d+)月/)?.[1]);
+        if (initiativeMonths.includes(month as typeof initiativeMonths[number])) { choosePeriod(month as typeof initiativeMonths[number]); return; }
+      }
+      const row = target.closest(".dashboard-department");
+      if (row) {
+        const name = row.querySelector(".dashboard-department-name")?.textContent;
+        const match = contents.departments.find(item => item.departmentName === name);
+        if (match) { setDepartment(match.id); return; }
+      }
+      const rank = target.closest(".dashboard-rank");
+      if (rank) { rank.querySelector<HTMLButtonElement>(".initiative-name-button")?.click(); return; }
       const mark = target.closest("[data-value]");
       if (mark && target.closest('[aria-label="業種別の売上と利益率"], [aria-label="業種別の売上構成"]')) {
         const text = mark.getAttribute("data-value") ?? "";
