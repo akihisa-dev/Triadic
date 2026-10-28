@@ -5,7 +5,7 @@ test("グラフのクリックで対象を減らさず、表示条件から月�
   const amounts = page.locator(".dashboard-stat strong");
   const original = ["12,702,061", "833,696", "6.6%"];
   await expect(amounts).toHaveText(original);
-  const point = page.locator(".dashboard-chart").first().locator("circle").nth(2);
+  const point = page.locator(".dashboard-chart").first().locator(".dashboard-series-0 .dashboard-chart-point").filter({ hasText: /^6月 一次予算 / });
   await point.click();
   await expect(page.locator(".floating-trigger")).toContainText("年間");
   await page.locator(".dashboard-department .dashboard-bar").first().click();
