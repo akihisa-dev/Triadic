@@ -2,6 +2,7 @@ import { test, expect } from './fixtures';
 
 for (const phase of ['待ち時間', '保存中', '保存失敗', '入力不備', '変換中']) test(`施策詳細の戻る操作は${phase}の入力を保護する`, async ({ page, app }) => {
   await page.goto('/tests/ui/preview.html?data=full');
+  await expect(page.getByRole('status')).toHaveText('操作できます');
   await app.locator('body').evaluate(() => {
     const target = window as Window & { showOpenFilePicker?: () => Promise<FileSystemFileHandle[]>; saveGate?: { started: boolean; fail: boolean; release?: () => void } };
     const picker = target.showOpenFilePicker!;
