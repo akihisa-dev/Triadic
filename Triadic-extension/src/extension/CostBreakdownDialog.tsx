@@ -1,9 +1,8 @@
 import { useTableCellFilter } from "./TableCellFilter";
 import { TableViewHeader, TableViewEmpty, useTableView } from "./TableViewHeader";
-import type { TableColumn } from "../core/tables/columnView";
 import { useId, useLayoutEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
-import { buildCostBreakdown, indexCostBreakdown, type CostBreakdownTarget } from "../core/tables/costBreakdown";
+import { buildCostBreakdown, indexCostBreakdown, costBreakdownColumns, type CostBreakdownTarget } from "../core/tables/costBreakdown";
 import { MeasuredTableBody } from "./MeasuredTableBody";
 import type { Initiative, PlanContents } from "../core/domain/plan";
 import type { KindId } from "../core/domain/kinds";
@@ -28,15 +27,7 @@ export function CostBreakdownDialog({ contents, selected, target, title, navigat
   const departments = new Map(contents.departments.map(item => [item.id, item.departmentName]));
   const industries = new Map(contents.industries.map(item => [item.id, item.industryName]));
   const initiatives = new Map(contents.initiatives.map(item => [item.id, item]));
-  type Line = NonNullable<typeof result.detail>["lines"][number];
-  const definitions: TableColumn<Line>[] = [
-    { id: "name", label: "前年・施策", value: row => row.name },
-    { id: "account", label: "科目", type: "choice", value: row => accounts.get(row.accountId) },
-    { id: "department", label: "部署", type: "choice", value: row => departments.get(row.departmentId!) },
-    { id: "industry", label: "業種", type: "choice", value: row => industries.get(row.industryId!) },
-    { id: "sign", label: "集計の加減", type: "choice", value: row => row.sign === -1 ? "−" : "＋", sortValue: row => row.sign },
-    { id: "amount", label: "反映額", type: "number", scale: 1000, value: row => row.amount },
-  ];
+  const definitions = costBreakdownColumns(accounts, departments, industries);
   const tableView = useTableView(result.detail?.lines ?? [], definitions);
   useLayoutEffect(() => { if (container.current) container.current.scrollTop = 0; }, [tableView.state]);
   const cellFilter = useTableCellFilter(tableView, navigationBlocked);

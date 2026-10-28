@@ -1,5 +1,5 @@
 export type TableValue = string | number | readonly string[] | null | undefined;
-export type TableColumn<T> = { id: string; label: string; name?: string; type?: "text" | "choice" | "number"; value: (row: T) => TableValue; sortValue?: (row: T) => TableValue; scale?: number; sortable?: boolean };
+export type TableColumn<T> = { id: string; label: string; name?: string; type?: "text" | "choice" | "number"; value: (row: T) => TableValue; sortValue?: (row: T) => TableValue; scale?: number; sortable?: boolean; blankOrder?: "last" | "directional" };
 export type TableFilter = { type: "text"; text: string; exact?: boolean } | { type: "choice"; values: string[] }
   | { type: "number"; operator: "negative" | "positive" | "zero" | "nonzero" | "blank" | "range"; min?: number; max?: number };
 export type TableSort = { column: string; direction: "ascending" | "descending" };
@@ -39,7 +39,10 @@ export function selectTableRows<T>(rows: readonly T[], columns: readonly TableCo
   const direction = state.sort.direction === "ascending" ? 1 : -1;
   return filtered.map((row, index) => ({ row, index, value: (column.sortValue ?? column.value)(row) })).sort((a, b) => {
     const blankA = a.value == null || tableValueText(a.value) === "", blankB = b.value == null || tableValueText(b.value) === "";
-    if (blankA || blankB) return Number(blankA) - Number(blankB) || a.index - b.index;
+    if (blankA || blankB) {
+      const blanks = Number(blankA) - Number(blankB);
+      return blanks * (column.blankOrder === "directional" ? -direction : 1) || a.index - b.index;
+    }
     const compared = typeof a.value === "number" && typeof b.value === "number" ? (a.value < b.value ? -1 : a.value > b.value ? 1 : 0)
       : collator.compare(tableValueText(a.value), tableValueText(b.value));
     return compared * direction || a.index - b.index;

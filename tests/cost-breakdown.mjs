@@ -65,16 +65,21 @@ export async function verifyCostBreakdown(api) {
     { key: "c", name: "施策2（1行目）", accountId: 1, departmentId: 1, industryId: null, sign: -1, amount: 1 },
     { key: "d", name: "施策2（1行目）", accountId: 1, departmentId: 1, industryId: null, sign: -1, amount: 1 },
   ];
+  const definitions = api.costBreakdownColumns(new Map(sortContents.accounts.map(row => [row.id, row.displayName ?? row.accountName])),
+    new Map(sortContents.departments.map(row => [row.id, row.departmentName])), new Map(sortContents.industries.map(row => [row.id, row.industryName])));
   const beforeSort = JSON.stringify({ sortLines, sortContents });
   const expected = {
     name: ["bcda", "abcd"], account: ["bcda", "abcd"], department: ["bcda", "acdb"],
     industry: ["cdab", "bacd"], sign: ["bcda", "abcd"], amount: ["bcda", "acdb"],
   };
   for (const [column, orders] of Object.entries(expected)) for (const [i, direction] of ["ascending", "descending"].entries()) {
-    assert.equal(api.sortCostBreakdownLines(sortLines, sortContents, { column, direction }).map(line => line.key).join(""), orders[i], `${column}/${direction}: 表示名・数字・空欄・同値の元順序`);
+    assert.equal(api.selectTableRows(sortLines, definitions, { sort: { column, direction }, filters: {} }).map(line => line.key).join(""), orders[i], `${column}/${direction}: 表示名・数字・空欄・同値の元順序`);
   }
-  assert.equal(api.sortCostBreakdownLines(sortLines, sortContents, null), sortLines);
-  assert.deepEqual(api.sortCostBreakdownLines([], sortContents, { column: "amount", direction: "ascending" }), []);
+  assert.deepEqual(api.selectTableRows(sortLines, definitions, api.emptyTableView()), sortLines);
+  assert.deepEqual(api.selectTableRows([], definitions, { sort: { column: "amount", direction: "ascending" }, filters: {} }), []);
+  for (const direction of ['ascending', 'descending']) {
+    assert.deepEqual(api.selectTableRows(sortLines, definitions, { sort: { column: 'industry', direction }, filters: { industry: { type: 'choice', values: [''] } } }).map(row => row.key), ['c', 'd'], '空欄の絞り込みと安定順序を両方向で保持');
+  }
   assert.equal(JSON.stringify({ sortLines, sortContents }), beforeSort, "並べ替えで元明細・データを変更しない");
   console.log("総原価表の内訳: 全金額列・期間・分類・集計符号・1円精度・手修正0・相殺・範囲超過を確認しました。");
 }

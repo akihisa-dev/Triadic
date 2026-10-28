@@ -1,3 +1,4 @@
+import type { TableColumn } from "./columnView";
 import { baselineFor, previousKindName } from "../domain/kinds";
 import { amountToYen, checkedYen } from "../domain/amounts";
 import { isKindId, resolvedAmount, type KindId, type PreviousKind } from "../domain/kinds";
@@ -10,24 +11,16 @@ export type CostBreakdownLine = {
   departmentId: number | null; industryId: number | null; sign: number; amount: number;
 };
 
-export type CostBreakdownSort = {
-  column: "name" | "account" | "department" | "industry" | "sign" | "amount";
-  direction: "ascending" | "descending";
-};
-const nameOrder = new Intl.Collator("ja", { numeric: true });
-
-/** Sort the entire detail by displayed names or unrounded numeric values, without changing its source. */
-export function sortCostBreakdownLines(lines: CostBreakdownLine[], contents: PlanContents, sort: CostBreakdownSort | null) {
-  if (!sort) return lines;
-  const { column, direction } = sort;
-  const names = column === "account" ? new Map(contents.accounts.map(item => [item.id, item.displayName ?? item.accountName]))
-    : column === "department" ? new Map(contents.departments.map(item => [item.id, item.departmentName]))
-    : column === "industry" ? new Map(contents.industries.map(item => [item.id, item.industryName])) : new Map<number, string>();
-  const label = (line: CostBreakdownLine) => column === "name" ? line.name
-    : names.get((column === "account" ? line.accountId : column === "department" ? line.departmentId : line.industryId)!) ?? "";
-  const order = direction === "ascending" ? 1 : -1;
-  return [...lines].sort((left, right) => order * (column === "amount" || column === "sign"
-    ? left[column] - right[column] : nameOrder.compare(label(left), label(right))));
+/** Shared by the detail dialog and its sorting/filtering checks. */
+export function costBreakdownColumns(accounts: ReadonlyMap<number, string>, departments: ReadonlyMap<number, string>, industries: ReadonlyMap<number, string>): TableColumn<CostBreakdownLine>[] {
+  return [
+    { id: "name", label: "前年・施策", blankOrder: "directional", value: row => row.name },
+    { id: "account", label: "科目", type: "choice", blankOrder: "directional", value: row => accounts.get(row.accountId) },
+    { id: "department", label: "部署", type: "choice", blankOrder: "directional", value: row => departments.get(row.departmentId!) },
+    { id: "industry", label: "業種", type: "choice", blankOrder: "directional", value: row => industries.get(row.industryId!) },
+    { id: "sign", label: "集計の加減", type: "choice", value: row => row.sign === -1 ? "−" : "＋", sortValue: row => row.sign },
+    { id: "amount", label: "反映額", type: "number", scale: 1000, value: row => row.amount },
+  ];
 }
 
 /** A display snapshot can reuse candidates across periods, columns and reopen. */
