@@ -5,12 +5,16 @@ export class DraftAccountConflictError extends Error {
   constructor() { super("科目と金額が別々に変更されています。入力を保持しました。内容を確認してからやり直してください。"); }
 }
 
+export class DraftSaveConflictError extends Error {
+  constructor() { super("同じ項目が別の画面でも変更されています。入力をコピーして控えるか、入力を取り消して最新の内容を確認してください。"); }
+}
+
 function changedMoney(before: Record<string, unknown>, after: Record<string, unknown>) {
   return ["amounts", "overrides", "invalidAmounts"].some(key => !equal(before[key], after[key]));
 }
 
 /** Apply only edits made since submission over the values actually committed to the file. */
-export function reconcileSavedDraft<T>(submitted: T, pending: T, persisted: T): T {
+export function reconcileSavedDraft<T>(submitted: T, pending: T, persisted: T, rejectConflicts = false): T {
   const merge = (base: unknown, local: unknown, saved: unknown): unknown => {
     if (equal(base, local)) return saved;
     if (Array.isArray(base) && Array.isArray(local) && Array.isArray(saved)) {
@@ -38,6 +42,7 @@ export function reconcileSavedDraft<T>(submitted: T, pending: T, persisted: T): 
       return Object.fromEntries([...new Set([...Object.keys(base), ...Object.keys(local), ...Object.keys(saved)])]
         .map(key => [key, merge(base[key], local[key], saved[key])]).filter(([, value]) => value !== undefined));
     }
+    if (rejectConflicts && !equal(base, saved) && !equal(local, saved)) throw new DraftSaveConflictError();
     return local;
   };
   return merge(submitted, pending, persisted) as T;

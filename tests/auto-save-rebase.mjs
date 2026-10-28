@@ -1,5 +1,37 @@
 import assert from 'node:assert/strict';
 export async function verifyAutoSaveRebase(api) {
+  for (const overlap of [false, true]) {
+    let reject, attempts = 0;
+    const committed = [];
+    const failed = new api.AutoSave(async value => {
+      attempts++;
+      if (attempts === 1) await new Promise((_, fail) => { reject = fail; });
+      committed.push(value);
+    }, 100000);
+    failed.begin({ april: '10', may: '20', note: '' });
+    failed.change({ april: '11', may: '20', note: '' });
+    const saving = failed.flush();
+    failed.change({ ...failed.getSnapshot().draft, note: '保存中の追加入力' });
+    failed.syncSaved({ april: overlap ? '99' : '10', may: '777', note: '' });
+    reject(new Error('書込失敗')); await saving;
+    if (overlap) {
+      assert.match(failed.getSnapshot().error, /同じ項目/);
+      failed.syncSaved({ april: '99', may: '888', note: '' });
+      await failed.flush(); await failed.flush();
+      assert.equal(attempts, 1, '同じ項目の競合を再試行で上書きしない');
+      assert.equal(failed.getSnapshot().draft.april, '11');
+      failed.discard();
+      assert.equal(failed.getSnapshot().draft.april, '99');
+      assert.equal(failed.getSnapshot().draft.may, '888');
+    } else {
+      assert.equal(failed.getSnapshot().draft.may, '777');
+      await failed.flush();
+      assert.deepEqual(committed, [{ april: '11', may: '777', note: '保存中の追加入力' }]);
+      failed.change({ ...failed.getSnapshot().draft, note: '取消する入力' }); failed.discard();
+      assert.equal(failed.getSnapshot().draft.may, '777');
+    }
+    failed.cancelTimer(); failed.end();
+  }
   const empty=await api.createTriadicDatabase(2026),account=(await api.readPlanContents(empty)).accounts[0].id;
   const bytes=await api.registerInitiative(empty,{name:'外部更新後の編集',note:'',fiscalYear:'2026',expansionId:1,industryId:1,departmentId:1,rows:[{id:'draft-row',accountId:account,amounts:{4:'120',5:'125',6:'130'}}]});
   const initial=(await api.readPlanContents(bytes)).initiatives[0];

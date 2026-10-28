@@ -14,6 +14,7 @@ export class AutoSave<T> {
   private identity: string | undefined;
   private replacement: { draft: T | null; identity: string | undefined } | null = null;
   private missingSource = false;
+  private failedConflict = "";
   private get replacementError() { return this.missingSource
     ? "編集対象が削除されています。入力をコピーして控えるか、入力を取り消してください。"
     : "編集対象が別のデータに変更されています。"; }
@@ -30,12 +31,17 @@ export class AutoSave<T> {
   private equal(a: T | null, b: T | null) { return JSON.stringify(a) === JSON.stringify(b); }
   begin(draft: T, identity?: string) {
     if (this.state.pending) return;
-    this.identity = identity; this.replacement = null; this.missingSource = false;
+    this.identity = identity; this.replacement = null; this.missingSource = false; this.failedConflict = "";
     this.saved = draft;
     this.publish({ draft, pending: false, saving: false, error: "" });
   }
   /** The page supplies the actual saved source, including any external merge. */
   syncSaved(draft: T, identity = this.identity) {
+    if (this.failedConflict) {
+      this.replacement = { draft, identity };
+      this.publish({ ...this.state, error: this.failedConflict });
+      return;
+    }
     if (this.saved !== null && this.state.pending && (identity !== this.identity || this.missingSource)) {
       // Do not rebase unfinished input onto a different owner, even while its save is returning.
       this.replacement = { draft, identity };
@@ -115,8 +121,21 @@ export class AutoSave<T> {
       return "";
     } catch (error) {
       clearTimeout(this.timer);
-      const message = this.replacement ? this.replacementError : error instanceof Error ? error.message : "自動保存できませんでした。";
-      this.publish({ ...this.state, pending: true, saving: false, error: message });
+      let message = this.replacement ? this.replacementError : error instanceof Error ? error.message : "自動保存できませんでした。";
+      let latest = this.state.draft;
+      if (!this.replacement && this.incoming !== null && this.saved !== null && latest !== null) {
+        const incoming = this.incoming;
+        try {
+          latest = reconcileSavedDraft(this.saved, latest, incoming, true);
+          this.saved = incoming;
+        } catch (conflict) {
+          this.replacement = { draft: incoming, identity: this.identity };
+          message = conflict instanceof Error ? conflict.message : message;
+          this.failedConflict = message;
+        }
+      }
+      this.incoming = null;
+      this.publish({ ...this.state, draft: latest, pending: true, saving: false, error: message });
       return message;
     }
   }
@@ -126,6 +145,7 @@ export class AutoSave<T> {
   discard() {
     if (this.state.saving) return;
     clearTimeout(this.timer);
+    this.failedConflict = "";
     if (this.replacement) {
       this.saved = this.replacement.draft; this.identity = this.replacement.identity; this.replacement = null; this.incoming = null; this.missingSource = false;
     }
