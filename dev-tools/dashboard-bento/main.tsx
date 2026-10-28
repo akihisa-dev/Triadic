@@ -10,7 +10,6 @@ import { initiativeMonths } from "../../Triadic-extension/src/core/domain/calend
 import type { Initiative } from "../../Triadic-extension/src/core/domain/plan";
 import type { BudgetPrevious, KindId } from "../../Triadic-extension/src/core/domain/kinds";
 import { formatYen } from "../../Triadic-extension/src/core/domain/amounts";
-import { filterPlan } from "../../Triadic-extension/src/core/tables/planTables";
 import { readPlanContents } from "../../Triadic-extension/src/core/storage/readPlan";
 import "../../Triadic-extension/src/extension/ExtensionPage.css";
 import "./preview.css";
@@ -25,8 +24,6 @@ function App() {
   const [selected, setSelected] = useState<KindId[]>([1]);
   const [previous, setPrevious] = useState<BudgetPrevious>({ 1: 1, 2: 1 });
   const [period, setPeriod] = useState<DashboardPeriod>("annual");
-  const [department, setDepartment] = useState<number | null>(null);
-  const [industry, setIndustry] = useState<number | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [dark, setDark] = useState(true);
   const [pinned, setPinned] = useState(false);
@@ -38,11 +35,7 @@ function App() {
   const trigger = useRef<HTMLButtonElement>(null);
   const view = useRef<WindowViewValues>({});
   const drag = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
-  const sliced = useMemo(() => ({ ...filterPlan(contents, { departments: department === null ? null : [department], industries: industry === null ? null : [industry] }),
-    departments: department === null ? contents.departments : contents.departments.filter(item => item.id === department),
-    industries: industry === null ? contents.industries : contents.industries.filter(item => item.id === industry),
-  }), [department, industry]);
-  const data = useMemo(() => buildDashboard({ ...sliced, budgetPrevious: previous }, selected), [sliced, previous, selected]);
+  const data = useMemo(() => buildDashboard({ ...contents, budgetPrevious: previous }, selected), [previous, selected]);
   const visible = open || pinned;
   const periodName = period === "annual" ? "年間" : `${period}月`;
   useEffect(() => { document.documentElement.dataset.theme = dark ? "dark" : "light"; }, [dark]);
@@ -54,26 +47,13 @@ function App() {
     const elements = [...root.current!.querySelectorAll<HTMLElement>(".dashboard-stat, .dashboard-panel, .dashboard-analysis-section")];
     for (const title of root.current!.querySelectorAll("svg > title")) title.textContent = (title.textContent ?? "").replace("各項目の数値は下の「数値を表示」で確認できます。", "");
     for (const paragraph of root.current!.querySelectorAll(".dashboard-empty")) if (paragraph.textContent?.includes("金額は「数値を表示」で確認できます。")) paragraph.textContent = paragraph.textContent.replace("金額は「数値を表示」で確認できます。", "");
-    for (const point of root.current!.querySelectorAll(".dashboard-chart-point")) {
-      const month = Number(point.querySelector("title")?.textContent?.match(/^(\d+)月/)?.[1]);
-      point.setAttribute("data-selected", String(period === month));
-      point.setAttribute("aria-pressed", String(period === month));
-      point.setAttribute("role", "button"); point.setAttribute("tabindex", "0"); point.setAttribute("data-preview-action", "month");
-      point.setAttribute("aria-label", `${point.querySelector("title")?.textContent ?? "月"}：${period === month ? "選択を解除" : "この月を選択"}`);
-    }
-    for (const row of root.current!.querySelectorAll(".dashboard-department:not(.dashboard-department-header)")) {
-      const name = row.querySelector(".dashboard-department-name")?.textContent;
-      const active = contents.departments.some(item => item.id === department && item.departmentName === name);
-      row.setAttribute("data-selected", String(active));
-      for (const button of row.querySelectorAll("button")) button.setAttribute("aria-pressed", String(active));
-    }
     elements.forEach(element => {
       element.classList.add("bento-card");
-      for (const number of element.querySelectorAll(".dashboard-number")) number.setAttribute("aria-label", (number.getAttribute("aria-label") ?? "").replace("の総原価表", "の部署で絞り込む"));
+      for (const button of element.querySelectorAll<HTMLButtonElement>(".dashboard-department button")) button.disabled = true;
       if (element.classList.contains("dashboard-comparison")) element.id = "preview-comparison";
       if (element.classList.contains("dashboard-impact")) element.id = "preview-impact";
     });
-  }, [period, selected, previous, sliced]);
+  }, [period, selected, previous]);
   useEffect(() => {
     if (detail) dialog.current?.showModal();
     else dialog.current?.close();
@@ -82,7 +62,7 @@ function App() {
     if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
       for (const bar of root.current!.querySelectorAll(".dashboard-bar")) bar.animate([{ transform: "scaleX(.05)", transformOrigin: "left" }, { transform: "scaleX(1)", transformOrigin: "left" }], { duration: 650, easing: "cubic-bezier(.16,1,.3,1)" });
     }
-  }, [period, department, industry, selected, previous]);
+  }, [period, selected, previous]);
   function choosePeriod(next: DashboardPeriod) {
     view.current["dashboard:period"] = next;
     view.current["dashboard:department-period"] = next;
@@ -106,42 +86,20 @@ function App() {
       <span className="preview-draft">ダッシュボードの確認案</span>
       <button onClick={() => setDark(value => !value)}>{dark ? "ライト" : "ダーク"}</button></header>
     <aside className="preview-rail" aria-label="画面内の移動"><a href="#dashboard-title" aria-label="ダッシュボード"><SidebarIcon name="cost" /></a><a href="#preview-comparison" aria-label="部署別比較"><SidebarIcon name="expansion" /></a><a href="#preview-impact" aria-label="施策の影響"><SidebarIcon name="list" /></a><a href="/dev-tools/index.html" aria-label="開発ツール一覧"><SidebarIcon name="home" /></a></aside>
-    <div className="bento-preview" ref={root} onKeyDown={event => {
-      if ((event.key === "Enter" || event.key === " ") && (event.target as Element).closest("[data-preview-action]")) { event.preventDefault(); event.target.dispatchEvent(new MouseEvent("click", { bubbles: true })); }
-    }} onClick={event => {
+    <div className="bento-preview" ref={root} onClick={event => {
       const target = event.target as Element;
       if (target.closest("button, input, select, a, summary")) return;
-      if (target.closest(".dashboard-chart")) {
-        const text = target.closest("circle")?.querySelector("title")?.textContent ?? (target.tagName.toLowerCase() === "text" ? target.textContent : "");
-        const month = Number(text?.match(/^(\d+)月/)?.[1]);
-        if (initiativeMonths.includes(month as typeof initiativeMonths[number])) { choosePeriod(period === month ? "annual" : month as typeof initiativeMonths[number]); return; }
-      }
-      const row = target.closest(".dashboard-department");
-      if (row) {
-        const name = row.querySelector(".dashboard-department-name")?.textContent;
-        const match = contents.departments.find(item => item.departmentName === name);
-        if (match) { setDepartment(current => current === match.id ? null : match.id); return; }
-      }
-      const rank = target.closest(".dashboard-rank");
-      if (rank) { rank.querySelector<HTMLButtonElement>(".initiative-name-button")?.click(); return; }
-      const mark = target.closest("[data-value]");
-      if (mark && target.closest('[aria-label="業種別の売上と利益率"], [aria-label="業種別の売上構成"]')) {
-        const text = mark.getAttribute("data-value") ?? "";
-        const match = contents.industries.find(item => text.startsWith(item.industryName + " ") || text.includes(" " + item.industryName + " "));
-        if (match) { setIndustry(current => current === match.id ? null : match.id); return; }
-      }
+      target.closest(".dashboard-rank")?.querySelector<HTMLButtonElement>(".initiative-name-button")?.click();
     }}>
-      <div className="slice-summary" aria-label="絞り込み中の条件">{department !== null && <button onClick={() => setDepartment(null)}>{contents.departments.find(item => item.id === department)?.departmentName}を解除</button>}{industry !== null && <button onClick={() => setIndustry(null)}>{contents.industries.find(item => item.id === industry)?.industryName}を解除</button>}</div>
-      <WindowViewContext value={view.current}><DashboardPage key={period} contents={sliced} selected={selected} previous={previous} disabled={false} onSelection={changeSelection}
-        onDepartment={id => setDepartment(current => current === id ? null : id)} onInitiative={showInitiative} /></WindowViewContext>
+      <WindowViewContext value={view.current}><DashboardPage key={period} contents={contents} selected={selected} previous={previous} disabled={false} onSelection={changeSelection}
+        onDepartment={() => {}} onInitiative={showInitiative} /></WindowViewContext>
     </div>
     <aside ref={panel} className={`floating-controls ${visible ? "is-open" : ""}`} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} aria-label="表示条件" onMouseEnter={() => setOpen(true)} onMouseLeave={() => { if (!panel.current?.contains(document.activeElement)) setOpen(false); }} onFocus={() => setOpen(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false); }} onKeyDown={event => { if (event.key === "Escape") { trigger.current?.focus(); setPinned(false); setOpen(false); } }}>
       {visible && <div className="floating-body"><ComparisonSelection selected={selected} previous={previous} onChange={changeSelection} />
-        <div className="slice-selects"><label>部署<select value={department ?? "all"} onChange={event => setDepartment(event.target.value === "all" ? null : Number(event.target.value))}><option value="all">全部署</option>{contents.departments.map(item => <option key={item.id} value={item.id}>{item.departmentName}</option>)}</select></label><label>業種<select value={industry ?? "all"} onChange={event => setIndustry(event.target.value === "all" ? null : Number(event.target.value))}><option value="all">全業種</option>{contents.industries.map(item => <option key={item.id} value={item.id}>{item.industryName}</option>)}</select></label></div>
         <div className="period-buttons" role="group" aria-label="対象期間">{(["annual", ...initiativeMonths] as const).map(month => <button key={month} aria-pressed={period === month} onClick={() => choosePeriod(month)}>{month === "annual" ? "年間" : `${month}月`}</button>)}</div>
         <p>月の選択は部署別比較・施策の影響に反映</p>
       </div>}
-      {(department !== null || industry !== null || period !== "annual") && <div className="floating-active" aria-label="選択中の条件">{period !== "annual" && <button onClick={() => choosePeriod("annual")}>{period}月を解除</button>}{department !== null && <button onClick={() => setDepartment(null)}>{contents.departments.find(item => item.id === department)?.departmentName}を解除</button>}{industry !== null && <button onClick={() => setIndustry(null)}>{contents.industries.find(item => item.id === industry)?.industryName}を解除</button>}<button onClick={() => { setDepartment(null); setIndustry(null); choosePeriod("annual"); }}>絞り込みをすべて解除</button></div>}
+      {period !== "annual" && <div className="floating-active"><button onClick={() => choosePeriod("annual")}>年間に戻す</button></div>}
       <div className="floating-head"><button className="drag-handle" aria-label="表示条件パネルを移動" onPointerDown={event => { drag.current = { x: event.clientX, y: event.clientY, ox: offset.x, oy: offset.y }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={move} onPointerUp={() => { drag.current = null; }} onKeyDown={event => {
         const step = event.shiftKey ? 40 : 10;
         if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) { event.preventDefault(); setOffset(value => ({ x: Math.min(8, Math.max(-(innerWidth - 360), value.x + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0))), y: Math.min(8, Math.max(-(innerHeight - 400), value.y + (event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0))) })); }

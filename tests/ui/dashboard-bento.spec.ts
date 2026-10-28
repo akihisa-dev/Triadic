@@ -1,39 +1,23 @@
 import { test, expect } from "@playwright/test";
 
-test("確認案の月・部署・業種は再クリックで解除でき、一括解除でも元の金額へ戻る", async ({ page }) => {
+test("グラフのクリックで対象を減らさず、表示条件から月と比較種別を選べる", async ({ page }) => {
   await page.goto("/dev-tools/dashboard-bento/index.html");
   const amounts = page.locator(".dashboard-stat strong");
   const original = ["12,702,061", "833,696", "6.6%"];
   await expect(amounts).toHaveText(original);
   const point = page.locator(".dashboard-chart").first().locator("circle").nth(2);
   await point.click();
-  await expect(page.locator(".floating-trigger")).toContainText("6月");
-  await point.click();
   await expect(page.locator(".floating-trigger")).toContainText("年間");
-  const department = page.locator(".dashboard-department .dashboard-bar").first();
-  await department.click();
-  await expect(amounts).toHaveText(["5,286,436", "520,104", "9.8%"]);
-  await department.click();
-  await expect(amounts).toHaveText(original);
+  await page.locator(".dashboard-department .dashboard-bar").first().click();
+  await expect(page.locator(".dashboard-department-name")).toHaveCount(8);
   const industry = page.locator('.dashboard-analysis-section[aria-label="業種別の売上構成"] g[data-value]').filter({ hasText: /^直営自動車 \d/ }).locator("text").first();
   await industry.click();
-  await expect(page.locator(".slice-summary")).toContainText("直営自動車を解除");
-  await industry.click();
   await expect(amounts).toHaveText(original);
-  await point.click();
-  await department.click();
-  const reset = page.locator(".floating-active").getByRole("button", { name: "絞り込みをすべて解除", exact: true });
-  await page.locator(".floating-trigger").press("Escape");
-  const before = await reset.boundingBox();
-  await reset.hover();
-  const after = await reset.boundingBox();
-  expect(Math.abs(before!.y - after!.y)).toBeLessThanOrEqual(1);
-  await reset.click();
-  await expect(amounts).toHaveText(original);
+  await expect(page.locator(".slice-summary, .slice-selects")).toHaveCount(0);
+  await page.locator(".floating-trigger").press("Enter");
+  await page.getByRole("button", { name: "6月", exact: true }).click();
+  await expect(page.locator(".floating-trigger")).toContainText("6月");
+  await page.getByRole("button", { name: "年間に戻す", exact: true }).click();
   await expect(page.locator(".floating-trigger")).toContainText("年間");
-  await expect(page.locator(".slice-summary")).toBeEmpty();
-  await page.locator(".floating-trigger").press("Enter");
-  await expect(page.locator(".floating-trigger")).toHaveAttribute("aria-expanded", "true");
-  await page.locator(".floating-trigger").press("Enter");
-  await expect(page.locator(".floating-trigger")).toHaveAttribute("aria-expanded", "false");
+  await expect(amounts).toHaveText(original);
 });

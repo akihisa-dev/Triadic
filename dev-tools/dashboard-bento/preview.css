@@ -65,20 +65,13 @@
 @keyframes detail-reveal { from { opacity: 0; transform: translateY(36px) scale(.92); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @media (prefers-reduced-motion: reduce) { .preview-detail[open] { animation: none; } }
 
-.slice-summary { display: flex; gap: 8px; margin: 0 auto 12px; max-width: 1800px; }
-.slice-summary:empty { display: none; }
-.slice-summary button { border: 1px solid var(--accent); border-radius: 6px; color: var(--accent); background: var(--surface); padding: 7px 12px; cursor: pointer; font-size: 12px; }
-.slice-selects { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-.slice-selects label { display: grid; gap: 6px; font-size: 11px; color: var(--muted); min-width: 0; }
-.slice-selects select { width: 100%; border: 1px solid var(--line); border-radius: 6px; background: var(--canvas); color: var(--ink); padding: 8px; font-size: 12px; }
 
 .bento-preview .analysis-values { display: none; }
 
-.bento-preview :is(.dashboard-chart-point, .dashboard-department .dashboard-bar, .dashboard-rank .dashboard-bar) { cursor: pointer; }
 
 .floating-active { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 10px 0; }
 .floating-controls .floating-active button { font-size: 11px; padding: 6px 8px; border-color: var(--accent); color: var(--accent); }
 
-.bento-preview .dashboard-chart-point[data-selected="true"] { r: 5; stroke: var(--ink); stroke-width: 2; }
-.bento-preview .dashboard-department[data-selected="true"] .dashboard-department-name button { color: var(--accent); text-decoration: underline; }
-.bento-preview [data-preview-action]:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.bento-preview .dashboard-department button:disabled { opacity: 1; cursor: default; color: var(--ink); text-decoration: none; }
+.bento-preview .dashboard-rank .dashboard-bar { cursor: pointer; }
