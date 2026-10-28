@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import { verifyDashboardDepartmentComparison } from './dashboard-department-comparison.mjs';
 import { verifyDashboardHiddenExpense } from './dashboard-hidden-expense.mjs';
 
 export async function verifyDashboard(api) {
+  verifyDashboardDepartmentComparison(api);
   await verifyDashboardHiddenExpense(api);
   const sample = await api.readPlanContents(await api.createSamplePlan(2026));
   const sales = sample.accounts.find(item => item.accountType === "sales");

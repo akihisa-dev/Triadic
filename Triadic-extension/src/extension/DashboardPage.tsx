@@ -3,7 +3,7 @@ import { formatAmount, formatRate, formatYen } from "../core/domain/amounts";
 import { initiativeMonths } from "../core/domain/calendar";
 import { baselineFor, comparisonName, previousKindName, type KindId, type BudgetPrevious } from "../core/domain/kinds";
 import type { Initiative, PlanContents } from "../core/domain/plan";
-import { buildDashboard, dashboardAmounts, dashboardChange, rankDashboardInitiatives, type Dashboard, type DashboardMetric, type DashboardPeriod, type DashboardSeries } from "../core/tables/dashboard";
+import { buildDashboard, dashboardAmounts, dashboardChange, dashboardDepartmentComparison, rankDashboardInitiatives, type Dashboard, type DashboardMetric, type DashboardPeriod, type DashboardSeries } from "../core/tables/dashboard";
 import { DashboardAnalysis } from "./DashboardAnalysis";
 import { ComparisonSelection } from "./ComparisonSelection";
 import { TableCalculationBoundary } from "./TableCalculationBoundary";
@@ -33,6 +33,7 @@ export function DashboardPage({ contents, selected, previous, disabled, onSelect
 function DashboardContents({ contents, selected, disabled, onDepartment, onInitiative }: Pick<Props, "contents" | "selected" | "disabled" | "onDepartment" | "onInitiative">) {
   const dashboard = useMemo(() => buildDashboard(contents, selected), [contents, selected]);
   const [departmentPeriod, setDepartmentPeriod] = useWindowViewState("dashboard:department-period", "annual", true);
+  const departmentComparison = useMemo(() => dashboardDepartmentComparison(dashboard.departments, departmentPeriod), [dashboard, departmentPeriod]);
   const [period, setPeriod] = useWindowViewState("dashboard:period", "annual", true);
   const [ranking, setRanking] = useWindowViewState("dashboard:ranking", selected[0]!, true);
   const rankKind = selected.includes(ranking) ? ranking : selected[0]!;
@@ -57,14 +58,14 @@ function DashboardContents({ contents, selected, disabled, onDepartment, onIniti
     <section className="dashboard-panel dashboard-comparison"><div className="dashboard-panel-heading"><h2>部署別比較</h2><div className="dashboard-controls"><label>部署の対象期間<select value={departmentPeriod} onChange={event => setDepartmentPeriod(event.target.value === "annual" ? "annual" : Number(event.target.value) as DashboardPeriod)}><option value="annual">年間</option>{initiativeMonths.map(month => <option key={month} value={month}>{month}月</option>)}</select></label></div></div>
       <div className="dashboard-legend">{priors.map(kind => <span key={kind} className={`dashboard-prior dashboard-prior-${kind}`}>{previousKindName(kind)}</span>)}{selected.map((kind, index) => <span className={`dashboard-series-${index}`} key={kind}>{kindName(kind)}</span>)}<span>金額：千円</span></div>
       <div className="dashboard-department dashboard-department-header" aria-hidden="true"><span>部署</span><span>売上 / 前年増減</span><span>利益 / 前年増減</span><span>利益率 / 前年差</span></div>
-      {dashboard.departments.map(department => {
+      {departmentComparison.rows.map(department => {
         return <div className="dashboard-department" key={department.id ?? "unassigned"}>
           <div className="dashboard-department-name">{department.id === null ? department.name : <button className="initiative-name-button" disabled={disabled} onClick={() => onDepartment(department.id!)}>{department.name}</button>}</div>
           {metrics.map(metric => {
-            const maximum = Math.max(1, ...dashboard.departments.flatMap(item => item.budgets.map(value => Math.abs(dashboardAmounts(value.months, departmentPeriod)[metric.id]))));
+            const maximum = departmentComparison.maximum[metric.id];
             return <div key={metric.id} className="dashboard-department-metric"><span className="dashboard-mobile-label">{metric.name}</span>{department.budgets.map((entry, index) => {
-              const prior = dashboardAmounts(entry.previous, departmentPeriod);
-              const amount = dashboardAmounts(entry.months, departmentPeriod)[metric.id];
+              const prior = entry.previous;
+              const amount = entry.amounts[metric.id];
               return <div key={entry.kind} className={`dashboard-department-kind dashboard-series-${index}`}>
                 <span className="dashboard-series-label">{kindName(entry.kind)}</span>
                 {department.id === null ? <span>{formatYen(amount)}</span> : <button className="dashboard-number" disabled={disabled} aria-label={`${department.name} ${kindName(entry.kind)} ${metric.name} ${formatYen(amount)}の総原価表`} onClick={() => onDepartment(department.id!)}>{formatYen(amount)}</button>}
@@ -74,10 +75,10 @@ function DashboardContents({ contents, selected, disabled, onDepartment, onIniti
             })}</div>;
           })}
           <div className="dashboard-department-metric"><span className="dashboard-mobile-label" aria-hidden="true">利益率 / 前年差</span>{department.budgets.map((entry, index) => {
-            const prior = dashboardAmounts(entry.previous, departmentPeriod);
-            const value = dashboardAmounts(entry.months, departmentPeriod).margin;
+            const prior = entry.previous;
+            const value = entry.amounts.margin;
             const difference = value === undefined || prior.margin === undefined ? undefined : value - prior.margin;
-            const maximum = Math.max(1, ...dashboard.departments.flatMap(item => item.budgets.map(value => Math.abs(dashboardAmounts(value.months, departmentPeriod).margin ?? 0))));
+            const maximum = departmentComparison.maximum.margin;
             return <div key={entry.kind} className={`dashboard-department-kind dashboard-series-${index}`} role="group"
               aria-label={`${department.name} ${kindName(entry.kind)} ${departmentPeriod === "annual" ? "年間" : `${departmentPeriod}月`} 利益率 ${value === undefined ? "計算できません" : rate(value)} 前年差 ${difference === undefined ? "計算できません" : rate(difference, true)}`}>
               <span className="dashboard-series-label" aria-hidden="true">{kindName(entry.kind)}</span><span aria-hidden="true">{rate(value)}</span>

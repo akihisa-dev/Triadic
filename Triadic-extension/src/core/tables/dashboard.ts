@@ -44,6 +44,18 @@ export function buildDashboard(contents: PlanContents, selected: KindId[]) {
   };
 }
 export type Dashboard = ReturnType<typeof buildDashboard>;
+/** Resolve each department/kind once; all bars and margin tracks share these maxima. */
+export function dashboardDepartmentComparison(departments: Dashboard["departments"], period: DashboardPeriod) {
+  const maximum = { sales: 1, profit: 1, margin: 1 };
+  const rows = departments.map(department => ({ ...department, budgets: department.budgets.map(entry => {
+    const previous = dashboardAmounts(entry.previous, period), amounts = dashboardAmounts(entry.months, period);
+    maximum.sales = Math.max(maximum.sales, Math.abs(amounts.sales));
+    maximum.profit = Math.max(maximum.profit, Math.abs(amounts.profit));
+    maximum.margin = Math.max(maximum.margin, Math.abs(amounts.margin ?? 0));
+    return { kind: entry.kind, previous, amounts };
+  }) }));
+  return { rows, maximum };
+}
 export type DashboardRank = { initiative: Initiative; amount: number; values: { kind: KindId; amount: number }[] };
 export function rankDashboardInitiatives(dashboard: Dashboard, kind: KindId, period: DashboardPeriod, metric: DashboardMetric, direction: "increase" | "decrease"): DashboardRank[] {
   const indexes = dashboard.initiatives.map(entry => ({ kind: entry.kind, amounts: new Map(entry.items.map(item => [item.id, dashboardAmounts(item.months, period)[metric]])) }));
