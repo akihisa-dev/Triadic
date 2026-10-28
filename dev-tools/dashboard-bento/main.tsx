@@ -1,5 +1,4 @@
 import { createRoot } from "react-dom/client";
-import { createPortal } from "react-dom";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { DashboardPage } from "../../Triadic-extension/src/extension/DashboardPage";
 import { ComparisonSelection } from "../../Triadic-extension/src/extension/ComparisonSelection";
@@ -26,8 +25,6 @@ function App() {
   const [selected, setSelected] = useState<KindId[]>([1]);
   const [previous, setPrevious] = useState<BudgetPrevious>({ 1: 1, 2: 1 });
   const [period, setPeriod] = useState<DashboardPeriod>("annual");
-  const [cards, setCards] = useState<HTMLElement[]>([]);
-  const [zoom, setZoom] = useState<{ name: string; rect: DOMRect } | null>(null);
   const [department, setDepartment] = useState<number | null>(null);
   const [industry, setIndustry] = useState<number | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
@@ -36,8 +33,6 @@ function App() {
   const [open, setOpen] = useState(false);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const root = useRef<HTMLDivElement>(null);
-  const zoomDialog = useRef<HTMLDialogElement>(null);
-  const zoomRoot = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -64,19 +59,7 @@ function App() {
       if (element.classList.contains("dashboard-comparison")) element.id = "preview-comparison";
       if (element.classList.contains("dashboard-impact")) element.id = "preview-impact";
     });
-    setCards(elements);
   }, [period, selected, previous, sliced]);
-  useLayoutEffect(() => {
-    const dialog = zoomDialog.current;
-    if (!zoom || !dialog || !zoomRoot.current) { dialog?.close(); return; }
-    for (const card of zoomRoot.current.querySelectorAll<HTMLElement>(".dashboard-stat, .dashboard-panel, .dashboard-analysis-section")) card.style.display = card.querySelector("h2")?.textContent === zoom.name ? "block" : "none";
-    if (dialog.open) return;
-    dialog.showModal();
-    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      const target = dialog.getBoundingClientRect(), from = zoom.rect;
-      dialog.animate([{ transform: `translate(${from.x + from.width / 2 - target.x - target.width / 2}px, ${from.y + from.height / 2 - target.y - target.height / 2}px) scale(${from.width / target.width}, ${from.height / target.height})`, opacity: .5 }, { transform: "translate(0, 0) scale(1, 1)", opacity: 1 }], { duration: 620, easing: "cubic-bezier(.16,1,.3,1)" });
-    }
-  }, [zoom, period, selected, previous, sliced]);
   useEffect(() => {
     if (detail) dialog.current?.showModal();
     else dialog.current?.close();
@@ -96,9 +79,6 @@ function App() {
       for (const bar of root.current!.querySelectorAll(".dashboard-bar")) bar.animate([{ transform: "scaleX(.05)", transformOrigin: "left" }, { transform: "scaleX(1)", transformOrigin: "left" }], { duration: 650, easing: "cubic-bezier(.16,1,.3,1)" });
     }
   }, [period, department, industry, selected, previous]);
-  function openZoom(card: HTMLElement) {
-    setZoom({ name: card.querySelector("h2")?.textContent ?? "", rect: card.getBoundingClientRect() });
-  }
   function choosePeriod(next: DashboardPeriod) {
     view.current["dashboard:period"] = next;
     view.current["dashboard:department-period"] = next;
@@ -131,16 +111,10 @@ function App() {
         const match = contents.industries.find(item => text.startsWith(item.industryName + " ") || text.includes(" " + item.industryName + " "));
         if (match) { setIndustry(match.id); return; }
       }
-      const card = target.closest<HTMLElement>(".bento-card");
-      if (card && target.closest("svg")) openZoom(card);
     }}>
       <div className="slice-summary" aria-label="絞り込み中の条件">{department !== null && <button onClick={() => setDepartment(null)}>{contents.departments.find(item => item.id === department)?.departmentName}を解除</button>}{industry !== null && <button onClick={() => setIndustry(null)}>{contents.industries.find(item => item.id === industry)?.industryName}を解除</button>}</div>
       <WindowViewContext value={view.current}><DashboardPage key={period} contents={sliced} selected={selected} previous={previous} disabled={false} onSelection={changeSelection}
         onDepartment={id => setDepartment(id)} onInitiative={showInitiative} /></WindowViewContext>
-      {cards.map(card => {
-        const name = card.querySelector("h2")?.textContent ?? "";
-        return createPortal(<button className="card-expand" aria-label={`${name}を拡大`} aria-haspopup="dialog" onClick={() => openZoom(card)}>拡大</button>, card, name);
-      })}
     </div>
     <aside ref={panel} className={`floating-controls ${visible ? "is-open" : ""}`} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} aria-label="表示条件" onMouseEnter={() => setOpen(true)} onMouseLeave={() => { if (!panel.current?.contains(document.activeElement)) setOpen(false); }} onFocus={() => setOpen(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false); }} onKeyDown={event => { if (event.key === "Escape") { trigger.current?.focus(); setPinned(false); setOpen(false); } }}>
       <div className="floating-head"><button className="drag-handle" aria-label="表示条件パネルを移動" onPointerDown={event => { drag.current = { x: event.clientX, y: event.clientY, ox: offset.x, oy: offset.y }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={move} onPointerUp={() => { drag.current = null; }} onKeyDown={event => {
@@ -153,7 +127,6 @@ function App() {
         <p>月の選択は部署別比較・施策の影響に反映</p>
       </div>}
     </aside>
-    <dialog ref={zoomDialog} className="chart-zoom" aria-label={zoom ? `${zoom.name}の拡大` : "グラフの拡大"} onCancel={() => setZoom(null)} onClick={event => { if (event.target === event.currentTarget) setZoom(null); }}><header><h2>{zoom?.name}</h2><button onClick={() => setZoom(null)}>閉じる</button></header><div className="zoom-dashboard" ref={zoomRoot}>{zoom && <WindowViewContext value={{ ...view.current }}><DashboardPage contents={sliced} selected={selected} previous={previous} disabled={false} onSelection={changeSelection} onDepartment={id => setDepartment(id)} onInitiative={showInitiative} /></WindowViewContext>}</div></dialog>
     <dialog ref={dialog} className="preview-detail" onCancel={() => setDetail(null)} onClick={event => { if (event.target === event.currentTarget) setDetail(null); }}><div className="preview-detail-heading"><h2>{detail?.name}</h2><button onClick={() => setDetail(null)}>閉じる</button></div><p>金額：千円</p><table><thead><tr><th>月</th><th>種別</th><th>売上</th><th>利益</th></tr></thead><tbody>{detail?.rows.map(row => <tr key={`${row.month}:${row.kind}`}><th>{row.month}月</th><td>{row.kind === 1 ? "一次予算" : "確定予算"}</td><td>{formatYen(row.sales)}</td><td>{formatYen(row.profit)}</td></tr>)}</tbody></table></dialog>
   </>;
 }
