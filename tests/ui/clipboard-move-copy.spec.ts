@@ -129,3 +129,33 @@ for (const name of ['総原価表', '展開表', '施策一覧']) test(`${name}�
     expect(lastRow).toBeGreaterThan(200);
   }
 });
+
+for (const name of ['総原価表', '展開表', '施策一覧']) test(`${name}の矢印選択は上下左右の固定領域に隠れない`, async ({ page, app }) => {
+  await page.goto('/tests/ui/preview.html?data=signed-categories-large');
+  await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
+  await app.getByRole('navigation', { name: 'メインナビゲーション' }).getByRole('button', { name, exact: true }).click();
+  await settleMotion(app.locator('body'));
+  const table = app.getByRole('table', { name, exact: true }), region = table.locator('..');
+  const cell = (row: number, column: number) => table.locator(`[data-copy-row="${row}"][data-copy-column="${column}"]`);
+  const uncovered = async (target: Locator) => {
+    await expect(target).toHaveAttribute('data-range-selected', 'true');
+    await expect.poll(() => target.evaluate(node => {
+      const box = node.getBoundingClientRect();
+      return [[box.left + 2, box.top + 2], [box.right - 2, box.bottom - 2]].every(([x, y]) => {
+        const hit = node.ownerDocument.elementFromPoint(x!, y!);
+        return hit === node || !!hit && node.contains(hit);
+      });
+    })).toBe(true);
+  };
+  await cell(0, 0).dispatchEvent('pointerdown', { button: 0, buttons: 1, shiftKey: true });
+  for (let i = 0; i < 45; i++) await region.press('Shift+ArrowDown');
+  await uncovered(cell(45, 0)); // Includes the lower sticky total boundary.
+  expect((await transfer(region, 'copy')).text.split('\n')).toHaveLength(46);
+  for (let i = 0; i < 12; i++) await region.press('ArrowUp');
+  await uncovered(cell(33, 0));
+  for (let i = 0; i < 18; i++) await region.press('ArrowRight');
+  for (let i = 0; i < 12; i++) await region.press('ArrowLeft');
+  await uncovered(cell(33, 6));
+  expect((await transfer(region, 'copy')).text).toBe(await cell(33, 6).textContent());
+  await expect(app.getByRole('dialog')).toHaveCount(0);
+});

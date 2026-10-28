@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, type ClipboardEvent, type KeyboardEvent, type MouseEvent, type PointerEvent, type RefObject } from "react";
 import { gridBounds, type GridCell, type GridSelection } from "../core/tables/grid";
+import { revealTableRangeCell } from "./tableRangeVisibility";
 import "./TableRangeCopy.css";
 
 export const tableCopyCell = (row: number, column: number) => ({ "data-copy-row": row, "data-copy-column": column });
@@ -113,7 +114,9 @@ export function useTableRangeCopy(container: RefObject<HTMLDivElement | null>, o
       const end = { row: Math.max(0, Math.min(rowCount - 1, active.end.row + (event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0))),
         column: Math.max(0, Math.min(columnCount - 1, active.end.column + (event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0))) };
       event.preventDefault(); selection.current = { anchor: event.shiftKey ? active.anchor : end, end }; paint();
-      container.current?.querySelector<HTMLElement>(`[data-copy-row="${end.row}"][data-copy-column="${end.column}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest" });
+      const region = container.current;
+      const cell = region?.querySelector<HTMLElement>(`[data-copy-row="${end.row}"][data-copy-column="${end.column}"]`);
+      if (region && cell) revealTableRangeCell(region, cell);
     },
   };
 }
