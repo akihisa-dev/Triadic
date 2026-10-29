@@ -39,7 +39,6 @@ export function DashboardControls({ selected, previous, disabled, period, onSele
         <button key={month} disabled={disabled} aria-pressed={period === month} onClick={() => onPeriod(month)}>{month === "annual" ? "年間" : `${month}月`}</button>)}</div>
       <p>月の選択は部署別比較・施策の影響に反映</p>
     </div>
-    {period !== "annual" && <div className="dashboard-floating-active"><button disabled={disabled} onClick={() => onPeriod("annual")}>年間に戻す</button></div>}
     <div className="dashboard-floating-head">
       <button className="dashboard-drag-handle" aria-label="表示条件パネルを移動"
         onPointerDown={event => { drag.current = { x: event.clientX, y: event.clientY, ox: offset.x, oy: offset.y }; event.currentTarget.setPointerCapture(event.pointerId); }}

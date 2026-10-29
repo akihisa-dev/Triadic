@@ -17,7 +17,8 @@ test("グラフのクリックで対象を減らさず、表示条件から月�
   await page.locator(".dashboard-floating-trigger").press("Enter");
   await page.getByRole("button", { name: "6月", exact: true }).click();
   await expect(page.locator(".dashboard-floating-trigger")).toContainText("6月");
-  await page.getByRole("button", { name: "年間に戻す", exact: true }).click();
+  await expect(page.getByRole("button", { name: "年間に戻す", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "年間", exact: true }).click();
   await expect(page.locator(".dashboard-floating-trigger")).toContainText("年間");
   await expect(amounts).toHaveText(original);
 });

@@ -180,7 +180,9 @@ test("表示条件はスクロール中も画面内に残り、月変更と解�
   await app.locator(".home-content").evaluate(node => { node.scrollTop = node.scrollHeight; });
   const inside = await app.locator(".dashboard-floating-controls").evaluate(node => { const r = node.getBoundingClientRect(); return r.top >= 0 && r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight; });
   expect(inside).toBe(true);
-  await app.getByRole("button", { name: "年間に戻す", exact: true }).click();
+  await expect(app.getByRole("button", { name: "年間に戻す", exact: true })).toHaveCount(0);
+  await trigger.press("Enter");
+  await app.getByRole("button", { name: "年間", exact: true }).click();
   await expect(trigger).toContainText("年間");
   await expect(department).toHaveText("5,286,436");
   await expect(app.locator(".dashboard-stat strong")).toHaveText(annual);
