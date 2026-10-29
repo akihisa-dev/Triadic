@@ -85,3 +85,5 @@
 三表の高さ不足は既存の機能確認用データを使い、`short-table-viewport.spec.ts` で通常高・450px・300pxへの変更、キーボード選択と条件欄への復帰を確認します。会社予算の金額・マスタは変更しません。
 
 展開表の非表示の基準前年間の差は `tests/ui/expansion-previous-plan.ts` の既定マスタを保持した専用データで確認します。単独・両予算・逆順・表示用前年・絞り込み後の予算差と真の超過を `tests/expansion-previous-difference.mjs`、画面を `expansion-previous-difference.spec.ts` で検証し、会社予算の内容は変更しません。
+
+非表示の基準前年合計の超過も同じ専用生成元の `createExpansionBaselineTotalPlan` で確認します。`tests/expansion-baseline-total.mjs` と `expansion-previous-difference.spec.ts` が正負・単独/両予算・絞り込み・表示金額の超過と1円精度を検証します。会社予算と既定マスタは変更しません。

@@ -1,8 +1,9 @@
 import { verifyExpansionPreviousDifference } from "./expansion-previous-difference.mjs";
+import { verifyExpansionBaselineTotal } from "./expansion-baseline-total.mjs";
 import assert from 'node:assert/strict';
 
 export async function verifyExpansionTableView(api, { excel = false } = {}) {
-  if (!excel) await verifyExpansionPreviousDifference(api);
+  if (!excel) { await verifyExpansionPreviousDifference(api); await verifyExpansionBaselineTotal(api); }
   const contents = await api.readPlanContents(await api.createSamplePlan(2026));
   const ordered={...contents,previousAmounts:[],expansions:contents.expansions.slice(0,1),
     periodTypes:[5,-1,0].map(id=>({id,periodName:`期間${id}`,startMonthRule:'new'})),

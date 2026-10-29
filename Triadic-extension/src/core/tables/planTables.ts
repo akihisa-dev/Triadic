@@ -37,7 +37,7 @@ export function buildKindCostTable(contents: PlanContents, selected: KindId[]) {
   const skeleton = kinds[0] ?? buildCostTable(contents.accounts, contents.aggregations, [], contents.fiscalYear, previous);
   return skeleton.map((row, index) => ({ ...row, values: [row.previous, ...kinds.map(rows => rows[index]!.budget)] }));
 }
-export function previousTotals(contents: PlanContents): ExpansionTotals {
+function exactPreviousTotals(contents: PlanContents) {
   const accounts = new Map(contents.accounts.map(account => [account.id, account]));
   const exact = new Map(initiativeMonths.map(month => [month, { sales: 0n, profit: 0n }]));
   for (const record of contents.previousAmounts) {
@@ -46,8 +46,20 @@ export function previousTotals(contents: PlanContents): ExpansionTotals {
     const totals = exact.get(record.month as typeof initiativeMonths[number])!;
     totals.sales += BigInt(effects.sales); totals.profit += BigInt(effects.profit);
   }
-  return Object.fromEntries([...exact].map(([month, totals]) => [month, {
+  return exact;
+}
+export function previousTotals(contents: PlanContents): ExpansionTotals {
+  return Object.fromEntries([...exactPreviousTotals(contents)].map(([month, totals]) => [month, {
     sales: checkedYen(totals.sales), profit: checkedYen(totals.profit),
+  }]));
+}
+
+/** Only the displayed budget is range checked; its hidden baseline may be larger. */
+export function expansionBudget(contents: PlanContents, kind: KindId, changes: ExpansionMonths): ExpansionTotals {
+  const previous = exactPreviousTotals({ ...contents, previousKind: baselineFor(contents, kind) });
+  return Object.fromEntries(initiativeMonths.map(month => [month, {
+    sales: changes[month]?.sales === null ? null : checkedYen(previous.get(month)!.sales + BigInt(changes[month]?.sales ?? 0)),
+    profit: changes[month]?.profit === null ? null : checkedYen(previous.get(month)!.profit + BigInt(changes[month]?.profit ?? 0)),
   }]));
 }
 
@@ -70,14 +82,15 @@ export function buildKindExpansionTable(contents: PlanContents, selected: KindId
     return { byId, byExpansion };
   });
   const table = buildExpansionTable({ ...contents, initiatives: projections[0]! }, contents.fiscalYear, sort);
-  const priors = selected.map(kind => previousTotals({ ...contents, previousKind: baselineFor(contents, kind) }));
+  const priors = options.comparePrevious === false ? [] : selected.map(kind => previousTotals({ ...contents, previousKind: baselineFor(contents, kind) }));
   const compare = (values: ExpansionMonths[]) => selected.length === 2
     ? [...values, combineTotals(values[selected.indexOf(2)]!, values[selected.indexOf(1)]!, -1)] : values;
   const totals = projections.map(totalInitiatives);
   return {
-    // The UI uses each baseline for filtered budgets, but never displays their difference.
+    // Only Excel exposes the calculation baselines as rows.
     previous: options.comparePrevious === false ? priors : compare(priors),
-    total: compare(totals.map((total, index) => combineTotals(priors[index]!, total))),
+    total: compare(totals.map((total, index) => options.comparePrevious === false
+      ? expansionBudget(contents, selected[index]!, total) : combineTotals(priors[index]!, total))),
     changes: compare(totals),
     groups: table.groups.map(group => {
       const members = indexes.map(index => index.byExpansion.get(group.expansion.id) ?? []);

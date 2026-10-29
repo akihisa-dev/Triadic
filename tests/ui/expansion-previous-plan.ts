@@ -13,3 +13,19 @@ export async function createExpansionPreviousPlan(split = false) {
   bytes = await changePlanSettings(bytes, { type: 'comparison', screen: 'expansion-table', selected: [1, 2], previous: { 1: 1, 2: 2, display: 1 } });
   await validateTriadicDatabase(bytes); return bytes;
 }
+
+export async function createExpansionBaselineTotalPlan(split = false, negative = false) {
+  let bytes = await createTriadicDatabase(2026);
+  const plan = await readPlanContents(bytes), accountId = plan.accounts.find(row => row.accountType === 'sales')!.id;
+  for (const department of plan.departments.slice(0, 2)) bytes = await savePreviousAmounts(bytes, {
+    departmentId: department.id, industryId: department.industryIds[0]!, previousKind: 1,
+    rows: [{ accountId, amounts: { 4: negative ? '-5000000000000' : '5000000000000' } }],
+  });
+  for (let index = 0; index < (split ? 2 : 1); index++) bytes = await registerInitiative(bytes, {
+    ...createInitiativeDraft('2026'), departmentId: plan.departments[0]!.id, industryId: plan.departments[0]!.industryIds[0]!,
+    name: `基準合計の境界${index + 1}`, expansionId: plan.expansions[0]!.id,
+    rows: [{ accountId, amounts: { 4: `${negative ? '' : '-'}${split ? '1000000000000' : '2000000000000'}` } }],
+  });
+  bytes = await changePlanSettings(bytes, { type: 'comparison', screen: 'expansion-table', selected: [1, 2], previous: { 1: 1, 2: 1, display: 2 } });
+  await validateTriadicDatabase(bytes); return bytes;
+}

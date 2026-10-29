@@ -64,4 +64,4 @@ export { initiativeListColumns } from "../../Triadic-extension/src/core/tables/i
 
 export { createCostDisplayOverflowPlan } from "../ui/cost-display-plan";
 
-export { createExpansionPreviousPlan } from "../ui/expansion-previous-plan";
+export { createExpansionPreviousPlan, createExpansionBaselineTotalPlan } from "../ui/expansion-previous-plan";

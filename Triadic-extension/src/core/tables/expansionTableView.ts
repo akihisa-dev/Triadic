@@ -1,7 +1,7 @@
 import type { KindId } from "../domain/kinds";
 import type { PlanContents } from "../domain/plan";
 import { createExpansionGrouping, groupExpansionCategories, groupExpansionPeriods, totalInitiatives } from "./expansionTable";
-import { buildKindExpansionTable, combineTotals } from "./planTables";
+import { buildKindExpansionTable, combineTotals, expansionBudget } from "./planTables";
 import { selectTableRows, type TableColumn, type TableViewState } from "./columnView";
 
 function buildView(contents: PlanContents, selected: KindId[], grouping: ReturnType<typeof createExpansionGrouping>) {
@@ -52,7 +52,7 @@ export function selectExpansionView(base: ExpansionView, contents: PlanContents,
   }).filter(group => !filtered || group.initiatives.length > 0);
   const members = groups.flatMap(group => group.initiatives);
   const changes = filtered ? base.table.changes.map((_, index) => calculate(() => totalInitiatives(members.map(item => ({ months: item.values[index]! }))))) : base.table.changes;
-  const budgets = filtered ? changes.slice(0, base.selected.length).map((amounts, index) => calculate(() => combineTotals(base.table.previous[index]!, amounts))) : [];
+  const budgets = filtered ? changes.slice(0, base.selected.length).map((amounts, index) => calculate(() => expansionBudget(contents, base.selected[index]!, amounts))) : [];
   const total = !filtered ? base.table.total : base.selected.length === 2
     ? [...budgets, calculate(() => combineTotals(budgets[base.selected.indexOf(2)]!, budgets[base.selected.indexOf(1)]!, -1))] : budgets;
   return { ...shapeView({ ...base.table, groups, changes, total }, createExpansionGrouping(contents), base.selected, state), calculationError };
