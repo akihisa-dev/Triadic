@@ -22,7 +22,6 @@ export function DashboardControls({ selected, previous, disabled, period, onSele
       <ComparisonSelection selected={selected} previous={previous} disabled={disabled} onChange={onSelection} />
       <div className="dashboard-period-buttons" role="group" aria-label="対象期間">{(["annual", ...initiativeMonths] as const).map(month =>
         <button key={month} disabled={disabled} aria-pressed={period === month} onClick={() => onPeriod(month)}>{month === "annual" ? "年間" : `${month}月`}</button>)}</div>
-      <p>月の選択は部署別比較・施策の影響に反映</p>
     </div>
     <div className="dashboard-floating-head">
       <button ref={trigger} className="dashboard-floating-trigger" aria-expanded={open} aria-controls={bodyId}
