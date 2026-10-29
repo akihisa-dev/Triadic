@@ -1,3 +1,4 @@
+import { verifyWindowUrl } from "./window-url.mjs";
 import { verifyWindowCloseJoin } from "./window-close-join.mjs";
 import { verifyOperationMembership } from "./window-operation-membership.mjs";
 import { verifyWindowJoinLifetime } from "./window-join-lifetime.mjs";
@@ -13,6 +14,7 @@ import { verifyHistoryCommit } from "./window-history-commit.mjs";
 import { verifyWindowControlTimeout } from "./window-control-timeout.mjs";
 
 export async function verifyWindowSession(api) {
+  await verifyWindowUrl(api);
   await verifyWindowCloseJoin(api);
   await verifyWindowJoinLifetime(api);
   await verifyWindowMasterIdentity(api);

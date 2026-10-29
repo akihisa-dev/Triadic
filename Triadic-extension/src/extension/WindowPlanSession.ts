@@ -69,7 +69,7 @@ export class WindowPlanSession implements SessionAccess {
     const ticket = hash.get("view");
     try { await this.call("join", group, ticket); }
     catch (failure) { this.snapshot = { ...this.snapshot, historyError: failure instanceof Error ? failure.message : "ウィンドウを開けませんでした。" }; this.listeners.forEach(listener => listener()); }
-    if (ticket) { hash.delete("view"); history.replaceState(null, "", `${location.pathname}${location.search}#${hash}`); }
+    this.syncWorkspaceUrl(true);
     window.addEventListener("pagehide", () => {
       this.port?.postMessage({ type: "request", id: ++this.sequence, method: "detach", args: [] } satisfies HubRequest);
       this.releaseLock?.(); this.port?.close();
@@ -78,6 +78,19 @@ export class WindowPlanSession implements SessionAccess {
     window.addEventListener("focus", () => {
       if (this.info.peers > 1 && this.info.group) this.activation = this.call("activate").catch(() => {});
     });
+  }
+  private syncWorkspaceUrl(consumeTicket = false) {
+    if (typeof location === "undefined" || typeof history === "undefined") return;
+    const hash = new URLSearchParams(location.hash.slice(1));
+    const before = hash.toString();
+    // Only an existing duplicate reference follows membership; ordinary windows
+    // do not gain automatic rejoining when a file is opened.
+    if (hash.has("workspace")) {
+      if (this.info.group) hash.set("workspace", this.info.group);
+      else hash.delete("workspace");
+    }
+    if (consumeTicket) hash.delete("view");
+    if (hash.toString() !== before) history.replaceState(history.state, "", `${location.pathname}${location.search}${hash.size ? `#${hash}` : ""}`);
   }
   private failWorker() {
     if (this.failure) return;
@@ -110,6 +123,7 @@ export class WindowPlanSession implements SessionAccess {
       if (message.masterIdentities) this.masterIdentities = message.masterIdentities;
       else if (!sameGroup) this.masterIdentities = {};
       this.updateInfo({ ...message.info, initialView: sameGroup ? this.info.initialView : message.info.initialView });
+      this.syncWorkspaceUrl();
       this.handle = message.handle;
       this.snapshot = message.contentsPatch ? { ...message.snapshot, contents: applyPlanContentsPatch(this.snapshot.contents!, message.contentsPatch) }
         : message.preserveContents ? { ...message.snapshot, contents: this.snapshot.contents } : message.snapshot;
