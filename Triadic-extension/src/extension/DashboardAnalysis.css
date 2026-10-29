@@ -45,9 +45,7 @@
 /* Adopted comparison and ranking: shared rows and aligned amounts, without changing the approved top section. */
 .dashboard-comparison, .dashboard-impact { border: 0; border-top: 1px solid var(--line); padding: 24px 0; border-radius: 0; background: transparent; }
 .dashboard-comparison h2, .dashboard-impact h2 { font-size: 17px; }
-.dashboard-single-kind :is(.dashboard-department-kind, .dashboard-rank-value) > .dashboard-series-label { display: none; }
 .dashboard-department-kind { grid-template-columns: 1fr auto; align-items: center; column-gap: 14px; row-gap: 7px; }
-.dashboard-department-kind > .dashboard-series-label { grid-column: 1 / -1; }
 .dashboard-department-kind > .dashboard-bar, .dashboard-department-kind > .dashboard-margin-track { grid-row: 2; grid-column: 1; width: 100%; }
 .dashboard-department-kind > .dashboard-delta { grid-column: 2; grid-row: 1 / 3; text-align: right; }
 .dashboard-department-kind > .dashboard-number { font-size: 14px; }
@@ -58,7 +56,7 @@
 .dashboard-rank > .initiative-name-button { text-align: left; font-size: 13px; grid-column: 1; grid-row: 1 / span 2; margin: 0; }
 .dashboard-rank-value { grid-column: 2; margin: 0; align-items: center; }
 .dashboard-rank-value .dashboard-bar { grid-row: 2; }
-.dashboard-rank-value > span:not(.dashboard-series-label) { justify-self: end; }
+.dashboard-rank-value > .dashboard-series-value { justify-self: end; }
 @container (max-width: 1280px) { .dashboard-analysis > .dashboard-pair { grid-template-columns: 1fr; } }
 @media (max-width: 680px) {
   .dashboard-department-kind { grid-template-columns: 1fr; }

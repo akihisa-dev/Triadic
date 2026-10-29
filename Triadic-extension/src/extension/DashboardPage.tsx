@@ -48,18 +48,17 @@ function DashboardContents({ contents, selected, disabled, onDepartment, onIniti
   const kindName = (id: KindId) => comparisonName(contents, id).replace("\n", " · ");
   const annual = dashboard.budgets.map(entry => ({ kind: entry.kind, previous: dashboardAmounts(entry.previous), ...dashboardAmounts(entry.months) }));
   return <div className="dashboard-grid" ref={charts}>
+    <div className="dashboard-legend" aria-label="グラフの凡例">{priors.map(kind => <span key={kind} className={`dashboard-prior dashboard-prior-${kind}`}>{previousKindName(kind)}</span>)}{selected.map((kind, index) => <span className={`dashboard-series-${index}`} key={kind}>{kindName(kind)}</span>)}</div>
     <div className="dashboard-stats">
       {([...metrics, { id: "margin", name: "利益率" }] as const).map(metric => <section className="dashboard-stat" key={metric.id} aria-label={`年間${metric.name}`}>
         <h2>{metric.id === "margin" ? metric.name : `年間${metric.name}`}</h2>
-        {annual.map((value, index) => <div key={value.kind} className={`dashboard-stat-kind dashboard-series-${index}`}>
-          <span className="dashboard-series-label">{kindName(value.kind)}</span>
-          <strong>{metric.id === "margin" ? rate(value.margin) : formatYen(value[metric.id])}</strong>
+        {annual.map((value, index) => <div key={value.kind} className={`dashboard-stat-kind dashboard-series-${index}`} role="group" aria-label={kindName(value.kind)}>
+          <strong className="dashboard-series-value">{metric.id === "margin" ? rate(value.margin) : formatYen(value[metric.id])}</strong>
           <span className="dashboard-delta">前年差 {metric.id === "margin" ? rate(value.margin === undefined || value.previous.margin === undefined ? undefined : value.margin - value.previous.margin, true) : growth(value[metric.id], value.previous[metric.id])}</span>
-        <div className="dashboard-baseline">{priorName(value.kind)} <span>{metric.id === "margin" ? rate(value.previous.margin) : formatYen(value.previous[metric.id])}</span></div>
+        <div className="dashboard-baseline dashboard-prior" role="group" aria-label={priorName(value.kind)}><span className="dashboard-series-value">{metric.id === "margin" ? rate(value.previous.margin) : formatYen(value.previous[metric.id])}</span></div>
         </div>)}
       </section>)}
     </div>
-    <div className="dashboard-legend" aria-label="グラフの凡例">{priors.map(kind => <span key={kind} className={`dashboard-prior dashboard-prior-${kind}`}>{previousKindName(kind)}</span>)}{selected.map((kind, index) => <span className={`dashboard-series-${index}`} key={kind}>{kindName(kind)}</span>)}</div>
     <div className="dashboard-pair">{metrics.map(metric => <section key={metric.id} className="dashboard-panel"><h2>{metric.name}の月別推移</h2><MonthlyChart series={dashboard} metric={metric.id} priorName={priorName} kindName={kindName} /></section>)}</div>
     <section className="dashboard-panel dashboard-comparison"><div className="dashboard-panel-heading"><h2>部署別比較</h2></div>
       <div className="dashboard-legend">{priors.map(kind => <span key={kind} className={`dashboard-prior dashboard-prior-${kind}`}>{previousKindName(kind)}</span>)}{selected.map((kind, index) => <span className={`dashboard-series-${index}`} key={kind}>{kindName(kind)}</span>)}<span>金額：千円</span></div>
@@ -73,8 +72,7 @@ function DashboardContents({ contents, selected, disabled, onDepartment, onIniti
               const prior = entry.previous;
               const amount = entry.amounts[metric.id];
               return <div key={entry.kind} className={`dashboard-department-kind dashboard-series-${index}`}>
-                <span className="dashboard-series-label">{kindName(entry.kind)}</span>
-                {department.id === null ? <span>{formatYen(amount)}</span> : <button className="dashboard-number" disabled={disabled} aria-label={`${department.name} ${kindName(entry.kind)} ${metric.name} ${formatYen(amount)}の総原価表`} onClick={() => onDepartment(department.id!)}>{formatYen(amount)}</button>}
+                {department.id === null ? <span className="dashboard-series-value" role="group" aria-label={`${kindName(entry.kind)} ${metric.name} ${formatYen(amount)}`}>{formatYen(amount)}</span> : <button className="dashboard-number dashboard-series-value" disabled={disabled} aria-label={`${department.name} ${kindName(entry.kind)} ${metric.name} ${formatYen(amount)}の総原価表`} onClick={() => onDepartment(department.id!)}>{formatYen(amount)}</button>}
                 <div className={`dashboard-bar ${amount < 0 ? "dashboard-bar-negative" : ""}`} style={{ width: `${Math.abs(amount) / maximum * 100}%` }} />
                 <span className="dashboard-delta">{growth(amount, prior[metric.id])}</span>
               </div>;
@@ -87,7 +85,7 @@ function DashboardContents({ contents, selected, disabled, onDepartment, onIniti
             const maximum = departmentComparison.maximum.margin;
             return <div key={entry.kind} className={`dashboard-department-kind dashboard-series-${index}`} role="group"
               aria-label={`${department.name} ${kindName(entry.kind)} ${departmentPeriod === "annual" ? "年間" : `${departmentPeriod}月`} 利益率 ${value === undefined ? "計算できません" : rate(value)} 前年差 ${difference === undefined ? "計算できません" : rate(difference, true)}`}>
-              <span className="dashboard-series-label" aria-hidden="true">{kindName(entry.kind)}</span><span aria-hidden="true">{rate(value)}</span>
+              <span className="dashboard-series-value" aria-hidden="true">{rate(value)}</span>
               {value !== undefined && <div className="dashboard-margin-track" aria-hidden="true"><span style={{ left: `${50 + value / maximum * 46}%` }} /></div>}
               <span className="dashboard-delta" aria-hidden="true">{rate(difference, true)}</span></div>;
           })}</div>
@@ -98,6 +96,7 @@ function DashboardContents({ contents, selected, disabled, onDepartment, onIniti
     <section className="dashboard-panel dashboard-impact"><div className="dashboard-panel-heading"><h2>施策の影響</h2><div className="dashboard-controls">
       {selected.length > 1 && <label>並び順の基準<select value={rankKind} onChange={event => setRanking(Number(event.target.value) as KindId)}>{selected.map(kind => <option key={kind} value={kind}>{kindName(kind)}</option>)}</select></label>}
     </div></div>
+      <div className="dashboard-legend">{selected.map((kind, index) => <span className={`dashboard-series-${index}`} key={kind}>{kindName(kind)}</span>)}</div>
       <div className="dashboard-pair">{metrics.map(metric => <div key={metric.id}><h3>{metric.name}への影響</h3>{(["increase", "decrease"] as const).map(direction => <Ranking key={`${metric.id}:${direction}:${rankKind}:${period}`} dashboard={dashboard} metric={metric.id} kind={rankKind} period={period} direction={direction} kindName={kindName} disabled={disabled} onOpen={onInitiative} />)}</div>)}</div>
     </section>
     <DashboardAnalysis contents={contents} selected={selected} />
@@ -111,7 +110,7 @@ function Ranking({ dashboard, metric, kind, period, direction, kindName, disable
     <h4>{direction === "increase" ? "増加" : "減少"}</h4>
     {ranks.map(item => <div key={item.initiative.id} className="dashboard-rank">
       <button className="initiative-name-button" disabled={disabled} onClick={() => onOpen(item.initiative, kind)}>{item.initiative.name}</button>
-      {item.values.map((value, index) => <div key={value.kind} className={`dashboard-rank-value dashboard-series-${index}`}><span className="dashboard-series-label">{kindName(value.kind)}</span><span>{signedAmount(value.amount)}</span><button className={`dashboard-bar dashboard-initiative-bar ${value.amount < 0 ? "dashboard-bar-negative" : ""}`} disabled={disabled} aria-label={`${item.initiative.name} ${kindName(value.kind)} ${signedAmount(value.amount)}の施策詳細`} onClick={() => onOpen(item.initiative, value.kind)} style={{ width: `${Math.abs(value.amount) / maximum * 100}%` }} /></div>)}
+      {item.values.map((value, index) => <div key={value.kind} className={`dashboard-rank-value dashboard-series-${index}`}><span className="dashboard-series-value" role="group" aria-label={`${kindName(value.kind)} ${signedAmount(value.amount)}`}>{signedAmount(value.amount)}</span><button className={`dashboard-bar dashboard-initiative-bar ${value.amount < 0 ? "dashboard-bar-negative" : ""}`} disabled={disabled} aria-label={`${item.initiative.name} ${kindName(value.kind)} ${signedAmount(value.amount)}の施策詳細`} onClick={() => onOpen(item.initiative, value.kind)} style={{ width: `${Math.abs(value.amount) / maximum * 100}%` }} /></div>)}
     </div>)}
     {!ranks.length && <p className="dashboard-empty">該当する施策はありません。</p>}
   </section>;

@@ -42,6 +42,9 @@ export async function verifyDashboard(api) {
     initiative(index + 1, `全件確認${index + 1}`, department, [row(sales.id, String(7 - index))])) };
   for (const selected of [[1], [1, 2]]) {
     const html = api.renderDashboard(many, selected);
+    assert.doesNotMatch(html, /dashboard-series-label/, '各行に予算名・基準前年を繰り返さない');
+    assert.match(html, /class="dashboard-legend"/, '凡例で比較条件を確認できる');
+    assert.match(html, /aria-label="一次予算 · 前年見込基準/, '読み上げ用の予算識別を維持する');
     const salesRanking = html.split('aria-label="売上を増やす施策"')[1].split('</section>')[0];
     assert.equal((salesRanking.match(/class="dashboard-rank"/g) ?? []).length, 7, '6件目以降も初期表示から確認できる');
     for (let index = 1; index <= 7; index++) assert.ok(salesRanking.includes(`全件確認${index}`));
