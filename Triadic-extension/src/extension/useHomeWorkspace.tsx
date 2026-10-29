@@ -99,7 +99,7 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   const localPrevious = { "cost-table": fixedPrevious, "expansion-table": fixedPrevious };
   const dashboardSelection = useMemo(() => ({ kinds: phase === 1 ? [1] as KindId[] : storedDashboard.kinds, previous: fixedPrevious }), [phase, storedDashboard, fixedPrevious]);
   const selectWork = (kind: KindId) => {
-    const next: Screen = { phase: kind, page: "initiative-list", selectedInitiative: null, detailOrigin: "initiative-list" };
+    const next: Screen = { phase: kind, page: "dashboard", selectedInitiative: null, detailOrigin: "dashboard" };
     requestNavigation(next, () => {
       setLocalKinds({ "initiative-list": [kind], "cost-table": phaseKinds(kind), "expansion-table": phaseKinds(kind) });
       setDashboardSelection({ kinds: phaseKinds(kind), previous: phasePrevious(kind) });

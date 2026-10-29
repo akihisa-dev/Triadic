@@ -14,7 +14,7 @@ Previous-year forecast and actuals are independent inputs. Cost and expansion sc
 
 ## English
 
-After opening or creating a file, the independent four-part selector opens a primary or final budget phase. Primary edits forecast/primary; final edits actuals/final and references forecast-based primary. Entry shows only the active budget tab. Lists, tables, search and dashboards share the phase scope. Initiatives created in final are hidden from primary. Masters, monetary calculations and inheritance remain shared. Format 34 adds only the initiative creation-phase marker; older files are rejected without migration. Forecast/actuals and revised-budget entries are unavailable. Beneath the four phase entries, “Relationships,” “Screens and data,” “How calculations work,” and “Processing flow” open the existing app-wide explanations. These views also omit normal workspace chrome and return through “Choose work.” The sidebar no longer has a Home entry.
+After opening or creating a file, the independent four-part selector opens the dashboard for the selected primary or final budget phase. Primary edits forecast/primary; final edits actuals/final and references forecast-based primary. Entry shows only the active budget tab. Lists, tables, search and dashboards share the phase scope. Initiatives created in final are hidden from primary. Masters, monetary calculations and inheritance remain shared. Format 34 adds only the initiative creation-phase marker; older files are rejected without migration. Forecast/actuals and revised-budget entries are unavailable. Beneath the four phase entries, “Relationships,” “Screens and data,” “How calculations work,” and “Processing flow” open the existing app-wide explanations. These views also omit normal workspace chrome and return through “Choose work.” The sidebar no longer has a Home entry.
 
 **A Chrome extension for building budgets from initiatives and checking them in three tables.**
 
@@ -580,7 +580,7 @@ History types, empty state, and five-minute interval use shared SQLite-independe
 
 ## 日本語
 
-ファイルを開く・新規作成した後は、独立した4分割の「作業を選択」が開きます。一次予算フェーズでは前年見込と一次予算、確定予算フェーズでは前年実績と確定予算を編集します。確定では前年見込を基準にした一次予算を表・グラフで参照できます。施策入力には作業中の予算タブだけを表示します。前年・予算の表示範囲は施策一覧・総原価表・展開表・検索・ダッシュボードで揃え、確定で新規追加した施策は一次には表示しません。マスタと金額計算・一次から確定の未修正月への追従は共通のままです。作成フェーズの識別情報を施策に保存するため保存形式は34です。旧形式の移行は行いません。「見通し・実績」「修正予算」は未実装のため選べません。メニューの「作業を選択」から戻れます。4分割の下に「関連図」「画面とデータ」「計算の仕組み」「処理の流れ」を並べ、フェーズを選ぶ前からアプリ全体の仕組みを確認できます。説明画面にも通常のサイドバーや検索は表示せず、「作業を選択」で入口へ戻ります。サイドバーのHomeは廃止しました。フェーズ選択は画面の表示条件として扱い、決定・固定の状態管理は追加しません。
+ファイルを開く・新規作成した後は、独立した4分割の「作業を選択」が開きます。一次予算・確定予算を選んだ直後は、そのフェーズのダッシュボードを表示します。一次予算フェーズでは前年見込と一次予算、確定予算フェーズでは前年実績と確定予算を編集します。確定では前年見込を基準にした一次予算を表・グラフで参照できます。施策入力には作業中の予算タブだけを表示します。前年・予算の表示範囲は施策一覧・総原価表・展開表・検索・ダッシュボードで揃え、確定で新規追加した施策は一次には表示しません。マスタと金額計算・一次から確定の未修正月への追従は共通のままです。作成フェーズの識別情報を施策に保存するため保存形式は34です。旧形式の移行は行いません。「見通し・実績」「修正予算」は未実装のため選べません。メニューの「作業を選択」から戻れます。4分割の下に「関連図」「画面とデータ」「計算の仕組み」「処理の流れ」を並べ、フェーズを選ぶ前からアプリ全体の仕組みを確認できます。説明画面にも通常のサイドバーや検索は表示せず、「作業を選択」で入口へ戻ります。サイドバーのHomeは廃止しました。フェーズ選択は画面の表示条件として扱い、決定・固定の状態管理は追加しません。
 
 [English](#english) · [日本語](#日本語)
 

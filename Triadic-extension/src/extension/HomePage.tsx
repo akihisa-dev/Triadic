@@ -58,8 +58,8 @@ function HomePageContents(props: HomePageProps) {
       <ConfirmationDialog open={windows.discardLabels !== null} title="履歴を開きますか？"
         message={`${windows.discardLabels ?? ""}の未登録の入力は破棄され、確認待ちの内容も破棄されます。ほかのウィンドウを閉じて履歴を開きますか？`}
         confirmLabel="はい" busy={false} onCancel={() => windows.finishDiscard(false)} onConfirm={() => windows.finishDiscard(true)} />
-      <ConfirmationDialog open={discardRequest !== null} title="入力内容を破棄しますか？" message={discardRequest?.recovery ? "保持中の登録前の入力を破棄して、保護した未保存入力に置き換えます。" : discardRequest?.duplicate ? "保持中の登録前の入力を破棄して、選んだ施策の複製に置き換えます。" : "登録前の入力を破棄して施策一覧へ戻ります。"}
-        confirmLabel={discardRequest?.recovery ? "破棄して引き継ぐ" : discardRequest?.duplicate ? "破棄して複製する" : "破棄して一覧へ戻る"} busy={discardRequest?.recovery ? isSaving : navigationBlocked}
+      <ConfirmationDialog open={discardRequest !== null} title="入力内容を破棄しますか？" message={discardRequest?.recovery ? "保持中の登録前の入力を破棄して、保護した未保存入力に置き換えます。" : discardRequest?.duplicate ? "保持中の登録前の入力を破棄して、選んだ施策の複製に置き換えます。" : discardRequest?.dashboard ? "登録前の入力を破棄してダッシュボードを開きます。" : "登録前の入力を破棄して施策一覧へ戻ります。"}
+        confirmLabel={discardRequest?.recovery ? "破棄して引き継ぐ" : discardRequest?.duplicate ? "破棄して複製する" : discardRequest?.dashboard ? "破棄してダッシュボードへ" : "破棄して一覧へ戻る"} busy={discardRequest?.recovery ? isSaving : navigationBlocked}
         onCancel={() => setDiscardRequest(null)} onConfirm={() => {
           if (!discardRequest || (discardRequest.recovery ? isSaving : navigationBlocked)) return;
           setInitiativeDraft(createInitiativeDraft(String(currentContents.fiscalYear)));

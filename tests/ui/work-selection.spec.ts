@@ -1,6 +1,6 @@
 import { test, expect, openInitiativeEntry } from "./fixtures";
 
-test("ファイルを開くと4つの入口が現れ、一次・確定を選んで一覧へ進める", async ({ page, app }) => {
+test("ファイルを開くと4つの入口が現れ、一次・確定を選んでダッシュボードへ進める", async ({ page, app }) => {
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   const selection = app.getByRole("main", { name: "作業を選択", exact: true });
   await expect(selection).toBeVisible();
@@ -17,7 +17,7 @@ test("ファイルを開くと4つの入口が現れ、一次・確定を選ん�
     const button = selection.getByRole("button", { name, exact: true });
     await button.focus();
     await button.press("Enter");
-    await expect(app.getByRole("heading", { name: "施策一覧", exact: true })).toBeVisible();
+    await expect(app.getByRole("heading", { name: "ダッシュボード", exact: true })).toBeVisible();
     await expect(app.getByRole("complementary", { name: "メニュー" })).toBeVisible();
     await expect(app.getByLabel("予算フェーズ", { exact: true })).toHaveText(name);
     await expect(app.getByRole("button", { name: "操作を取り消す", exact: true })).toBeDisabled();
@@ -42,8 +42,8 @@ test("入口に戻っても登録前の入力を保持し、別の予算へ進�
   await dialog.getByRole("button", { name: "キャンセル", exact: true }).click();
   await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "確定予算", exact: true }).click();
   await expect(dialog).toBeVisible();
-  await dialog.getByRole("button", { name: "破棄して一覧へ戻る", exact: true }).click();
-  await expect(app.getByRole("heading", { name: "施策一覧", exact: true })).toBeVisible();
+  await dialog.getByRole("button", { name: "破棄してダッシュボードへ", exact: true }).click();
+  await expect(app.getByRole("heading", { name: "ダッシュボード", exact: true })).toBeVisible();
 });
 
 

@@ -21,7 +21,7 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
   callbacks.current = { beforeNavigate, onError };
   const [queueNavigation] = useState(() => latestNavigation<Screen>(next => callbacks.current.beforeNavigate(next), error => callbacks.current.onError(error)));
   navigationState.current = { blocked: navigationBlocked, page };
-  const [discardRequest, setDiscardRequest] = useState<{ perform: () => void; duplicate?: boolean; recovery?: boolean } | null>(null);
+  const [discardRequest, setDiscardRequest] = useState<{ perform: () => void; duplicate?: boolean; recovery?: boolean; dashboard?: boolean } | null>(null);
   const { initiatives } = contents;
   const latestContents = useRef(contents);
   latestContents.current = contents;
@@ -45,8 +45,8 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
   };
   const requestNavigation = (next: Screen, perform = () => navigate(next)) => {
     if (navigationBlocked || discardRequest) return;
-    if (next.page === "initiative-list" && !preview && hasInitiativeDraftInput(initiativeDraft)) {
-      setDiscardRequest({ perform: () => queueNavigation(next, perform) });
+    if ((next.page === "initiative-list" || (page === "work-selection" && next.page === "dashboard")) && !preview && hasInitiativeDraftInput(initiativeDraft)) {
+      setDiscardRequest({ perform: () => queueNavigation(next, perform), dashboard: next.page === "dashboard" });
       return;
     }
     queueNavigation(next, perform);

@@ -2,6 +2,8 @@ import { test, expect, settleMotion } from './fixtures';
 
 async function selectPhase(app: import('@playwright/test').FrameLocator, name: string) {
   await app.getByRole('main', { name: '作業を選択', exact: true }).getByRole('button', { name, exact: true }).click();
+  await expect(app.getByRole('heading', { name: 'ダッシュボード', exact: true })).toBeVisible();
+  await app.getByRole('navigation', { name: 'メインナビゲーション' }).getByRole('button', { name: '施策一覧', exact: true }).click();
   await expect(app.getByRole('heading', { name: '施策一覧', exact: true })).toBeVisible();
 }
 
