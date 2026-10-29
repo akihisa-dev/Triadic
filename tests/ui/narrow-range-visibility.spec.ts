@@ -1,6 +1,6 @@
 import { test, expect, settleMotion } from './fixtures';
 
-for (const width of [320, 375]) for (const name of ['総原価表', '展開表', '施策一覧']) test(`${width}pxの${name}は選択した金額の全桁を表示する`, async ({ page, app }) => {
+for (const width of [320, 375]) for (const name of ['総原価表', '展開表', '施策一覧']) test(`${width}pxの${name}は選択した金額の全桁を表示する`, { tag: '@fixed-viewport' }, async ({ page, app }) => {
   await page.setViewportSize({ width, height: 800 });
   await page.goto('/tests/ui/preview.html?data=full');
   await page.addStyleTag({ content: '.test-toolbar{display:none!important} #app-preview{height:100vh}' });

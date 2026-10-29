@@ -71,7 +71,7 @@ test("表示幅が足りない表は施策名と金額を同時に読め、広�
 });
 
 for (const surface of ["initiative", "previous"]) {
-  test(`${surface}の選択月は明暗両方で読め、セル寸法と金額を保つ`, async ({ page, app }) => {
+  test(`${surface}の選択月は明暗両方で読め、セル寸法と金額を保つ`, { tag: '@fixed-viewport' }, async ({ page, app }) => {
     await page.setViewportSize({ width: 1280, height: 1200 });
     await openSample(page, app);
     const nav = app.getByRole("navigation", { name: "メインナビゲーション" });

@@ -1,6 +1,6 @@
 import {test,expect} from './runtime-errors';
 import {settleMotion} from './fixtures';
-for(const viewport of [{width:375,height:450},{width:1280,height:450},{width:375,height:800}])test(`${viewport.width}x${viewport.height}で勘定科目と履歴の末尾を操作し、登録欄にも戻れる`,async({page},info)=>{
+for(const viewport of [{width:375,height:450},{width:1280,height:450},{width:375,height:800}])test(`${viewport.width}x${viewport.height}で勘定科目と履歴の末尾を操作し、登録欄にも戻れる`,{tag:'@fixed-viewport'},async({page},info)=>{
   await page.setViewportSize(viewport);await page.goto('/tests/ui/multi-window.html');await page.getByRole('button',{name:'ファイルを開く',exact:true}).click();
   await page.getByRole('navigation',{name:'メインナビゲーション'}).getByRole('button',{name:'マスタ',exact:true}).click();await page.getByRole('button',{name:/^勘定科目マスタ/}).click();
   const close=page.getByRole('button',{name:'サイドバーを閉じる',exact:true}).first();if(await close.isVisible())await close.click();await settleMotion(page.locator('body'));

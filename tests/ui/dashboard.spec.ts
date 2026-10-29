@@ -111,7 +111,7 @@ test("負数・ゼロ・未所属・長い名称でも図と入力の意味を�
 });
 
 
-test("費用の2図は全幅で上下に並び、構成図に横スクロールを作らない", async ({ page, app }) => {
+test("費用の2図は全幅で上下に並び、構成図に横スクロールを作らない", { tag: '@fixed-viewport' }, async ({ page, app }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/tests/ui/preview.html?data=large");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
@@ -123,9 +123,14 @@ test("費用の2図は全幅で上下に並び、構成図に横スクロール�
   const boxes = await sections.evaluateAll(nodes => nodes.map(node => { const r = node.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, bottom: r.bottom }; }));
   expect(boxes[1]!.y).toBeGreaterThanOrEqual(boxes[0]!.bottom);
   expect(boxes[0]!.width).toBeGreaterThan(1000);
-  const available = await app.locator(".dashboard-grid").evaluate(node => node.getBoundingClientRect().width) - 50;
-  expect(Math.abs(boxes[0]!.width - available)).toBeLessThanOrEqual(1);
-  expect(boxes[1]!.width).toBe(boxes[0]!.width);
+  const available = await app.locator(".dashboard-grid").evaluate(node => {
+    const rect = node.getBoundingClientRect();
+    return { x: rect.x, width: rect.width };
+  });
+  for (const box of boxes) {
+    expect(Math.abs(box.x - available.x)).toBeLessThanOrEqual(1);
+    expect(Math.abs(box.width - available.width)).toBeLessThanOrEqual(1);
+  }
   const scroll = sections.first().locator(".analysis-plot > .analysis-scroll");
   await expect.poll(() => scroll.evaluate(node => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1);
   await expect(sections.first().locator(".analysis-tile-label")).toContainText(["給料手当", "下払運賃", "賃借料", "臨時傭員費"]);

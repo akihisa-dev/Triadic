@@ -45,7 +45,7 @@ test("期間列の通常罫線が背景へ埋もれず、月・期間の境界�
   }
 });
 
-test("狭幅の合計ラベルにも固定部分の右端の線が残る", async ({ page, app }) => {
+test("狭幅の合計ラベルにも固定部分の右端の線が残る", { tag: '@fixed-viewport' }, async ({ page, app }) => {
   await page.setViewportSize({ width: 375, height: 1155 });
   await page.goto("/tests/ui/preview.html");
   await expect(page.getByRole("status")).toHaveText("操作できます");

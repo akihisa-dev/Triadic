@@ -20,7 +20,8 @@ export default defineConfig({
   },
   projects: [
     { name: "desktop", use: { viewport: { width: 1280, height: 864 } } },
-    { name: "narrow", use: { viewport: { width: 375, height: 800 } } },
+    // Tests that set their own viewport cover those sizes once in desktop.
+    { name: "narrow", grepInvert: /@fixed-viewport/, use: { viewport: { width: 375, height: 800 } } },
   ],
   webServer: {
     command: "npm run dev:ui -- --port 4174",
