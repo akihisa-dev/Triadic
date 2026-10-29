@@ -19,3 +19,5 @@ export { nodes as homeDestinations, edges as homeRelations } from "../../Triadic
 
 export { moveTableRangeSelection, describeTableRange } from "../../Triadic-extension/src/core/tables/tableRangeSelection";
 export { useTableRangeCopy } from "../../Triadic-extension/src/extension/useTableRangeCopy";
+
+export { expenseTreemap } from "../../Triadic-extension/src/extension/dashboardTreemap";

@@ -2,8 +2,7 @@
 .dashboard-page > .initiative-list-heading { margin-bottom: 20px; }
 .dashboard-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
 .dashboard-grid :is(.dashboard-stats, .dashboard-analysis, .dashboard-expense-charts), .dashboard-grid > .dashboard-pair, .dashboard-analysis > .dashboard-pair { display: contents; }
-.dashboard-grid :is(.dashboard-stat, .dashboard-panel, .dashboard-analysis-section) { grid-column: span 6; border: 1px solid var(--line); border-radius: 18px; padding: 24px; margin: 0; background: var(--surface); min-width: 0; transition: border-color 160ms; }
-.dashboard-grid :is(.dashboard-stat, .dashboard-panel, .dashboard-analysis-section):hover { border-color: var(--muted); }
+.dashboard-grid :is(.dashboard-stat, .dashboard-panel, .dashboard-analysis-section) { grid-column: span 6; border: 1px solid var(--line); border-radius: 18px; padding: 24px; margin: 0; background: var(--surface); min-width: 0; }
 .dashboard-grid > .dashboard-legend, .dashboard-grid .analysis-kind { grid-column: 1 / -1; margin: 0; }
 .dashboard-grid .dashboard-stat { grid-column: span 4; padding: 24px 28px; }
 .dashboard-grid .dashboard-stat-kind strong { font-size: clamp(26px, 2.8vw, 46px); letter-spacing: -.035em; }

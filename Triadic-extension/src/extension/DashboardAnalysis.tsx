@@ -3,9 +3,10 @@ import { addYen, formatAmount, formatRate, formatYen, sumYen } from "../core/dom
 import { initiativeMonths } from "../core/domain/calendar";
 import { baselineFor, comparisonName, previousKindName, type KindId } from "../core/domain/kinds";
 import type { PlanContents } from "../core/domain/plan";
-import { analysisAnnual, buildDashboardBreakdowns, compositionMode, waterfallSteps, treemapTiles, type AnalysisGroup } from "../core/tables/dashboardBreakdowns";
+import { analysisAnnual, buildDashboardBreakdowns, compositionMode, waterfallSteps, type AnalysisGroup } from "../core/tables/dashboardBreakdowns";
 import { useWindowViewState } from "./windowView";
 import "./DashboardAnalysis.css";
+import { expenseTreemap } from "./dashboardTreemap";
 
 const signed = (value: number) => `${value > 0 ? "+" : ""}${formatYen(value)}`;
 const margin = (sales: number, profit: number) => sales === 0 ? undefined : profit / sales * 100;
@@ -135,23 +136,27 @@ function Composition({ values, name, treemap = false }: { values: Datum[]; name:
   const nonzero = values.filter(item => item.value > 0);
   const sorted = treemap || nonzero.length > 8 ? [...nonzero].sort((a, b) => b.value - a.value) : nonzero;
   const visible = sorted.length > 8 ? [...sorted.slice(0, 7), { name: treemap ? "その他科目" : "その他業種", value: sumYen(sorted.slice(7).map(item => item.value)) }] : sorted;
+  const map = treemap ? expenseTreemap(visible, width) : null;
   let angle = -Math.PI / 2;
   const point = (a: number) => [220 + 140 * Math.cos(a), 185 + 140 * Math.sin(a)];
-  return <div ref={container}><Plot name={name} width={treemap ? width : 640} height={treemap ? 460 : 370}  >
-    {treemap ? treemapTiles(visible.map(item => item.value), width - 8, 450).map(({ index: i, x, y, width: w, height: h }) => { const item = visible[i]!; return <Mark key={i} label={`${item.name} ${formatYen(item.value)}千円 ${formatRate(item.value / total * 100)}`}>
+  return <div ref={container}><Plot name={name} width={treemap ? width : 640} height={map?.height ?? 370}>
+    {map ? map.tiles.map(({ index: i, x, y, width: w, height: h, label }) => { const item = visible[i]!; return <Mark key={i} label={`${item.name} ${formatYen(item.value)}千円 ${formatRate(item.value / total * 100)}`}>
       <rect x={x} y={y} width={w} height={h} fill={color(i)} stroke="var(--surface)" strokeWidth={2} />
-      <foreignObject x={x + 9} y={y + 10} width={Math.max(0, w - 18)} height={Math.max(0, h - 18)}><div className="analysis-tile-label" style={{ color: i % 6 === 2 || i % 6 === 5 ? "var(--ink)" : "var(--surface)" }}>{i + 1}{w > 90 && h > 45 && <> {item.name}</>}{w > 120 && h > 100 && <><strong>{formatYen(item.value)}</strong><span>{formatRate(item.value / total * 100)}</span></>}</div></foreignObject>
+      {label.outside && <path className="analysis-connector" fill="none" d={`M${x + w},${y + h / 2}L${label.x - 10},${label.y + 10}`} />}
+      <foreignObject x={label.x} y={label.y} width={label.width} height={label.height}><div className="analysis-tile-label" style={{ color: label.outside || i % 6 === 2 || i % 6 === 5 ? "var(--ink)" : "var(--surface)" }}>
+        {label.lines.map((line, index) => <span className="analysis-tile-name" key={index}>{line}</span>)}<strong>{label.amount}</strong><span>{formatRate(item.value / total * 100)}</span>
+      </div></foreignObject>
     </Mark>; }) : <>
       {visible.map((item, i) => { const begin = angle; angle += item.value / total * Math.PI * 2; const a = point(begin), b = point(angle);
-        return <Mark key={i} label={`${i + 1} ${item.name} ${formatYen(item.value)}千円 ${formatRate(item.value / total * 100)}`}>
+        return <Mark key={i} label={`${item.name} ${formatYen(item.value)}千円 ${formatRate(item.value / total * 100)}`}>
           {visible.length === 1 ? <circle cx={220} cy={185} r={140} fill={color(i)} /> : <path d={`M220,185L${a[0]},${a[1]}A140,140 0 ${angle - begin > Math.PI ? 1 : 0},1 ${b[0]},${b[1]}Z`} fill={color(i)} stroke="var(--surface)" strokeWidth={2} />}
         </Mark>; })}
       <circle cx={220} cy={185} r={91} fill="var(--surface)" /><text x={220} y={175} textAnchor="middle">合計（千円）</text><text className="analysis-total" x={220} y={205} textAnchor="middle">{formatYen(total)}</text>
       {visible.map((item, i) => <Mark key={i} label={`${item.name} ${formatRate(item.value / total * 100)}`}>
-        <rect x={395} y={36 + i * 40} width={10} height={10} fill={color(i)} /><text x={415} y={46 + i * 40}>{i + 1} {item.name.length > 10 ? item.name.slice(0, 10) + "…" : item.name}</text><text x={630} y={62 + i * 40} textAnchor="end">{formatRate(item.value / total * 100)}</text>
+        <rect x={395} y={36 + i * 40} width={10} height={10} fill={color(i)} /><text x={415} y={46 + i * 40}>{item.name.length > 10 ? item.name.slice(0, 10) + "…" : item.name}</text><text x={630} y={62 + i * 40} textAnchor="end">{formatRate(item.value / total * 100)}</text>
       </Mark>)}
     </>}
-  </Plot>{treemap && <div className="analysis-legend">{visible.map((item, i) => <span key={i}><i style={{ background: color(i) }} />{i + 1} {item.name} {formatYen(item.value)}</span>)}</div>}</div>;
+  </Plot></div>;
 }
 function Scatter({ groups, selected, prior, kindName }: { groups: AnalysisGroup[]; selected: KindId[]; prior: (kind: KindId) => string; kindName: (kind: KindId) => string }) {
   const dots = groups.flatMap((group, groupIndex) => selected.flatMap(kind => [{ name: `${prior(kind)}（${kindName(kind)}）`, kind: null, budgetKind: kind, ...analysisAnnual(group.budgets.find(entry => entry.kind === kind)!.previous) }, { name: kindName(kind), kind, budgetKind: kind, ...annual(group, kind) }]).map(item => ({ ...item, margin: margin(item.sales, item.profit), group: group.name, groupIndex })));
@@ -240,6 +245,7 @@ export function DashboardAnalysis({ contents, selected }: { contents: PlanConten
   const expansionId = data.expansions.some(item => item.id === expansion) ? expansion : data.expansions[0]?.id ?? null;
   const kindName = (id: KindId) => comparisonName(contents, id).replace("\n", " · ");
   const priorName = (id: KindId) => previousKindName(baselineFor(contents, id));
+  const budgetName = kind === 1 ? "一次予算" : "確定予算";
   const prior = priorName(kind), note = `年間・${kindName(kind)}・千円`;
   const total = (metric: "sales" | "profit", previous: boolean) => sumYen(data.industries.map(group => previous ? analysisAnnual(group.budgets.find(entry => entry.kind === kind)!.previous)[metric] : annual(group, kind)[metric]));
   const sales = data.industries.map(group => ({ name: group.name, value: annual(group, kind).sales }));
@@ -251,8 +257,8 @@ export function DashboardAnalysis({ contents, selected }: { contents: PlanConten
     {selected.length > 1 && <div className="analysis-kind dashboard-controls"><label>構成・増減グラフの予算<select value={kind} onChange={event => setKind(Number(event.target.value) as KindId)}>{selected.map(id => <option key={id} value={id}>{kindName(id)}</option>)}</select></label></div>}
     <Section title="展開別の利益増減" note={`${prior} → ${kindName(kind)}・年間・千円`}><Waterfall groups={data.expansions} kind={kind} start={total("profit", true)} end={total("profit", false)} prior={prior} budget={kindName(kind)} /></Section>
     <div className="dashboard-pair">
-      <Section title="期間別の月別利益増減" note={`${kindName(kind)}・施策増減・千円`}><PeriodColumns groups={data.periods} kind={kind} /></Section>
-      <Section title="展開区分別の利益増減" note={`${note}・施策増減`} control={<div className="dashboard-controls"><label>展開<select value={expansionId === null ? "none" : String(expansionId)} onChange={event => setExpansion(event.target.value === "none" ? null : Number(event.target.value))}>{data.expansions.map(item => <option key={item.id ?? "none"} value={item.id === null ? "none" : String(item.id)}>{item.name}</option>)}</select></label></div>}>{categoryGroups.length ? <Lollipops values={profitValues(categoryGroups, kind)} name="展開区分別の利益増減" /> : <p className="dashboard-empty">この展開の施策はありません。</p>}</Section>
+      <Section title="期間別の月別利益増減" note={`${budgetName}・施策増減・千円`}><PeriodColumns groups={data.periods} kind={kind} /></Section>
+      <Section title="展開区分別の利益増減" note={`年間・${budgetName}・施策増減・千円`} control={<div className="dashboard-controls"><label>展開<select value={expansionId === null ? "none" : String(expansionId)} onChange={event => setExpansion(event.target.value === "none" ? null : Number(event.target.value))}>{data.expansions.map(item => <option key={item.id ?? "none"} value={item.id === null ? "none" : String(item.id)}>{item.name}</option>)}</select></label></div>}>{categoryGroups.length ? <Lollipops values={profitValues(categoryGroups, kind)} name="展開区分別の利益増減" /> : <p className="dashboard-empty">この展開の施策はありません。</p>}</Section>
     </div>
     <div className="dashboard-pair">
       <Section title="業種別の売上構成" note={note}><Composition values={sales} name="業種別の売上構成" /></Section>
@@ -267,6 +273,6 @@ export function DashboardAnalysis({ contents, selected }: { contents: PlanConten
       <Section title="勘定科目別の費用構成" note={note}><Composition values={expenses} name="勘定科目別の費用構成" treemap /></Section>
       <Section title="科目別の費用増減" note="年間・千円"><Dumbbells groups={data.accounts} selected={selected} prior={priorName} kindName={kindName} /></Section>
     </div>
-    <Section title="展開 × 月別の利益増減" note={`${kindName(kind)}・施策増減・千円`}><Heatmap name="展開 × 月別の利益増減" columns={initiativeMonths.map(month => `${month}月`)} rows={data.expansions.map(group => ({ name: group.name, values: initiativeMonths.map(month => group.budgets.find(item => item.kind === kind)!.months[month]!.profit) }))} /></Section>
+    <Section title="展開 × 月別の利益増減" note={`${budgetName}・施策増減・千円`}><Heatmap name="展開 × 月別の利益増減" columns={initiativeMonths.map(month => `${month}月`)} rows={data.expansions.map(group => ({ name: group.name, values: initiativeMonths.map(month => group.budgets.find(item => item.kind === kind)!.months[month]!.profit) }))} /></Section>
   </div>;
 }

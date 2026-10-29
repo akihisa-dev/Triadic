@@ -40,6 +40,11 @@ if (mode === "scatter-labels") {
   plan.industries = plan.industries.map((item, i) => ({ ...item, industryName: i === 0 ? "同じ位置に重なる長い業種名を省略せず確認するための業種" : item.industryName }));
   plan.previousAmounts = plan.industries.map((industry, i) => ({ id: i + 1, revision: 1, previousKind: 1, accountId: sales.id, industryId: industry.id, departmentId: plan.departments[0]!.id, month: 4, amount: "1000" }));
 }
+if (mode === "tiny-expenses") {
+  const expenses = plan.accounts.filter(account => account.accountType === "expense").slice(0, 4);
+  plan.accounts = plan.accounts.map(account => account.id === expenses[2]!.id ? { ...account, accountName: "長い費用科目の名前".repeat(8) } : account);
+  plan.initiatives = [{ ...source, rows: expenses.map((account, index) => ({ accountId: account.id, amounts: { 4: ["9000000000000", "1000", "0.01", "0.001"][index]! } })) }];
+}
 const view: WindowViewValues = {};
 function Fixture() {
   const [kinds, setKinds] = useState<KindId[]>([1, 2]);

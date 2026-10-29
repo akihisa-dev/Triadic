@@ -97,6 +97,22 @@ export async function verifyDashboard(api) {
       assert.ok(tile.x >= 0 && tile.y >= 0 && tile.x + tile.width <= width + 1e-7 && tile.y + tile.height <= height + 1e-7, "全項目が図の内側に収まる");
     }
   }
+  for (const width of [640, 1250]) {
+    const values = [9000000000000000, 1000000, 10, 1].map((value, index) => ({ name: index === 2 ? "長い費用科目の名前".repeat(8) : `費用科目${index}`, value }));
+    const layout = api.expenseTreemap(values, width);
+    assert.equal(layout.tiles.length, values.length);
+    const external = layout.tiles.filter(tile => tile.label.outside).sort((a, b) => a.label.y - b.label.y);
+    assert.ok(external.length >= 3, '小さい区画は名前と金額の表示領域を外側に確保する');
+    for (const tile of layout.tiles) {
+      const label = tile.label;
+      assert.equal(label.lines.join(''), values[tile.index].name, '長い科目名も省略しない');
+      assert.equal(label.amount, api.formatYen(values[tile.index].value));
+      assert.ok(label.x >= 0 && label.x + label.width <= width && label.y + label.height <= layout.height);
+      assert.ok(label.height >= label.lines.length * 20 + 50, '名称・金額・割合を常時読める高さを確保する');
+      if (!label.outside) assert.ok(label.x + label.width <= tile.x + tile.width && label.y + label.height <= tile.y + tile.height);
+    }
+    for (let i = 1; i < external.length; i++) assert.ok(external[i - 1].label.y + external[i - 1].label.height < external[i].label.y, '外側の名称と金額を重ねない');
+  }
   assert.equal(api.compositionMode([0, 0]), "empty");
   assert.equal(api.compositionMode([100, -1]), "signed", "負数を面積に変換しない");
   assert.equal(api.compositionMode([0, 1]), "area");
