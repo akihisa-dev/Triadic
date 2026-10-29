@@ -10,6 +10,7 @@ import "./HistoryDifferenceDialog.css";
 
 export function HistoryDifferenceDialog({ date, differences, impact, onClose, returnFocus = null }: { date: string; differences: HistoryDifference[]; impact: HistoryIncomeImpact[]; onClose: () => void; returnFocus?: HTMLElement | null }) {
   const dialog = useRef<HTMLDialogElement>(null), title = useId();
+  const composing = useRef(false);
   const [section, setSection] = useState(""), [query, setQuery] = useState(""), [page, setPage] = useState(0);
   const [mode, setMode] = useState("income");
   const [previous, setPrevious] = useState(defaultBudgetPrevious);
@@ -37,7 +38,9 @@ export function HistoryDifferenceDialog({ date, differences, impact, onClose, re
     return () => { element.close(); if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true }); };
   }, [returnFocus]);
   return createPortal(<dialog ref={dialog} className="confirmation-dialog history-difference-dialog" aria-labelledby={title}
-    onCancel={event => { event.preventDefault(); onClose(); }} onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); onClose(); } }}>
+    onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; }}
+    onCancel={event => { event.preventDefault(); if (!composing.current) onClose(); }} onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation();
+      if (!composing.current && !event.nativeEvent.isComposing && event.keyCode !== 229) onClose(); } }}>
     <div className="history-difference-heading"><div><h2 id={title}>履歴と現在の差分</h2><p>{date} → 現在の保存済みデータ</p></div>
       <button autoFocus type="button" className="secondary-button" onClick={onClose}>閉じる</button></div>
     <div className="history-comparison-modes" role="group" aria-label="比較する内容">

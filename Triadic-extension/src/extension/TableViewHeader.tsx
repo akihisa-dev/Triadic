@@ -66,6 +66,7 @@ function TableFilterPanel<T>({ column, source, filter, sorted, trigger, onClose,
   onClose: () => void; onApply: (filter?: TableFilter) => void; onOriginalOrder: () => void;
 }) {
   const panel = useRef<HTMLDivElement>(null), heading = useId();
+  const composing = useRef(false);
   const [query, setQuery] = useState(filter?.type === "text" ? filter.text : "");
   const [values, setValues] = useState<string[] | null>(filter?.type === "choice" ? filter.values : null);
   const [operator, setOperator] = useState(filter?.type === "number" ? filter.operator : "all");
@@ -125,8 +126,14 @@ function TableFilterPanel<T>({ column, source, filter, sorted, trigger, onClose,
   };
   const all = selectedValues === null || choices.every(value => selectedValues.has(value));
   return createPortal(<div ref={panel} popover="manual" className="table-filter-panel" role="dialog" aria-labelledby={heading}
+    onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; }}
     onKeyDown={event => {
       event.stopPropagation();
+      if ((event.key === "Escape" || event.key === "Enter") && (composing.current || event.nativeEvent.isComposing || event.keyCode === 229)) {
+        // Escape must not trigger a containing native dialog's default cancel action.
+        if (event.key === "Escape") event.preventDefault();
+        return;
+      }
       if (event.key === "Escape") { event.preventDefault(); close(); }
       if (event.key === "Enter" && !event.nativeEvent.isComposing && event.nativeEvent.keyCode !== 229 && event.target instanceof HTMLInputElement) { event.preventDefault(); apply(); }
       if (event.key === "Tab") {

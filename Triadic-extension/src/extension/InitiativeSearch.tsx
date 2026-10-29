@@ -18,6 +18,7 @@ export function InitiativeSearch({ initiatives, masters, disabled, onOpen }: Pro
 
 function InitiativeSearchDialog({ initiatives, masters, disabled, onOpen, onClose, returnFocus, query, onQueryChange }: Props & { onClose: () => void; returnFocus: HTMLElement | null; query: string; onQueryChange: (query: string) => void }) {
   const title = useId(), dialog = useRef<HTMLDialogElement>(null), queryInput = useRef<HTMLInputElement>(null);
+  const composing = useRef(false);
   const [page, setPage] = useState(0);
   const { expansions, expansionCategories, departments, industries, periodTypes } = masters;
   const search = useMemo(() => createInitiativeSearch(initiatives, { expansions, expansionCategories, departments, industries, periodTypes }),
@@ -29,8 +30,10 @@ function InitiativeSearchDialog({ initiatives, masters, disabled, onOpen, onClos
     return () => { element.close(); if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true }); };
   }, [returnFocus]);
   return createPortal(<dialog ref={dialog} className="confirmation-dialog initiative-search-dialog" aria-labelledby={title}
-    onCancel={event => { event.preventDefault(); onClose(); }}
-    onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); onClose(); } }}>
+    onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; }}
+    onCancel={event => { event.preventDefault(); if (!composing.current) onClose(); }}
+    onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation();
+      if (!composing.current && !event.nativeEvent.isComposing && event.keyCode !== 229) onClose(); } }}>
     <div className="initiative-search-heading"><h2 id={title}>施策を検索</h2><button type="button" className="secondary-button" onClick={onClose}>閉じる</button></div>
     <label className="initiative-search-query">施策名・備考・分類<input ref={queryInput} type="search" value={query} onChange={event => { onQueryChange(event.target.value); setPage(0); }}
       onKeyDown={event => {
