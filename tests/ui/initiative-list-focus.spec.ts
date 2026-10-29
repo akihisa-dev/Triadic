@@ -6,7 +6,10 @@ for (const count of [200, 201, 1000]) {
     const table = page.getByRole("table", { name: "施策一覧", exact: true });
     await expect(table).toHaveAttribute("aria-rowcount", String(count + 3));
     const first = table.getByRole("button", { name: "施策000", exact: true });
-    await table.getByRole("button", { name: "開始年月", exact: true }).focus();
+    // Enter the body after the current header controls, including monthly filters.
+    const lastHeader = table.locator("thead").getByRole("button").last();
+    await expect(lastHeader).toHaveAccessibleName("3月 利益を絞り込む");
+    await lastHeader.focus();
     await page.keyboard.press("Tab");
     await expect(first).toBeFocused();
     const container = page.locator(".initiative-list-container");
