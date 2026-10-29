@@ -20,6 +20,7 @@
 
 | 実装済み機能・条件 | 根拠となる実装 | データ・初期状態 | 操作・再現方法 | 期待結果 | 確認方法 |
 |---|---|---|---|---|---|
+| 作業を選択 | extension/WorkSelectionPage.tsx・useHomeWorkspace.tsx | 既存の小規模・会社予算を使用。予算設計・データ変更なし | ファイルを開き一次／確定を選ぶ。メニューから戻る | 選んだ種別の施策一覧へ移動。入口選択で金額・保存内容を変更せず、未実装の2入口は選べない | 画面: work-selection.spec.ts |
 | 新規作成・形式・年度 | core/storage/triadicDatabase.ts・triadicSchema.ts | 2027年度一つ、前年見込/実績、一次/確定 | 生成したSQLiteを再読込。不正/旧形式は専用データ | 整合性・参照制約が正常。旧形式は移行せず拒否 | 自動: sample-plan.mjs・file-boundaries.mjs |
 | 前年入力・見込と実績 | core/storage/settings.ts・core/tables/previousGrid.ts | 事業と圏域ごとの前年元帳。1〜3月に見込/実績差 | 基準前年を切替。前年入力は東京圏/不動産Bを選択 | 前年実績の外部売上120億円。見込の未確定売上を独立保持 | 自動: reference-sample.mjs・previous-baselines.mjs。画面: 前年切替 |
 | 部署・業種・所属 | core/storage/departmentMaster.ts・industryMaster.ts | 7圏域＋本社、デフォルト9業種。営業倉庫は衣料品・非衣料品とも不動産B | マスタと絞込候補を確認。不正所属は私有コピーで登録 | 未所属の業種を登録拒否。不動産Aのテナント収入はなく、本社は一般管理費・営業外のみ | 自動: sample-plan.mjs・department-data.mjs |

@@ -9,8 +9,9 @@ for (const kindName of ['一次予算', '確定予算']) {
     await expect(page.getByRole('status')).toHaveText('操作できます');
     const app = page.frameLocator('#app-preview');
     await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
+    await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: kindName, exact: true }).click();
     const nav = app.getByRole('navigation', { name: 'メインナビゲーション' });
-    await expect(app.getByRole('main', { name: 'ホーム', exact: true })).toBeVisible();
+    await expect(app.getByRole('main', { name: '施策一覧', exact: true })).toBeVisible();
     await nav.getByRole('button', { name: '施策一覧', exact: true }).click();
     const kind = app.getByRole('spinbutton', { name: '種別', exact: true });
     await kind.getByRole('button', { name: kindName, exact: true }).click();
@@ -45,7 +46,8 @@ for (const kindName of ['一次予算', '確定予算']) {
     await app.getByRole('button', { name: '閉じる', exact: true }).click();
     await app.getByRole('alertdialog').getByRole('button', { name: '閉じる', exact: true }).click();
     await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
-    await expect(app.getByRole('main', { name: 'ホーム', exact: true })).toBeVisible();
+    await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: kindName, exact: true }).click();
+    await expect(app.getByRole('main', { name: '施策一覧', exact: true })).toBeVisible();
     await nav.getByRole('button', { name: '施策一覧', exact: true }).click();
     await expect(alert).toContainText('範囲を超えています');
     await nav.getByRole('button', { name: '履歴', exact: true }).click();

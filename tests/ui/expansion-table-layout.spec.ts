@@ -5,6 +5,10 @@ test("展開表の結合セル・固定列・全月の列境界をスクロー�
   await page.goto("/tests/ui/preview.html");
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
+  await app.getByRole("heading", { name: "Home", exact: true }).click();
+  await settleMotion(app.locator("body"));
   await app.getByRole("main", { name: "ホーム", exact: true }).getByRole("button", { name: "展開表", exact: true }).click();
   await app.getByRole("main", { name: "ホーム", exact: true }).getByRole("button", { name: "展開表", exact: true }).click();
   await selectBudgets(app, [1, 2]);
@@ -116,6 +120,10 @@ test("施策がない展開も名称とゼロの小計を同じ列で表示す�
   await page.goto("/tests/ui/preview.html?data=defaults");
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
+  await app.getByRole("heading", { name: "Home", exact: true }).click();
+  await settleMotion(app.locator("body"));
   await app.getByRole("main", { name: "ホーム", exact: true }).getByRole("button", { name: "展開表", exact: true }).click();
   await app.getByRole("main", { name: "ホーム", exact: true }).getByRole("button", { name: "展開表", exact: true }).click();
   await selectBudgets(app, [1, 2]);

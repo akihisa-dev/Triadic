@@ -36,7 +36,8 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
 
     test("開閉を途中で反転しても幅が飛ばず、本文がサイドバーに追従する", async ({ app }, testInfo) => {
       await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
-      await expect(app.getByRole("main", { name: "ホーム", exact: true })).toBeVisible();
+      await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
+      await expect(app.getByRole("main", { name: "施策一覧", exact: true })).toBeVisible();
       await settleMotion(app.locator("body"));
       const result = await app.locator("body").evaluate(async body => {
         const trigger = body.querySelector<HTMLButtonElement>(".home-header button")!;
@@ -93,8 +94,11 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
         actions: [{ frame: 0, selector: ".entry-open-section > button" }],
       });
       expect(opening.some(sample => sample.text.includes("ファイルを開く") && sample.opacity > 0 && sample.opacity < 0.9)).toBe(true);
-      expect(opening.some(sample => sample.text.includes("前年入力") && sample.opacity > 0 && sample.opacity < 0.9)).toBe(true);
-      expect(opening.find(sample => sample.text.includes("前年入力"))!.opacity).toBeLessThan(0.25);
+      expect(opening.some(sample => sample.text.includes("見通し・実績") && sample.opacity > 0 && sample.opacity < 0.9)).toBe(true);
+      expect(opening.find(sample => sample.text.includes("見通し・実績"))!.opacity).toBeLessThan(0.25);
+      await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
+      await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
+      await app.getByRole("heading", { name: "Home", exact: true }).click();
       await settleMotion(app.locator("body"));
       await app.getByRole("button", { name: "サイドバーを開く" }).click();
       await settleMotion(app.locator("body"));
@@ -163,6 +167,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
 
     test("表内保存の成功・エラーと通知の消去で入力欄や表が動かない", async ({ page, app }, testInfo) => {
       await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+      await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
       await app.getByRole("button", { name: "サイドバーを開く" }).click();
       await app.getByRole("button", { name: "マスタ", exact: true }).click();
       await app.getByRole("button", { name: /^勘定科目マスタ/ }).click();

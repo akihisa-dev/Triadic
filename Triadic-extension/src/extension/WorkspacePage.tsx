@@ -1,3 +1,4 @@
+import { WorkSelectionPage } from "./WorkSelectionPage";
 import { DashboardPage } from "./DashboardPage";
 import { useMemo, useRef } from "react";
 import { ExpansionCategoryMasterPage } from "./ExpansionCategoryMasterPage";
@@ -44,6 +45,7 @@ export function WorkspacePage({ displayed, workspace }: { displayed: Screen; wor
   if (currentInitiative) lastDetail.current = currentInitiative;
   const retainedInitiative = currentInitiative ?? (lastDetail.current?.id === selectedInitiative?.id && lastDetail.current?.fiscalYear === selectedInitiative?.fiscalYear ? lastDetail.current : null);
   switch (displayed.page) {
+    case "work-selection": return <WorkSelectionPage disabled={navigationBlocked || isSaving} onSelect={workspace.selectWork} />;
     case "dashboard": return <DashboardPage contents={contents} selected={workspace.dashboardSelection.kinds} previous={workspace.dashboardSelection.previous}
       disabled={navigationBlocked || isSaving} onSelection={(kinds, previous) => workspace.setDashboardSelection({ kinds, previous })}
       onDepartment={workspace.openDashboardDepartment} onInitiative={openInitiative} />;

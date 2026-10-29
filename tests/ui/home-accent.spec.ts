@@ -1,7 +1,11 @@
-import { test, expect } from "./fixtures";
+import { settleMotion, test, expect } from "./fixtures";
 
 test("背景・名称・線は製品のテーマへ揃え、操作対象のアイコンだけにアクセントを使う", async ({ app }) => {
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
+  await app.getByRole("heading", { name: "Home", exact: true }).click();
+  await settleMotion(app.locator("body"));
   const home = app.getByRole("main", { name: "ホーム", exact: true });
   const target = home.getByRole("button", { name: "施策一覧", exact: true });
   for (const dark of [false, true]) {

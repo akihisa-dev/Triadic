@@ -103,6 +103,9 @@ export function WorkspaceSidebar({ workspace }: { workspace: HomeWorkspace }) {
             </button>
           </header>
           <nav className="sidebar-navigation" aria-label="メインナビゲーション">
+            <button className="sidebar-item" type="button" aria-label="作業を選択" disabled={navigationBlocked} aria-current={page === "work-selection" ? "page" : undefined} onClick={() => { dismissNotice(); setPage("work-selection"); }}>
+              <SidebarIcon name="list" /><span className="sidebar-label">作業を選択</span>
+            </button>
             <button className="sidebar-item" type="button" aria-label="Home" disabled={navigationBlocked} aria-current={page === "home" ? "page" : undefined} onClick={() => setPage("home")}>
               <SidebarIcon name="home" />
               <span className="sidebar-label">Home</span>

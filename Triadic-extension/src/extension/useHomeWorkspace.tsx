@@ -28,7 +28,7 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   const sidebar = useSidebar();
   const isSidebarOpen = sidebar.expanded;
   const collapseSidebar = sidebar.collapse;
-  const screens = useScreenHistory<Screen>(initialView?.screen ?? { page: "home", selectedInitiative: null, detailOrigin: "initiative-list" },
+  const screens = useScreenHistory<Screen>(initialView?.screen ?? { page: "work-selection", selectedInitiative: null, detailOrigin: "initiative-list" },
     (left, right) => left.page === right.page && left.selectedInitiative?.id === right.selectedInitiative?.id && left.detailOrigin === right.detailOrigin && left.detailKind === right.detailKind && left.detailVisit === right.detailVisit);
   const screen = screens.current;
   const { selectedInitiative } = screen;
@@ -88,6 +88,14 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   const [localKinds, setLocalKinds] = useWindowViewState("table:kinds", contents.kindSelections);
   const [localPrevious, setLocalPrevious] = useWindowViewState("table:previous", contents.previousSelections);
   const [dashboardSelection, setDashboardSelection] = useWindowViewState("dashboard:selection", { kinds: [1], previous: { 1: 1, 2: 1 } });
+  const selectWork = (kind: KindId) => {
+    const next: Screen = { page: "initiative-list", selectedInitiative: null, detailOrigin: "initiative-list" };
+    requestNavigation(next, () => {
+      setLocalKinds(value => ({ ...value, "initiative-list": [kind] }));
+      dismissNotice();
+      navigate(next);
+    });
+  };
   const openDashboardDepartment = (id: number) => {
     costTableView.current = { industries: [], departments: [id], top: 0, left: 0 };
     setLocalKinds(value => ({ ...value, "cost-table": dashboardSelection.kinds }));
@@ -161,7 +169,7 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   }, [isSidebarOpen, closeSidebar]);
 
   return {
-    dashboardSelection, setDashboardSelection, openDashboardDepartment,
+    selectWork, dashboardSelection, setDashboardSelection, openDashboardDepartment,
     restoreMutation, saveAsMutation, saveAs, setEditPending, ioController, setIOController, openInitiative, menuButton, relationView, costTableView, sidebar, showError, localKinds, localPrevious,
     isSidebarOpen, screen, initiativeDraft, setInitiativeDraft, preview, setPreview,
     restoreRequested, setRestoreRequested, restoreError, setRestoreError, contents, currentContents,

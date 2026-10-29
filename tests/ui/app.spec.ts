@@ -35,9 +35,10 @@ test("ファイルを開き、サイドバーを操作して入口へ戻る", as
   await expect(app.getByText("前回の計画", { exact: true })).toBeVisible();
   await attachImage(testInfo, "入口", await preview.screenshot());
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
   const trigger = app.locator(".home-header").getByRole("button", { name: /サイドバー/ });
   const sidebar = app.getByRole("complementary", { name: "メニュー" });
-  const main = app.getByRole("main", { name: "ホーム", exact: true });
+  const main = app.getByRole("main", { name: "施策一覧", exact: true });
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await expect(app.locator(".home-file-name")).toHaveText("画面テスト.triadic");
   await settleMotion(app.locator("body"));
@@ -49,7 +50,7 @@ test("ファイルを開き、サイドバーを操作して入口へ戻る", as
   await expect(trigger).toBeFocused();
   await expect(trigger).toHaveAccessibleName("サイドバーを閉じる");
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
-  await expect(sidebar.getByRole("button", { name: "Home", exact: true })).toHaveAttribute("aria-current", "page");
+  await expect(sidebar.getByRole("button", { name: "施策一覧", exact: true })).toHaveAttribute("aria-current", "page");
   await settleMotion(app.locator("body"));
   const sidebarBox = (await sidebar.boundingBox())!;
   const mainBox = (await main.boundingBox())!;
@@ -60,6 +61,8 @@ test("ファイルを開き、サイドバーを操作して入口へ戻る", as
   await expect(app.getByRole("dialog")).toHaveCount(0);
   await attachImage(testInfo, "サイドバー", await preview.screenshot());
   await page.keyboard.press("Tab");
+  await expect(app.getByRole("button", { name: "前の画面に戻る", exact: true })).toBeFocused();
+  await page.keyboard.press("Tab");
   await expect(app.getByRole("button", { name: "施策を検索", exact: true })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(app.getByRole("button", { name: "ウィンドウを複製", exact: true })).toBeFocused();
@@ -68,7 +71,7 @@ test("ファイルを開き、サイドバーを操作して入口へ戻る", as
   await page.keyboard.press("Tab");
   await expect(close).toBeFocused();
   await page.keyboard.press("Tab");
-  await expect(sidebar.getByRole("button", { name: "Home", exact: true })).toBeFocused();
+  await expect(sidebar.getByRole("button", { name: "作業を選択", exact: true })).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await expect(sidebar).toBeVisible();
@@ -84,7 +87,7 @@ test("ファイルを開き、サイドバーを操作して入口へ戻る", as
   await expect(sidebar).toBeVisible();
   await expect(trigger).toBeFocused();
   await trigger.click();
-  await main.click({ position: { x: 20, y: 20 } });
+  await app.getByLabel("基準年度", { exact: true }).click();
   await expect(sidebar).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
@@ -102,6 +105,7 @@ test("ファイルを開き、サイドバーを操作して入口へ戻る", as
   await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await expect(app.getByRole("heading", { name: "Triadic" })).toBeVisible();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await expect(sidebar).toBeVisible();
   expect(await app.locator("html").evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
@@ -109,6 +113,8 @@ test("ファイルを開き、サイドバーを操作して入口へ戻る", as
 
 test("サイドバーを開いたまま施策一覧とホームを往復できる", async ({ page, app }) => {
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
   const trigger = app.locator(".home-header").getByRole("button", { name: /サイドバー/ });
   const sidebar = app.getByRole("complementary", { name: "メニュー" });
   const navigation = sidebar.getByRole("navigation", { name: "メインナビゲーション" });
@@ -116,9 +122,11 @@ test("サイドバーを開いたまま施策一覧とホームを往復でき�
   const initiativeEntry = navigation.getByRole("button", { name: "施策一覧", exact: true });
 
   await trigger.click();
-  await expect(navigation.getByRole("button")).toHaveText(["Home", "ダッシュボード", "施策一覧", "総原価表", "展開表", "前年入力", "入出力", "マスタ", "履歴"]);
+  await expect(navigation.getByRole("button")).toHaveText(["作業を選択", "Home", "ダッシュボード", "施策一覧", "総原価表", "展開表", "前年入力", "入出力", "マスタ", "履歴"]);
   await expect(home).toHaveAttribute("aria-current", "page");
   await expect(initiativeEntry).not.toHaveAttribute("aria-current", "page");
+  await page.keyboard.press("Tab");
+  await expect(app.getByRole("button", { name: "前の画面に戻る", exact: true })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(app.getByRole("button", { name: "施策を検索", exact: true })).toBeFocused();
   await page.keyboard.press("Tab");
@@ -127,6 +135,8 @@ test("サイドバーを開いたまま施策一覧とホームを往復でき�
   await expect(app.getByRole("switch", { name: "ダークテーマ", exact: true })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(sidebar.getByRole("button", { name: "サイドバーを閉じる" })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(navigation.getByRole("button", { name: "作業を選択", exact: true })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(home).toBeFocused();
   await page.keyboard.press("Tab");
@@ -165,13 +175,14 @@ test("サイドバーを開いたまま施策一覧とホームを往復でき�
   await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await expect(app.getByRole("heading", { name: "Triadic" })).toBeVisible();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
-  await expect(app.getByRole("main", { name: "ホーム", exact: true })).toBeVisible();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await expect(sidebar).toBeVisible();
 });
 
 test("施策名・備考・月別金額を入力し、画面を往復しても保持する", async ({ page, app }, testInfo) => {
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
   const trigger = app.locator(".home-header").getByRole("button", { name: /サイドバー/ });
   const sidebar = app.getByRole("complementary", { name: "メニュー" });
   const name = app.getByRole("textbox", { name: "施策名", exact: true });
@@ -231,6 +242,7 @@ test("施策名・備考・月別金額を入力し、画面を往復しても�
   await sidebar.getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
   await trigger.click();
   await openInitiativeEntry(app);
   await expect(name).toHaveValue("");
@@ -240,6 +252,7 @@ test("施策名・備考・月別金額を入力し、画面を往復しても�
 
 test("金額表の各セルを編集でき、狭い画面でも最後の月に入力できる", async ({ page, app }, testInfo) => {
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
   const trigger = app.locator(".home-header").getByRole("button", { name: /サイドバー/ });
   await trigger.click();
   await openInitiativeEntry(app);
@@ -309,6 +322,7 @@ test("金額表の各セルを編集でき、狭い画面でも最後の月に�
 
 test("画面幅を変えてもサイドバーとメインが並び、閉じると幅が戻る", async ({ page, app }) => {
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
   const trigger = app.locator(".home-header").getByRole("button", { name: /サイドバー/ });
   const sidebar = app.getByRole("complementary", { name: "メニュー" });
   await trigger.click();
@@ -361,12 +375,14 @@ test("新しいファイルの年度を一度選び、閉じた後に同じ年�
   await expect(year).toHaveAttribute("data-moving", "false");
   await expect(year).toHaveAttribute("aria-valuenow", "2030");
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
   await expect(app.locator(".home-header")).toContainText("2030年度");
   await expect(app.locator(".home-file-name")).toHaveText("Untitled.triadic");
   await app.getByRole("button", { name: "サイドバーを開く" }).click();
   await app.getByRole("complementary", { name: "メニュー", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("alertdialog", { name: "閉じる", exact: true }).getByRole("button", { name: "閉じる", exact: true }).click();
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
   await expect(app.locator(".home-file-name")).toHaveText("Untitled.triadic");
   await expect(app.locator(".home-header")).toContainText("2030年度");
 });
@@ -393,7 +409,7 @@ test("壊れたファイルを拒否し、正常なファイルで再開でき�
   await page.getByLabel("ファイル操作", { exact: true }).selectOption("normal");
   await expect(page.getByRole("status")).toHaveText("操作できます");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
-  await expect(app.getByRole("main", { name: "ホーム", exact: true })).toBeVisible();
+  await expect(app.getByRole("main", { name: "作業を選択", exact: true })).toBeVisible();
 });
 
 test("保存失敗時は入口に残り、既存のファイルを開ける", async ({ page, app }) => {
@@ -402,6 +418,7 @@ test("保存失敗時は入口に残り、既存のファイルを開ける", as
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
   await expect(app.getByRole("alert")).toHaveText("テスト用の保存失敗です。");
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
   await expect(app.locator(".home-file-name")).toHaveText("画面テスト.triadic");
 });
 
@@ -435,8 +452,11 @@ test("確認用画面と配布用ビルドの表示・操作が一致する", as
         }
       }
       if (state === "ホーム") {
+        for (const target of [app, production]) await target.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
+        for (const target of [app, production]) await target.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
         await expect(app.getByRole("main", { name: "ホーム", exact: true })).toBeVisible();
         await expect(production.getByRole("main", { name: "ホーム", exact: true })).toBeVisible();
+        for (const target of [app, production]) await target.getByRole("heading", { name: "Home", exact: true }).click();
       }
       if (state === "施策入力") {
         for (const target of [app, production]) {
@@ -469,6 +489,8 @@ test("確認用画面と配布用ビルドの表示・操作が一致する", as
       expect(await app.locator("body").ariaSnapshot()).toBe(await production.locator("body").ariaSnapshot());
       await page.mouse.move(0, 0);
       await production.mouse.move(0, 0);
+      await settleMotion(app.locator("body"));
+      await settleMotion(production.locator("body"));
       const graph = state === "ホーム" || state === "サイドバー";
       if (graph) {
         // Independent live force layouts have different transient coordinates.
@@ -522,6 +544,7 @@ test.describe("日本時間の年度境界", () => {
       await app.getByRole("button", { name: "次の年度", exact: true }).click();
       await expect(slot).toHaveAttribute("aria-valuenow", String(year + 1));
       await app.getByRole("button", { name: "新規作成", exact: true }).click();
+      await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
       await expect(app.locator(".home-header")).toContainText(`${year + 1}年度`);
     });
   }
@@ -531,6 +554,7 @@ test.describe("日本時間の年度境界", () => {
 test("年度スロットをドラッグして選び、ページの位置を保つ", async ({ page, app }) => {
   const slot = app.getByRole("spinbutton", { name: "年度", exact: true });
   const year = Number(await slot.getAttribute("aria-valuenow"));
+  await slot.scrollIntoViewIfNeeded();
   const selected = await app.locator(".year-slot-selected").boundingBox();
   if (!selected) throw new Error("年度スロットが表示されていません。");
   const position = await slot.boundingBox();
@@ -543,5 +567,6 @@ test("年度スロットをドラッグして選び、ページの位置を保�
   expect(selectedYear).toBeGreaterThan(year);
   expect(await slot.boundingBox()).toEqual(position);
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
   await expect(app.locator(".home-header")).toContainText(`${selectedYear}年度`);
 });

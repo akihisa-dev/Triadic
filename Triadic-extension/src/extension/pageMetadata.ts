@@ -2,6 +2,7 @@ import type { Page } from "./workspace/types";
 import type { SidebarIconName } from "./SidebarIcon";
 
 export const pageMetadata = {
+  "work-selection": { name: "作業を選択", master: false, icon: "list" },
   "dashboard": { name: "ダッシュボード", master: false, icon: "cost" },
   "home": { name: "Home", master: false, icon: "home" },
   "initiative-list": { name: "施策一覧", master: false, icon: "list" },

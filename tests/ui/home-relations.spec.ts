@@ -4,6 +4,10 @@ const tables = ["施策一覧", "総原価表", "展開表"];
 
 test("関連図の初期配置は三つの対等な表と全14入口を示す", async ({ app }) => {
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
+  await app.getByRole("heading", { name: "Home", exact: true }).click();
+  await settleMotion(app.locator("body"));
   const home = app.getByRole("main", { name: "ホーム", exact: true });
   await expect(home.locator(".home-relation-node")).toHaveCount(14);
   await expect(home.locator(".home-relations-brand")).toHaveText("Triadic");
@@ -16,6 +20,10 @@ test("関連図の初期配置は三つの対等な表と全14入口を示す", 
 
 test("表の選択で全体が再配置され、直接の説明だけを表示する", async ({ app }) => {
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
+  await app.getByRole("heading", { name: "Home", exact: true }).click();
+  await settleMotion(app.locator("body"));
   const home = app.getByRole("main", { name: "ホーム", exact: true });
   const unrelated = home.locator('.home-relation-item:has([data-page="account-type-master"])');
   const before = await unrelated.getAttribute("transform");
@@ -39,6 +47,10 @@ test("表の選択で全体が再配置され、直接の説明だけを表示�
 
 test("二度目の操作で画面を開き、戻っても他のホーム表示を使える", async ({ app }) => {
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
+  await app.getByRole("heading", { name: "Home", exact: true }).click();
+  await settleMotion(app.locator("body"));
   for (const name of ["総原価表", "勘定科目マスタ"]) {
     const home = app.getByRole("main", { name: "ホーム", exact: true });
     const button = home.getByRole("button", { name, exact: true });
@@ -47,6 +59,8 @@ test("二度目の操作で画面を開き、戻っても他のホーム表示�
     await button.press("Enter");
     await expect(app.getByRole("heading", { name, exact: true })).toBeVisible();
     await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
+    await app.getByRole("heading", { name: "Home", exact: true }).click();
+    await settleMotion(app.locator("body"));
   }
   await app.getByRole("button", { name: "画面とデータ", exact: true }).click();
   await expect(app.getByRole("region", { name: "画面とデータの対応図" })).toBeVisible();
@@ -56,6 +70,10 @@ test("二度目の操作で画面を開き、戻っても他のホーム表示�
 
 test("ドラッグは画面を開かず選択中の定位置へ戻り、ズームと全体表示を維持する", async ({ app, page }) => {
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
+  await app.getByRole("heading", { name: "Home", exact: true }).click();
+  await settleMotion(app.locator("body"));
   const home = app.getByRole("main", { name: "ホーム", exact: true });
   await home.getByRole("button", { name: "総原価表", exact: true }).click();
   const button = home.getByRole("button", { name: "集計マスタ", exact: true });
@@ -82,6 +100,10 @@ test("ドラッグは画面を開かず選択中の定位置へ戻り、ズー�
 
 test("関係線の4種類を、選択と移動の後も維持する", async ({ app }) => {
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
+  await app.getByRole("heading", { name: "Home", exact: true }).click();
+  await settleMotion(app.locator("body"));
   const home = app.getByRole("main", { name: "ホーム", exact: true });
   await home.getByRole("button", { name: "施策一覧", exact: true }).click();
   await expect(home.locator(".home-relations-map .relation-reference path").first()).toHaveCSS("stroke-dasharray", "8px, 5px");
@@ -92,6 +114,10 @@ test("関係線の4種類を、選択と移動の後も維持する", async ({ a
 
 test("移動中の項目を押しただけではアニメーションを停止しない", async ({ app, page }) => {
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
+  await app.getByRole("heading", { name: "Home", exact: true }).click();
+  await settleMotion(app.locator("body"));
   const home = app.getByRole("main", { name: "ホーム", exact: true });
   const button = home.getByRole("button", { name: "施策一覧", exact: true });
   await button.press("Space");
@@ -121,6 +147,10 @@ test("移動中の項目を押しただけではアニメーションを停止�
 
 test("キャンバスは見出しの下から画面下端まで広がる", async ({ page, app }) => {
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
+  await app.getByRole("heading", { name: "Home", exact: true }).click();
+  await settleMotion(app.locator("body"));
   await settleMotion(app.locator("body"));
   for (const height of [800, 1000]) {
     await page.setViewportSize({ width: page.viewportSize()!.width, height });
@@ -136,6 +166,10 @@ test("キャンバスは見出しの下から画面下端まで広がる", async
 test("各入口を選んでも名称・関係説明・中央の名前が重ならない", async ({ app }) => {
   test.setTimeout(60_000);
   await app.getByRole("button", { name: "新規作成", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
+  await app.getByRole("heading", { name: "Home", exact: true }).click();
+  await settleMotion(app.locator("body"));
   const home = app.getByRole("main", { name: "ホーム", exact: true });
   await expect(home.locator(".home-relation-name")).toHaveCount(14);
   const names = await home.locator(".home-relation-name").allTextContents();

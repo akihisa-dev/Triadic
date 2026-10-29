@@ -30,7 +30,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
     await expect(slot).toHaveAttribute("data-moving", "false");
     await expect(slot).toHaveAttribute("aria-valuenow", String(stopped - 1));
     await app.getByRole("button", { name: "新規作成", exact: true }).click();
-    await expect(app.locator(".home-header")).toContainText(`${stopped - 1}年度`);
+    await expect(app.locator(".work-selection-header")).toContainText(`${stopped - 1}年度`);
   });
 }
 

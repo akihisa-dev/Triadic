@@ -4,6 +4,10 @@ import { dataTables, screenData } from "../../Triadic-extension/src/extension/sc
 test("全画面の対応・説明・保存項目・参照先を省略せずに閲覧できる", async ({ app }) => {
   test.setTimeout(90_000);
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
+  await app.getByRole("heading", { name: "Home", exact: true }).click();
+  await settleMotion(app.locator("body"));
   await app.getByRole("button", { name: "画面とデータ", exact: true }).click();
   const map = app.getByRole("region", { name: "画面とデータの対応図" });
   for (const screen of screenData) {
@@ -34,6 +38,10 @@ test("全画面の対応・説明・保存項目・参照先を省略せずに�
 
 test("画面の保存項目と参照先をたどり、関連図の入口へ戻れる", async ({ app }) => {
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
+  await app.getByRole("heading", { name: "Home", exact: true }).click();
+  await settleMotion(app.locator("body"));
   await app.getByRole("button", { name: "画面とデータ", exact: true }).click();
   const map = app.getByRole("region", { name: "画面とデータの対応図" });
   await expect(map.getByRole("heading", { name: "施策一覧", exact: true })).toBeVisible();

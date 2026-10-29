@@ -14,6 +14,8 @@ Previous-year forecast and actuals are independent inputs. Cost and expansion sc
 
 ## English
 
+After opening or creating a file, the four-part work selector shows initial budget, final budget, forecast/actuals and revised budget. Initial/final open the initiative list with that budget selected locally; forecast/actuals and revised budget are marked unavailable. Use 「作業を選択」 in the sidebar to return. This first step adds entry navigation only; budget freezing, independent phases and handoff are not implemented. Existing budget inheritance and comparison controls remain unchanged.
+
 **A Chrome extension for building budgets from initiatives and checking them in three tables.**
 
 Enter what each initiative will do, which accounts will change, in which months, and by how much compared with the previous year to build a company's annual budget. The initiative list, cost summary, and breakdown table all use the same previous-year forecast/actuals and initiative adjustments, so you do not need to copy figures between tables.
@@ -577,6 +579,8 @@ History types, empty state, and five-minute interval use shared SQLite-independe
 <a id="日本語"></a>
 
 ## 日本語
+
+ファイルを開く・新規作成した後は、通常画面から独立した4分割の「作業を選択」が開きます。選択前はサイドバー・検索・操作取消・画面履歴・ウィンドウ複製を表示せず、予算を選んだ後に通常画面を表示します。「一次予算」「確定予算」は選んだ種別の施策一覧へ進み、「見通し・実績」「修正予算」は未実装のため選べません。メニューの「作業を選択」から戻れます。入口の選択はウィンドウ内の表示だけに反映し、保存済みデータは変更しません。今回は入口の追加までで、フェーズの決定・固定・独立した引き継ぎは未実装です。一次から確定への既存の金額追従と各画面の種別切替・比較条件は維持します。
 
 [English](#english) · [日本語](#日本語)
 

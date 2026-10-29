@@ -35,7 +35,7 @@ test("保存済みでも再読み込みに確認を表示し、中止すると�
   const dialog = await pending;
   expect(dialog.type()).toBe("beforeunload");
   await dialog.dismiss();
-  await expect(app.getByRole("main", { name: "ホーム", exact: true })).toBeVisible();
+  await expect(app.getByRole("main", { name: "作業を選択", exact: true })).toBeVisible();
   const retry = page.waitForEvent("dialog");
   await page.evaluate(() => { setTimeout(() => location.reload(), 0); });
   await (await retry).accept();

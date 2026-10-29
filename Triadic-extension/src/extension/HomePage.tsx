@@ -1,6 +1,7 @@
 import { useHomeWorkspace, type HomePageProps } from "./useHomeWorkspace";
 import { WorkspaceHeader, WorkspaceSidebar } from "./WorkspaceChrome";
 import { WorkspacePage } from "./WorkspacePage";
+import { WorkSelectionPage, WorkSelectionHeader } from "./WorkSelectionPage";
 import { useEffect, useState } from "react";
 import { WindowViewContext } from "./windowView";
 import { useWindowWorkspace } from "./useWindowWorkspace";
@@ -34,6 +35,12 @@ function HomePageContents(props: HomePageProps) {
   }, [screen.page]);
   return (
     <HistoryReadOnlyContext value={preview !== null}><SavedOperationRevisionContext value={operationRevision}><div className="home-page">
+      {screen.page === "work-selection" ? <>
+        <WorkSelectionHeader fiscalYear={workspace.contents.fiscalYear} onClose={workspace.onCloseFile} disabled={navigationBlocked || isSaving} />
+        <div className="work-selection-content" inert={operationMutation.busy || workspace.saveAsMutation.busy || windows.settling}>
+          <WorkSelectionPage disabled={navigationBlocked || isSaving} onSelect={workspace.selectWork} />
+        </div>
+      </> : <>
       <WorkspaceHeader workspace={workspace} windows={windows} />
       <div className="home-layout">
         <WorkspaceSidebar workspace={workspace} />
@@ -43,6 +50,7 @@ function HomePageContents(props: HomePageProps) {
           </FadeSwap>
         </div>
       </div>
+      </>}
       <StatusNotice message={notice.message || historyError} error={notice.message ? notice.error : Boolean(historyError)} {...(notice.message ? { onDismiss: dismissNotice } : {})} />
       <ConfirmationDialog open={windows.discardLabels !== null} title="履歴を開きますか？"
         message={`${windows.discardLabels ?? ""}の未登録の入力は破棄され、確認待ちの内容も破棄されます。ほかのウィンドウを閉じて履歴を開きますか？`}
