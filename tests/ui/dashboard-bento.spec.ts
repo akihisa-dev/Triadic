@@ -7,18 +7,18 @@ test("グラフのクリックで対象を減らさず、表示条件から月�
   await expect(amounts).toHaveText(original);
   const point = page.locator(".dashboard-chart").first().locator(".dashboard-series-0 .dashboard-chart-point").filter({ hasText: /^6月 一次予算 / });
   await point.click();
-  await expect(page.locator(".floating-trigger")).toContainText("年間");
+  await expect(page.locator(".dashboard-floating-trigger")).toContainText("年間");
   await page.locator(".dashboard-department .dashboard-bar").first().click();
   await expect(page.locator(".dashboard-department-name")).toHaveCount(8);
   const industry = page.locator('.dashboard-analysis-section[aria-label="業種別の売上構成"] g[data-value]').filter({ hasText: /^直営自動車 \d/ }).locator("text").first();
   await industry.click();
   await expect(amounts).toHaveText(original);
   await expect(page.locator(".slice-summary, .slice-selects")).toHaveCount(0);
-  await page.locator(".floating-trigger").press("Enter");
+  await page.locator(".dashboard-floating-trigger").press("Enter");
   await page.getByRole("button", { name: "6月", exact: true }).click();
-  await expect(page.locator(".floating-trigger")).toContainText("6月");
+  await expect(page.locator(".dashboard-floating-trigger")).toContainText("6月");
   await page.getByRole("button", { name: "年間に戻す", exact: true }).click();
-  await expect(page.locator(".floating-trigger")).toContainText("年間");
+  await expect(page.locator(".dashboard-floating-trigger")).toContainText("年間");
   await expect(amounts).toHaveText(original);
 });
 
@@ -44,5 +44,5 @@ test("施策詳細ダイアログを表示中の施策名で識別し、閉じ�
     await expect(dialog.locator("tbody tr")).toHaveText(rows);
     await page.keyboard.press("Escape");
   }
-  await expect(page.locator(".floating-trigger")).toContainText("年間");
+  await expect(page.locator(".dashboard-floating-trigger")).toContainText("年間");
 });

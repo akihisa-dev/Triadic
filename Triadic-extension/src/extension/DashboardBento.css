@@ -1,0 +1,55 @@
+.dashboard-page { max-width: 1832px; margin-inline: auto; padding: 24px 24px 180px; }
+.dashboard-page > .initiative-list-heading { margin-bottom: 20px; }
+.dashboard-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+.dashboard-grid :is(.dashboard-stats, .dashboard-analysis, .dashboard-expense-charts), .dashboard-grid > .dashboard-pair, .dashboard-analysis > .dashboard-pair { display: contents; }
+.dashboard-grid :is(.dashboard-stat, .dashboard-panel, .dashboard-analysis-section) { grid-column: span 6; border: 1px solid var(--line); border-radius: 18px; padding: 24px; margin: 0; background: var(--surface); min-width: 0; transition: border-color 160ms; }
+.dashboard-grid :is(.dashboard-stat, .dashboard-panel, .dashboard-analysis-section):hover { border-color: var(--muted); }
+.dashboard-grid > .dashboard-legend, .dashboard-grid .analysis-kind { grid-column: 1 / -1; margin: 0; }
+.dashboard-grid .dashboard-stat { grid-column: span 4; padding: 24px 28px; }
+.dashboard-grid .dashboard-stat-kind strong { font-size: clamp(26px, 2.8vw, 46px); letter-spacing: -.035em; }
+.dashboard-grid .dashboard-stat h2 { margin-bottom: 16px; }
+.dashboard-grid .dashboard-stat-kind { margin-bottom: 0; gap: 8px; }
+.dashboard-grid .dashboard-comparison { grid-column: span 7; max-height: 560px; overflow: auto; }
+.dashboard-grid .dashboard-impact { grid-column: span 5; max-height: 560px; overflow: auto; }
+.dashboard-grid .dashboard-impact > .dashboard-pair { grid-template-columns: 1fr; }
+.dashboard-grid .dashboard-impact .dashboard-rank { grid-template-columns: minmax(100px, 1fr) minmax(80px, .6fr); }
+.dashboard-grid .dashboard-comparison .dashboard-department { gap: 12px; grid-template-columns: minmax(65px, .7fr) repeat(2, minmax(0, 1.2fr)) minmax(70px, .7fr); }
+.dashboard-grid .dashboard-analysis-section[aria-label="展開別の利益増減"], .dashboard-grid .dashboard-analysis-section[aria-label="部署 × 業種の利益"], .dashboard-grid .dashboard-analysis-section[aria-label="展開 × 月別の利益増減"], .dashboard-grid .dashboard-expense-charts > section { grid-column: 1 / -1; }
+.dashboard-grid .analysis-focus:empty { min-height: 12px; padding: 0; }
+.dashboard-initiative-bar { border: 0; padding: 0; cursor: pointer; }
+.dashboard-initiative-bar:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.dashboard-floating-controls { position: fixed; bottom: 24px; right: 24px; z-index: 40; width: 346px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 88px); display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: 0 12px 48px rgb(var(--shadow-rgb) / .22); font-size: 12px; }
+.dashboard-floating-controls button { color: var(--ink); border: 1px solid var(--line); background: var(--surface); border-radius: 7px; padding: 7px 10px; font: inherit; cursor: pointer; }
+.dashboard-floating-controls button:disabled { cursor: default; opacity: .5; }
+.dashboard-floating-controls button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dashboard-floating-head { display: flex; align-items: center; padding: 10px; gap: 6px; flex: none; }
+.dashboard-floating-controls .dashboard-drag-handle { border: 0; background: transparent; color: var(--muted); font-size: 10px; touch-action: none; cursor: move; padding: 8px 4px; }
+.dashboard-floating-controls .dashboard-floating-trigger { flex: 1; text-align: left; border: 0; background: transparent; padding: 4px; font-weight: 600; min-width: 0; }
+.dashboard-floating-trigger span { display: block; margin-top: 4px; font-weight: 400; font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
+.dashboard-floating-controls .dashboard-pin-control { border: 0; color: var(--muted); background: var(--soft); }
+.dashboard-floating-controls .dashboard-pin-control[aria-pressed="true"] { color: var(--accent); }
+.dashboard-floating-body { padding: 18px; overflow: auto; min-height: 0; }
+.dashboard-floating-body .comparison-selection { width: 100%; margin: 0 0 18px; grid-template-columns: 1fr 1fr 1fr; }
+.dashboard-period-buttons { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.dashboard-period-buttons button:first-child { grid-column: 1 / -1; }
+.dashboard-floating-controls .dashboard-period-buttons button { padding: 7px 0; background: var(--canvas); border-color: transparent; }
+.dashboard-floating-controls .dashboard-period-buttons button[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); background: var(--surface); }
+.dashboard-floating-body p { margin: 12px 0 0; font-size: 10px; color: var(--muted); }
+.dashboard-floating-active { display: flex; padding: 10px 10px 0; flex: none; }
+.dashboard-floating-controls .dashboard-floating-active button { font-size: 11px; padding: 6px 8px; border-color: var(--accent); color: var(--accent); }
+@media (max-width: 1100px) {
+  .dashboard-grid .dashboard-comparison, .dashboard-grid .dashboard-impact { grid-column: 1 / -1; }
+  .dashboard-grid .dashboard-impact > .dashboard-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-grid .dashboard-stat { padding: 22px 18px; }
+}
+@media (max-width: 760px) {
+  .dashboard-page { padding: 20px 12px 160px; }
+  .dashboard-grid { gap: 12px; }
+  .dashboard-grid :is(.dashboard-stat, .dashboard-panel, .dashboard-analysis-section) { grid-column: 1 / -1; padding: 20px 16px; }
+  .dashboard-grid .dashboard-stat { display: block; }
+  .dashboard-grid .dashboard-stat-kind strong { font-size: 36px; }
+  .dashboard-grid .dashboard-impact > .dashboard-pair { grid-template-columns: 1fr; }
+  .dashboard-grid .dashboard-comparison .dashboard-department { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-floating-controls { bottom: 16px; right: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .dashboard-grid * { transition: none !important; } }

@@ -52,8 +52,7 @@ for (const dark of [false, true]) test(`全データ列の縦罫線を維持す�
   }
   await menu.getByRole("button", { name: "ダッシュボード", exact: true }).click();
   await expectVerticalBorders(app.locator(".analysis-heatmap table").first());
-  await app.locator(".analysis-values summary").first().click();
-  await expectVerticalBorders(app.locator(".analysis-values table").first());
+  await expect(app.locator(".analysis-values")).toHaveCount(0);
   await menu.getByRole("button", { name: "Home", exact: true }).click();
   await app.getByRole("button", { name: "画面とデータ", exact: true }).click();
   await expectVerticalBorders(app.locator(".screen-data-summary"));

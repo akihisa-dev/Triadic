@@ -1,14 +1,15 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { formatAmount, formatRate, formatYen } from "../core/domain/amounts";
 import { initiativeMonths } from "../core/domain/calendar";
 import { baselineFor, comparisonName, previousKindName, type KindId, type BudgetPrevious } from "../core/domain/kinds";
 import type { Initiative, PlanContents } from "../core/domain/plan";
 import { buildDashboard, dashboardAmounts, dashboardChange, dashboardDepartmentComparison, rankDashboardInitiatives, type Dashboard, type DashboardMetric, type DashboardPeriod, type DashboardSeries } from "../core/tables/dashboard";
 import { DashboardAnalysis } from "./DashboardAnalysis";
-import { ComparisonSelection } from "./ComparisonSelection";
+import { DashboardControls } from "./DashboardControls";
 import { TableCalculationBoundary } from "./TableCalculationBoundary";
 import { useWindowViewState } from "./windowView";
 import "./DashboardPage.css";
+import "./DashboardBento.css";
 
 type Props = { contents: PlanContents; selected: KindId[]; previous: BudgetPrevious; disabled: boolean;
   onSelection: (kinds: KindId[], previous: BudgetPrevious) => void;
@@ -20,28 +21,33 @@ const growth = (value: number, previous: number) => { const change = dashboardCh
 
 export function DashboardPage({ contents, selected, previous, disabled, onSelection, ...navigation }: Props) {
   const context = useMemo(() => ({ ...contents, budgetPrevious: previous }), [contents, previous]);
+  const [period, setPeriod] = useWindowViewState("dashboard:period", "annual", true);
   return <main className={`dashboard-page ${selected.length === 1 ? "dashboard-single-kind" : ""}`} aria-labelledby="dashboard-title">
-    <div className="initiative-list-heading"><h1 id="dashboard-title">ダッシュボード</h1>
-      <ComparisonSelection selected={selected} previous={previous} disabled={disabled} onChange={onSelection} />
-    </div>
+    <div className="initiative-list-heading"><h1 id="dashboard-title">ダッシュボード</h1></div>
     <TableCalculationBoundary resetKeys={[contents, selected, previous]}>
-      <DashboardContents contents={context} selected={selected} disabled={disabled} {...navigation} />
+      <DashboardContents contents={context} selected={selected} disabled={disabled} period={period} {...navigation} />
     </TableCalculationBoundary>
+    <DashboardControls selected={selected} previous={previous} disabled={disabled} period={period} onPeriod={setPeriod} onSelection={onSelection} />
   </main>;
 }
 
-function DashboardContents({ contents, selected, disabled, onDepartment, onInitiative }: Pick<Props, "contents" | "selected" | "disabled" | "onDepartment" | "onInitiative">) {
+function DashboardContents({ contents, selected, disabled, onDepartment, onInitiative, period }: Pick<Props, "contents" | "selected" | "disabled" | "onDepartment" | "onInitiative"> & { period: DashboardPeriod }) {
   const dashboard = useMemo(() => buildDashboard(contents, selected), [contents, selected]);
-  const [departmentPeriod, setDepartmentPeriod] = useWindowViewState("dashboard:department-period", "annual", true);
+  const departmentPeriod = period;
+  const charts = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const animations = [...charts.current!.querySelectorAll(".dashboard-bar")].map(bar => bar.animate([{ transform: "scaleX(.05)", transformOrigin: "left" }, { transform: "scaleX(1)", transformOrigin: "left" }], { duration: 650, easing: "cubic-bezier(.16,1,.3,1)" }));
+    return () => animations.forEach(animation => animation.cancel());
+  }, [period, selected, contents]);
   const departmentComparison = useMemo(() => dashboardDepartmentComparison(dashboard.departments, departmentPeriod), [dashboard, departmentPeriod]);
-  const [period, setPeriod] = useWindowViewState("dashboard:period", "annual", true);
   const [ranking, setRanking] = useWindowViewState("dashboard:ranking", selected[0]!, true);
   const rankKind = selected.includes(ranking) ? ranking : selected[0]!;
   const priorName = (kind: KindId) => previousKindName(baselineFor(contents, kind));
   const priors = [...new Set(selected.map(kind => baselineFor(contents, kind)))];
   const kindName = (id: KindId) => comparisonName(contents, id).replace("\n", " · ");
   const annual = dashboard.budgets.map(entry => ({ kind: entry.kind, previous: dashboardAmounts(entry.previous), ...dashboardAmounts(entry.months) }));
-  return <>
+  return <div className="dashboard-grid" ref={charts}>
     <div className="dashboard-stats">
       {([...metrics, { id: "margin", name: "利益率" }] as const).map(metric => <section className="dashboard-stat" key={metric.id} aria-label={`年間${metric.name}`}>
         <h2>{metric.id === "margin" ? metric.name : `年間${metric.name}`}</h2>
@@ -55,7 +61,7 @@ function DashboardContents({ contents, selected, disabled, onDepartment, onIniti
     </div>
     <div className="dashboard-legend" aria-label="グラフの凡例">{priors.map(kind => <span key={kind} className={`dashboard-prior dashboard-prior-${kind}`}>{previousKindName(kind)}</span>)}{selected.map((kind, index) => <span className={`dashboard-series-${index}`} key={kind}>{kindName(kind)}</span>)}</div>
     <div className="dashboard-pair">{metrics.map(metric => <section key={metric.id} className="dashboard-panel"><h2>{metric.name}の月別推移</h2><MonthlyChart series={dashboard} metric={metric.id} priorName={priorName} kindName={kindName} /></section>)}</div>
-    <section className="dashboard-panel dashboard-comparison"><div className="dashboard-panel-heading"><h2>部署別比較</h2><div className="dashboard-controls"><label>部署の対象期間<select value={departmentPeriod} onChange={event => setDepartmentPeriod(event.target.value === "annual" ? "annual" : Number(event.target.value) as DashboardPeriod)}><option value="annual">年間</option>{initiativeMonths.map(month => <option key={month} value={month}>{month}月</option>)}</select></label></div></div>
+    <section className="dashboard-panel dashboard-comparison"><div className="dashboard-panel-heading"><h2>部署別比較</h2></div>
       <div className="dashboard-legend">{priors.map(kind => <span key={kind} className={`dashboard-prior dashboard-prior-${kind}`}>{previousKindName(kind)}</span>)}{selected.map((kind, index) => <span className={`dashboard-series-${index}`} key={kind}>{kindName(kind)}</span>)}<span>金額：千円</span></div>
       <div className="dashboard-department dashboard-department-header" aria-hidden="true"><span>部署</span><span>売上 / 前年増減</span><span>利益 / 前年増減</span><span>利益率 / 前年差</span></div>
       {departmentComparison.rows.map(department => {
@@ -90,13 +96,12 @@ function DashboardContents({ contents, selected, disabled, onDepartment, onIniti
       {!dashboard.departments.length && <p className="dashboard-empty">部署は登録されていません。</p>}
     </section>
     <section className="dashboard-panel dashboard-impact"><div className="dashboard-panel-heading"><h2>施策の影響</h2><div className="dashboard-controls">
-      <label>対象期間<select value={period} onChange={event => setPeriod(event.target.value === "annual" ? "annual" : Number(event.target.value) as DashboardPeriod)}><option value="annual">年間</option>{initiativeMonths.map(month => <option key={month} value={month}>{month}月</option>)}</select></label>
       {selected.length > 1 && <label>並び順の基準<select value={rankKind} onChange={event => setRanking(Number(event.target.value) as KindId)}>{selected.map(kind => <option key={kind} value={kind}>{kindName(kind)}</option>)}</select></label>}
     </div></div>
       <div className="dashboard-pair">{metrics.map(metric => <div key={metric.id}><h3>{metric.name}への影響</h3>{(["increase", "decrease"] as const).map(direction => <Ranking key={`${metric.id}:${direction}:${rankKind}:${period}`} dashboard={dashboard} metric={metric.id} kind={rankKind} period={period} direction={direction} kindName={kindName} disabled={disabled} onOpen={onInitiative} />)}</div>)}</div>
     </section>
     <DashboardAnalysis contents={contents} selected={selected} />
-  </>;
+  </div>;
 }
 
 function Ranking({ dashboard, metric, kind, period, direction, kindName, disabled, onOpen }: { dashboard: Dashboard; metric: DashboardMetric; kind: KindId; period: DashboardPeriod; direction: "increase" | "decrease"; kindName: (kind: KindId) => string; disabled: boolean; onOpen: Props["onInitiative"] }) {
@@ -107,7 +112,7 @@ function Ranking({ dashboard, metric, kind, period, direction, kindName, disable
     <h4>{direction === "increase" ? "増加" : "減少"}</h4>
     {(expanded ? ranks : ranks.slice(0, 5)).map(item => <div key={item.initiative.id} className="dashboard-rank">
       <button className="initiative-name-button" disabled={disabled} onClick={() => onOpen(item.initiative, kind)}>{item.initiative.name}</button>
-      {item.values.map((value, index) => <div key={value.kind} className={`dashboard-rank-value dashboard-series-${index}`}><span className="dashboard-series-label">{kindName(value.kind)}</span><span>{signedAmount(value.amount)}</span><div className={`dashboard-bar ${value.amount < 0 ? "dashboard-bar-negative" : ""}`} style={{ width: `${Math.abs(value.amount) / maximum * 100}%` }} /></div>)}
+      {item.values.map((value, index) => <div key={value.kind} className={`dashboard-rank-value dashboard-series-${index}`}><span className="dashboard-series-label">{kindName(value.kind)}</span><span>{signedAmount(value.amount)}</span><button className={`dashboard-bar dashboard-initiative-bar ${value.amount < 0 ? "dashboard-bar-negative" : ""}`} disabled={disabled} aria-label={`${item.initiative.name} ${kindName(value.kind)} ${signedAmount(value.amount)}の施策詳細`} onClick={() => onOpen(item.initiative, value.kind)} style={{ width: `${Math.abs(value.amount) / maximum * 100}%` }} /></div>)}
     </div>)}
     {!ranks.length && <p className="dashboard-empty">該当する施策はありません。</p>}
     {ranks.length > 5 && <button className="dashboard-more" onClick={() => setExpanded(value => !value)} aria-expanded={expanded}>{expanded ? "上位5件に戻す" : `全${ranks.length}件を表示`}</button>}

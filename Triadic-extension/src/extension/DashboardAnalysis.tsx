@@ -13,22 +13,17 @@ const rate = (value: number | undefined) => value === undefined ? "—" : format
 const annual = (group: AnalysisGroup, kind: KindId) => analysisAnnual(group.budgets.find(entry => entry.kind === kind)!.months);
 const profitValues = (groups: AnalysisGroup[], kind: KindId) => groups.map(group => ({ name: group.name, value: annual(group, kind).profit }));
 type Datum = { name: string; value: number };
-type TableRow = (string | number)[];
 
-function ValueTable({ headers, rows }: { headers: string[]; rows: TableRow[] }) {
-  return <details className="analysis-values"><summary>数値を表示</summary><div className="analysis-scroll" tabIndex={0} role="region" aria-label="グラフの数値"><table><thead><tr>{headers.map(header => <th key={header} scope="col">{header}</th>)}</tr></thead><tbody>{rows.map((row, i) => <tr key={i}>{row.map((value, j) => j === 0 ? <th key={j} scope="row">{value}</th> : <td key={j}>{value}</td>)}</tr>)}</tbody></table></div></details>;
-}
-function Plot({ name, width = 640, height = 300, children, headers, rows }: { name: string; width?: number; height?: number; children: ReactNode; headers: string[]; rows: TableRow[] }) {
+function Plot({ name, width = 640, height = 300, children }: { name: string; width?: number; height?: number; children: ReactNode }) {
   const [focus, setFocus] = useState("");
   return <div className="analysis-plot">
     <div className="analysis-scroll" role="region" aria-label={`${name}のグラフ`} tabIndex={0}>
       <svg role="img" aria-label={name} viewBox={`0 0 ${width} ${height}`} style={{ minWidth: width }} width="100%" height={height}
         onFocusCapture={event => setFocus((event.target as Element).closest("[data-value]")?.getAttribute("data-value") ?? "")}
         onBlurCapture={() => setFocus("")} onMouseOver={event => setFocus((event.target as Element).closest("[data-value]")?.getAttribute("data-value") ?? "")} onMouseLeave={() => setFocus("")}>
-        <title>{name}。金額は千円。各項目の数値は下の「数値を表示」で確認できます。</title>{children}
+        <title>{name}。金額は千円。</title>{children}
       </svg>
     </div><output className="analysis-focus">{focus}</output>
-    <ValueTable headers={headers} rows={rows} />
   </div>;
 }
 function Mark({ label, children }: { label: string; children: ReactNode }) {
@@ -60,7 +55,7 @@ function Waterfall({ groups, kind, start, end, prior, budget }: { groups: Analys
   const entries = [{ name: prior, value: start, from: 0, to: start, total: true }, ...changes.map((item, index) => ({ ...item, ...steps[index]!, total: false })), { name: budget, value: end, from: 0, to: end, total: true }];
   const width = Math.max(920, entries.length * 110 + 110), height = 364, left = 100;
   const extent = scale(entries.flatMap(item => [item.from, item.to]), 264, 32);
-  return <Plot name="展開別の利益増減" width={width} height={height} headers={["展開", "利益増減・合計（千円）"]} rows={entries.map(item => [item.name, item.total ? formatYen(item.value) : signed(item.value)])}>
+  return <Plot name="展開別の利益増減" width={width} height={height}  >
     <Hatch id={hatch} /><Axis extent={extent} x1={left} x2={width - 16} y={264} vertical />
     <line className="analysis-zero" x1={left} x2={width - 16} y1={extent.at(0)} y2={extent.at(0)} />
     {entries.map((item, index) => {
@@ -87,7 +82,7 @@ function PeriodColumns({ groups, kind }: { groups: AnalysisGroup[]; kind: KindId
   });
   const extent = scale(stacks.flatMap(items => items.flatMap(item => [item.from, item.to])), 250, 28);
   return <><div className="analysis-legend">{values.map((item, index) => <span key={item.name}><i style={{ background: color(index) }} />{index + 1} {item.name}</span>)}</div>
-    <Plot name="期間別の月別利益増減" height={300} headers={["期間", ...initiativeMonths.map(month => `${month}月（千円）`)]} rows={values.map(item => [item.name, ...initiativeMonths.map(month => signed(item.months[month]!.profit))])}>
+    <Plot name="期間別の月別利益増減" height={300}  >
       <Hatch id={hatch} /><Axis extent={extent} x1={88} x2={624} y={250} vertical />
       <line className="analysis-zero" x1={88} x2={624} y1={extent.at(0)} y2={extent.at(0)} />
       {stacks.map((items, i) => <g key={i}>{items.map(item => <Mark key={item.name} label={`${initiativeMonths[i]}月 ${item.name} ${signed(item.value)}千円`}>
@@ -101,7 +96,7 @@ const color = (index: number) => `var(--analysis-color-${index % 6})`;
 function Lollipops({ values, name }: { values: Datum[]; name: string }) {
   const height = Math.max(220, values.length * 42 + 65);
   const extent = scale(values.map(item => item.value), 245, 550);
-  return <Plot name={name} height={height} headers={["区分", "利益増減（千円）"]} rows={values.map(item => [item.name, signed(item.value)])}>
+  return <Plot name={name} height={height}  >
     <Axis extent={extent} x1={245} x2={550} y={height - 42} />
     <line className="analysis-zero" x1={extent.at(0)} x2={extent.at(0)} y1={20} y2={height - 42} />
     {values.map((item, index) => <Mark key={index} label={`${item.name} ${signed(item.value)}千円`}>
@@ -115,7 +110,7 @@ function Lollipops({ values, name }: { values: Datum[]; name: string }) {
 function SignedBars({ values, name }: { values: Datum[]; name: string }) {
   const height = Math.max(220, values.length * 42 + 65), hatch = useId();
   const extent = scale(values.map(item => item.value), 245, 550);
-  return <Plot name={name} height={height} headers={["名称", "金額（千円）"]} rows={values.map(item => [item.name, signed(item.value)])}>
+  return <Plot name={name} height={height}  >
     <Hatch id={hatch} /><Axis extent={extent} x1={245} x2={550} y={height - 42} />
     <line className="analysis-zero" x1={extent.at(0)} x2={extent.at(0)} y1={20} y2={height - 42} />
     {values.map((item, index) => <Mark key={index} label={`${item.name} ${signed(item.value)}千円`}>
@@ -142,7 +137,7 @@ function Composition({ values, name, treemap = false }: { values: Datum[]; name:
   const visible = sorted.length > 8 ? [...sorted.slice(0, 7), { name: treemap ? "その他科目" : "その他業種", value: sumYen(sorted.slice(7).map(item => item.value)) }] : sorted;
   let angle = -Math.PI / 2;
   const point = (a: number) => [220 + 140 * Math.cos(a), 185 + 140 * Math.sin(a)];
-  return <div ref={container}><Plot name={name} width={treemap ? width : 640} height={treemap ? 460 : 370} headers={["名称", "金額（千円）", "構成比"]} rows={values.map(item => [item.name, formatYen(item.value), formatRate(item.value / total * 100)])}>
+  return <div ref={container}><Plot name={name} width={treemap ? width : 640} height={treemap ? 460 : 370}  >
     {treemap ? treemapTiles(visible.map(item => item.value), width - 8, 450).map(({ index: i, x, y, width: w, height: h }) => { const item = visible[i]!; return <Mark key={i} label={`${item.name} ${formatYen(item.value)}千円 ${formatRate(item.value / total * 100)}`}>
       <rect x={x} y={y} width={w} height={h} fill={color(i)} stroke="var(--surface)" strokeWidth={2} />
       <foreignObject x={x + 9} y={y + 10} width={Math.max(0, w - 18)} height={Math.max(0, h - 18)}><div className="analysis-tile-label" style={{ color: i % 6 === 2 || i % 6 === 5 ? "var(--ink)" : "var(--surface)" }}>{i + 1}{w > 90 && h > 45 && <> {item.name}</>}{w > 120 && h > 100 && <><strong>{formatYen(item.value)}</strong><span>{formatRate(item.value / total * 100)}</span></>}</div></foreignObject>
@@ -186,7 +181,7 @@ function Scatter({ groups, selected, prior, kindName }: { groups: AnalysisGroup[
   }
   const marker = useId();
   return <><div className="analysis-legend"><span>○ {[...new Set(selected.map(prior))].join(" / ")}</span>{selected.map((kind, i) => <span key={kind}>{i === 0 ? "●" : "◆"} {kindName(kind)}</span>)}</div>
-    <Plot name="業種別の売上と利益率" width={640} height={bottom + 65} headers={["業種", "種別", "売上（千円）", "利益率"]} rows={dots.map(item => [item.group, item.name, formatYen(item.sales), rate(item.margin)])}>
+    <Plot name="業種別の売上と利益率" width={640} height={bottom + 65}  >
       <defs><marker id={marker} markerWidth={6} markerHeight={6} refX={5} refY={3} orient="auto"><path d="M0,0L6,3L0,6" fill="var(--muted)" /></marker></defs>
       <Axis extent={x} x1={100} x2={600} y={bottom} />
       {[0, 1, 2, 3, 4].map(tick => { const value = y.low + (y.high - y.low) * tick / 4; return <g key={tick} className="analysis-axis"><line x1={100} x2={600} y1={y.at(value)} y2={y.at(value)} /><text x={90} y={y.at(value) + 4} textAnchor="end">{formatRate(value)}</text></g>; })}
@@ -208,14 +203,14 @@ function Scatter({ groups, selected, prior, kindName }: { groups: AnalysisGroup[
         </g>;
       })}
     </Plot>
-    {valid.length < dots.length && <p className="dashboard-empty">売上0の項目は利益率を算出せず、点を表示しません。金額は「数値を表示」で確認できます。</p>}</>;
+    {valid.length < dots.length && <p className="dashboard-empty">売上0の項目は利益率を算出せず、点を表示しません。</p>}</>;
 }
 function Dumbbells({ groups, selected, prior, kindName }: { groups: AnalysisGroup[]; selected: KindId[]; prior: (kind: KindId) => string; kindName: (kind: KindId) => string }) {
   const items = groups.map(group => ({ name: group.name, values: selected.map(kind => ({ kind, prior: analysisAnnual(group.budgets.find(entry => entry.kind === kind)!.previous).expense!, value: annual(group, kind).expense! })) })).filter(item => item.values.some(value => value.prior !== 0 || value.value !== 0));
   const step = selected.length * 22 + 22, height = Math.max(230, items.length * step + 65);
   const extent = scale(items.flatMap(item => item.values.flatMap(value => [value.prior, value.value])), 245, 530);
   return <><div className="analysis-legend"><span>○ {[...new Set(selected.map(prior))].join(" / ")}</span>{selected.map((kind, i) => <span key={kind}>{i === 0 ? "●" : "◆"} {kindName(kind)}</span>)}</div>
-    <Plot name="科目別の費用増減" height={height} headers={["勘定科目", "種別", "前年（千円）", "予算（千円）", "費用増減（千円）"]} rows={items.flatMap(item => item.values.map(value => [item.name, kindName(value.kind), formatYen(value.prior), formatYen(value.value), signed(addYen(value.value, -value.prior))]))}>
+    <Plot name="科目別の費用増減" height={height}  >
       <Axis extent={extent} x1={245} x2={530} y={height - 42} />
       {items.map((item, index) => <g key={item.name}>
         <foreignObject x={0} y={25 + index * step} width={205} height={step - 6}><div className="analysis-row-name">{item.name}</div></foreignObject>

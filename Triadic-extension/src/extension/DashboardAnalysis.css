@@ -29,13 +29,11 @@
 .analysis-tile-label { color: var(--surface); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; overflow: hidden; }
 .analysis-tile-label strong { display: block; font-weight: 500; font-size: 17px; margin: 5px 0; white-space: nowrap; }
 .analysis-focus { display: block; min-height: 36px; padding: 6px 0; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
-.analysis-values { font-size: 12px; margin-top: 6px; }
-.analysis-values summary { cursor: pointer; color: var(--accent); width: fit-content; }
-.analysis-values table, .analysis-heatmap table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.analysis-values :is(td, th), .analysis-heatmap :is(td, th) { padding: 12px 14px; border: 1px solid var(--table-line); text-align: right; white-space: nowrap; }
-.analysis-values th:first-child, .analysis-heatmap th:first-child { text-align: left; min-width: 150px; max-width: 250px; white-space: normal; overflow-wrap: anywhere; }
-.analysis-values th, .analysis-heatmap th { font-weight: 500; background: var(--surface); }
-.analysis-values thead th, .analysis-heatmap thead th { position: sticky; top: 0; z-index: 1; }
+.analysis-heatmap table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.analysis-heatmap :is(td, th) { padding: 12px 14px; border: 1px solid var(--table-line); text-align: right; white-space: nowrap; }
+.analysis-heatmap th:first-child { text-align: left; min-width: 150px; max-width: 250px; white-space: normal; overflow-wrap: anywhere; }
+.analysis-heatmap th { font-weight: 500; background: var(--surface); }
+.analysis-heatmap thead th { position: sticky; top: 0; z-index: 1; }
 .analysis-heatmap th:first-child { position: sticky; left: 0; z-index: 2; }
 .analysis-heatmap thead th:first-child { z-index: 3; }
 .analysis-heatmap td { min-width: 105px; }
