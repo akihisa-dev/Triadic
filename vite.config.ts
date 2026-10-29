@@ -18,7 +18,9 @@ export default defineConfig({
   esbuild: { supported: { "template-literal": false } },
   plugins: [react(), notices.main()],
   worker: { format: "es", plugins: () => [notices.worker()] },
-  optimizeDeps: { exclude: ["@sqlite.org/sqlite-wasm"] },
+  // Worker-only spreadsheet dependencies must be ready before the first export.
+  // Prebundling affects the dev server; the application still loads them on demand.
+  optimizeDeps: { include: ["jszip", "exceljs", "saxes"], exclude: ["@sqlite.org/sqlite-wasm"] },
   build: {
     outDir: buildOutputRoot,
     emptyOutDir: true,
