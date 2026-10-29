@@ -11,9 +11,6 @@
 .dashboard-stat-kind { display: grid; gap: 4px; margin: 8px 0 14px; }
 .dashboard-stat-kind strong { font-size: clamp(20px, 2.5vw, 30px); font-weight: 500; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .dashboard-series-value { display: block; }
-.dashboard-series-value::before { content: ""; display: block; width: 16px; margin-bottom: 4px; border-top: 2px solid var(--dashboard-series); }
-.dashboard-series-1 .dashboard-series-value::before { border-top-style: dotted; }
-.dashboard-prior .dashboard-series-value::before { border-top-style: dashed; }
 .dashboard-series-0 { --dashboard-series: var(--accent); }
 .dashboard-series-1 { --dashboard-series: var(--ink); }
 .dashboard-prior { --dashboard-series: var(--muted); }
