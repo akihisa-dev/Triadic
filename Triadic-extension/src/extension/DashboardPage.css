@@ -54,7 +54,6 @@
 .dashboard-rank .initiative-name-button { font-size: 12px; margin-bottom: 5px; }
 .dashboard-rank-value { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; margin-bottom: 10px; font-size: 12px; font-variant-numeric: tabular-nums; }
 .dashboard-rank-value .dashboard-bar { grid-column: 1 / -1; }
-.dashboard-more { border: 0; background: transparent; color: var(--accent); padding: 4px 0; font-size: 12px; cursor: pointer; }
 .dashboard-empty { font-size: 12px; color: var(--muted); margin: 12px 0; }
 .dashboard-mobile-label { display: none; }
 @media (max-width: 900px) { .dashboard-department { gap: 12px; } }

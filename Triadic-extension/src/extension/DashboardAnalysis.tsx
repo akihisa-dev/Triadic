@@ -256,7 +256,7 @@ export function DashboardAnalysis({ contents, selected }: { contents: PlanConten
     </div>
     <div className="dashboard-pair">
       <Section title="業種別の売上構成" note={note}><Composition values={sales} name="業種別の売上構成" /></Section>
-      <Section title="業種別の売上と利益率" note={`年間・${prior}／${selected.map(kindName).join("／")}`}><Scatter groups={industryGroups} selected={selected} prior={priorName} kindName={kindName} /></Section>
+      <Section title="業種別の売上と利益率" note="年間"><Scatter groups={industryGroups} selected={selected} prior={priorName} kindName={kindName} /></Section>
     </div>
     <Section title="部署 × 業種の利益" note={note}><Heatmap name="部署 × 業種の利益" columns={matrixIndustries.map(group => group.name)} rows={data.departments.map(department => ({ name: department.name, values: matrixIndustries.map(industry => {
       const entry = data.cells.get(JSON.stringify([department.id, industry.id]));
@@ -265,7 +265,7 @@ export function DashboardAnalysis({ contents, selected }: { contents: PlanConten
     }) }))} /></Section>
     <div className="dashboard-expense-charts">
       <Section title="勘定科目別の費用構成" note={note}><Composition values={expenses} name="勘定科目別の費用構成" treemap /></Section>
-      <Section title="科目別の費用増減" note={`年間・${prior}／${selected.map(kindName).join("／")}・千円`}><Dumbbells groups={data.accounts} selected={selected} prior={priorName} kindName={kindName} /></Section>
+      <Section title="科目別の費用増減" note="年間・千円"><Dumbbells groups={data.accounts} selected={selected} prior={priorName} kindName={kindName} /></Section>
     </div>
     <Section title="展開 × 月別の利益増減" note={`${kindName(kind)}・施策増減・千円`}><Heatmap name="展開 × 月別の利益増減" columns={initiativeMonths.map(month => `${month}月`)} rows={data.expansions.map(group => ({ name: group.name, values: initiativeMonths.map(month => group.budgets.find(item => item.kind === kind)!.months[month]!.profit) }))} /></Section>
   </div>;

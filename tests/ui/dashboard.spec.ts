@@ -49,10 +49,10 @@ test("サンプル予算の明暗・全件表示と空のデータ", async ({ pa
 
 
   await expect(app.locator(".dashboard-ranking")).toHaveCount(4);
-  const more = app.getByRole("button", { name: /^全\d+件を表示$/ }).first();
-  await more.click();
-  await expect(app.getByRole("button", { name: "上位5件に戻す", exact: true }).first()).toBeVisible();
-  await app.getByRole("button", { name: "上位5件に戻す", exact: true }).first().click();
+  await expect(app.getByRole("button", { name: /^全\d+件を表示$|^上位5件に戻す$/ })).toHaveCount(0);
+  await expect(app.getByRole("region", { name: "売上を増やす施策", exact: true }).locator(".dashboard-rank")).toHaveCount(12);
+  await expect(app.getByRole("region", { name: "利益を増やす施策", exact: true }).locator(".dashboard-rank")).toHaveCount(18);
+  await expect(app.getByRole("region", { name: "利益を減らす施策", exact: true }).locator(".dashboard-rank")).toHaveCount(11);
   const dark = app.getByRole("switch", { name: "ダークテーマ", exact: true });
   await dark.click();
   await expect(app.locator("html")).toHaveAttribute("data-theme", "dark");

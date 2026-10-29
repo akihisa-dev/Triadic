@@ -106,16 +106,14 @@ function DashboardContents({ contents, selected, disabled, onDepartment, onIniti
 
 function Ranking({ dashboard, metric, kind, period, direction, kindName, disabled, onOpen }: { dashboard: Dashboard; metric: DashboardMetric; kind: KindId; period: DashboardPeriod; direction: "increase" | "decrease"; kindName: (kind: KindId) => string; disabled: boolean; onOpen: Props["onInitiative"] }) {
   const ranks = useMemo(() => rankDashboardInitiatives(dashboard, kind, period, metric, direction), [dashboard, kind, period, metric, direction]);
-  const [expanded, setExpanded] = useState(false);
   const maximum = Math.max(1, ...ranks.flatMap(item => item.values.map(value => Math.abs(value.amount))));
   return <section className="dashboard-ranking" aria-label={`${metric === "sales" ? "売上" : "利益"}を${direction === "increase" ? "増やす" : "減らす"}施策`}>
     <h4>{direction === "increase" ? "増加" : "減少"}</h4>
-    {(expanded ? ranks : ranks.slice(0, 5)).map(item => <div key={item.initiative.id} className="dashboard-rank">
+    {ranks.map(item => <div key={item.initiative.id} className="dashboard-rank">
       <button className="initiative-name-button" disabled={disabled} onClick={() => onOpen(item.initiative, kind)}>{item.initiative.name}</button>
       {item.values.map((value, index) => <div key={value.kind} className={`dashboard-rank-value dashboard-series-${index}`}><span className="dashboard-series-label">{kindName(value.kind)}</span><span>{signedAmount(value.amount)}</span><button className={`dashboard-bar dashboard-initiative-bar ${value.amount < 0 ? "dashboard-bar-negative" : ""}`} disabled={disabled} aria-label={`${item.initiative.name} ${kindName(value.kind)} ${signedAmount(value.amount)}の施策詳細`} onClick={() => onOpen(item.initiative, value.kind)} style={{ width: `${Math.abs(value.amount) / maximum * 100}%` }} /></div>)}
     </div>)}
     {!ranks.length && <p className="dashboard-empty">該当する施策はありません。</p>}
-    {ranks.length > 5 && <button className="dashboard-more" onClick={() => setExpanded(value => !value)} aria-expanded={expanded}>{expanded ? "上位5件に戻す" : `全${ranks.length}件を表示`}</button>}
   </section>;
 }
 

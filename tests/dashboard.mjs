@@ -38,6 +38,15 @@ export async function verifyDashboard(api) {
     initiative(5, "円精度", department, [row(sales.id, "0.001")]),
     { ...initiative(6, "年度外", department, [row(sales.id, "999")]), fiscalYear: sample.fiscalYear - 1 },
   ] };
+  const many = { ...plan, initiatives: Array.from({ length: 7 }, (_, index) =>
+    initiative(index + 1, `全件確認${index + 1}`, department, [row(sales.id, String(7 - index))])) };
+  for (const selected of [[1], [1, 2]]) {
+    const html = api.renderDashboard(many, selected);
+    const salesRanking = html.split('aria-label="売上を増やす施策"')[1].split('</section>')[0];
+    assert.equal((salesRanking.match(/class="dashboard-rank"/g) ?? []).length, 7, '6件目以降も初期表示から確認できる');
+    for (let index = 1; index <= 7; index++) assert.ok(salesRanking.includes(`全件確認${index}`));
+    assert.doesNotMatch(html, /全7件を表示|上位5件に戻す/);
+  }
   const before = structuredClone(plan);
   const dashboard = api.buildDashboard(plan, [1, 2]);
   assert.deepEqual(api.dashboardAmounts(dashboard.previous), { sales: 1000000, profit: 200000, margin: 20 });
