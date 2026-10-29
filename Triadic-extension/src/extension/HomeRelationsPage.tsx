@@ -1,5 +1,5 @@
 import { type RefObject } from "react";
-import { useWindowViewState } from "./windowView";
+import { informationViews, type InformationView } from "./WorkSelectionPage";
 import "./HomeRelations.css";
 import { SidebarIcon } from "./SidebarIcon";
 import { ScreenDataMap } from "./ScreenDataMap";
@@ -15,17 +15,20 @@ type Props = {
   onNavigate: (page: HomeDestination) => void;
   disabled: boolean;
   view: RefObject<RelationView | null>;
+  mode?: InformationView;
+  onModeChange?: (mode: InformationView) => void;
+  onBack?: () => void;
 };
-export function HomeRelationsPage({ onNavigate, disabled, view }: Props) {
-  const [mode, setMode] = useWindowViewState("home:mode", "relations");
+export function HomeRelationsPage({ onNavigate, disabled, view, mode = "relations", onModeChange, onBack }: Props) {
   const { viewport, selected, setSelected, setActive, setFocused, active, camera, dragging, graph, focusNode, fit, zoomCenter, handlers } = useRelationGestures(view, disabled);
   const isRelated = (edge: typeof edges[number], index: number) => edge.from === selected || edge.to === selected || subNodes[index]!.page === selected;
   const related = new Set(edges.flatMap((edge, index) => isRelated(edge, index) ? [edge.from, edge.to] : []));
   return <main className="home-relations" aria-label="ホーム">
-    <header className="home-relations-heading"><h1>Home</h1>
+    <header className="home-relations-heading">
+      {onBack && <button type="button" className="text-button" disabled={disabled} onClick={onBack}>← 作業を選択</button>}
       <div className="home-relations-mode" role="group" aria-label="ホームの表示">
-        {([["relations", "関連図"], ["data", "画面とデータ"], ["calculation", "計算の仕組み"], ["process", "処理の流れ"]] as const).map(([id, name]) =>
-          <button key={id} type="button" aria-pressed={mode === id} onClick={() => setMode(id!)}>{name}</button>)}
+        {informationViews.map(([id, name]) =>
+          <button key={id} type="button" aria-pressed={mode === id} disabled={disabled} onClick={() => onModeChange?.(id)}>{name}</button>)}
       </div>
     </header>
     <div hidden={mode !== "data"} style={mode === "data" ? { display: "flex", flex: 1, minHeight: 0 } : undefined}>

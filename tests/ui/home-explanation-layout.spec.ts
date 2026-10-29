@@ -3,8 +3,8 @@ import { settleMotion, test, expect } from "./fixtures";
 test("ホームの説明項目は左に縦並びで、最後の項目まで選べる", async ({ app }) => {
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
-  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
-  await app.getByRole("heading", { name: "Home", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "作業を選択", exact: true }).click();
+  await app.getByRole("navigation", { name: "アプリの仕組み", exact: true }).getByRole("button", { name: "関連図", exact: true }).click();
   await settleMotion(app.locator("body"));
   for (const [label, region, content] of [
     ["画面とデータ", "画面とデータの対応図", ".screen-data-content"],

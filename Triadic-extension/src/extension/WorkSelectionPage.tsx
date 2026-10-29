@@ -17,8 +17,11 @@ const choices = [
   { name: "修正予算", kind: null, path: "M4 3v7m0 4v7M12 3v12m0 4v2M20 3v2m0 4v12M1 10h6m2 5h6m2-10h6" },
 ] as const;
 
-export function WorkSelectionPage({ disabled, onSelect }: { disabled: boolean; onSelect: (kind: KindId) => void }) {
-  return <main className="work-selection-page" aria-label="作業を選択">
+export const informationViews = [["relations", "関連図"], ["data", "画面とデータ"], ["calculation", "計算の仕組み"], ["process", "処理の流れ"]] as const;
+export type InformationView = typeof informationViews[number][0];
+
+export function WorkSelectionPage({ disabled, onSelect, onOpenInformation }: { disabled: boolean; onSelect: (kind: KindId) => void; onOpenInformation: (mode: InformationView) => void }) {
+  return <div className="work-selection-landing"><main className="work-selection-page" aria-label="作業を選択">
     {choices.map(choice => <button key={choice.name} type="button" className="work-selection-gate"
       disabled={disabled || choice.kind === null} aria-label={choice.name}
       aria-describedby={choice.kind === null ? `work-unavailable-${choice.name}` : undefined}
@@ -32,5 +35,11 @@ export function WorkSelectionPage({ disabled, onSelect }: { disabled: boolean; o
       <span className="work-selection-name">{choice.name}</span>
       <svg className="work-selection-symbol" viewBox="0 0 26 26" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={choice.path} /></svg>
     </button>)}
-  </main>;
+  </main>
+    <nav className="work-selection-information" aria-label="アプリの仕組み">
+      {informationViews.map(([mode, name]) => <button key={mode} type="button" disabled={disabled} onClick={() => onOpenInformation(mode)}>
+        <span>{name}</span><span className="work-selection-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 18 18 6M6 6h12v12" /></svg></span>
+      </button>)}
+    </nav>
+  </div>;
 }

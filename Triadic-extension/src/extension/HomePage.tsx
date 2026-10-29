@@ -36,10 +36,12 @@ function HomePageContents(props: HomePageProps) {
   }, [screen.page]);
   return (
     <BudgetPhaseContext value={workspace.phase}><HistoryReadOnlyContext value={preview !== null}><SavedOperationRevisionContext value={operationRevision}><div className="home-page">
-      {screen.page === "work-selection" ? <>
+      {(screen.page === "work-selection" || screen.page === "home") ? <>
         <WorkSelectionHeader fiscalYear={workspace.contents.fiscalYear} onClose={workspace.onCloseFile} disabled={navigationBlocked || isSaving} />
         <div className="work-selection-content" inert={operationMutation.busy || workspace.saveAsMutation.busy || windows.settling}>
-          <WorkSelectionPage disabled={navigationBlocked || isSaving} onSelect={workspace.selectWork} />
+          {screen.page === "work-selection" ? <WorkSelectionPage disabled={navigationBlocked || isSaving} onSelect={workspace.selectWork}
+            onOpenInformation={mode => { workspace.setHomeMode(mode); workspace.setPage("home"); }} />
+            : <WorkspacePage displayed={screen} workspace={workspace} />}
         </div>
       </> : <>
       <WorkspaceHeader workspace={workspace} windows={windows} />

@@ -5,8 +5,8 @@ test("全画面の対応・説明・保存項目・参照先を省略せずに�
   test.setTimeout(90_000);
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
-  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
-  await app.getByRole("heading", { name: "Home", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "作業を選択", exact: true }).click();
+  await app.getByRole("navigation", { name: "アプリの仕組み", exact: true }).getByRole("button", { name: "関連図", exact: true }).click();
   await settleMotion(app.locator("body"));
   await app.getByRole("button", { name: "画面とデータ", exact: true }).click();
   const map = app.getByRole("region", { name: "画面とデータの対応図" });
@@ -33,14 +33,14 @@ test("全画面の対応・説明・保存項目・参照先を省略せずに�
         .toEqual(table.columns.map(column => [column.label, column.name, column.reference ?? "—"]));
     }
   }
-  await expect(app.getByRole("button", { name: "操作を取り消す", exact: true })).toBeDisabled();
+  await expect(app.getByRole("button", { name: "操作を取り消す", exact: true })).toHaveCount(0);
 });
 
 test("画面の保存項目と参照先をたどり、関連図の入口へ戻れる", async ({ app }) => {
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("main", { name: "作業を選択", exact: true }).getByRole("button", { name: "一次予算", exact: true }).click();
-  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "Home", exact: true }).click();
-  await app.getByRole("heading", { name: "Home", exact: true }).click();
+  await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "作業を選択", exact: true }).click();
+  await app.getByRole("navigation", { name: "アプリの仕組み", exact: true }).getByRole("button", { name: "関連図", exact: true }).click();
   await settleMotion(app.locator("body"));
   await app.getByRole("button", { name: "画面とデータ", exact: true }).click();
   const map = app.getByRole("region", { name: "画面とデータの対応図" });
@@ -77,12 +77,12 @@ test("画面の保存項目と参照先をたどり、関連図の入口へ戻�
   await app.getByRole("button", { name: "関連図", exact: true }).click();
   await settleMotion(app.locator("body"));
   await expect(app.getByRole("region", { name: "画面とマスタの相関図" })).toBeVisible();
-  await expect(app.getByRole("button", { name: "操作を取り消す", exact: true })).toBeDisabled();
+  await expect(app.getByRole("button", { name: "操作を取り消す", exact: true })).toHaveCount(0);
   const initiatives = app.getByRole("main", { name: "ホーム" }).getByRole("button", { name: "施策一覧", exact: true });
   await initiatives.press("Enter");
   await expect(initiatives).toHaveAttribute("aria-pressed", "true");
   await expect(app.getByRole("heading", { name: "施策一覧", exact: true })).toHaveCount(0);
-  await expect(app.getByRole("button", { name: "操作を取り消す", exact: true })).toBeDisabled();
+  await expect(app.getByRole("button", { name: "操作を取り消す", exact: true })).toHaveCount(0);
   await initiatives.press("Enter");
   await expect(app.getByRole("heading", { name: "施策一覧", exact: true })).toBeVisible();
 });

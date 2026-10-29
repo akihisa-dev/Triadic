@@ -45,3 +45,35 @@ test("入口に戻っても登録前の入力を保持し、別の予算へ進�
   await dialog.getByRole("button", { name: "破棄して一覧へ戻る", exact: true }).click();
   await expect(app.getByRole("heading", { name: "施策一覧", exact: true })).toBeVisible();
 });
+
+
+test("4分割の下からアプリ全体の説明を開き、通常画面を出さずに戻れる", async ({ app }, testInfo) => {
+  await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
+  const information = app.getByRole("navigation", { name: "アプリの仕組み", exact: true });
+  const selection = app.getByRole("main", { name: "作業を選択", exact: true });
+  await expect(information.getByRole("button")).toHaveText(["関連図", "画面とデータ", "計算の仕組み", "処理の流れ"]);
+  const menuBox = (await selection.boundingBox())!;
+  const linksBox = (await information.boundingBox())!;
+  expect(linksBox.y).toBeGreaterThanOrEqual(menuBox.y + menuBox.height - 1);
+  const linkBoxes = await information.getByRole("button").evaluateAll(nodes => nodes.map(node => {
+    const box = node.getBoundingClientRect(); return { x: box.x, y: box.y };
+  }));
+  expect(linkBoxes[0]!.y).toBeCloseTo(linkBoxes[1]!.y);
+  if (testInfo.project.name === "desktop") expect(linkBoxes[0]!.y).toBeCloseTo(linkBoxes[3]!.y);
+  else expect(linkBoxes[2]!.y).toBeGreaterThan(linkBoxes[0]!.y);
+  for (const [name, region] of [["関連図", "画面とマスタの相関図"], ["画面とデータ", "画面とデータの対応図"], ["計算の仕組み", "計算の仕組み"], ["処理の流れ", "処理の流れ"]] as const) {
+    await information.getByRole("button", { name, exact: true }).press("Enter");
+    await expect(app.getByRole("region", { name: region, exact: true })).toBeVisible();
+    await expect(app.getByRole("complementary", { name: "メニュー" })).toHaveCount(0);
+    await expect(app.getByRole("button", { name: "施策を検索", exact: true })).toHaveCount(0);
+    await expect(app.getByRole("button", { name: "操作を取り消す", exact: true })).toHaveCount(0);
+    await expect(app.getByRole("group", { name: "ホームの表示", exact: true }).getByRole("button", { name, exact: true })).toHaveAttribute("aria-pressed", "true");
+    await app.getByRole("button", { name: "← 作業を選択", exact: true }).click();
+    await expect(selection).toBeVisible();
+  }
+  await selection.getByRole("button", { name: "確定予算", exact: true }).click();
+  await expect(app.getByLabel("予算フェーズ", { exact: true })).toHaveText("確定予算");
+  const navigation = app.getByRole("navigation", { name: "メインナビゲーション" });
+  await expect(navigation.getByRole("button", { name: "Home", exact: true })).toHaveCount(0);
+  await expect(app.getByRole("button", { name: "操作を取り消す", exact: true })).toBeDisabled();
+});

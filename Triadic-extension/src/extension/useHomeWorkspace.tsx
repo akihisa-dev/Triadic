@@ -25,6 +25,7 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   const initialView = windows?.getWindowSnapshot().initialView;
   const menuButton = useRef<HTMLButtonElement>(null);
   const costTableView = useRef<CostTableView>(initialView?.costTable ?? { industries: [], departments: [], top: 0, left: 0 });
+  const [homeMode, setHomeMode] = useWindowViewState("home:mode", "relations", true);
   const relationView = useRef<RelationView | null>(initialView?.relation ?? null);
   const sidebar = useSidebar();
   const isSidebarOpen = sidebar.expanded;
@@ -180,7 +181,7 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   }, [isSidebarOpen, closeSidebar]);
 
   return {
-    phase, selectWork, dashboardSelection, setDashboardSelection, openDashboardDepartment,
+    homeMode, setHomeMode, phase, selectWork, dashboardSelection, setDashboardSelection, openDashboardDepartment,
     restoreMutation, saveAsMutation, saveAs, setEditPending, ioController, setIOController, openInitiative, menuButton, relationView, costTableView, sidebar, showError, localKinds, localPrevious,
     isSidebarOpen, screen, initiativeDraft, setInitiativeDraft, preview, setPreview,
     restoreRequested, setRestoreRequested, restoreError, setRestoreError, contents, sourceContents, currentContents,

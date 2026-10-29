@@ -14,7 +14,7 @@ Previous-year forecast and actuals are independent inputs. Cost and expansion sc
 
 ## English
 
-After opening or creating a file, the independent four-part selector opens a primary or final budget phase. Primary edits forecast/primary; final edits actuals/final and references forecast-based primary. Entry shows only the active budget tab. Lists, tables, search and dashboards share the phase scope. Initiatives created in final are hidden from primary. Masters, monetary calculations and inheritance remain shared. Format 34 adds only the initiative creation-phase marker; older files are rejected without migration. Forecast/actuals and revised-budget entries are unavailable.
+After opening or creating a file, the independent four-part selector opens a primary or final budget phase. Primary edits forecast/primary; final edits actuals/final and references forecast-based primary. Entry shows only the active budget tab. Lists, tables, search and dashboards share the phase scope. Initiatives created in final are hidden from primary. Masters, monetary calculations and inheritance remain shared. Format 34 adds only the initiative creation-phase marker; older files are rejected without migration. Forecast/actuals and revised-budget entries are unavailable. Beneath the four phase entries, “Relationships,” “Screens and data,” “How calculations work,” and “Processing flow” open the existing app-wide explanations. These views also omit normal workspace chrome and return through “Choose work.” The sidebar no longer has a Home entry.
 
 **A Chrome extension for building budgets from initiatives and checking them in three tables.**
 
@@ -57,7 +57,7 @@ For example, if an expense was 1,000 thousand yen in a month last year, entering
 | Export the three tables to Excel and import a previous-year template | Work with budget tables in Excel and update previous-year forecast/actuals in bulk from a dedicated template |
 | Autosave and undo/redo the latest 100 operations | Save edits to registered data and undo successful changes one at a time |
 | Record, view, and restore past states | Keep snapshots in the same file and restore all business data to a selected point |
-| Inspect data and calculation rules in the app | Check the basis of displayed values through “Screens and data,” “How calculations work,” and “Processing flow” on Home |
+| Inspect data and calculation rules in the app | Check the basis of displayed values through “Screens and data,” “How calculations work,” and “Processing flow” from the work selector |
 
 Enter amounts in **thousands of yen with up to three decimal places**. `120` means 120,000 yen, and `0.001` means 1 yen. Calculations and storage use whole yen; only table displays round to whole thousands of yen. Rounded display values are never used as calculation inputs.
 
@@ -126,21 +126,21 @@ The entry screen and shared header display the version beside the app name. It i
 
 ### File entry and sidebar
 
-Implemented screens include the `.triadic` entry screen, Home, previous-year input, initiative input/list/details, cost summary, breakdown table, masters, and account, aggregation, breakdown-category, industry, department, period, and budget-kind masters. Entry supports “Continue,” “Open file,” “New,” and file drops. The previous file is above separate open/new areas. The open-file area says “Drop a .triadic file here”; dragging a file highlights the whole area with a pale accent background, matching dashed border, and “Drop here to open.” Choose the new file's year in a vertical slot, defaulting to the current April-based fiscal year with its date range shown. Numbers flow vertically, spin with wheel/drag momentum, then decelerate to a year position. Focus at drag start does not shift the page. Up/down keys and clicks on adjacent years move one year at a time; OS reduced-motion settings suppress inertia.
+Implemented screens include the `.triadic` entry screen, work selector and app-wide explanations, previous-year input, initiative input/list/details, cost summary, breakdown table, masters, and account, aggregation, breakdown-category, industry, department, period, and budget-kind masters. Entry supports “Continue,” “Open file,” “New,” and file drops. The previous file is above separate open/new areas. The open-file area says “Drop a .triadic file here”; dragging a file highlights the whole area with a pale accent background, matching dashed border, and “Drop here to open.” Choose the new file's year in a vertical slot, defaulting to the current April-based fiscal year with its date range shown. Numbers flow vertically, spin with wheel/drag momentum, then decelerate to a year position. Focus at drag start does not shift the page. Up/down keys and clicks on adjacent years move one year at a time; OS reduced-motion settings suppress inertia.
 
-The sidebar normally forms a 64px icon rail. Hovering shows item names and the filename; leaving collapses it. Keyboard focus within the rail also expands it. Opening with the top-left hamburger keeps it open after the pointer leaves or the screen changes. The hamburger, close button, or Esc returns to the rail. Expansion smoothly pushes the main panel aside; even on narrow screens it is limited to 280px and half the viewport width. Rail icons also open Home, Initiative list, Cost summary, Breakdown table, Previous-year input, Import/export, Masters, History, and Close file. Touch uses buttons rather than hover. Opening a file starts on Home with the rail collapsed.
+The sidebar normally forms a 64px icon rail. Hovering shows item names and the filename; leaving collapses it. Keyboard focus within the rail also expands it. Opening with the top-left hamburger keeps it open after the pointer leaves or the screen changes. The hamburger, close button, or Esc returns to the rail. Expansion smoothly pushes the main panel aside; even on narrow screens it is limited to 280px and half the viewport width. Rail icons also open Choose work, Dashboard, Initiative list, Cost summary, Breakdown table, Previous-year input, Import/export, Masters, History, and Close file. Touch uses buttons rather than hover. Opening a file starts on the independent work selector without a sidebar.
 
 Period and optional aggregation deletions compare the confirmed business fields again when saving. Reusing an ID or changing the target makes the old confirmation fail without writing; select the current target and confirm again. Unrelated master changes do not invalidate it.
 
 New file creation reserves the selected destination in the shared session before writing. A file already open, loading, or reserved for another save/create is rejected without changing its contents. Opens arriving during creation wait and read the newly saved data. An unused existing file can still be replaced explicitly. Failed creation releases the reservation and permits retry.
 
-### Home and disclosure of calculations and data
+### Work selection and disclosure of calculations and data
 
 “Screens and data,” “How calculations work,” and “Processing flow” list their topics vertically on the left and display the selected explanation on the right. The topic list and explanation scroll independently.
 
 The explanation uses one reading column. “Screens and data” starts with used fields, storage sources, and purposes, followed by full calculation/display explanations and expandable tables containing every stored field and reference. Calculation and processing views start with an outline of the steps, followed by inputs, full step descriptions, conditions, results, and retention. Supporting source files remain expandable at the end. No explanatory content is abridged; narrow screens scroll wide correspondence tables within the table area.
 
-The Home diagram gives the initiative list, cost summary, and breakdown table equal circular destinations on a triangle, with Triadic at its center. Masters and previous-year input start evenly distributed around the outside. Selecting an item smoothly rearranges all destinations, including unrelated ones, and shows only its direct relationships and descriptions. Selecting a table moves it to the top vertex; clearing selection restores the initial arrangement. The first click or Enter/Space selects an item, and activating the same selected item again opens its screen. Click the background or press Escape to clear selection. Reference, structure, amount, and alternative-view relationships retain dashed, dotted, solid, and double lines, with a permanent legend. Dragged destinations and visible descriptions track their lines and return to the current selection's layout on release. Dragging does not open a screen. Transitions use every display frame, preserve position and velocity when selecting another item, and ease gently into a stop. Pressing a moving item leaves its animation running until an actual drag starts. Reduced motion shortens the transition. Background panning, wheel/pinch/button/keyboard zoom, fit-all, and camera retention on returning to Home remain available. Colors come from the product theme: monochrome backgrounds, labels, and lines, with blue/light or gold/dark accents only on the active icon. These operations do not write data.
+The relationship diagram opened from the work selector gives the initiative list, cost summary, and breakdown table equal circular destinations on a triangle, with Triadic at its center. Masters and previous-year input start evenly distributed around the outside. Selecting an item smoothly rearranges all destinations, including unrelated ones, and shows only its direct relationships and descriptions. Selecting a table moves it to the top vertex; clearing selection restores the initial arrangement. The first click or Enter/Space selects an item, and activating the same selected item again opens its screen. Click the background or press Escape to clear selection. Reference, structure, amount, and alternative-view relationships retain dashed, dotted, solid, and double lines, with a permanent legend. Dragged destinations and visible descriptions track their lines and return to the current selection's layout on release. Dragging does not open a screen. Transitions use every display frame, preserve position and velocity when selecting another item, and ease gently into a stop. Pressing a moving item leaves its animation running until an actual drag starts. Reduced motion shortens the transition. Background panning, wheel/pinch/button/keyboard zoom, fit-all, and camera retention on returning to the relationship diagram remain available. Colors come from the product theme: monochrome backgrounds, labels, and lines, with blue/light or gold/dark accents only on the active icon. These operations do not write data.
 
 In “Screens and data” (画面とデータ), select a screen to inspect how storage tables map to displayed items. Opening a table shows all stored fields and references and allows navigation to references used on the same screen. Previous-year input also shows storage sources for aggregation display names, membership, and signs, distinguishing subtotals, totals, and profit margins from stored actuals. Calculated tables and fixed budget-kind definitions are distinguished. This view only exposes structure, not actual data, editing, or SQL execution. “Relationship graph” (関連図) returns to the original navigation graph.
 
@@ -162,7 +162,7 @@ Existing amount cells in initiative entry/details and previous-year input accept
 
 Select monthly ranges by dragging or Shift+arrows. Copy uses tabs and line breaks; paste supports multiple rows/months, and one value fills the selected range. Ctrl/Command+Enter fills it with the value being edited; Delete/Backspace sets it to 0. Arrows, Enter, and Tab move between cells; F2 or double-click edits within a cell. Bulk input containing rows without accounts, cells outside the table, or invalid amounts is rejected entirely, preserving amounts. Input outside the initial budget creates overrides for each month in the range. Incomplete numeric input such as “-” or “1e” retains its invalid state and starting value by kind, account row, and month. Switching kinds, editing another cell, pasting, or clearing elsewhere does not release the save block. Only correcting that cell, explicitly clearing it, or canceling with Esc clears its invalid state. Cancellation restores its original amount, inheritance, and explicit override of 0. This temporary state is not saved to the file. Ordinary blank cells mean 0.
 
-“Add initiative” in the list opens full-screen input and returns to the list after successful registration. Sidebar and Home lead to the list. Returning through the input back button, sidebar, or navigation history asks to discard entered input. Cancel or Esc preserves it; adding after discarding starts empty. Empty input returns without confirmation. Moving to master settings and canceling/failing a save preserve input.
+“Add initiative” in the list opens full-screen input and returns to the list after successful registration. The sidebar and relationship diagram lead to the list. Returning through the input back button, sidebar, or navigation history asks to discard entered input. Cancel or Esc preserves it; adding after discarding starts empty. Empty input returns without confirmation. Moving to master settings and canceling/failing a save preserve input.
 
 The input screen places initiative name, notes, and registration button in that order on the top row. Beneath them, dropdowns start at the left in this order: breakdown category, subcategory, department, period, industry. Name and notes are equally wide single-line inputs, each at most 20rem. Narrow screens wrap the top row in order and use two columns for selections. Dropdowns are 36px tall and use their opened candidate lists. New-input fields and registration button are also 36px tall. Category, department, and industry are required; period is optional.
 
@@ -180,7 +180,7 @@ The initiative list places breakdown category, period, initiative name, and star
 
 Start year/month is automatically derived from the period classification and monthly amounts, separately for initial/final budgets at load time. The list shows the selected kind's result. “New” uses the first nonzero month in the current fiscal year. “Carryover period” treats April through the last nonzero month as continuous and uses the following month in the previous fiscal year as the start. Intermediate zero months count as continuous. The check occurs before positive and negative account rows cancel, and respects final-budget overrides of 0. It is blank for all-zero months, no period, custom classifications, or a carryover period starting after April or continuing through March. Renaming preserves classification rules, and saving amounts/periods derives it from the new source data. The start date cannot be edited directly.
 
-Amount areas do not permanently display unit, precision, or comparison-formula notes. See this document and Home's calculation explanation. Initiative input/detail cells display numbers only. Storage format, units, and precision are unchanged.
+Amount areas do not permanently display unit, precision, or comparison-formula notes. See this document and the calculation explanation opened from the work selector. Initiative input/detail cells display numbers only. Storage format, units, and precision are unchanged.
 
 Initiative input and details place Back, the heading, and Duplicate on one row, wrapping on narrow screens. Compact vertical gaps provide more room for monthly rows while preserving field widths and font sizes. Selection totals retain their space so selecting cells does not shift the table.
 
@@ -274,9 +274,9 @@ ExcelJS 4.4.0 (MIT) and its existing XML parser saxes 5.0.1 (ISC) are bundled in
 
 ## Amount-item and account-attribute masters
 
-Open the amount-item master from Masters or Home's graph to view three fixed items (revenue, expenses, profit), their order, and signed account-attribute composition. Revenue = revenue − cost of sales; expenses = expenses; profit = revenue − cost of sales − expenses + profit, where right-hand terms are totals by account attribute. Addition/editing/deletion is unavailable. Display and calculations share definitions without changing storage format, calculation rules, or existing data; nothing is transmitted externally.
+Open the amount-item master from Masters or the relationship diagram to view three fixed items (revenue, expenses, profit), their order, and signed account-attribute composition. Revenue = revenue − cost of sales; expenses = expenses; profit = revenue − cost of sales − expenses + profit, where right-hand terms are totals by account attribute. Addition/editing/deletion is unavailable. Display and calculations share definitions without changing storage format, calculation rules, or existing data; nothing is transmitted externally.
 
-The account-attribute master, also reached from Masters or Home, shows revenue, cost of sales, expenses, and profit in fixed names/order. It cannot be added to, edited, or deleted. It shares definitions with account-master choices and excludes aggregations. There are no new tables, migrations, or external transmission; viewing does not rewrite data/results.
+The account-attribute master, also reached from Masters or the relationship diagram, shows revenue, cost of sales, expenses, and profit in fixed names/order. It cannot be added to, edited, or deleted. It shares definitions with account-master choices and excludes aggregations. There are no new tables, migrations, or external transmission; viewing does not rewrite data/results.
 
 ## Colors
 
@@ -580,7 +580,7 @@ History types, empty state, and five-minute interval use shared SQLite-independe
 
 ## 日本語
 
-ファイルを開く・新規作成した後は、独立した4分割の「作業を選択」が開きます。一次予算フェーズでは前年見込と一次予算、確定予算フェーズでは前年実績と確定予算を編集します。確定では前年見込を基準にした一次予算を表・グラフで参照できます。施策入力には作業中の予算タブだけを表示します。前年・予算の表示範囲は施策一覧・総原価表・展開表・検索・ダッシュボードで揃え、確定で新規追加した施策は一次には表示しません。マスタと金額計算・一次から確定の未修正月への追従は共通のままです。作成フェーズの識別情報を施策に保存するため保存形式は34です。旧形式の移行は行いません。「見通し・実績」「修正予算」は未実装のため選べません。メニューの「作業を選択」から戻れます。フェーズ選択は画面の表示条件として扱い、決定・固定の状態管理は追加しません。
+ファイルを開く・新規作成した後は、独立した4分割の「作業を選択」が開きます。一次予算フェーズでは前年見込と一次予算、確定予算フェーズでは前年実績と確定予算を編集します。確定では前年見込を基準にした一次予算を表・グラフで参照できます。施策入力には作業中の予算タブだけを表示します。前年・予算の表示範囲は施策一覧・総原価表・展開表・検索・ダッシュボードで揃え、確定で新規追加した施策は一次には表示しません。マスタと金額計算・一次から確定の未修正月への追従は共通のままです。作成フェーズの識別情報を施策に保存するため保存形式は34です。旧形式の移行は行いません。「見通し・実績」「修正予算」は未実装のため選べません。メニューの「作業を選択」から戻れます。4分割の下に「関連図」「画面とデータ」「計算の仕組み」「処理の流れ」を並べ、フェーズを選ぶ前からアプリ全体の仕組みを確認できます。説明画面にも通常のサイドバーや検索は表示せず、「作業を選択」で入口へ戻ります。サイドバーのHomeは廃止しました。フェーズ選択は画面の表示条件として扱い、決定・固定の状態管理は追加しません。
 
 [English](#english) · [日本語](#日本語)
 
@@ -631,7 +631,7 @@ flowchart TD
 | 総原価表・展開表・施策一覧のExcel出力と前年フォーマットの取り込み | 各表をExcelで扱い、基準前年の金額を専用フォーマットから一括更新できます |
 | 自動保存と直近100操作の取り消し・やり直し | 登録済みデータの編集を保存し、保存に成功した変更を一つずつ戻せます |
 | 過去の状態の記録・閲覧・復元 | 同じファイルに時点ごとの状態を残し、全体を選んだ時点へ戻せます |
-| アプリ内でデータと計算の根拠を閲覧 | ホームの「画面とデータ」「計算の仕組み」「処理の流れ」で表示の根拠を確かめられます |
+| アプリ内でデータと計算の根拠を閲覧 | 作業選択画面から開く「画面とデータ」「計算の仕組み」「処理の流れ」で表示の根拠を確かめられます |
 
 金額は**千円単位で小数点以下3桁まで**入力できます。`120`は120,000円、`0.001`は1円です。計算と保存は1円単位で行い、表の表示だけを整数の千円へ四捨五入します。丸めた表示値を再計算の元には使いません。
 
@@ -722,13 +722,13 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 現在の実装は、`.triadic`ファイルを開く入口画面、ホーム画面、前年入力、施策入力・施策一覧・施策詳細画面、総原価表、展開表、マスタ画面、勘定科目マスタ・集計マスタ・展開マスタ・業種マスタ・部署マスタ・期間マスタ・種別マスタ画面です。入口では「続きから」「ファイルを開く」「新規作成」とファイルのドロップを扱います。外側の囲みを設けず、左側に「前回のファイル」と大きな「続きから」、その下に「ファイルを開く」を置き、右側に「新しいファイル」と年度選択・新規作成を並べます。狭い画面では同じ順序で縦に並べます。「ファイルを開く」欄には「.triadicファイルをここにドロップ」を表示し、ファイルをドラッグ中は欄全体の淡いアクセント色の背景・同色の破線と「ここにドロップして開く」の表示で受け入れ先を示します。新規作成の年度は、上下に回すスロットで選びます。初期値は4月始まりの当年度で、対象期間も併記します。数字は上下に流れ、ホイールやドラッグの勢いに応じて回転した後、減速して年度の位置で止まります。ドラッグ開始時のフォーカスでページの位置を変えません。上下キーと前後の年度のクリックは1年ずつ移動し、OSの「動きを減らす」設定では慣性を抑えます。
 
-サイドバーは普段、幅64pxのアイコンだけのレールです。カーソルを重ねると項目名とファイル名を表示し、外すと折り畳みます。キーボードでレール内へ移動した場合も展開します。画面左上のハンバーガーボタンで開くと、カーソルを外した後や画面を切り替えた後も開いた状態を維持します。ハンバーガーボタン・閉じるボタン・Escキーでレールへ戻せます。展開時はメインパネルを滑らかに押しのけて横に並び、狭い画面でも最大280px、画面幅の半分までに収めます。「Home」「施策一覧」「総原価表」「展開表」「前年入力」「入出力」「マスタ」「履歴」と「閉じる」はレールのアイコンからも操作できます。タッチ操作ではホバー展開を行わず、ボタンで開閉します。ファイルを開くとレール状態のホームから開始します。
+サイドバーは普段、幅64pxのアイコンだけのレールです。カーソルを重ねると項目名とファイル名を表示し、外すと折り畳みます。キーボードでレール内へ移動した場合も展開します。画面左上のハンバーガーボタンで開くと、カーソルを外した後や画面を切り替えた後も開いた状態を維持します。ハンバーガーボタン・閉じるボタン・Escキーでレールへ戻せます。展開時はメインパネルを滑らかに押しのけて横に並び、狭い画面でも最大280px、画面幅の半分までに収めます。「作業を選択」「ダッシュボード」「施策一覧」「総原価表」「展開表」「前年入力」「入出力」「マスタ」「履歴」と「閉じる」はレールのアイコンからも操作できます。タッチ操作ではホバー展開を行わず、ボタンで開閉します。ファイルを開くとサイドバーのない作業選択画面から開始します。
 
 期間・任意集計の削除は、確認時の業務項目を保存時にも照合します。同じ番号で別の対象が作られた場合や対象が変更された場合は書き込まず拒否し、現在の対象を選び直して確認できます。無関係のマスタ更新だけでは拒否しません。
 
 新規作成は書き込み前に、共有セッションで保存先を予約します。別ウィンドウで使用中・読込中、または別の保存・作成の予約中のファイルは、内容を変更せず拒否します。作成中に同じファイルを開く操作は完了を待ち、新しく保存した内容を読み込みます。未使用の既存ファイルは明示して置き換えられます。失敗時は予約を解除し、再試行できます。
 
-### ホームと計算・データの開示
+### 作業選択画面と計算・データの開示
 
 「画面とデータ」「計算の仕組み」「処理の流れ」では、左側に説明項目を縦一列で並べ、選んだ説明を右側に表示します。項目一覧と説明はそれぞれスクロールできます。
 
@@ -736,9 +736,9 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 ホームの関連図は、施策一覧・総原価表・展開表を同じ大きさの円と三角形で示し、中央にTriadicを置きます。マスタと前年入力は初期状態で外周へ均等に並びます。項目を選ぶと、直接関係のない項目も含めて配置が滑らかに変わり、選択中の関係線と説明だけを表示します。表を選ぶとその表が上の頂点へ移動します。1回目のクリックまたはEnter・Spaceで選択し、選択済みの同じ項目をもう一度操作すると画面を開きます。背景のクリックまたはEscapeで解除し、初期配置へ戻ります。選択・参照は破線、構成・所属は点線、金額・計算は実線、同じ内容の別表示は二重線とし、凡例は常設します。項目と表示中の説明はドラッグでき、線も追従し、離すと現在の選択に対応する定位置へ戻ります。ドラッグ終了では画面を開きません。画面の更新ごとに位置を進め、移動中の選び直しでは位置と速度を引き継いで滑らかに止まります。押しただけでは移動を止めず、実際にドラッグを始めた位置から追従します。背景のドラッグ、ホイール・ピンチ・ボタン・キーによる拡大縮小、全体表示と、ホームへ戻った際の表示位置・倍率の保持を維持します。OSの「動きを減らす」設定では動きを短くします。製品のモノクロの配色を使い、操作対象のアイコンだけをライトは青・ダークは金で示します。配置・表示操作によるファイルへの書き込みはありません。
 
-ホームの「画面とデータ」では、画面を選ぶと保存テーブルと表示項目の対応を確認できます。テーブルを開くと全保存項目と参照先を表示し、同じ画面で使う参照先へ移動できます。前年入力では集計の表示名・所属・加減算の保存元も示し、小計・合計・利益率と保存する基準前年の金額を区別します。計算で作る総原価表・展開表・施策一覧や種別の固定定義も区別します。構造の閲覧だけを行い、実データの表示・編集やSQL実行は行いません。「関連図」で元の画面移動用の図へ戻れます。
+作業選択画面から開く「画面とデータ」では、画面を選ぶと保存テーブルと表示項目の対応を確認できます。テーブルを開くと全保存項目と参照先を表示し、同じ画面で使う参照先へ移動できます。前年入力では集計の表示名・所属・加減算の保存元も示し、小計・合計・利益率と保存する基準前年の金額を区別します。計算で作る総原価表・展開表・施策一覧や種別の固定定義も区別します。構造の閲覧だけを行い、実データの表示・編集やSQL実行は行いません。「関連図」で元の画面移動用の図へ戻れます。
 
-ホームの「計算の仕組み」「処理の流れ」では、対象を選び、元になる情報、処理順、条件・例外、結果、保存場所を確認できます。金額精度・引き継ぎ・総原価表・展開表・施策一覧の計算と、読込・自動保存・競合・履歴・取消・一時状態を扱います。実際のデータの値や処理ログは表示せず、閲覧でデータを変更しません。「説明に対応する実装」で根拠のファイル名も確認できます。
+作業選択画面から開く「計算の仕組み」「処理の流れ」では、対象を選び、元になる情報、処理順、条件・例外、結果、保存場所を確認できます。金額精度・引き継ぎ・総原価表・展開表・施策一覧の計算と、読込・自動保存・競合・履歴・取消・一時状態を扱います。実際のデータの値や処理ログは表示せず、閲覧でデータを変更しません。「説明に対応する実装」で根拠のファイル名も確認できます。
 
 新規ファイルの展開マスタは、1「コスト」、2「料金改定」、3「荷主撤退」、4「物量増減」、5「売上拡販」、6「拠点集約」、7「生産性向上」、8「効率化」の8件です。既存ファイルの登録内容は自動で置き換えません。
 
@@ -774,7 +774,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 開始年月は期間の分類と月別金額から自動算出し、一次予算と確定予算で別々に読み込み時に導出します。施策一覧では選択中の種別の開始年月を表示します。新規は最初に非0の金額がある当年度の月、期間差は4月から最後に非0の金額がある月までを継続とみなし、その翌月を前年度の開始月とします。途中の0の月も継続として扱います。科目行の正負を相殺する前に判定し、確定予算の手修正0も反映します。全月0、期間未選択・独自分類、期間差が4月以外から始まる・3月まで続く場合は空欄です。改名しても分類の算出規則を維持し、金額・期間の保存後には新しい元データから求めます。開始年月は直接編集できません。
 
-各画面の金額欄では単位・精度・比較式の常設注記を表示しません。金額の単位と精度は本書とホームの「計算の仕組み」で確認できます。施策入力・詳細の金額セルは数値だけを表示します。保存形式・単位・精度は変更しません。
+各画面の金額欄では単位・精度・比較式の常設注記を表示しません。金額の単位と精度は本書と作業選択画面から開く「計算の仕組み」で確認できます。施策入力・詳細の金額セルは数値だけを表示します。保存形式・単位・精度は変更しません。
 
 施策入力・詳細では、戻る操作・見出し・複製操作を一行にまとめ、狭い画面では折り返します。入力欄の幅と文字サイズを保ち、上部の各段と金額表までの余白を抑えています。選択範囲の合計表示の高さを確保し、セル選択で表の位置が動かないようにします。
 
