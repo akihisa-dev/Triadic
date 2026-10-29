@@ -167,6 +167,7 @@ test("表示条件はスクロール中も画面内に残り、月変更と解�
   await app.getByRole("button", { name: "ファイルを開く", exact: true }).click();
   await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "ダッシュボード", exact: true }).click();
   const trigger = app.locator(".dashboard-floating-trigger");
+  await expect(app.locator(".dashboard-pin-control, .dashboard-drag-handle")).toHaveCount(0);
   const annual = ["12,702,061", "833,696", "6.6%"];
   const department = app.locator(".dashboard-department").nth(1).locator(".dashboard-number").first();
   await expect(department).toHaveText("5,286,436");
