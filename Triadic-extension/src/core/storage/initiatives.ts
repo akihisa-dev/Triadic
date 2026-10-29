@@ -22,8 +22,8 @@ export async function registerInitiative(bytes: Uint8Array, draft: InitiativeEnt
 export function applyInitiativeRegistration(database: Database, draft: InitiativeEntryDraft): void {
   validateInitiative(draft, listAccounts(database), listNames(database), listExpansions(database), listDepartments(database), listPeriodTypes(database), listIndustries(database));
   if (Number(draft.fiscalYear) !== readFiscalYear(database)) throw new Error("年度はファイルの基準年度と同じにしてください。");
-  database.run(`INSERT INTO initiatives (name, note, expansion_id, expansion_category_id, department_id, period_type_id, industry_id, sort_order)
-    VALUES (?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM initiatives))`, [draft.name.trim(), draft.note, draft.expansionId, draft.expansionCategoryId ?? null, draft.departmentId ?? null, draft.periodTypeId ?? null, draft.industryId ?? null]);
+  database.run(`INSERT INTO initiatives (created_kind, name, note, expansion_id, expansion_category_id, department_id, period_type_id, industry_id, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM initiatives))`, [draft.createdKind ?? 1, draft.name.trim(), draft.note, draft.expansionId, draft.expansionCategoryId ?? null, draft.departmentId ?? null, draft.periodTypeId ?? null, draft.industryId ?? null]);
   const id = Number(database.exec("SELECT last_insert_rowid()")[0]!.values[0]![0]);
   for (const [index, row] of draft.rows.entries()) {
     if (row.accountId === null) continue;

@@ -29,7 +29,7 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
     if (screen.page === "initiative-detail" && editPending &&
       !initiatives.some(item => item.id === screen.selectedInitiative?.id && item.fiscalYear === screen.selectedInitiative?.fiscalYear)) return;
     screens.prune(entry => entry.page !== "initiative-detail" || initiatives.some(item => item.id === entry.selectedInitiative?.id && item.fiscalYear === entry.selectedInitiative?.fiscalYear),
-      { page: "home", selectedInitiative: null, detailOrigin: "initiative-list" });
+      { phase: screen.phase, page: "home", selectedInitiative: null, detailOrigin: "initiative-list" });
   }, [initiatives, screens.prune, screen.page, screen.selectedInitiative?.id, screen.selectedInitiative?.fiscalYear, editPending]);
   const openInitiative = (initiative: Initiative, kind?: KindId) => {
     if (navigationState.current.blocked || navigationState.current.page !== page) return;
@@ -37,7 +37,8 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
     requestNavigation({
       page: "initiative-detail",
       detailVisit: crypto.randomUUID(),
-      detailKind: kind ?? 1,
+      phase: screen.phase,
+      detailKind: screen.phase ?? kind ?? 1,
       detailOrigin: page === "dashboard" ? "dashboard" : page === "cost-table" ? "cost-table" : page === "home" ? "home" : page === "expansion-table" ? "expansion-table" : "initiative-list",
       selectedInitiative: { id: initiative.id, fiscalYear: initiative.fiscalYear },
     });
@@ -62,7 +63,7 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
     const perform = () => {
       setInitiativeDraft(duplicateInitiativeDraft(source, initiatives));
       dismissNotice();
-      navigate({ page: "initiative-entry", selectedInitiative: null, detailOrigin: "initiative-list" });
+      navigate({ phase: screen.phase, page: "initiative-entry", selectedInitiative: null, detailOrigin: "initiative-list" });
     };
     if (hasInitiativeDraftInput(initiativeDraft)) setDiscardRequest({ perform, duplicate: true });
     else perform();
@@ -73,7 +74,7 @@ export function useWorkspaceNavigation(screens: ReturnType<typeof useScreenHisto
       // Transfer first, then release the protected editor. No file write happens here.
       setInitiativeDraft(recoverInitiativeDraft(input, references, latestContents.current));
       release(); dismissNotice();
-      navigate({ page: "initiative-entry", selectedInitiative: null, detailOrigin: "initiative-list" });
+      navigate({ phase: screen.phase, page: "initiative-entry", selectedInitiative: null, detailOrigin: "initiative-list" });
     };
     if (hasInitiativeDraftInput(initiativeDraft)) setDiscardRequest({ perform, recovery: true });
     else perform();

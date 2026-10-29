@@ -9,8 +9,9 @@ import type { Department } from "./departmentMaster";
 import type { PeriodType } from "./periodMaster";
 import type { InitiativeStartMonths } from "./initiativeStartMonth";
 export type InitiativeRow = { id?: string; accountId: number | null; revision?: number; amountRevisions?: Partial<Record<number, number>>; overrideRevisions?: Partial<Record<number, number>>; amounts: Partial<Record<InitiativeMonth, string>>; overrides?: KindOverrides; invalidAmounts?: KindInvalidAmounts };
-export type InitiativeEntryDraft = { name: string; note: string; expansionId: number | null; expansionCategoryId?: number | null; departmentId?: number | null; periodTypeId?: number | null; industryId?: number | null; fiscalYear: string; rows: InitiativeRow[]; invalidNumbers?: boolean };
+export type InitiativeEntryDraft = { createdKind?: import("./kinds").KindId; name: string; note: string; expansionId: number | null; expansionCategoryId?: number | null; departmentId?: number | null; periodTypeId?: number | null; industryId?: number | null; fiscalYear: string; rows: InitiativeRow[]; invalidNumbers?: boolean };
 export type Initiative = {
+  createdKind?: import("./kinds").KindId;
   id: number;
   identity?: string;
   name: string;

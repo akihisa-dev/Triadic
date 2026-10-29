@@ -19,7 +19,7 @@ test("ファイルを開くと4つの入口が現れ、一次・確定を選ん�
     await button.press("Enter");
     await expect(app.getByRole("heading", { name: "施策一覧", exact: true })).toBeVisible();
     await expect(app.getByRole("complementary", { name: "メニュー" })).toBeVisible();
-    await expect(app.getByRole("spinbutton", { name: "種別", exact: true })).toHaveAttribute("aria-valuetext", name);
+    await expect(app.getByLabel("予算フェーズ", { exact: true })).toHaveText(name);
     await expect(app.getByRole("button", { name: "操作を取り消す", exact: true })).toBeDisabled();
     await app.getByRole("navigation", { name: "メインナビゲーション" }).getByRole("button", { name: "作業を選択", exact: true }).click();
     await expect(selection).toBeVisible();

@@ -88,3 +88,5 @@
 展開表の非表示の基準前年間の差は `tests/ui/expansion-previous-plan.ts` の既定マスタを保持した専用データで確認します。単独・両予算・逆順・表示用前年・絞り込み後の予算差と真の超過を `tests/expansion-previous-difference.mjs`、画面を `expansion-previous-difference.spec.ts` で検証し、会社予算の内容は変更しません。
 
 非表示の基準前年合計の超過も同じ専用生成元の `createExpansionBaselineTotalPlan` で確認します。`tests/expansion-baseline-total.mjs` と `expansion-previous-difference.spec.ts` が正負・単独/両予算・絞り込み・表示金額の超過と1円精度を検証します。会社予算と既定マスタは変更しません。
+
+作業フェーズは既存の会社予算・小規模データを使用します。確定で追加した施策の一次からの非表示と保存・再読込、作成フェーズの不正値拒否、金額追従とマスタ不変は `tests/budget-phases.mjs`、入口・入力タブ・前年・検索・三表・共通マスタは `tests/ui/budget-phases.spec.ts` で確認します。

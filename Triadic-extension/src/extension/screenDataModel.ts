@@ -11,7 +11,7 @@ const tableLabels: Partial<Record<TableName, string>> = {
 };
 // Labels explain meaning; table names, columns and references come from the saved schema.
 const columnLabels: Record<string, string> = {
-  id: "識別子", name: "名称", code: "コード", identity: "作成識別子", revision: "更新番号", sort_order: "並び順", kind_id: "予算種別", previous_kind: "前年見込・前年実績／一次予算の基準前年", final_previous_kind: "確定予算の基準前年", display_previous_kind: "前年列の表示種別", month: "月", amount_yen: "金額（円）",
+  id: "識別子", name: "名称", code: "コード", identity: "作成識別子", revision: "更新番号", sort_order: "並び順", kind_id: "予算種別", created_kind: "施策の作成フェーズ", previous_kind: "前年見込・前年実績／一次予算の基準前年", final_previous_kind: "確定予算の基準前年", display_previous_kind: "前年列の表示種別", month: "月", amount_yen: "金額（円）",
   fiscal_year: "基準年度", created_at: "作成日時", updated_at: "更新日時", note: "備考", expansion_id: "展開", industry_id: "業種",
   department_id: "部署", period_type_id: "期間",
   initiative_id: "施策", account_id: "勘定科目", row_id: "施策の科目行", attribute: "科目属性", display_name: "表示名", required_key: "必須集計の役割",
@@ -28,7 +28,7 @@ export type TableUse = { table: TableName; purpose: string; fields: string[] };
 export type ScreenData = { page: Exclude<Page, "home" | "master">; name: string; tables: TableUse[]; calculated: string[] };
 const use = <T extends TableName>(table: T, purpose: string, ...fields: ColumnName<T>[]): TableUse => ({ table, purpose, fields });
 const documentInfo = use("document_info", "共通ヘッダーの基準年度・対象月", "fiscal_year");
-const initiative = use("initiatives", "施策名・備考・分類", "name", "note", "expansion_id", "expansion_category_id", "industry_id", "department_id", "period_type_id", "sort_order", "identity");
+const initiative = use("initiatives", "施策名・備考・分類", "name", "note", "expansion_id", "expansion_category_id", "industry_id", "department_id", "period_type_id", "sort_order", "identity", "created_kind");
 const rows = use("initiative_rows", "施策と科目の対応・科目行の並び", "id", "initiative_id", "account_id", "sort_order");
 const amounts = use("initiative_amounts", "一次12か月と確定の明示手修正月の増減", "row_id", "kind_id", "month", "amount_yen");
 const accounts = use("accounts", "科目名・表示名・科目属性", "id", "code", "name", "display_name", "attribute");
@@ -113,4 +113,11 @@ const rangeCopyRule = "総原価表・展開表・施策一覧では、金額セ
 for (const screen of screenData) {
   if (["initiative-entry", "initiative-detail", "previous-input"].includes(screen.page)) screen.calculated.push(cutMoveRule);
   if (["cost-table", "expansion-table", "initiative-list"].includes(screen.page)) screen.calculated.push(rangeCopyRule);
+}
+
+for (const screen of screenData) {
+  if (["work-selection", "initiative-entry", "initiative-detail", "initiative-list", "cost-table", "expansion-table", "dashboard", "previous-input"].includes(screen.page)) {
+    screen.calculated.push( " 作業フェーズの表示条件を共有し、一次では前年見込と一次、確定では前年実績・前年見込基準の一次参照・確定を扱います。入力は作業中の予算だけで、確定作成の施策は一次へ表示しません。マスタと金額計算・未修正月の追従は共通です。");
+    if (screen.tables.some(use => use.table === "initiatives") && !screen.tables.find(use => use.table === "initiatives")!.fields.includes("created_kind")) screen.tables.find(use => use.table === "initiatives")!.fields.push("created_kind");
+  }
 }

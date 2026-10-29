@@ -125,3 +125,7 @@ for (const mechanism of mechanisms) {
     mechanism.sources.push(extension+"useTableRangeCopy.ts", extension+"InitiativeListPage.tsx");
   }
 }
+
+for (const mechanism of mechanisms) {
+  if (["inheritance", "work-selection"].includes(mechanism.id)) mechanism.conditions.push("作業フェーズは画面移動と複製ウィンドウへ保持します。一次は前年見込と一次、確定は前年実績・前年見込基準の一次参照・確定を表示し、入力は作業中の予算だけです。確定作成の施策は一次の表示対象から除き、作成フェーズ以外の保存構造・金額計算・マスタ共有と未修正月の追従は変更しません。");
+}

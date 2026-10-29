@@ -1,3 +1,4 @@
+import { BudgetPhaseContext } from "./BudgetPhase";
 import { useHomeWorkspace, type HomePageProps } from "./useHomeWorkspace";
 import { WorkspaceHeader, WorkspaceSidebar } from "./WorkspaceChrome";
 import { WorkspacePage } from "./WorkspacePage";
@@ -34,7 +35,7 @@ function HomePageContents(props: HomePageProps) {
     if (screen.page === "spreadsheet-io") preloadSpreadsheetIO();
   }, [screen.page]);
   return (
-    <HistoryReadOnlyContext value={preview !== null}><SavedOperationRevisionContext value={operationRevision}><div className="home-page">
+    <BudgetPhaseContext value={workspace.phase}><HistoryReadOnlyContext value={preview !== null}><SavedOperationRevisionContext value={operationRevision}><div className="home-page">
       {screen.page === "work-selection" ? <>
         <WorkSelectionHeader fiscalYear={workspace.contents.fiscalYear} onClose={workspace.onCloseFile} disabled={navigationBlocked || isSaving} />
         <div className="work-selection-content" inert={operationMutation.busy || workspace.saveAsMutation.busy || windows.settling}>
@@ -66,6 +67,6 @@ function HomePageContents(props: HomePageProps) {
         }} />
       <ConfirmationDialog open={restoreRequested} title="過去の状態に戻す" message={restoreError || (preview ? `${historyDate(preview.entry.recordedAt)}の状態にファイル全体を戻しますか？ 復元前の状態も履歴に残します。` : "")} confirmLabel={restoreError ? "保存を再試行して戻す" : "この時点に戻す"} busy={isSaving || restoreMutation.busy || historyBusy}
         onCancel={() => setRestoreRequested(false)} onConfirm={() => { void (restoreError ? onPrepareSave().then(restorePreview).catch(failure => setRestoreError(failure instanceof Error ? failure.message : "保存先を選択できませんでした。")) : restorePreview()); }} />
-    </div></SavedOperationRevisionContext></HistoryReadOnlyContext>
+    </div></SavedOperationRevisionContext></HistoryReadOnlyContext></BudgetPhaseContext>
   );
 }

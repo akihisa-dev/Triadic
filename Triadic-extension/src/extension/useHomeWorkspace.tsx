@@ -1,13 +1,14 @@
+import { contentsForPhase, phaseKinds, phasePrevious, draftForPhase } from "../core/domain/budgetPhase";
 import type { CostTableView } from "./CostTablePage";
 import { useWorkspaceNavigation } from "./workspace/useWorkspaceNavigation";
 import { useWorkspaceHistory } from "./workspace/useWorkspaceHistory";
 import { useMutation } from "./useMutation";
 import { useScreenHistory } from "./useScreenHistory";
-import { ComparisonSelection } from "./ComparisonSelection";
 import { KindSelectionSlots } from "./KindSelectionSlots";
+import { ComparisonSelection } from "./ComparisonSelection";
 import { type BudgetPrevious, type KindId, type KindScreen, type PlanChange } from "../core/domain/kinds";
 import { type RelationView } from "./HomeRelationsPage";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createInitiativeDraft, hasInitiativeDraftInput } from "../core/domain/initiativeRules";
 import { useSidebar } from "./useSidebar";
 import type { Screen } from "./workspace/types";
@@ -29,9 +30,10 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   const isSidebarOpen = sidebar.expanded;
   const collapseSidebar = sidebar.collapse;
   const screens = useScreenHistory<Screen>(initialView?.screen ?? { page: "work-selection", selectedInitiative: null, detailOrigin: "initiative-list" },
-    (left, right) => left.page === right.page && left.selectedInitiative?.id === right.selectedInitiative?.id && left.detailOrigin === right.detailOrigin && left.detailKind === right.detailKind && left.detailVisit === right.detailVisit);
+    (left, right) => left.page === right.page && left.selectedInitiative?.id === right.selectedInitiative?.id && left.detailOrigin === right.detailOrigin && left.detailKind === right.detailKind && left.detailVisit === right.detailVisit && left.phase === right.phase);
   const screen = screens.current;
   const { selectedInitiative } = screen;
+  const phase = screen.phase ?? 1;
   const navigate = screens.navigate;
   const currentContents = initialContents;
   const [notice, setNotice] = useState({ message: "", error: false });
@@ -48,7 +50,8 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
     resetScreens, previewEntry, returnToCurrent, restorePreview } = useWorkspaceHistory(screens,
     () => navigationBlocked || saving.current, operation => mutation.run(operation), onPreviewHistory, onRestoreHistory,
     () => setInitiativeDraft(createInitiativeDraft(String(currentContents.fiscalYear))), dismissNotice, setNotice);
-  const contents = preview?.contents ?? currentContents;
+  const sourceContents = preview?.contents ?? currentContents;
+  const contents = useMemo(() => contentsForPhase(sourceContents, phase), [sourceContents, phase]);
   const assertWritable = () => { if (preview) throw new Error("過去のデータは閲覧専用です。"); };
 
   const mutation = useMutation(assertWritable);
@@ -85,13 +88,20 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   const availableUndo = canUndo || editPending || isSaving;
   const travelOperation = useWorkspaceOperations(operationBlocked, saving, operationMutation, availableUndo, canRedo, onPrepareSave, onTravelOperation, dismissNotice, setNotice);
   const changePlan = (change: PlanChange) => mutation.run(async () => { await onChangePlan(change); });
-  const [localKinds, setLocalKinds] = useWindowViewState("table:kinds", contents.kindSelections);
-  const [localPrevious, setLocalPrevious] = useWindowViewState("table:previous", contents.previousSelections);
-  const [dashboardSelection, setDashboardSelection] = useWindowViewState("dashboard:selection", { kinds: [1], previous: { 1: 1, 2: 1 } });
+  const [storedKinds, setLocalKinds] = useWindowViewState("table:kinds", contents.kindSelections);
+  const [, setLocalPrevious] = useWindowViewState("table:previous", contents.previousSelections);
+  const [storedDashboard, setDashboardSelection] = useWindowViewState("dashboard:selection", { kinds: [1], previous: { 1: 1, 2: 1 } });
+  const localKinds = useMemo(() => ({ ...storedKinds, "initiative-list": phase === 1 ? [1] : storedKinds["initiative-list"],
+    "cost-table": phase === 1 ? [1] : storedKinds["cost-table"],
+    "expansion-table": phase === 1 ? [1] : storedKinds["expansion-table"] }) as typeof storedKinds, [storedKinds, phase]);
+  const fixedPrevious = useMemo(() => phasePrevious(phase), [phase]);
+  const localPrevious = { "cost-table": fixedPrevious, "expansion-table": fixedPrevious };
+  const dashboardSelection = useMemo(() => ({ kinds: phase === 1 ? [1] as KindId[] : storedDashboard.kinds, previous: fixedPrevious }), [phase, storedDashboard, fixedPrevious]);
   const selectWork = (kind: KindId) => {
-    const next: Screen = { page: "initiative-list", selectedInitiative: null, detailOrigin: "initiative-list" };
+    const next: Screen = { phase: kind, page: "initiative-list", selectedInitiative: null, detailOrigin: "initiative-list" };
     requestNavigation(next, () => {
-      setLocalKinds(value => ({ ...value, "initiative-list": [kind] }));
+      setLocalKinds({ "initiative-list": [kind], "cost-table": phaseKinds(kind), "expansion-table": phaseKinds(kind) });
+      setDashboardSelection({ kinds: phaseKinds(kind), previous: phasePrevious(kind) });
       dismissNotice();
       navigate(next);
     });
@@ -129,8 +139,8 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
       void changePlan(change).then(applyLocal).catch(error => setNotice({ message: error instanceof Error ? error.message : "比較条件を保存できませんでした。", error: true }));
     };
     return screen === "initiative-list"
-      ? <KindSelectionSlots screen={screen} selected={localKinds[screen]} disabled={navigationBlocked || isSaving} onChange={selected => changeSelection(selected)} />
-      : <ComparisonSelection independentPrevious selected={localKinds[screen]} previous={localPrevious[screen]} disabled={navigationBlocked || isSaving} onChange={changeSelection} />;
+      ? <KindSelectionSlots phase={phase === 1 ? 1 : null} screen={screen} selected={localKinds[screen]} disabled={navigationBlocked || isSaving} onChange={selected => changeSelection(selected)} />
+      : <ComparisonSelection phase={phase} independentPrevious selected={localKinds[screen]} previous={localPrevious[screen]} disabled={navigationBlocked || isSaving} onChange={changeSelection} />;
   };
   const { changeMaster, changePeriodTypes, changeDepartments, changeIndustries, changeExpansions, changeExpansionCategories, changeAggregations, update } = useWorkspaceCommands(
     { onChangeMaster, onChangePeriodTypes, onChangeDepartments, onChangeIndustries, onChangeExpansions, onChangeExpansionCategories, onChangeAggregations, onUpdateInitiative }, mutation, currentContents,
@@ -138,11 +148,12 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   const register = async () => {
     if (saving.current) return;
     const startingNavigation = latestNavigation.current;
-    const submittedDraft = initiativeDraft;
+    const submittedDraft = draftForPhase(initiativeDraft, phase);
+    const startingDraft = initiativeDraft;
     dismissNotice();
     try {
       await mutation.run(async () => { await onRegisterInitiative(submittedDraft); });
-      if (latestDraft.current === submittedDraft) setInitiativeDraft(createInitiativeDraft(submittedDraft.fiscalYear));
+      if (latestDraft.current === startingDraft) setInitiativeDraft(createInitiativeDraft(submittedDraft.fiscalYear));
       if (latestNavigation.current === startingNavigation) navigate({ ...screen, page: "initiative-list" });
       setNotice({ message: "施策を登録しました。", error: false });
     } catch (error) {
@@ -169,10 +180,10 @@ export function useHomeWorkspace({ windows, onChangePlan, fileName, initialConte
   }, [isSidebarOpen, closeSidebar]);
 
   return {
-    selectWork, dashboardSelection, setDashboardSelection, openDashboardDepartment,
+    phase, selectWork, dashboardSelection, setDashboardSelection, openDashboardDepartment,
     restoreMutation, saveAsMutation, saveAs, setEditPending, ioController, setIOController, openInitiative, menuButton, relationView, costTableView, sidebar, showError, localKinds, localPrevious,
     isSidebarOpen, screen, initiativeDraft, setInitiativeDraft, preview, setPreview,
-    restoreRequested, setRestoreRequested, restoreError, setRestoreError, contents, currentContents,
+    restoreRequested, setRestoreRequested, restoreError, setRestoreError, contents, sourceContents, currentContents,
     notice, dismissNotice, isSaving, operationMutation, navigationBlocked, searchBlocked, discardRequest,
     setDiscardRequest, operationBlocked, travelOperation, requestNavigation, setPage, startInitiative, duplicateInitiative, recoverInitiative,
     usedAccountIds, changePlan, kindSelection, changeMaster, changePeriodTypes, changeDepartments,

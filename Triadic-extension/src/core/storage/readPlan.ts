@@ -35,11 +35,11 @@ export function listInitiatives(db: Database, fiscalYear: number, initiativeId?:
     }
   }
   const rules = new Map(listPeriodTypes(db).map(period => [period.id, period.startMonthRule]));
-  return (db.exec(`SELECT id, name, note, expansion_id, expansion_category_id, department_id, period_type_id, industry_id, revision, identity FROM initiatives${initiativeId === undefined ? "" : " WHERE id = ?"} ORDER BY sort_order, id`, params)[0]?.values ?? [])
-    .map(([id, name, note, expansion, category, department, period, industry, revision, identity]) => {
+  return (db.exec(`SELECT id, name, note, expansion_id, expansion_category_id, department_id, period_type_id, industry_id, revision, identity, created_kind FROM initiatives${initiativeId === undefined ? "" : " WHERE id = ?"} ORDER BY sort_order, id`, params)[0]?.values ?? [])
+    .map(([id, name, note, expansion, category, department, period, industry, revision, identity, createdKind]) => {
       const rows = rowsByOwner.get(Number(id)) ?? [];
       const rule = period === null ? null : rules.get(Number(period)) ?? null;
-      return { id: Number(id), identity: String(identity), name: String(name), note: String(note), expansionId: Number(expansion), expansionCategoryId: category === null ? null : Number(category), departmentId: Number(department), periodTypeId: period === null ? null : Number(period), industryId: Number(industry), fiscalYear, revision: Number(revision),
+      return { ...(createdKind === 2 ? { createdKind: 2 as const } : {}), id: Number(id), identity: String(identity), name: String(name), note: String(note), expansionId: Number(expansion), expansionCategoryId: category === null ? null : Number(category), departmentId: Number(department), periodTypeId: period === null ? null : Number(period), industryId: Number(industry), fiscalYear, revision: Number(revision),
         startYearMonths: { 1: deriveStartYearMonth(fiscalYear, rule, rows, 1), 2: deriveStartYearMonth(fiscalYear, rule, rows, 2) }, rows };
     });
 }

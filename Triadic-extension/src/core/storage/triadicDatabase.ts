@@ -94,7 +94,7 @@ function assertDatabase(db: Database, documentType: DocumentType): void {
   for (const table of ["accounts", "expansions", "industries"]) {
     if (db.exec(`SELECT code FROM ${table} GROUP BY code HAVING COUNT(*) > 1`).length) invalid();
   }
-  if (db.exec(`SELECT id FROM initiatives WHERE trim(name) = '' OR expansion_id IS NULL OR industry_id IS NULL OR department_id IS NULL
+  if (db.exec(`SELECT id FROM initiatives WHERE typeof(created_kind) != 'integer' OR created_kind NOT IN (1,2) OR trim(name) = '' OR expansion_id IS NULL OR industry_id IS NULL OR department_id IS NULL
     UNION ALL SELECT id FROM initiative_rows WHERE typeof(id) != 'text' OR id = ''
     UNION ALL SELECT r.id FROM initiative_rows r LEFT JOIN initiative_amounts m ON m.row_id = r.id AND m.kind_id = 1 GROUP BY r.id HAVING COUNT(m.month) != 12 OR COUNT(DISTINCT m.month) != 12`).length) throw new Error("各入力行には12か月分の明細が必要です。");
   if (db.exec("SELECT kind_id FROM initiative_amounts WHERE typeof(kind_id) != 'integer' OR kind_id NOT IN (1,2)").length) invalid();

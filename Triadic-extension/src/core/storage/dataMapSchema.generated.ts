@@ -243,6 +243,9 @@ export const dataMapSchema = [
         "name": "id"
       },
       {
+        "name": "created_kind"
+      },
+      {
         "name": "name"
       },
       {

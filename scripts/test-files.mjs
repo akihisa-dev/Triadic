@@ -44,6 +44,7 @@ import { verifyAggregationPositions } from "../tests/aggregation-positions.mjs";
 import { verifyAggregationRebase } from "../tests/aggregation-rebase.mjs";
 import { verifyMasterOrderStorage } from "../tests/master-order-storage.mjs";
 import { verifyClassificationStorage } from "../tests/classification-storage.mjs";
+import { verifyBudgetPhases } from "../tests/budget-phases.mjs";
 import { verifyKindAmountStorage } from "../tests/kind-amount-storage.mjs";
 import { verifyCostCancellation } from "../tests/cost-cancellation.mjs";
 import { verifyCostMonthlyAddition } from "../tests/cost-monthly-addition.mjs";
@@ -158,6 +159,7 @@ await withNodeBundle("tests/core-api.ts", async production => {
   verifyHomeMasterCoverage(api);
   await verifySingleYearPlan(api);
   await verifyKindAmountStorage(api);
+  await verifyBudgetPhases(api);
   await verifyClassificationStorage(api);
   await verifyStartMonths(api);
   verifyInitiativeTotals(api);

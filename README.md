@@ -10,11 +10,11 @@
 
 ## Previous-year forecast and actuals
 
-Previous-year forecast and actuals are independent inputs. Cost and expansion screens use three independent columns: previous year, initial budget and final budget. Other comparison screens retain their two budget columns. Each budget allows one baseline; selecting the other replaces it. At least one budget stays selected. Each budget uses its own baseline in tables, dashboard graphs, Excel exports, and history comparison. On-screen tables use the independently selected previous-year value alongside the separately selected budgets; changing any one leaves the other two selections and amounts unchanged. Previous-year columns name forecast or actuals; budget headings use only initial/final budget on one line. Cost tables also show change for one budget or final-minus-initial for two. Cost and expansion tables save the previous-year display and both budget selections atomically. Storage format 33 rejects older or unknown formats without migration or rewriting. No new permissions or external transmission are introduced.
+Previous-year forecast and actuals are independent inputs. Cost and expansion screens use three independent columns: previous year, initial budget and final budget. Other comparison screens retain their two budget columns. Each budget allows one baseline; selecting the other replaces it. At least one budget stays selected. Each budget uses its own baseline in tables, dashboard graphs, Excel exports, and history comparison. On-screen tables use the independently selected previous-year value alongside the separately selected budgets; changing any one leaves the other two selections and amounts unchanged. Previous-year columns name forecast or actuals; budget headings use only initial/final budget on one line. Cost tables also show change for one budget or final-minus-initial for two. Cost and expansion tables save the previous-year display and both budget selections atomically. Storage format 34 rejects older or unknown formats without migration or rewriting. No new permissions or external transmission are introduced.
 
 ## English
 
-After opening or creating a file, the four-part work selector shows initial budget, final budget, forecast/actuals and revised budget. Initial/final open the initiative list with that budget selected locally; forecast/actuals and revised budget are marked unavailable. Use 「作業を選択」 in the sidebar to return. This first step adds entry navigation only; budget freezing, independent phases and handoff are not implemented. Existing budget inheritance and comparison controls remain unchanged.
+After opening or creating a file, the independent four-part selector opens a primary or final budget phase. Primary edits forecast/primary; final edits actuals/final and references forecast-based primary. Entry shows only the active budget tab. Lists, tables, search and dashboards share the phase scope. Initiatives created in final are hidden from primary. Masters, monetary calculations and inheritance remain shared. Format 34 adds only the initiative creation-phase marker; older files are rejected without migration. Forecast/actuals and revised-budget entries are unavailable.
 
 **A Chrome extension for building budgets from initiatives and checking them in three tables.**
 
@@ -103,7 +103,7 @@ Input grids support cut-and-paste moves within the same table: cutting keeps sou
 ### Current scope and limitations
 
 - The app runs as a Chrome extension and handles local files for which you grant read/write permission. It does not transmit data externally or synchronize across browsers.
-- The storage format is 33. All files in format 32 or earlier are rejected, whether or not they contain details. Unknown formats are also rejected without migration or overwriting. When a file changes externally, independent changes to other rows are automatically merged with your edits. Overlapping row changes or inconsistent changes are not overwritten; you can save all entered data to another file and continue. Cancellation or failure preserves input and the original file. Applying external changes clears earlier undo history, leaving only your current edit undoable. Save As copies the saved business data and history to another .triadic file and continues editing there. It preserves undo/redo and switches the filename and Continue reference only after a successful write. Category assignments and initiative category references also compare the category contents when merging. An ID reused after undo or history restoration cannot silently receive old references. Concurrent renaming and a new assignment/reference are rejected; ordinary renaming preserves existing references.
+- The storage format is 34. All files in format 33 or earlier are rejected, whether or not they contain details. Unknown formats are also rejected without migration or overwriting. When a file changes externally, independent changes to other rows are automatically merged with your edits. Overlapping row changes or inconsistent changes are not overwritten; you can save all entered data to another file and continue. Cancellation or failure preserves input and the original file. Applying external changes clears earlier undo history, leaving only your current edit undoable. Save As copies the saved business data and history to another .triadic file and continues editing there. It preserves undo/redo and switches the filename and Continue reference only after a successful write. Category assignments and initiative category references also compare the category contents when merging. An ID reused after undo or history restoration cannot silently receive old references. Concurrent renaming and a new assignment/reference are rejected; ordinary renaming preserves existing references.
 - After successfully saving a conflict to another file, the displayed filename and “Continue” reference point to that file for normal editing, undo, history, and recording on closure. Cancellation or write failure leaves references unchanged. Failure to remember the reference on the device is reported; the current screen can still resume from the successful destination.
 - Excel export covers the three tables and calculation inputs; import accepts the previous-year template exported by the app. Arbitrary Excel workbooks and edits to exported three-table workbooks cannot be imported into the file. Recalculation in an actual Excel installation has not been verified.
 - Input that fails to save remains on screen, but recovery after tab closure, reload, or forced termination is not guaranteed. Changes to the same file from multiple screens or external apps are detected to stop overwriting.
@@ -580,7 +580,7 @@ History types, empty state, and five-minute interval use shared SQLite-independe
 
 ## 日本語
 
-ファイルを開く・新規作成した後は、通常画面から独立した4分割の「作業を選択」が開きます。選択前はサイドバー・検索・操作取消・画面履歴・ウィンドウ複製を表示せず、予算を選んだ後に通常画面を表示します。「一次予算」「確定予算」は選んだ種別の施策一覧へ進み、「見通し・実績」「修正予算」は未実装のため選べません。メニューの「作業を選択」から戻れます。入口の選択はウィンドウ内の表示だけに反映し、保存済みデータは変更しません。今回は入口の追加までで、フェーズの決定・固定・独立した引き継ぎは未実装です。一次から確定への既存の金額追従と各画面の種別切替・比較条件は維持します。
+ファイルを開く・新規作成した後は、独立した4分割の「作業を選択」が開きます。一次予算フェーズでは前年見込と一次予算、確定予算フェーズでは前年実績と確定予算を編集します。確定では前年見込を基準にした一次予算を表・グラフで参照できます。施策入力には作業中の予算タブだけを表示します。前年・予算の表示範囲は施策一覧・総原価表・展開表・検索・ダッシュボードで揃え、確定で新規追加した施策は一次には表示しません。マスタと金額計算・一次から確定の未修正月への追従は共通のままです。作成フェーズの識別情報を施策に保存するため保存形式は34です。旧形式の移行は行いません。「見通し・実績」「修正予算」は未実装のため選べません。メニューの「作業を選択」から戻れます。フェーズ選択は画面の表示条件として扱い、決定・固定の状態管理は追加しません。
 
 [English](#english) · [日本語](#日本語)
 
@@ -652,7 +652,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 
 「前年入力」で前年見込／前年実績を切り替えて入力します。前年実績の表示中はコピーアイコンから、選択中の部署・業種の12か月分を前年見込からコピーできます。対象と上書きを確認して実行し、取消可能です。両者は独立し、未入力は0です。
 総原価表・展開表の比較条件は、行を前年見込・前年実績、列を前年・一次予算・確定予算とする3列のチェック欄で選びます。前年列は見込か実績の一方を選び、一次・確定も各列で独立して選びます。同じ列の見込と実績は排他で、一次・確定のどちらかは表示します。一つの列を変更しても他の2列の選択・金額・見出しは変えません。ダッシュボード・入出力・履歴収支は予算2列のチェック欄を使用します。 総原価表・展開表は選択予算と両方の前年条件を一度に保存します。入出力でも表ごとに選び、Excelの見出しと数式へ反映します。前年フォーマットは見込／実績を選んで出力し、取り込み時はファイルに記録された側だけを確認・更新します。用途のない旧Excelは出力し直してください。履歴の収支比較も同じチェック欄を使用します。
-保存場所・保持期間・削除・外部送信は変わりません。見込・実績・基準選択を同じファイルと履歴に保存し、旧保存形式32以前は移行せず拒否します。失敗・キャンセルでは入力と元ファイルを保持します。
+保存場所・保持期間・削除・外部送信は変わりません。見込・実績・基準選択を同じファイルと履歴に保存し、旧保存形式33以前は移行せず拒否します。失敗・キャンセルでは入力と元ファイルを保持します。
 
 ### 一次予算と確定予算の使い分け
 
@@ -679,7 +679,7 @@ Chromeへ読み込む手順は[Chromeで読み込む](#chromeで読み込む)を
 ### 現在の対応範囲と制限
 
 - Chrome拡張機能として動作し、利用者が読み書きを許可したローカルファイルを扱います。データの外部送信やブラウザ間の同期は行いません。
-- 保存形式は33です。32以前や未知の形式は読み込みを拒否し、移行・上書きは行いません。ファイル更新時は、今回の編集と別の行への変更を自動で合わせて保存します。同じ行の変更や整合しない変更は上書きせず、入力済みのデータ全体を別ファイルへ保存して編集を続けられます。キャンセル・保存失敗では入力と元ファイルを保持します。外部変更の反映時には過去の操作取消を初期化し、今回の編集だけを取り消せます。「別名で保存」は保存済みのデータ・マスタ・履歴を別の.triadicファイルへ保存し、新しい保存先で編集を続けます。操作取消・やり直しを維持し、ファイル名と「続きから」は書き込み成功後だけ切り替えます。 別ウィンドウが開いている保存先や別ファイルの保存先切り替え中のファイルは、書き込み前に拒否します。双方の内容と入力を保持し、保存先を開いている画面を閉じるか別の保存先を選び直せます。切り替え中の保存先を開く操作は完了を待ち、同じ担当へ接続します。
+- 保存形式は34です。33以前や未知の形式は読み込みを拒否し、移行・上書きは行いません。ファイル更新時は、今回の編集と別の行への変更を自動で合わせて保存します。同じ行の変更や整合しない変更は上書きせず、入力済みのデータ全体を別ファイルへ保存して編集を続けられます。キャンセル・保存失敗では入力と元ファイルを保持します。外部変更の反映時には過去の操作取消を初期化し、今回の編集だけを取り消せます。「別名で保存」は保存済みのデータ・マスタ・履歴を別の.triadicファイルへ保存し、新しい保存先で編集を続けます。操作取消・やり直しを維持し、ファイル名と「続きから」は書き込み成功後だけ切り替えます。 別ウィンドウが開いている保存先や別ファイルの保存先切り替え中のファイルは、書き込み前に拒否します。双方の内容と入力を保持し、保存先を開いている画面を閉じるか別の保存先を選び直せます。切り替え中の保存先を開く操作は完了を待ち、同じ担当へ接続します。
 - 競合から別ファイルへ保存できた場合は、通常の編集・操作取消・履歴操作・終了時の記録を含め、画面のファイル名と「続きから」の参照を保存成功先へ揃えます。キャンセルや書き込み失敗では参照を変更しません。端末内への参照の記憶に失敗した場合は通知し、同じ画面内では成功先から再開できます。
 - Excel出力は総原価表・展開表・施策一覧と計算元を扱い、取り込みはアプリから出力した前年入力フォーマットが対象です。任意のExcelブックや、出力した総原価表・展開表・施策一覧の編集内容をデータへ取り込む機能はありません。Excel実機での再計算は未確認です。
 - 保存に失敗した入力は画面内で保持しますが、タブ終了・再読み込み・強制終了後の復元は保証しません。複数の画面や外部アプリで同じファイルを変更した場合は、外部更新を検出して上書きを止めます。
@@ -954,7 +954,7 @@ Chromeのファイル選択、新規作成、ファイル参照を取得でき�
 
 施策・勘定科目・年月と月別金額を同じデータとして持ち、施策一覧・総原価表・展開表はそのデータを異なる視点で表します。集計結果を別の正本として重複保存しません。現在はファイルの新規作成、形式検証を伴う読込、勘定科目マスタ・集計マスタ・展開マスタ・業種マスタ・部署マスタ・期間マスタ・固定種別マスタ・固定科目属性マスタの閲覧、施策・前年入力の保存を実装しています。
 
-保存形式は33です。明細の有無にかかわらず、保存形式32以前のファイルは開けません。新規ファイルから使用します。対応しない旧形式や未知の形式は読み込み時に拒否し、移行や上書きは行いません。新しい形式のファイルは旧アプリで開けません。
+保存形式は34です。明細の有無にかかわらず、保存形式33以前のファイルは開けません。新規ファイルから使用します。対応しない旧形式や未知の形式は読み込み時に拒否し、移行や上書きは行いません。新しい形式のファイルは旧アプリで開けません。
 
 「基本情報」（`document_info`）に基準年度・作成日時・更新日時を保存します。保存データ全体に関する情報だけを扱い、保存形式などは`triadic_metadata`で管理します。一次予算・確定予算の2種別は業務定義で固定します。種別表や施策ごとの年度は保存しません。開始年月は基準年度・期間の算出規則・各科目行の種別別有効月額から読み込み時に導出し、保存列は持ちません。共通属性は`initiatives`、共通科目行は`initiative_rows`へ保存し、追加時から同じ文字列識別子を使います。施策金額は`initiative_amounts`へ科目行・種別ID・月で区別して円の整数を保存します。種別1（一次予算）は12か月、種別2（確定予算）は手修正月だけを保持します。明示した0と一次予算と同額の手修正もレコードとして保持し、未指定月だけ一次予算を引き継ぎます。引き継ぎ値は共通の解決処理から求め、別の保存値へ複製しません。基準前年の金額は`previous_amounts`へ科目・業種・部署・月ごとに保存します。種別選択と一次・確定それぞれの基準前年は`kind_selections`に画面別で保存します。詳細は[月別金額と保存構造](DATA_MODEL.md)と[実装設計](docs/single-year-plan-design.md)を参照してください。外部送信はありません。
 

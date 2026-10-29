@@ -16,6 +16,7 @@ import type { WindowPlanSession } from "../WindowPlanSession";
 export type Page = "work-selection" | "dashboard" | "spreadsheet-io" | "data-history" | "previous-input" | "home" | "initiative-entry" | "initiative-list" | "initiative-detail" | "cost-table" | "expansion-table" | "master" | "aggregation-master" | "account-master" | "expansion-master" | "expansion-category-master" | "industry-master" | "department-master" | "period-master" | "kind-master" | "account-type-master" | "amount-item-master";
 
 export type Screen = {
+  phase?: KindId | undefined;
   page: Page;
   detailKind?: KindId;
   detailVisit?: string;

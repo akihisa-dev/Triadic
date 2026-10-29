@@ -1,3 +1,4 @@
+import { useBudgetPhase } from "./BudgetPhase";
 import { createPortal } from "react-dom";
 import { useId, useRef, useState } from "react";
 import { initiativeMonths } from "../core/domain/calendar";
@@ -9,6 +10,7 @@ type Props = { selected: KindId[]; previous: BudgetPrevious; disabled: boolean; 
   onSelection: (kinds: KindId[], previous: BudgetPrevious) => void; onPeriod: (period: DashboardPeriod) => void };
 
 export function DashboardControls({ selected, previous, disabled, period, onSelection, onPeriod }: Props) {
+  const phase = useBudgetPhase();
   const [open, setOpen] = useState(false);
   const panel = useRef<HTMLElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -19,7 +21,7 @@ export function DashboardControls({ selected, previous, disabled, period, onSele
     onFocus={event => { if (event.target !== trigger.current) setOpen(true); }} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false); }}
     onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); trigger.current?.focus(); setOpen(false); } }}>
     <div id={bodyId} className="dashboard-floating-body" hidden={!open}>
-      <ComparisonSelection selected={selected} previous={previous} disabled={disabled} onChange={onSelection} />
+      <ComparisonSelection phase={phase} selected={selected} previous={previous} disabled={disabled} onChange={onSelection} />
       <div className="dashboard-period-buttons" role="group" aria-label="対象期間">{(["annual", ...initiativeMonths] as const).map(month =>
         <button key={month} disabled={disabled} aria-pressed={period === month} onClick={() => onPeriod(month)}>{month === "annual" ? "年間" : `${month}月`}</button>)}</div>
     </div>

@@ -37,6 +37,7 @@ export function WorkspaceHeader({ workspace, windows }: { workspace: HomeWorkspa
             <span className="app-version" aria-label={`バージョン ${appVersion}`}>v{appVersion}</span>
           </span>
           <output className="home-fiscal-year" aria-label="基準年度">{contents.fiscalYear}年度</output>
+          <span aria-label="予算フェーズ">{workspace.phase === 1 ? "一次予算" : "確定予算"}</span>
         </div>
         <nav className="screen-history" aria-label="画面の移動履歴">
           {([-1, 1] as const).map(direction => {

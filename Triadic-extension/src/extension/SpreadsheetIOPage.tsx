@@ -1,3 +1,5 @@
+import { useBudgetPhase } from "./BudgetPhase";
+import { phaseKinds, phasePrevious } from "../core/domain/budgetPhase";
 import { useTableCellFilter } from "./TableCellFilter";
 import { TableViewHeader, TableViewEmpty, useTableView } from "./TableViewHeader";
 import type { TableColumn } from "../core/tables/columnView";
@@ -34,10 +36,11 @@ function download(bytes: Uint8Array, name: string) {
 export type SpreadsheetIOProps = { contents: PlanContents; busy: boolean; onChangePlan: (change: PlanChange) => Promise<void>; onPrepareSave: () => Promise<void>; onPendingChange: (pending: boolean) => void; onController?: (controller: SpreadsheetOperation | null) => void };
 export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave, onPendingChange, onController }: SpreadsheetIOProps) {
   const readOnly = useHistoryReadOnly();
+  const phase = useBudgetPhase();
   const [tables, setTables] = useState<ExportTable[]>(["cost-table", "expansion-table", "initiative-list"]);
-  const [selections, setSelections] = useState<KindSelections>(() => ({ "cost-table": [1], "expansion-table": [1], "initiative-list": [2] }));
-  const [previousSelections, setPreviousSelections] = useState<PreviousSelections>({ "cost-table": {1:1,2:1}, "expansion-table": {1:1,2:1} });
-  const [previousKind, setPreviousKind] = useState<PreviousKind>(1);
+  const [selections, setSelections] = useState<KindSelections>(() => phase === null ? { "cost-table": [1], "expansion-table": [1], "initiative-list": [2] } : { "cost-table": phaseKinds(phase), "expansion-table": phaseKinds(phase), "initiative-list": [phase] });
+  const [previousSelections, setPreviousSelections] = useState<PreviousSelections>(phase === null ? { "cost-table": {1:1,2:1}, "expansion-table": {1:1,2:1} } : { "cost-table": phasePrevious(phase), "expansion-table": phasePrevious(phase) });
+  const [previousKind, setPreviousKind] = useState<PreviousKind>(phase ?? 1);
   const [classificationSelection, setClassificationSelection] = useState<ExportClassificationSelection>({ industries: [], departments: [], pairs: [] });
   const [classificationSources, setClassificationSources] = useState(() => ({ industries: contents.industries, departments: contents.departments }));
   let currentSelection = classificationSelection;
@@ -103,6 +106,7 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
       if (!/\.xlsx$/i.test(file.name)) throw new Error("前年入力フォーマットのExcelファイル（.xlsx）を選択してください。");
       if (file.size > previousWorkbookLimits.compressedBytes) throw new Error("取り込みファイルは20MB以下にしてください。");
       const changes = await processPreviousWorkbook(new Uint8Array(await file.arrayBuffer()), contents);
+      if (phase !== null && changes.some(change => change.previousKind !== phase)) throw new Error(`このフェーズでは${previousKindName(phase)}のフォーマットを使用してください。`);
       if (!changes.length) { setNotice("変更する金額がありません。"); return; }
       return changes;
     });
@@ -120,7 +124,7 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
       {(Object.keys(tableNames) as ExportTable[]).map(table => <div className="io-table-option" key={table}>
         <label className="io-check"><input type="checkbox" checked={tables.includes(table)} disabled={disabled} onChange={event => setTables(current => event.target.checked ? [...current, table] : current.filter(t => t !== table))} />{tableNames[table]}</label>
         {tables.includes(table) && <div className="io-table-conditions">
-          {table === "initiative-list" ? <KindSelectionSlots screen={table} selected={selections[table]} disabled={disabled} onChange={selected => setSelections(current => ({ ...current, [table]: selected }))} /> : <ComparisonSelection selected={selections[table]} previous={previousSelections[table]} disabled={disabled} onChange={(selected, previous) => { setSelections(current => ({ ...current, [table]: selected })); setPreviousSelections(current => ({ ...current, [table]: previous })); }} />}
+          {table === "initiative-list" ? <KindSelectionSlots phase={phase} screen={table} selected={selections[table]} disabled={disabled} onChange={selected => setSelections(current => ({ ...current, [table]: selected }))} /> : <ComparisonSelection phase={phase} selected={selections[table]} previous={previousSelections[table]} disabled={disabled} onChange={(selected, previous) => { setSelections(current => ({ ...current, [table]: selected })); setPreviousSelections(current => ({ ...current, [table]: previous })); }} />}
           {table === "cost-table" && <div className="io-classifications">
             <ChoiceChips id="export-industry" label="業種名" value={industries} emptyLabel="全業種の合計" options={contents.industries.map(i => ({ id: i.id, name: i.industryName }))} disabled={disabled} onChange={industries => setClassificationSelection(current => ({ ...current, industries }))} />
             <ChoiceChips id="export-department" label="部署名" value={departments} emptyLabel="全部署の合計" options={contents.departments.map(d => ({ id: d.id, name: d.departmentName }))} disabled={disabled} onChange={departments => setClassificationSelection(current => ({ ...current, departments }))} />
@@ -141,7 +145,7 @@ export function SpreadsheetIOPage({ contents, busy, onChangePlan, onPrepareSave,
         event.preventDefault(); setDragging(false);
         void importFiles(Array.from(event.dataTransfer.files));
       }}>
-      <div className="io-heading"><h2 id="io-previous-title">{dragging && !disabled && !readOnly ? "ここにドロップして取り込む" : "前年入力"}</h2><PreviousKindSelection id="export-previous-kind" label="前年" value={previousKind} disabled={disabled} onChange={setPreviousKind} /><span className="field-hint">千円 · 小数点以下3桁まで</span></div>
+      <div className="io-heading"><h2 id="io-previous-title">{dragging && !disabled && !readOnly ? "ここにドロップして取り込む" : "前年入力"}</h2>{phase !== null ? <span>{previousKindName(phase)}</span> : <PreviousKindSelection id="export-previous-kind" label="前年" value={previousKind} disabled={disabled} onChange={setPreviousKind} />}<span className="field-hint">千円 · 小数点以下3桁まで</span></div>
       <div className="io-pair-list" role="group" aria-label="フォーマットに含める業種・部署">
         {contents.industries.map(i => <fieldset key={i.id}><legend>{i.industryName}</legend>{contents.departments.filter(d => d.industryIds.includes(i.id)).map(d => {
           const checked = pairs.some(p => p.industryId === i.id && p.departmentId === d.id);

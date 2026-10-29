@@ -1,3 +1,4 @@
+import { useBudgetPhase } from "./BudgetPhase";
 import type { ExpansionCategory } from "../core/domain/expansionCategoryMaster";
 import { useHistoryReadOnly } from "./HistoryReadOnly";
 import { InitiativeAmountGrid } from "./InitiativeAmountGrid";
@@ -33,7 +34,9 @@ type InitiativeEntryPageProps = {
 
 export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions, expansionCategories, departments, periodTypes, industries, onOpenMaster, isSaving, onRegister, onBack, editing, initialKind = 1 }: InitiativeEntryPageProps) {
   const readOnly = useHistoryReadOnly();
-  const [kind, setKind] = useWindowViewState("initiative:kind", initialKind);
+  const phase = useBudgetPhase();
+  const [storedKind, setKind] = useWindowViewState("initiative:kind", initialKind);
+  const kind = phase ?? storedKind;
   const allowedCategories = expansions.find(item => item.id === draft.expansionId)?.categoryIds ?? [];
   const allowedIndustries = departments.find(item => item.id === draft.departmentId)?.industryIds ?? [];
   return (
@@ -107,7 +110,7 @@ export function InitiativeEntryPage({ draft, onDraftChange, accounts, expansions
         <p>勘定科目がありません。</p>
         <button className="secondary-button" type="button" disabled={isSaving || editing?.pending} onClick={onOpenMaster}>勘定科目マスタを開く</button>
       </div>}
-      <div className="kind-tabs" role="tablist" aria-label="入力する種別">{INITIAL_KINDS.map(item => <button key={item.id} id={`kind-tab-${item.id}`} type="button" role="tab" aria-selected={kind === item.id} aria-controls="kind-amount-panel" onClick={() => setKind(item.id)}>{item.kindName}</button>)}</div>
+      <div className="kind-tabs" role="tablist" aria-label="入力する種別">{INITIAL_KINDS.filter(item => phase === null || item.id === phase).map(item => <button key={item.id} id={`kind-tab-${item.id}`} type="button" role="tab" aria-selected={kind === item.id} aria-controls="kind-amount-panel" onClick={() => setKind(item.id)}>{item.kindName}</button>)}</div>
       <div className="initiative-amount-table-container" id="kind-amount-panel" role="tabpanel" aria-labelledby={`kind-tab-${kind}`} aria-label="月別金額の入力表" tabIndex={0}>
         <InitiativeAmountGrid key={kind} draft={draft} kind={kind}
           accounts={accounts} rowOperationsDisabled={editing?.saving ?? false} isSaving={readOnly || isSaving} onDraftChange={onDraftChange} />

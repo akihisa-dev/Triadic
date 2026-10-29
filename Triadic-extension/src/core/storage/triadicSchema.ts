@@ -6,7 +6,7 @@ import { AGGREGATION_SQL } from "./aggregationSchema";
 export const TRIADIC_FILE_EXTENSION = ".triadic";
 export const TRIADIC_MIME_TYPE = "application/vnd.triadic+sqlite";
 export const TRIADIC_FORMAT_ID = "triadic";
-export const TRIADIC_FORMAT_VERSION = 33;
+export const TRIADIC_FORMAT_VERSION = 34;
 const revision = "INTEGER NOT NULL DEFAULT 0 CHECK (typeof(revision) = 'integer' AND revision >= 0)";
 const amount = "INTEGER NOT NULL DEFAULT 0 CHECK (typeof(amount_yen) = 'integer' AND amount_yen BETWEEN -9007199254740991 AND 9007199254740991)";
 const month = "INTEGER NOT NULL CHECK (typeof(month) = 'integer' AND month BETWEEN 1 AND 12)";
@@ -61,6 +61,7 @@ CREATE TABLE master_order (
 );
 CREATE TABLE initiatives (
  id INTEGER PRIMARY KEY AUTOINCREMENT,
+ created_kind INTEGER NOT NULL DEFAULT 1 CHECK (typeof(created_kind) = 'integer' AND created_kind IN (1,2)),
  name TEXT NOT NULL UNIQUE CHECK (length(trim(name)) > 0), note TEXT NOT NULL DEFAULT '',
  expansion_id INTEGER NOT NULL REFERENCES expansions(id),
  expansion_category_id INTEGER REFERENCES expansion_categories(id),
@@ -72,6 +73,7 @@ CREATE TABLE initiatives (
  FOREIGN KEY (department_id, industry_id) REFERENCES department_industries(department_id, industry_id),
  FOREIGN KEY (expansion_id, expansion_category_id) REFERENCES expansion_category_assignments(expansion_id, category_id)
 );
+CREATE TRIGGER immutable_created_kind BEFORE UPDATE OF created_kind ON initiatives WHEN NEW.created_kind != OLD.created_kind BEGIN SELECT RAISE(ABORT, '施策の作成フェーズは変更できません'); END;
 CREATE TABLE initiative_rows (
  id TEXT PRIMARY KEY NOT NULL CHECK (length(id) > 0),
  initiative_id INTEGER NOT NULL REFERENCES initiatives(id), account_id INTEGER NOT NULL REFERENCES accounts(id),

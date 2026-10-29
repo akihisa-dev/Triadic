@@ -68,3 +68,35 @@ test('出力中も応答し、中止・上限拒否・再出力を保持して�
   expect(previousBook.getWorksheet('_triadic')!.getCell('C1').value).toBe(1);
   expect(await hash()).toBe(original);
 });
+
+test('フェーズに合った予算と前年でExcelを出力する', async ({ page, app }) => {
+  test.setTimeout(60_000);
+  await page.goto('/tests/ui/preview.html?data=full');
+  await expect(page.getByRole('status')).toHaveText('操作できます');
+  await app.locator('body').evaluate(() => {
+    Reflect.set(window, 'phaseExports', []);
+    const click = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function () {
+      if (!this.download) { click.call(this); return; }
+      Reflect.get(window, 'phaseExports').push(fetch(this.href).then(r => r.arrayBuffer()).then(b => [...new Uint8Array(b)]));
+    };
+  });
+  await app.getByRole('button', { name: 'ファイルを開く', exact: true }).click();
+  for (const [index, name] of ['一次予算', '確定予算'].entries()) {
+    await app.getByRole('main', { name: '作業を選択', exact: true }).getByRole('button', { name, exact: true }).click();
+    const nav = app.getByRole('navigation', { name: 'メインナビゲーション' });
+    await nav.getByRole('button', { name: '入出力', exact: true }).click();
+    const report = app.getByRole('region', { name: '表の出力', exact: true });
+    await expect(report.getByRole('checkbox', { name: '確定予算を表示', exact: true })).toHaveCount(index === 0 ? 0 : 2);
+    await report.getByRole('button', { name: '選んだ表を出力', exact: true }).click();
+    await expect(app.getByText('表を出力しました。', { exact: true })).toBeVisible({ timeout: 30_000 });
+    const bytes = await app.locator('body').evaluate(async (_node, index) => await Reflect.get(window, 'phaseExports')[index], index);
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(Buffer.from(bytes) as unknown as ExcelJS.Buffer);
+    const headers = workbook.getWorksheet('総原価表')!.getRows(1, 5)!.flatMap(row => Object.values(row.values)).join(' ');
+    expect(headers).toContain('一次予算');
+    if (index === 0) expect(headers).not.toContain('確定予算');
+    else expect(headers).toContain('確定予算');
+    await nav.getByRole('button', { name: '作業を選択', exact: true }).click();
+  }
+});

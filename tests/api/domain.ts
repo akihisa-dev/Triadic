@@ -1,3 +1,4 @@
+export * from "../../Triadic-extension/src/core/domain/budgetPhase";
 export * from "../../Triadic-extension/src/core/tables/aggregationLayout";
 export * from "../../Triadic-extension/src/core/domain/budgetHints";
 export * from "../../Triadic-extension/src/core/tables/historyIncomeImpact";

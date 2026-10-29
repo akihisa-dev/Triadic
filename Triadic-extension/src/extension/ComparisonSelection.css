@@ -15,3 +15,7 @@
 .comparison-selection-independent > .comparison-cell { align-self: start; }
 .comparison-selection-independent > .comparison-baseline { align-self: start; line-height: 29px; }
 @media (pointer: coarse) { .comparison-selection-independent > .comparison-baseline { line-height: 44px; } }
+
+.phase-comparison-selection { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 13px; color: var(--muted); }
+.phase-comparison-selection label { display: flex; align-items: center; gap: 6px; }
+.phase-comparison-selection input { accent-color: var(--accent); }

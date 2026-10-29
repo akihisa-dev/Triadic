@@ -14,7 +14,7 @@ export function useWorkspaceHistory(screens: ReturnType<typeof useScreenHistory<
   const [preview, setPreview] = useState<{ entry: DataHistoryEntry; contents: PlanContents } | null>(null);
   const [restoreRequested, setRestoreRequested] = useState(false);
   const [restoreError, setRestoreError] = useState("");
-  const resetScreens = (next: Page) => screens.reset({ page: next, selectedInitiative: null, detailOrigin: "initiative-list" });
+  const resetScreens = (next: Page) => screens.reset({ phase: screens.current.phase, page: next, selectedInitiative: null, detailOrigin: "initiative-list" });
   const previewEntry = async (entry: DataHistoryEntry) => {
     if (blocked()) return;
     await run(async () => {
