@@ -32,11 +32,12 @@ const requestedScenario = new URLSearchParams(location.search).get("scenario");
 if ([...scenario.options].some(option => option.value === requestedScenario)) scenario.value = requestedScenario!;
 dataset.value = [...dataset.options].some(option => option.value === requested) ? requested! : "full";
 export let fixtureBytes: number[] | Uint8Array = new Uint8Array();
+export let memoryFiles: ReturnType<typeof installMemoryFiles>;
 
 frame.addEventListener("load", async () => {
   const target = frame.contentWindow as Window & typeof globalThis;
   const externalBytes = scenario.value === "file-conflict" ? dataset.value === "recreated-initiative" ? recreated!.external : dataset.value === "concurrent-initiative" ? concurrent!.external : await saveKindSelection(new Uint8Array(fixtureBytes), "cost-table", [2]) : undefined;
-  installMemoryFiles({ bytes: fixtureBytes, scenario: scenario.value as FileScenario, ...(externalBytes ? { externalBytes } : {}) }, target);
+  memoryFiles = installMemoryFiles({ bytes: fixtureBytes, scenario: scenario.value as FileScenario, ...(externalBytes ? { externalBytes } : {}) }, target);
   // Use the real application entry point, without a test-only copy of its UI.
   status.textContent = "操作できます";
   frame.inert = false;

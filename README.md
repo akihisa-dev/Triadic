@@ -460,6 +460,8 @@ Regular registration tests check four-attribute aggregation, fiscal/next-year mo
 
 Regular cost-summary/aggregation-master tests check required aggregations, signed child aggregation, rejection of duplicate membership/cycles, bulk membership moves and descendant preservation, previous-year-plus-initiative calculation, sums by kind, reorder, old-format rejection, and failure/conflict/cancellation. Screen tests cover master setup through initiative registration, cost-summary display, membership/sign controls in the table, account order, reload persistence, and failed saves.
 
+Sign-control screen tests hold the in-memory write boundary to check selection feedback before saving completes, disabled repeated actions, and the saved SQLite sign after release; failed saves preserve the original sign. They use no elapsed-time pass/fail thresholds. Optional observation is `PERF_MODE=sign npx playwright test sign-performance.spec.ts --project desktop --workers 1`; it records feedback/save times for default and sample data only when explicitly enabled, with no performance threshold.
+
 ## Load in Chrome
 
 1. Run `npm run build`.
@@ -1104,6 +1106,8 @@ npm run test:ui:report
 施策登録の通常テストでは4属性の集計、年度と翌年の年月、同一科目の複数行、空欄・ゼロ・負数・小数、旧形式の拒否、保存キャンセル・失敗・外部変更時の保護を確認します。画面テストでは登録から一覧への移動、種別切り替え、マスタの属性変更による再集計、再読込後の保持、施策名列の固定、保存失敗時の入力保持を広い画面と狭い画面で確認します。
 
 総原価表と集計マスタの通常テストでは必須集計、集計同士の加減算、重複所属・循環の拒否、所属の一括移動と配下の保持、前年＋施策の計算、種別別合算、並べ替え、旧形式の拒否、保存失敗・競合・キャンセルを検証します。画面テストではマスタ設定から施策登録、総原価表の表示、表内の選択欄による所属移動と符号の変更、科目順序、再読込後の保持と保存失敗を確認します。
+
+加減の画面テストはメモリ上の書き込みを保留し、保存完了前の選択反映・保存中の再操作禁止・解放後のSQLiteの符号を確認します。保存失敗では元の符号を保持することも確認し、所要時間を合否基準にしません。任意の観測は `PERF_MODE=sign npx playwright test sign-performance.spec.ts --project desktop --workers 1` です。明示実行時だけデフォルトとサンプルデータの選択反映・保存時間を記録し、性能の閾値は設けません。
 
 ## Chromeで読み込む
 

@@ -19,6 +19,7 @@ export function installMemoryFiles(
   let writable = options.scenario !== "write-permission" && options.scenario !== "permission-denied";
   let reads = 0;
   let writes = 0;
+  let heldWrite: { started: boolean; wait: Promise<void>; release: () => void } | null = null;
   const originalName = name;
   const getFile = () => new target.File([contents], name);
   const checkCancellation = () => {
@@ -50,6 +51,11 @@ export function installMemoryFiles(
       let pending: BlobPart | undefined;
       return {
         async write(data: BlobPart) {
+          if (heldWrite) {
+            const held = heldWrite;
+            held.started = true;
+            await held.wait;
+          }
           if (options.scenario === "save-failure") {
             throw new target.DOMException("テスト用の保存失敗です。", "NotAllowedError");
           }
@@ -83,5 +89,20 @@ export function installMemoryFiles(
     },
   });
 
-  return { getFile };
+  return {
+    getFile,
+    // Observe save-in-progress behavior without assuming a machine's speed.
+    holdNextWrite() {
+      if (heldWrite) throw new Error("書き込みは既に保留中です。");
+      let release!: () => void;
+      const wait = new Promise<void>(resolve => { release = resolve; });
+      heldWrite = { started: false, wait, release };
+    },
+    isWritePending: () => heldWrite?.started ?? false,
+    releaseWrite() {
+      const held = heldWrite;
+      heldWrite = null;
+      held?.release();
+    },
+  };
 }
